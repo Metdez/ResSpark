@@ -20,7 +20,7 @@ export function validateAnswer(question: QuestionDefinition, rawValue: string | 
     return null;
   }
 
-  const value = Number(rawValue);
+  const value = Number(rawValue.replace(/[$,\s]/g, ""));
   if (!Number.isFinite(value) || (question.valueType === "integer" && !Number.isInteger(value))) {
     return question.valueType === "integer" ? "Enter a whole number." : "Enter a valid number.";
   }
@@ -38,8 +38,16 @@ export function parseAnswer(question: QuestionDefinition, rawValue: string | boo
   if (question.valueType === "boolean") {
     return rawValue as boolean;
   }
+  const textValue = rawValue as string;
   if (question.valueType === "text") {
-    return (rawValue as string).trim();
+    return textValue.trim();
   }
-  return Number(rawValue);
+  return Number(textValue.replace(/[$,\s]/g, ""));
+}
+
+export function formatCurrencyAnswer(rawValue: string): string {
+  const value = Number(rawValue.replace(/[$,\s]/g, ""));
+  return Number.isFinite(value)
+    ? value.toLocaleString("en-US", { style: "currency", currency: "USD" })
+    : rawValue;
 }
