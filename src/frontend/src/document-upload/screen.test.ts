@@ -36,6 +36,63 @@ describe("document upload screen", () => {
     expect(onComplete).not.toHaveBeenCalled();
   });
 
+  it("sorts bulk uploads and counts recognized files toward required documents", () => {
+    const root = document.createElement("main");
+    document.body.append(root);
+    const onComplete = vi.fn();
+    renderDocumentUpload(root, { answers: {}, onBack: vi.fn(), onComplete });
+    const input = root.querySelector<HTMLInputElement>(".quick-upload-input")!;
+    Object.defineProperty(input, "files", {
+      configurable: true,
+      value: [
+        new File(["IRS"], "IRS_Account_Transcript.pdf"),
+        new File(["bank"], "Bank_Statement_March.pdf"),
+        new File(["misc"], "supporting-note.pdf"),
+      ],
+    });
+    input.dispatchEvent(new Event("change"));
+
+    expect(root.querySelector(".sorted-file-list")?.textContent).toContain("IRS account transcript");
+    expect(root.querySelector(".sorted-file-list")?.textContent).toContain("Recent personal bank statements");
+    expect(root.querySelector(".sorted-file-list")?.textContent).toContain("Other documents");
+    expect(root.querySelector('[data-request-status="irs_transcripts"]')?.textContent).toBe("Complete");
+    expect(root.querySelector('[data-request-status="bank_statements"]')?.textContent).toBe("Complete");
+
+    root.querySelector<HTMLButtonElement>(".primary-button")!.click();
+    expect(onComplete).toHaveBeenCalledOnce();
+    expect((onComplete.mock.calls[0][0] as SelectedDocument[]).map((document) => document.category))
+      .toEqual(["irs_transcripts", "bank_statements", "other"]);
+  });
+
+  it("accepts files dropped anywhere in the quick-upload zone", () => {
+    const root = document.createElement("main");
+    document.body.append(root);
+    renderDocumentUpload(root, { answers: {}, onBack: vi.fn(), onComplete: vi.fn() });
+    const zone = root.querySelector<HTMLElement>(".quick-upload")!;
+    const drop = new Event("drop", { bubbles: true, cancelable: true });
+    Object.defineProperty(drop, "dataTransfer", {
+      value: { files: [new File(["bank"], "checking-account-statement.pdf")] },
+    });
+
+    zone.dispatchEvent(drop);
+
+    expect(drop.defaultPrevented).toBe(true);
+    expect(root.querySelector(".sorted-file-list")?.textContent).toContain("checking-account-statement.pdf");
+    expect(root.querySelector('[data-request-status="bank_statements"]')?.textContent).toBe("Complete");
+  });
+
+  it("opens the file picker when the quick-upload zone is clicked", () => {
+    const root = document.createElement("main");
+    document.body.append(root);
+    renderDocumentUpload(root, { answers: {}, onBack: vi.fn(), onComplete: vi.fn() });
+    const input = root.querySelector<HTMLInputElement>(".quick-upload-input")!;
+    const openPicker = vi.spyOn(input, "click");
+
+    root.querySelector<HTMLElement>(".quick-upload")!.click();
+
+    expect(openPicker).toHaveBeenCalledOnce();
+  });
+
   it("requires one bank statement and offers two optional slots", () => {
     const root = document.createElement("main");
     document.body.append(root);

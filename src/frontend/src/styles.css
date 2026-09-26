@@ -73,6 +73,18 @@ input:focus, select:focus { outline: 3px solid rgb(8 126 139 / 30%); border-colo
 .secondary-button { border: 1px solid #486581; background: #fff; color: #243b53; }
 footer { max-width: 620px; margin: 28px auto 0; text-align: center; }
 .document-card { width: min(100%, 720px); }
+.quick-upload { display: grid; grid-template-columns: minmax(0, 1fr) max-content; gap: 14px 20px; align-items: center; margin-top: 24px; padding: 20px; border: 2px dashed #69b7bd; border-radius: 12px; background: #f0fbfa; cursor: pointer; user-select: none; transition: background .15s ease, border-color .15s ease, box-shadow .15s ease; }
+.quick-upload:focus-visible { outline: 3px solid rgb(8 126 139 / 30%); outline-offset: 3px; }
+.quick-upload.is-dragging { border-color: #087e8b; background: #e2f7f5; box-shadow: 0 0 0 4px rgb(8 126 139 / 14%); }
+.quick-upload-kicker { margin: 0 0 4px !important; color: #087e8b !important; font-size: .72rem !important; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.quick-upload h2 { margin: 0; color: #102a43; font-size: 1.1rem; }
+.quick-upload p { margin: 6px 0 0; color: #486581; font-size: .86rem; line-height: 1.45; }
+.quick-upload-button { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; padding: 0 16px; border-radius: 8px; background: #087e8b; color: #fff; font-weight: 750; cursor: pointer; }
+.quick-upload:hover .quick-upload-button, .quick-upload:focus-visible .quick-upload-button { background: #066c77; box-shadow: 0 0 0 3px rgb(8 126 139 / 18%); }
+.sorted-file-list { grid-column: 1 / -1; display: grid; gap: 6px; }
+.sorted-file-list > span { display: flex; gap: 8px; align-items: baseline; min-width: 0; color: #627d98; font-size: .8rem; }
+.sorted-file-list strong { min-width: 0; color: #243b53; overflow-wrap: anywhere; }
+.sorted-file-list small { flex: none; color: #087e8b; font-weight: 750; }
 .document-list { display: grid; gap: 12px; margin-top: 28px; }
 .document-request { padding: 18px; border: 1px solid #d9e2ec; border-radius: 10px; background: #f8fafc; }
 .document-request h2 { margin: 0; color: #243b53; font-size: 1rem; }
@@ -99,4 +111,7 @@ footer { max-width: 620px; margin: 28px auto 0; text-align: center; }
   .actions > .primary-button { grid-row: 1; }
   .upload-slot { grid-template-columns: 1fr; }
   .upload-button { justify-content: center; }
+  .quick-upload { grid-template-columns: 1fr; }
+  .sorted-file-list { grid-column: 1; }
+  .sorted-file-list > span { align-items: flex-start; flex-direction: column; gap: 2px; }
 }
