@@ -5,11 +5,11 @@ ResSpark helps a tax professional see which IRS collection path may fit a client
 A case moves through four steps:
 
 1. The taxpayer answers the intake questions in [`src/questions.py`](src/questions.py): household, housing, work, assets, and compliance.
-2. Those answers decide which documents to request: IRS transcripts and bank statements, plus pay stubs, a lease or mortgage statement, auto-loan statements, or a health-insurance statement when they apply.
-3. [`src/document_parse.py`](src/document_parse.py) reads those PDFs into the case record. The packets in [`Examples/`](Examples/) are the reference set. The same document types are also accepted under ordinary titles, such as "Pay Stub" or "Lease Statement".
+2. Those answers decide which documents to request. IRS transcripts and three months of bank statements are always required. Pay stubs and a W-2, self-employment records, a mortgage or a lease, vehicle records, retirement, life insurance, investments, or bankruptcy papers are requested only when the answers call for them. A utility bill is optional for a homeowner or a renter.
+3. [`src/document_parse.py`](src/document_parse.py) reads those PDFs into the case record. Each upload category (`irs_transcripts`, `bank_statements`, `pay_stubs`, `self_employment`, `real_property`, `lease`, `housing_utilities`, `vehicle`, `retirement`, `insurance`, `investments`, `bankruptcy`) selects the columns that file is allowed to fill. The packets in [`Examples/`](Examples/) are the reference set. The same document types are also accepted under ordinary titles, such as "Pay Stub" or "Lease Statement".
 4. When required facts are present, [`src/determination.py`](src/determination.py) compares income, allowable expenses, and equity with IRS standards and returns a suggested path. Unknown values block that step. A known zero does not.
 
-The TypeScript intake in [`src/frontend/`](src/frontend/) is the taxpayer question flow. Document upload belongs on that screen; parsing stays in Python.
+The TypeScript app in [`src/frontend/`](src/frontend/) is the taxpayer question flow, the document upload screen, and a results screen. It asks 26 questions and leaves the tax balance and the collection deadline to the IRS transcript. State, county, household size, and pay frequency are chosen from lists. The browser keeps the answers and the selected files for that visit. The results screen is a sandbox fixture until a processor sends those files to the Python parser. Image files can be chosen on the upload screen; parsing still needs text in the PDF.
 
 ## Suggested paths
 
@@ -24,7 +24,7 @@ Every result is a suggestion for professional review, not an IRS decision.
 
 - [`src/`](src/) — intake, case record, PDF parsing, determination, and standards access
 - [`src/schemas/`](src/schemas/) — PostgreSQL schema and IRS standards seed data
-- [`src/frontend/`](src/frontend/) — TypeScript question flow
+- [`src/frontend/`](src/frontend/) — TypeScript questions, document upload, and sandbox results
 - [`Examples/`](Examples/) — three synthetic client packets
 - [`Context/`](Context/) — IRS reference documents
 - [`Planning/`](Planning/) — UI notes; previous READMEs are in [`Planning/old/`](Planning/old/)

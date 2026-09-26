@@ -3,10 +3,13 @@
 ponytail: reads ReportLab text-show operators. Bank columns use the x y on `Tm`;
 every other field is read in draw order. A scanned PDF or another generator
 needs poppler (`pdftotext -layout`) instead.
-Pay stubs and unmatched W-2s sum into taxpayer wages. Auto statements sum.
+Pay stubs and unmatched W-2s sum into taxpayer wages. Auto loan statements sum.
 ponytail: a second earner is included in gross_wages_taxpayer. gross_wages_spouse
 stays unset; a spouse marker on the upload would split that line.
-Housing is the labeled rent or PITI; bank utility lines are not added.
+Housing is the labeled rent or PITI. A utility upload is added on top; a PITI
+figure that already includes utilities is not detected.
+ponytail: a second P&L replaces net business income. The same business on a
+Schedule C and a profit-and-loss is not added twice.
 Gross pay is Regular Gross Pay, or Gross Pay when that is the line on the stub.
 ponytail: a failed parse can ask Sciforium for the columns that document type
 owns. Empty extracted text is not recovered (no OCR). A scan still fails.
@@ -41,13 +44,19 @@ _TYPE_HINTS = {
     "bank_statements": "bank",
     "personal_bank_statements": "bank",
     "pay_stubs": "pay_stub",
+    "lease": "lease",
     "lease_statement": "lease",
     "rent": "lease",
     "mortgage_statement": "mortgage",
-    "real_property": "mortgage",
     "auto_loan_statement": "auto",
     "vehicle": "auto",
     "health_insurance_statement": "health",
+    "housing_utilities": "utility",
+    "self_employment": "business",
+    "retirement": "retirement",
+    "insurance": "life",
+    "investments": "investment",
+    "bankruptcy": "bankruptcy",
 }
 _ACCOUNT_FIELDS = (
     "filing_status_married", "state_of_residence", "total_tax_owed",
@@ -68,9 +77,20 @@ _KIND_FIELDS = {
         "vehicle_market_values", "vehicle_market_value_total", "vehicle_count",
     ),
     "health": ("actual_health_insurance_premiums",),
+    "utility": ("actual_housing_utilities",),
+    "business": ("net_business_income",),
+    "retirement": ("retirement_accounts_market_value", "retirement_accounts_loan_balance"),
+    "life": ("life_insurance_cash_value", "life_insurance_loan_balance"),
+    "investment": ("investment_accounts_net",),
+    "valuation": ("real_property_market_value", "has_real_property"),
 }
 # A statement can be handled without a value estimate. Both keys are required if either is present.
-_OPTIONAL_TOGETHER = {"auto": ("vehicle_market_values", "vehicle_market_value_total")}
+# A loan balance on retirement or life insurance may be omitted when the statement has none.
+_OPTIONAL_TOGETHER = {
+    "auto": ("vehicle_market_values", "vehicle_market_value_total"),
+    "retirement": ("retirement_accounts_loan_balance",),
+    "life": ("life_insurance_loan_balance",),
+}
 # That upload slot holds an account transcript, a wage transcript, or both.
 _IRS_FIELDS = _ACCOUNT_FIELDS + _KIND_FIELDS["wage"]
 _FIELD_TYPES = {
@@ -94,6 +114,7 @@ def merge_documents(parts: list[dict]) -> dict:
     """Combine parsed documents. Repeating stubs, W-2s, health, and auto files add up."""
     row: dict = {}
     banks, autos, stubs, wages, healths = [], [], [], [], []
+    utilities, retirements, lives, investments = [], [], [], []
     for part in parts:
         kind = part.pop("_kind")
         if kind == "bank":
@@ -106,18 +127,48 @@ def merge_documents(parts: list[dict]) -> dict:
             wages.append(part)
         elif kind == "health":
             healths.append(part)
+        elif kind == "utility":
+            utilities.append(part)
+        elif kind == "retirement":
+            retirements.append(part)
+        elif kind == "life":
+            lives.append(part)
+        elif kind == "investment":
+            investments.append(part)
+        elif kind == "bankruptcy":
+            row.setdefault("ai_flags", []).append(
+                "Bankruptcy documents were uploaded and need professional review."
+            )
         else:
             row.update(part)
     employers = _apply_income(row, stubs, wages)
     if healths:
-        row["actual_health_insurance_premiums"] = float(sum(
-            (Decimal(str(item["actual_health_insurance_premiums"])) for item in healths), Decimal(0)
-        ))
+        row["actual_health_insurance_premiums"] = _sum_amounts(healths, "actual_health_insurance_premiums")
+    if utilities:
+        base = Decimal(str(row.get("actual_housing_utilities") or 0))
+        row["actual_housing_utilities"] = float(base + Decimal(str(_sum_amounts(utilities, "actual_housing_utilities"))))
+    if retirements:
+        row["retirement_accounts_market_value"] = _sum_amounts(retirements, "retirement_accounts_market_value")
+        _sum_present(row, retirements, "retirement_accounts_loan_balance")
+    if lives:
+        row["life_insurance_cash_value"] = _sum_amounts(lives, "life_insurance_cash_value")
+        _sum_present(row, lives, "life_insurance_loan_balance")
+    if investments:
+        row["investment_accounts_net"] = _sum_amounts(investments, "investment_accounts_net")
     if banks:
         row.update(_combine_banks(banks, employers))
     if autos:
         row.update(_combine_autos(autos))
     return row
+
+
+def _sum_amounts(items: list[dict], key: str) -> float:
+    return float(sum((Decimal(str(item[key])) for item in items if key in item), Decimal(0)))
+
+
+def _sum_present(row: dict, items: list[dict], key: str) -> None:
+    if any(key in item for item in items):
+        row[key] = _sum_amounts(items, key)
 
 
 def _apply_income(row: dict, stubs: list[dict], wages: list[dict]) -> list[str]:
@@ -330,18 +381,30 @@ def _classify(texts: list[str], document_type: str | None) -> str | None:
         return "wage"
     if _has(head, "account transcript") or _has(head, "balance notice"):
         return "account"
+    if _has(head, "life insurance"):
+        return "life"
+    if _has(head, "retirement"):
+        return "retirement"
+    if _has(head, "profit and loss") or _has(head, "schedule c"):
+        return "business"
+    if _has(head, "brokerage") or _has(head, "investment account"):
+        return "investment"
+    if _has(head, "bankruptcy"):
+        return "bankruptcy"
     if _has(head, "checking") or _has(head, "bank statement") or _has(head, "account statement"):
         return "bank"
     if _has(head, "earnings statement") or _has(head, "pay stub") or _has(head, "paystub"):
         return "pay_stub"
     if _has(head, "rent") or _has(head, "lease"):
         return "lease"
-    if _has(head, "mortgage"):
+    if _has(head, "mortgage") or _has(head, "heloc"):
         return "mortgage"
     if _has(head, "auto loan") or _has(head, "vehicle loan"):
         return "auto"
     if _has(head, "premium") or _has(head, "health insurance"):
         return "health"
+    if document_type == "real_property":
+        return "valuation"
     return _TYPE_HINTS.get(document_type or "")
 
 
@@ -362,6 +425,22 @@ def _from_kind(kind: str, texts: list[str], rows: dict) -> dict:
         return _auto(texts)
     if kind == "health":
         return _health(texts)
+    if kind == "utility":
+        return _utility(texts)
+    if kind == "business":
+        return _business(texts)
+    if kind == "retirement":
+        return _retirement(texts)
+    if kind == "life":
+        return _life(texts)
+    if kind == "investment":
+        return _investment(texts)
+    if kind == "valuation":
+        return _valuation(texts)
+    if kind == "bankruptcy":
+        if not any(text.strip() for text in texts):
+            raise ValueError("No template matched")
+        return {"_kind": "bankruptcy"}
     raise ValueError("No template matched")
 
 
@@ -437,6 +516,14 @@ def _mortgage(texts: list[str]) -> dict:
 
 def _auto(texts: list[str]) -> dict:
     found = _pairs(texts)
+    if not any(label in found for label in ("Monthly Payment", "Remaining Balance", "Payoff Balance", "Loan Balance")):
+        value = _money(_pick(found, "Est. Market Value", "Estimated Market Value", "Market Value"))
+        return {
+            "_kind": "auto",
+            "vehicle_market_values": [value],
+            "vehicle_market_value_total": value,
+            "vehicle_count": 1,
+        }
     balance = _money(_pick(found, "Remaining Balance", "Payoff Balance", "Loan Balance"))
     row = {
         "_kind": "auto",
@@ -445,8 +532,9 @@ def _auto(texts: list[str]) -> dict:
         "vehicle_loan_balance_total": balance,
         "vehicle_count": 1,
     }
-    if "Est. Market Value" in found:
-        value = _money(found["Est. Market Value"])
+    value_label = next((label for label in ("Est. Market Value", "Estimated Market Value", "Market Value") if label in found), None)
+    if value_label:
+        value = _money(found[value_label])
         row["vehicle_market_values"] = [value]
         row["vehicle_market_value_total"] = value
     return row
@@ -460,11 +548,82 @@ def _health(texts: list[str]) -> dict:
     }
 
 
+def _utility(texts: list[str]) -> dict:
+    found = _pairs(texts)
+    return {
+        "_kind": "utility",
+        "actual_housing_utilities": _money(_pick(found, "Amount Due", "Current Charges", "Total Due")),
+    }
+
+
+def _business(texts: list[str]) -> dict:
+    found = _pairs(texts)
+    return {
+        "_kind": "business",
+        "net_business_income": _money(_pick(found, "Net Income", "Net Profit")),
+    }
+
+
+def _retirement(texts: list[str]) -> dict:
+    found = _pairs(texts)
+    row = {
+        "_kind": "retirement",
+        "retirement_accounts_market_value": _money(_pick(found, "Market Value", "Account Value")),
+    }
+    if "Loan Balance" in found:
+        row["retirement_accounts_loan_balance"] = _money(found["Loan Balance"])
+    return row
+
+
+def _life(texts: list[str]) -> dict:
+    found = _pairs(texts)
+    row = {
+        "_kind": "life",
+        "life_insurance_cash_value": _money(_pick(found, "Cash Value")),
+    }
+    if "Policy Loan" in found or "Loan Balance" in found:
+        row["life_insurance_loan_balance"] = _money(_pick(found, "Policy Loan", "Loan Balance"))
+    return row
+
+
+def _investment(texts: list[str]) -> dict:
+    found = _pairs(texts)
+    return {
+        "_kind": "investment",
+        "investment_accounts_net": _money(_pick(found, "Net Value", "Account Value")),
+    }
+
+
+def _valuation(texts: list[str]) -> dict:
+    found = _pairs(texts)
+    return {
+        "_kind": "valuation",
+        "real_property_market_value": _money(_pick(found, "Assessed Value", "Estimated Market Value", "Market Value")),
+        "has_real_property": True,
+    }
+
+
 def _combine_autos(statements: list[dict]) -> dict:
+    # ponytail: a registration plus a valuation plus a loan is not three cars.
+    # Value-only files fill vehicles that have no value yet, in order.
+    loans = [item for item in statements if "vehicle_loan_balances" in item]
+    extras = [item for item in statements if "vehicle_loan_balances" not in item]
+    if not loans:
+        values = _collected_values(extras)
+        row = {
+            "actual_vehicle_loan_lease": 0.0,
+            "vehicle_loan_balances": [0.0] * len(extras),
+            "vehicle_loan_balance_total": 0.0,
+            "vehicle_count": len(extras),
+        }
+        if values:
+            row["vehicle_market_values"] = values
+            row["vehicle_market_value_total"] = float(sum((Decimal(str(value)) for value in values), Decimal(0)))
+        return row
     balances: list[float] = []
     values: list[float] = []
     payment = Decimal(0)
-    for item in statements:
+    for item in loans:
         payment += Decimal(str(item["actual_vehicle_loan_lease"]))
         balances.extend(item["vehicle_loan_balances"])
         values.extend(item.get("vehicle_market_values") or [])
@@ -472,12 +631,21 @@ def _combine_autos(statements: list[dict]) -> dict:
         "actual_vehicle_loan_lease": float(payment),
         "vehicle_loan_balances": balances,
         "vehicle_loan_balance_total": float(sum((Decimal(str(value)) for value in balances), Decimal(0))),
-        "vehicle_count": len(statements),
+        "vehicle_count": len(loans),
     }
+    if not values:
+        values = _collected_values(extras)[: len(loans)]
     if values:
         row["vehicle_market_values"] = values
         row["vehicle_market_value_total"] = float(sum((Decimal(str(value)) for value in values), Decimal(0)))
     return row
+
+
+def _collected_values(items: list[dict]) -> list[float]:
+    values: list[float] = []
+    for item in items:
+        values.extend(item.get("vehicle_market_values") or [])
+    return values
 
 
 def _bank_statement(texts: list[str], rows: dict) -> dict:

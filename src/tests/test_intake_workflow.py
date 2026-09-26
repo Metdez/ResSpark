@@ -90,9 +90,17 @@ class V5IntakeWorkflowTests(unittest.TestCase):
         })
         codes = {request.code for request in requests}
         self.assertTrue({
-            "irs_transcripts", "personal_bank_statements", "pay_stubs",
-            "real_property", "vehicle", "retirement",
+            "irs_transcripts", "bank_statements", "pay_stubs",
+            "real_property", "housing_utilities", "vehicle", "retirement",
         }.issubset(codes))
+        utility = next(request for request in requests if request.code == "housing_utilities")
+        self.assertFalse(utility.required)
+
+        renter = document_requests_for({"owns_home": False, "rents_home": True})
+        renter_codes = {request.code for request in renter}
+        self.assertIn("lease", renter_codes)
+        self.assertNotIn("real_property", renter_codes)
+        self.assertNotIn("rent", renter_codes)
 
     def test_null_database_column_blocks_v2(self):
         row = canonical_zero_row()

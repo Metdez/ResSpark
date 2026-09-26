@@ -43,6 +43,7 @@ class DocumentRequest:
     code: str
     title: str
     reason: str
+    required: bool = True
 
 
 @dataclass
@@ -57,17 +58,18 @@ class WorkflowResult:
 
 
 _REQUESTS = {
-    "irs_transcripts": DocumentRequest("irs_transcripts", "IRS account transcripts or balance notices", "Verifies balance, tax type, collection statute, and prior agreement history."),
-    "personal_bank_statements": DocumentRequest("personal_bank_statements", "Recent personal bank statements", "Verifies cash balances and recurring deposits."),
-    "pay_stubs": DocumentRequest("pay_stubs", "Recent pay stubs and latest W-2", "Verifies gross wages, withholding, and pay frequency."),
-    "self_employment": DocumentRequest("self_employment", "Recent profit-and-loss report, business statements, and tax return/Schedule C", "Verifies net business income."),
-    "rent": DocumentRequest("rent", "Lease and recent utility bill", "Verifies rent and utilities."),
-    "real_property": DocumentRequest("real_property", "Mortgage/HELOC statements and property valuation or tax assessment", "Verifies real-property value and debt."),
-    "vehicle": DocumentRequest("vehicle", "Vehicle loan/lease statements, registration, and valuation evidence", "Verifies vehicle costs and equity."),
-    "retirement": DocumentRequest("retirement", "Recent retirement-account and loan statements", "Verifies retirement value and loans."),
-    "insurance": DocumentRequest("insurance", "Life-insurance cash-value and policy-loan statement", "Verifies life-insurance equity."),
-    "investments": DocumentRequest("investments", "Recent brokerage or investment-account statement", "Verifies investment value."),
-    "bankruptcy": DocumentRequest("bankruptcy", "Bankruptcy petition and current case-status document", "An open bankruptcy blocks V2's resolution recommendation."),
+    "irs_transcripts": DocumentRequest("irs_transcripts", "IRS account transcript", "Upload an IRS account transcript or balance notice. Include a wage and income transcript here if you have it."),
+    "bank_statements": DocumentRequest("bank_statements", "Recent personal bank statements", "Upload statements for each of the most recent three months."),
+    "pay_stubs": DocumentRequest("pay_stubs", "Recent pay stubs and W-2", "Upload your recent pay stubs and latest W-2."),
+    "self_employment": DocumentRequest("self_employment", "Self-employment records", "Upload a recent profit-and-loss report, business bank statements, and the applicable Schedule C, E, or F."),
+    "real_property": DocumentRequest("real_property", "Real-property records", "Upload a mortgage or HELOC statement if applicable, plus a property valuation or tax assessment."),
+    "lease": DocumentRequest("lease", "Lease agreement", "Upload your current residential lease agreement."),
+    "housing_utilities": DocumentRequest("housing_utilities", "Recent utility statement", "Optionally upload a recent utility statement for your residence.", required=False),
+    "vehicle": DocumentRequest("vehicle", "Vehicle records", "Upload registration and a current valuation for each vehicle. Include a loan or lease statement only when one exists."),
+    "retirement": DocumentRequest("retirement", "Retirement-account records", "Upload recent retirement-account and retirement-loan statements."),
+    "insurance": DocumentRequest("insurance", "Life-insurance records", "Upload a cash-value statement and any policy-loan statement."),
+    "investments": DocumentRequest("investments", "Investment-account records", "Upload recent brokerage or investment-account statements."),
+    "bankruptcy": DocumentRequest("bankruptcy", "Bankruptcy records", "Upload the bankruptcy petition and a current case-status document."),
 }
 
 
@@ -141,15 +143,17 @@ def initial_questions(case_row: Mapping[str, object] | None = None) -> list[dict
 
 def document_requests_for(case_row: Mapping[str, object]) -> list[DocumentRequest]:
     """Create document requests from values stored in case_financial_data."""
-    codes = ["irs_transcripts", "personal_bank_statements"]
+    codes = ["irs_transcripts", "bank_statements"]
     if case_row.get("is_wage_earner"):
         codes.append("pay_stubs")
     if case_row.get("is_self_employed"):
         codes.append("self_employment")
     if case_row.get("owns_home") or case_row.get("has_real_property"):
         codes.append("real_property")
-    elif case_row.get("rents_home"):
-        codes.append("rent")
+    if case_row.get("owns_home") is False and case_row.get("rents_home"):
+        codes.append("lease")
+    if case_row.get("owns_home") is True or (case_row.get("owns_home") is False and case_row.get("rents_home") is True):
+        codes.append("housing_utilities")
     if (case_row.get("vehicle_count") or 0) > 0:
         codes.append("vehicle")
     if case_row.get("has_retirement_accounts"):

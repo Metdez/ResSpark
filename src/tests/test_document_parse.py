@@ -280,6 +280,57 @@ class DocumentParseTests(unittest.TestCase):
         self.assertEqual(mismatched["gross_wages_taxpayer"], 300.0)
         self.assertNotIn("pay_frequency", mismatched)
 
+    def test_upload_categories_fill_case_columns(self):
+        hidden = ["Case file"] + ["spacer"] * 11
+        wage = parse_texts([
+            "Wage and Income Transcript",
+            "Form W-2 filed by: Acme Payroll LLC",
+            "Box 1", "$31,200.00",
+        ], document_type="pay_stubs")
+        self.assertEqual(wage["_kind"], "wage")
+
+        lease = parse_texts(hidden + [
+            "Rent:", "$1,000.00",
+            "Property Address:", "1 Main St, Columbus, OH 43215",
+        ], document_type="lease")
+        utility = parse_texts(hidden + ["Amount Due:", "$150.00"], document_type="housing_utilities")
+        housing = merge_documents([lease, utility])
+        self.assertEqual(housing["actual_housing_utilities"], 1150.0)
+
+        business = parse_texts(["Profit and Loss", "Net Income:", "$2,400.00"], document_type="self_employment")
+        self.assertEqual(business["net_business_income"], 2400.0)
+
+        retirement = parse_texts(["Retirement Account Statement", "Account Value:", "$10,000.00", "Loan Balance:", "$1,000.00"])
+        self.assertEqual(retirement["retirement_accounts_market_value"], 10000.0)
+        self.assertEqual(retirement["retirement_accounts_loan_balance"], 1000.0)
+
+        life = parse_texts(["Life Insurance Statement", "Cash Value:", "$5,000.00", "Premium:", "$40.00"])
+        self.assertEqual(life["_kind"], "life")
+        self.assertEqual(life["life_insurance_cash_value"], 5000.0)
+
+        investment = parse_texts(["Brokerage Statement", "Net Value:", "$3,200.00"])
+        self.assertEqual(investment["investment_accounts_net"], 3200.0)
+
+        valuation = parse_texts(hidden + ["Assessed Value:", "$200,000.00"], document_type="real_property")
+        self.assertEqual(valuation["real_property_market_value"], 200000.0)
+        self.assertTrue(valuation["has_real_property"])
+
+        value_only = parse_texts(hidden + ["Market Value:", "$8,000.00"], document_type="vehicle")
+        loan = parse_texts([
+            "Auto Loan Statement",
+            "Monthly Payment:", "$348.00",
+            "Payoff Balance:", "$9,200.00",
+        ])
+        vehicles = merge_documents([loan, value_only])
+        self.assertEqual(vehicles["vehicle_count"], 1)
+        self.assertEqual(vehicles["vehicle_market_values"], [8000.0])
+        self.assertEqual(vehicles["actual_vehicle_loan_lease"], 348.0)
+
+        bankruptcy = parse_texts(["Bankruptcy Petition", "Case status: open"], document_type="bankruptcy")
+        merged = merge_documents([bankruptcy])
+        self.assertIn("professional review", merged["ai_flags"][0])
+        self.assertNotIn("in_open_bankruptcy", merged)
+
 
 if __name__ == "__main__":
     unittest.main()
