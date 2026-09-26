@@ -1,6 +1,6 @@
 <!-- generated-by: gsd-doc-writer -->
 # ResSpark
-test
+
 ResSpark helps a tax professional quickly see which IRS payment or settlement option may fit a person's financial situation.
 
 > It is a screening tool, not a final filing decision. A tax professional should always review the documents and confirm the numbers before anything is sent to the IRS.
