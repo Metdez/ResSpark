@@ -9,7 +9,7 @@ A case moves through four steps:
 3. [`src/document_parse.py`](src/document_parse.py) classifies each PDF from its text, then reads it. The category is one of `irs_transcripts`, `bank_statements`, `pay_stubs`, `self_employment`, `real_property`, `lease`, `housing_utilities`, `vehicle`, `retirement`, `insurance`, `investments`, or `bankruptcy`. The upload slot is not used. Health insurance and life insurance are both `insurance`. A file that matches none of those returns `{"file", "error"}`, and the other files are still read. The packets in [`examples/`](examples/) are the reference set.
 4. When required facts are present, [`src/determination.py`](src/determination.py) compares income, allowable expenses, and equity with IRS standards and returns a suggested path. Unknown values block that step. A known zero does not.
 
-The TypeScript app in [`src/frontend/`](src/frontend/) is the taxpayer question flow, the document upload screen, and a results screen. It asks 26 questions and leaves the tax balance and the collection deadline to the IRS transcript. State, county, household size, and pay frequency are chosen from lists. The browser keeps the answers and the selected files for that visit. The results screen is a sandbox fixture until a processor sends those files to the Python parser. Image files can be chosen on the upload screen; parsing still needs text in the PDF.
+The TypeScript app in [`src/frontend/`](src/frontend/) is the taxpayer question flow, document upload screen, and results screen. It asks 26 questions and leaves the tax balance and collection deadline to the IRS transcript. On completion it posts the answers and selected files to `POST /api/cases` and renders the returned screening result. Image files can be selected on the upload screen; parsing still needs text in the PDF.
 
 ## Suggested paths
 
@@ -24,7 +24,7 @@ Every result is a suggestion for professional review, not an IRS decision.
 
 - [`src/`](src/) — intake, case record, PDF parsing, determination, and standards access
 - [`src/schemas/`](src/schemas/) — PostgreSQL schema and IRS standards seed data
-- [`src/frontend/`](src/frontend/) — TypeScript questions, document upload, and sandbox results
+- [`src/frontend/`](src/frontend/) — TypeScript questions, document upload, and screening results
 - [`examples/`](examples/) — three synthetic client packets
 - [`planning/`](planning/) — UI notes; previous READMEs are in [`planning/old/`](planning/old/)
 

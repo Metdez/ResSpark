@@ -1,7 +1,3 @@
-import "@material/web/select/outlined-select.js";
-import "@material/web/select/select-option.js";
-import type { MdOutlinedSelect } from "@material/web/select/outlined-select.js";
-
 import type { ResolutionCaseResult, ResolutionOutcome } from "./model";
 import "./styles.css";
 
@@ -52,10 +48,10 @@ const renderFinancialSections = (sections: ResolutionCaseResult["financialSectio
 const renderDocuments = (result: ResolutionCaseResult): string => result.documents.length
   ? `<ul class="uploaded-document-list">${result.documents.map((document) => `
       <li><span class="file-icon" aria-hidden="true">FILE</span><div><strong>${escapeHtml(document.name)}</strong><small>${escapeHtml(document.categoryLabel)} · ${formatBytes(document.size)}</small></div><span class="file-status">Ready</span></li>`).join("")}</ul>`
-  : '<p class="empty-state">No documents were supplied to this preview.</p>';
+  : '<p class="empty-state">No documents were supplied.</p>';
 
 export function renderResolutionResults(root: HTMLElement, options: ResolutionResultsOptions): void {
-  let activeOutcome = options.result.outcome;
+  const activeOutcome = options.result.outcome;
 
   const render = () => {
     const copy = statusCopy(activeOutcome);
@@ -70,7 +66,6 @@ export function renderResolutionResults(root: HTMLElement, options: ResolutionRe
           <header class="results-header">
             <a class="wordmark" href="#" aria-label="ResSpark home">ResSpark</a>
             <div class="results-header-actions">
-              ${options.result.isSandbox ? '<span class="sandbox-badge">Sandbox preview</span>' : ""}
               <button class="text-button" type="button" data-start-over>Start over</button>
             </div>
           </header>
@@ -116,23 +111,12 @@ export function renderResolutionResults(root: HTMLElement, options: ResolutionRe
               ${renderDocuments(options.result)}
             </section>
 
-            ${options.result.isSandbox ? `
-              <section class="scenario-control" aria-labelledby="scenario-label">
-                <div><strong id="scenario-label">Preview a screening outcome</strong><small>Sandbox-only control</small></div>
-                <md-outlined-select id="outcome-preview" aria-labelledby="scenario-label" label="Screening outcome">
-                  ${options.result.availableOutcomes.map((item) => `<md-select-option value="${item.id}"${item.id === activeOutcome.id ? " selected" : ""}><div slot="headline">${escapeHtml(item.path)}</div></md-select-option>`).join("")}
-                </md-outlined-select>
-              </section>` : ""}
           </div>
         </div>
       </main>`;
 
     root.querySelector<HTMLButtonElement>("[data-start-over]")!.addEventListener("click", options.onStartOver);
     root.querySelector<HTMLAnchorElement>(".wordmark")!.addEventListener("click", (event) => { event.preventDefault(); options.onStartOver(); });
-    root.querySelector<MdOutlinedSelect>("#outcome-preview")?.addEventListener("change", (event) => {
-      const selected = options.result.availableOutcomes.find((item) => item.id === (event.currentTarget as MdOutlinedSelect).value);
-      if (selected) { activeOutcome = selected; render(); }
-    });
     root.querySelector<HTMLElement>("#results-title")!.focus();
   };
 

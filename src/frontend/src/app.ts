@@ -5,7 +5,7 @@ import type { MdOutlinedSelect } from "@material/web/select/outlined-select.js";
 import { formatCurrencyAnswer, getApplicableQuestions, parseAnswer, validateAnswer } from "./flow";
 import { questions, type Answers, type QuestionDefinition, type QuestionOption } from "./questions";
 import { renderDocumentUpload } from "./document-upload/screen";
-import { processMockCase, type CaseProcessor } from "./case-processing";
+import { processCase as submitCase, type CaseProcessor } from "./case-processing";
 import type { ResolutionCaseResult } from "./resolution-results/model";
 import { renderResolutionResults } from "./resolution-results/screen";
 
@@ -29,7 +29,7 @@ function loadDraft(): { answers: Answers; step: number; screen: SavedScreen } | 
   }
 }
 
-export function createApp(root: HTMLElement, processCase: CaseProcessor = processMockCase): void {
+export function createApp(root: HTMLElement, processCase: CaseProcessor = submitCase): void {
   const savedDraft = loadDraft();
   let answers: Answers = savedDraft?.answers ?? {};
   let screen: Screen = savedDraft?.screen ?? "splash";

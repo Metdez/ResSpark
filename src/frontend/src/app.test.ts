@@ -2,6 +2,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { createApp } from "./app";
+import type { ResolutionCaseResult } from "./resolution-results/model";
 
 type SelectControl = HTMLElement & { value: string };
 
@@ -117,10 +118,31 @@ describe("intake interface", () => {
     expect(root.querySelector<SelectControl>("#answer")?.value).toBe("");
   });
 
-  it("moves from questionnaire answers through targeted documents to a mock result", async () => {
+  it("moves from questionnaire answers through targeted documents to a processor result", async () => {
     const root = document.createElement("main");
     document.body.append(root);
-    createApp(root);
+    const result: ResolutionCaseResult = {
+      caseLabel: "Tax resolution screening",
+      generatedAt: "2026-09-26T12:00:00Z",
+      outcome: {
+        id: "blocked",
+        path: "BLOCKED — Compliance gate failed",
+        shortLabel: "Compliance action needed",
+        status: "blocked",
+        reason: "A compliance step is required.",
+        nextStep: "Professional review.",
+        requirements: ["File all required tax returns"],
+        monthlyIncome: 0,
+        monthlyExpenses: 0,
+        netDisposableIncome: 0,
+        netRealizableEquity: 0,
+        suggestedOfferOrPayment: 0,
+        reviewNotes: [],
+      },
+      documents: [{ category: "irs_transcripts", categoryLabel: "IRS transcript", name: "irs_transcripts.pdf", type: "application/pdf", size: 1 }],
+      financialSections: [],
+    };
+    createApp(root, async () => result);
     clickButton(root, "Get started");
 
     for (let step = 0; step < 26 && !root.textContent?.includes("Upload the documents that apply to you."); step += 1) {

@@ -34,15 +34,6 @@
   gap: 18px;
 }
 
-.sandbox-badge {
-  padding: 6px 10px;
-  border-radius: 999px;
-  background: #fff4e5;
-  color: #8a4b08;
-  font-size: .72rem;
-  font-weight: 800;
-}
-
 .results-progress {
   width: min(100%, 620px);
   margin: 0 auto 18px;
@@ -112,30 +103,6 @@
   margin: 0 auto;
   display: grid;
   gap: 18px;
-}
-
-.scenario-control {
-  display: grid;
-  grid-template-columns: minmax(170px, .75fr) minmax(260px, 1.25fr);
-  align-items: center;
-  gap: 20px;
-  padding: 16px 18px;
-  border: 1px solid var(--results-border);
-  border-radius: 16px;
-  background: var(--results-surface);
-  box-shadow: 0 12px 32px rgb(16 42 67 / 8%);
-}
-
-.scenario-control strong,
-.scenario-control small { display: block; }
-.scenario-control strong { font-size: .85rem; }
-.scenario-control small { margin-top: 4px; color: var(--results-muted); font-size: .75rem; }
-
-.scenario-control md-outlined-select {
-  --md-outlined-select-text-field-container-shape: 9px;
-  --md-outlined-select-text-field-outline-color: #9aa7b5;
-  --md-outlined-select-text-field-focus-outline-color: var(--results-accent);
-  --md-sys-color-primary: var(--results-accent);
 }
 
 .outcome-card,
@@ -399,8 +366,6 @@
 @media (max-width: 620px) {
   .results-shell { padding: 16px; }
   .results-header { margin-bottom: 24px; }
-  .sandbox-badge { display: none; }
-  .scenario-control { grid-template-columns: 1fr; gap: 12px; }
   .outcome-heading { align-items: flex-start; }
   .outcome-labels { align-items: flex-start; flex-direction: column; }
   .section-heading { align-items: flex-start; flex-direction: column; gap: 5px; }

@@ -5,7 +5,7 @@ import { getDocumentRequests, type DocumentRequest, type DocumentUploadSlot } fr
 export interface DocumentUploadScreenOptions {
   answers: Answers;
   onBack: () => void;
-  onComplete: (documents: SelectedDocument[]) => void;
+  onComplete: (documents: SelectedDocument[]) => void | Promise<void>;
 }
 
 const acceptedDocumentTypes = ".pdf,.jpg,.jpeg,.png,.tif,.tiff,.heic";
@@ -122,7 +122,7 @@ export function renderDocumentUpload(root: HTMLElement, options: DocumentUploadS
           <button class="primary-button" type="button">Continue</button>
         </div>
       </section>
-      <footer>Files stay in this browser-only demo. A tax professional must review all information.</footer>
+      <footer>Files are submitted securely for screening. A tax professional must review all information.</footer>
     </main>`;
 
   root.querySelector<HTMLAnchorElement>(".wordmark")!.addEventListener("click", (event) => {
@@ -199,7 +199,7 @@ export function renderDocumentUpload(root: HTMLElement, options: DocumentUploadS
     });
   });
 
-  root.querySelector<HTMLButtonElement>(".primary-button")!.addEventListener("click", () => {
+  root.querySelector<HTMLButtonElement>(".primary-button")!.addEventListener("click", async (event) => {
     const missing = requests.filter((request) => request.required && !requestIsComplete(request));
     const error = root.querySelector<HTMLElement>(".error-message")!;
     if (missing.length) {
@@ -214,7 +214,15 @@ export function renderDocumentUpload(root: HTMLElement, options: DocumentUploadS
           file,
         })));
     });
-    options.onComplete([...sortedUploads, ...manualUploads]);
+    const button = event.currentTarget as HTMLButtonElement;
+    button.disabled = true;
+    error.textContent = "Submitting your case…";
+    try {
+      await options.onComplete([...sortedUploads, ...manualUploads]);
+    } catch {
+      button.disabled = false;
+      error.textContent = "We couldn't submit your case. Check your connection and try again.";
+    }
   });
   root.querySelector<HTMLElement>("#documents-title")!.focus();
 }
