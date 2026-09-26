@@ -50,7 +50,7 @@ if (example === "documents") {
       },
       [
         { category: "irs_transcripts", categoryLabel: "IRS account transcript", name: "IRS_Account_Transcript.pdf", type: "application/pdf", size: 284_300 },
-        { category: "personal_bank_statements", categoryLabel: "Recent personal bank statements", name: "Bank_Statements_Jan-Mar.pdf", type: "application/pdf", size: 1_428_000 },
+        { category: "bank_statements", categoryLabel: "Recent personal bank statements", name: "Bank_Statements_Jan-Mar.pdf", type: "application/pdf", size: 1_428_000 },
         { category: "pay_stubs", categoryLabel: "Recent pay stubs", name: "Pay_Stubs.pdf", type: "application/pdf", size: 194_800 },
       ],
     ),

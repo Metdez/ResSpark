@@ -37,5 +37,7 @@ self-employment, housing, vehicle, retirement, cash-value life-insurance,
 investment, and bankruptcy documents appear only when the matching intake
 answer makes them applicable. A renter's lease is a required, separate upload;
 homeowners and renters may optionally upload a utility statement.
+Python classifies each selected file from its text, not from the slot it was
+placed in. Health insurance is read as insurance.
 
 The Python intake still defines 28 taxpayer-facing questions. This frontend intentionally presents 26 after omitting `tax_only_balance` and `csed_months_remaining`; the contributor guide's reference to 32 questions remains an existing documentation mismatch.

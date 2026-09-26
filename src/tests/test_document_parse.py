@@ -6,6 +6,7 @@ import json
 import os
 from pathlib import Path
 import sys
+import tempfile
 from unittest.mock import patch
 import unittest
 
@@ -15,7 +16,41 @@ ROOT = SRC.parent
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from document_parse import merge_documents, parse_texts, parse_packet
+from document_parse import (
+    _CHAT_URL, _page_text, _parse_classified, classify_upload, merge_documents, parse_texts, parse_packet, parse_uploads,
+)
+
+
+_UNMATCHED = ["Case file"] + ["spacer"] * 11
+_ENV = {"SCIFORIUM_API_KEY": "test-key", "SCIFORIUM_API_ENDPOINT": "test-model"}
+
+
+class _Response(BytesIO):
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        return False
+
+
+def _with_model(content, document_type, texts=None, env=None, payload=None):
+    captured = {}
+
+    def fake_urlopen(request, timeout=60):
+        captured["request"] = request
+        captured["body"] = json.loads(request.data.decode())
+        if isinstance(content, BaseException):
+            raise content
+        if payload is None:
+            message = content if isinstance(content, str) else json.dumps(content)
+            body = {"choices": [{"message": {"content": message}}]}
+        else:
+            body = payload
+        return _Response(json.dumps(body).encode())
+
+    with patch.dict(os.environ, _ENV if env is None else env), patch("document_parse.urllib.request.urlopen", fake_urlopen):
+        parsed = parse_texts(_UNMATCHED if texts is None else texts, document_type=document_type)
+    return parsed, captured
 
 
 class DocumentParseTests(unittest.TestCase):
@@ -252,6 +287,111 @@ class DocumentParseTests(unittest.TestCase):
         self.assertEqual(parsed["actual_housing_utilities"], 1150.0)
         self.assertEqual(parsed["state_of_residence"], "TX")
 
+    def test_model_fallback_rejects_bad_replies_and_missing_credentials(self):
+        parsed, captured = _with_model(
+            'Sure.\n```json\n{"cash_and_bank_balances": 40.5}\n```',
+            "bank_statements",
+        )
+        self.assertEqual(parsed["cash_and_bank_balances"], 40.5)
+        self.assertEqual(captured["request"].full_url, _CHAT_URL)
+        self.assertEqual(captured["request"].get_header("Authorization"), "Bearer test-key")
+
+        for content, payload, cause in (
+            ("[]", None, ValueError),
+            ("nope", None, ValueError),
+            (None, {"choices": []}, IndexError),
+            (None, {}, KeyError),
+            (OSError("down"), None, OSError),
+        ):
+            with self.assertRaises(ValueError) as caught:
+                _with_model(content, "bank_statements", payload=payload)
+            self.assertIsInstance(caught.exception.__cause__, cause)
+
+        with self.assertRaises(ValueError) as caught:
+            _with_model({}, "lease_statement")
+        self.assertIsNone(caught.exception.__cause__)
+
+        def fail_if_called(*args, **kwargs):
+            raise AssertionError("model was called")
+
+        with patch.dict(os.environ, {"SCIFORIUM_API_KEY": "", "SCIFORIUM_API_ENDPOINT": ""}), \
+                patch("document_parse.urllib.request.urlopen", fail_if_called):
+            with self.assertRaises(ValueError) as caught:
+                parse_texts(_UNMATCHED, document_type="lease_statement")
+        self.assertIsInstance(caught.exception.__cause__, RuntimeError)
+
+        with patch("document_parse.urllib.request.urlopen", fail_if_called):
+            with self.assertRaises(ValueError):
+                parse_texts(["   "], document_type="lease_statement")
+
+    def test_model_fallback_coerces_pay_stub_and_vehicle_values(self):
+        stub, _ = _with_model({
+            "pay_frequency": "Semi-Monthly",
+            "gross_wages_taxpayer": 4200,
+            "actual_current_taxes": 1098.3,
+            "is_wage_earner": True,
+        }, "pay_stubs")
+        self.assertEqual(stub["pay_frequency"], "semimonthly")
+        self.assertEqual(stub["gross_wages_taxpayer"], 4200.0)
+        self.assertIs(stub["is_wage_earner"], True)
+
+        with self.assertRaises(ValueError):
+            _with_model({
+                "pay_frequency": "whenever",
+                "gross_wages_taxpayer": 4200,
+                "actual_current_taxes": 100,
+                "is_wage_earner": "yes",
+            }, "pay_stubs")
+
+        loan = {
+            "actual_vehicle_loan_lease": 348,
+            "vehicle_loan_balances": [9200],
+            "vehicle_loan_balance_total": 9200,
+            "vehicle_count": 1.0,
+        }
+        bare, _ = _with_model(loan, "vehicle")
+        self.assertEqual(bare["vehicle_count"], 1)
+        self.assertNotIn("vehicle_market_values", bare)
+
+        valued, _ = _with_model({
+            **loan,
+            "vehicle_market_values": [8000, 1000],
+            "vehicle_market_value_total": 9000,
+        }, "vehicle")
+        self.assertEqual(valued["vehicle_market_values"], [8000.0, 1000.0])
+        self.assertEqual(valued["vehicle_market_value_total"], 9000.0)
+
+        with self.assertRaises(ValueError):
+            _with_model({**loan, "vehicle_market_values": [8000]}, "vehicle")
+        with self.assertRaises(ValueError):
+            _with_model({**loan, "vehicle_loan_balances": ["9200"]}, "vehicle")
+
+    def test_model_fallback_splits_irs_transcripts(self):
+        account = {
+            "filing_status_married": False,
+            "state_of_residence": "TX",
+            "total_tax_owed": 60000,
+            "tax_only_balance": 44500.0,
+            "csed_months_remaining": 79.0,
+        }
+        both, _ = _with_model({**account, "gross_wages_taxpayer": 2600}, "irs_transcripts")
+        self.assertEqual(both["_kind"], "account")
+        self.assertEqual(both["csed_months_remaining"], 79)
+        self.assertEqual(both["gross_wages_taxpayer"], 2600.0)
+        self.assertIs(both["filing_status_married"], False)
+
+        wage, _ = _with_model({"gross_wages_taxpayer": 2600}, "irs_transcripts")
+        self.assertEqual(wage, {"_kind": "wage", "gross_wages_taxpayer": 2600.0})
+
+        with self.assertRaises(ValueError):
+            _with_model({**account, "csed_months_remaining": 79.5}, "irs_transcripts")
+        with self.assertRaises(ValueError):
+            _with_model({"total_tax_owed": 60000}, "irs_transcripts")
+
+    def test_model_fallback_truncates_the_document_text(self):
+        _, captured = _with_model({"cash_and_bank_balances": 1}, "bank_statements", texts=["x" * 13_000])
+        self.assertEqual(len(captured["body"]["messages"][1]["content"]), 12_000)
+
     def test_repeating_income_and_health_documents_add_up(self):
         combined = merge_documents([
             {"_kind": "pay_stub", "_employer": "Acme Co", "pay_frequency": "biweekly",
@@ -330,6 +470,88 @@ class DocumentParseTests(unittest.TestCase):
         merged = merge_documents([bankruptcy])
         self.assertIn("professional review", merged["ai_flags"][0])
         self.assertNotIn("in_open_bankruptcy", merged)
+
+    def test_example_files_classify_before_parsing(self):
+        for path in (ROOT / "examples").rglob("*.pdf"):
+            texts, _rows = _page_text(path.read_bytes())
+            self.assertEqual(classify_upload(texts), _example_code(path.name), path.name)
+
+        health = next((ROOT / "examples").rglob("07_Health_Insurance_Statement.pdf"))
+        row, errors = parse_uploads([("health.pdf", health)])
+        self.assertEqual(errors, [])
+        self.assertEqual(row["actual_health_insurance_premiums"], 178.0)
+
+        part, error = _parse_classified("life.pdf", [
+            "Life Insurance Statement", "Cash Value:", "$5,000.00",
+        ], {})
+        self.assertIsNone(error)
+        self.assertEqual(merge_documents([part])["life_insurance_cash_value"], 5000.0)
+
+    def test_unreadable_file_is_named_and_the_rest_are_parsed(self):
+        lease = ROOT / "examples/01_marcus_delgado_CNC/05_Lease_Statement.pdf"
+
+        def fail_if_called(*args, **kwargs):
+            raise AssertionError("model was called")
+
+        with tempfile.TemporaryDirectory() as folder:
+            blank = Path(folder) / "scan.pdf"
+            blank.write_bytes(b"")
+            with patch("document_parse.urllib.request.urlopen", fail_if_called):
+                row, errors = parse_uploads([
+                    ("scan.pdf", blank),
+                    ("lease.pdf", lease),
+                ])
+
+        self.assertEqual(errors, [{"file": "scan.pdf", "error": "No readable text."}])
+        self.assertEqual(row["actual_housing_utilities"], 1150.0)
+        self.assertEqual(row["state_of_residence"], "TX")
+
+    def test_unrecognized_text_returns_a_structured_classification_error(self):
+        texts = ["Grocery list", "apples", "bread"]
+        part, error = _with_classification(texts, {"error": "This is a grocery list."})
+        self.assertIsNone(part)
+        self.assertEqual(error, {"file": "notes.pdf", "error": "This is a grocery list."})
+
+        part, error = _with_classification(texts, "not json")
+        self.assertEqual(error, {"file": "notes.pdf", "error": "Could not classify this file."})
+
+        def fail_if_called(*args, **kwargs):
+            raise AssertionError("model was called")
+
+        with patch.dict(os.environ, {"SCIFORIUM_API_KEY": "", "SCIFORIUM_API_ENDPOINT": ""}), \
+                patch("document_parse.urllib.request.urlopen", fail_if_called):
+            part, error = _parse_classified("notes.pdf", texts, {})
+        self.assertIsNone(part)
+        self.assertEqual(error, {"file": "notes.pdf", "error": "Could not classify this file."})
+
+
+def _example_code(name: str) -> str:
+    lower = name.lower()
+    if "transcript" in lower:
+        return "irs_transcripts"
+    if "bank" in lower:
+        return "bank_statements"
+    if "pay" in lower:
+        return "pay_stubs"
+    if "lease" in lower:
+        return "lease"
+    if "mortgage" in lower:
+        return "real_property"
+    if "auto" in lower:
+        return "vehicle"
+    if "health" in lower:
+        return "insurance"
+    raise AssertionError(name)
+
+
+def _with_classification(texts, content):
+    def fake_urlopen(request, timeout=60):
+        message = content if isinstance(content, str) else json.dumps(content)
+        payload = {"choices": [{"message": {"content": message}}]}
+        return _Response(json.dumps(payload).encode())
+
+    with patch.dict(os.environ, _ENV), patch("document_parse.urllib.request.urlopen", fake_urlopen):
+        return _parse_classified("notes.pdf", texts, {})
 
 
 if __name__ == "__main__":
