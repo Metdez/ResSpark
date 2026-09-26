@@ -1,242 +1,121 @@
 <!-- generated-by: gsd-doc-writer -->
-# Tax Resolution Screening Logic — V2
+# ResSpark
 
-This small Python project turns structured taxpayer financial data into a reviewable IRS resolution-path recommendation.
+ResSpark helps a tax professional quickly see which IRS payment or settlement option may fit a person's financial situation.
 
-> This is a screening tool, not a filing decision. A CPA, enrolled agent, or tax attorney should verify transcripts, supporting documents, CSEDs, and current IRS guidance before anything is submitted.
+> It is a screening tool, not a final filing decision. A tax professional should always review the documents and confirm the numbers before anything is sent to the IRS.
 
-## System flow
+## The big picture
 
 ```mermaid
 flowchart LR
-    A[Mock PDFs in Examples<br/>and client answers] --> B[Map facts into FinancialData]
-    Q[questions.py<br/>intake field definitions] --> B
-    B --> C[standards.py<br/>2026 IRS allowance lookups]
-    B --> D[determination.py<br/>income, expense, and equity math]
-    C --> D
-    D --> E[Compliance gate]
-    E --> F[Resolution decision tree]
-    F --> G[Determination result]
-    G --> H[CPA / EA review]
+    A[Client answers<br/>and example documents] --> B[Build a financial picture]
+    B --> C[Look at income,<br/>living costs, and property]
+    C --> D[Compare the result<br/>with IRS rules]
+    D --> E[Show the best<br/>next option]
+    E --> F[Tax professional<br/>reviews it]
 ```
 
-`FinancialData` is the single input model. The result is a `Determination` containing the recommended path, explanation, monthly income, allowable expenses, net disposable income, net realizable equity, suggested payment or offer, and any manual-review notes.
+The tool looks at how much money comes in each month, what the person needs to live on, what property or savings they have, how much they owe, and how much time the IRS has left to collect.
 
-## Mock example data
+## Example documents
 
-The [`Examples/`](Examples/) folder contains synthetic PDF document packets for three representative tax-resolution cases:
+The [`Examples/`](Examples/) folder has three made-up client packets. They include things like tax transcripts, bank statements, pay stubs, housing records, and insurance or vehicle documents.
 
 ```text
 Examples/
-├── 01_marcus_delgado_CNC/              # CNC scenario
-├── 02_whitfield_gregory_OIC/             # Offer in Compromise scenario
-└── 03_renata_alves_streamlined_IA/      # Installment-agreement scenario (legacy folder name)
+├── 01_marcus_delgado_CNC/              # A hardship case
+├── 02_whitfield_gregory_OIC/           # A settlement-offer case
+└── 03_renata_alves_streamlined_IA/     # A payment-plan case
 ```
 
-Across the packets, the mock source documents include IRS account and wage transcripts, three months of bank statements, pay stubs, housing documents, auto-loan statements, health-insurance statements, and case-specific support such as a daycare invoice.
+The current program does not read those PDFs on its own. They are examples of the information that would be entered into the program.
 
 ```mermaid
 flowchart LR
-    A[Mock PDF case packet<br/>Examples] --> B[Document extraction / mapping<br/>upstream step]
-    B --> C[FinancialData]
-    D[demo.py<br/>constructs sample data directly] --> C
-    C --> E[determine_resolution_path]
-    E --> F[Determination]
+    A[Example documents] --> B[Enter the important numbers]
+    B --> C[Run the decision logic]
+    C --> D[Get a suggested next step]
 ```
 
-V2 does not currently parse the PDFs automatically; the example packets show the type of evidence that an extraction layer would map into `FinancialData`, while `demo.py` bypasses extraction and builds sample records directly in Python.
-
-## Calculation pipeline
+## How it chooses a next step
 
 ```mermaid
 flowchart TD
-    A[FinancialData] --> B[Add monthly household income]
-    A --> C[Calculate allowable monthly expenses]
-    B --> D[Gross monthly income]
-    C --> E[Allowable expense total]
-    D --> F[Net disposable income<br/>NDI = income - expenses]
-    E --> F
+    A[Start with the client's information] --> B{Are basic tax requirements met?}
+    B -- No --> X[Stop and fix the missing issue]
+    B -- Yes --> C{Is there money left each month?}
 
-    A --> G[Calculate asset equity]
-    G --> H[Net realizable equity<br/>NRE]
+    C -- No --> D{Is there very little usable property or savings?}
+    D -- Yes --> E[Possible hardship status]
+    D -- No --> F[Human review needed]
 
-    F --> I[Resolution decision tree]
-    H --> I
-    A --> I
+    C -- Yes --> G{Can the full balance be paid before the IRS deadline?}
+    G -- Yes --> H[Choose the payment plan that fits]
+    G -- No --> I{Would a settlement offer be lower than the full balance?}
+    I -- Yes --> J[Possible settlement offer]
+    I -- No --> K[Possible partial-payment plan]
 ```
 
-### Allowable expenses
+In plain English, the tool first checks for anything that blocks a solution. Then it asks: is there money left after normal living costs, can the person pay everything before the deadline, and if not, is a smaller settlement realistic?
 
-| Category | V2 treatment |
+## What the tool counts
+
+```mermaid
+flowchart TD
+    A[Monthly income] --> E[Money left each month]
+    B[Normal living costs] --> E
+
+    C[Cash, savings, vehicles,<br/>home equity, and other property] --> F[Usable property value]
+    D[IRS local cost limits<br/>for the person's county] --> B
+
+    E --> G[Choose a possible path]
+    F --> G
+    H[Amount owed and IRS deadline] --> G
+```
+
+The program uses the person's actual county for housing costs and the right local transportation area. It also gives the allowed vehicle reductions before counting vehicle value.
+
+## Possible results
+
+| Result | Simple meaning |
 |---|---|
-| Food, clothing, and miscellaneous | Full national standard by household size |
-| Housing and utilities | Lesser of actual expense or the taxpayer's county standard |
-| Vehicle ownership | Lesser of actual loan/lease cost or the national ownership standard |
-| Vehicle operating | Lesser of actual cost or the applicable metro/Census-region standard |
-| Public transportation | Actual cost when the taxpayer has no vehicle |
-| Out-of-pocket health care | Standard amount per household member, based on age |
-| Health insurance, taxes, dependent care, and other listed expenses | Actual reported amount |
+| Stop and fix the issue | Something basic is missing, such as an unfiled return or an open bankruptcy case. |
+| Hardship status | There is no money left each month and very little usable property. |
+| Payment plan | The person can pay the full balance before the IRS collection deadline. |
+| Settlement offer | The person's available property and future ability to pay appear lower than the full balance. |
+| Partial-payment plan | The person can pay something each month, but not enough to pay the full balance before the deadline. |
+| Human review | The numbers point in more than one direction and a professional needs to decide. |
 
-## County and transportation lookup
+## A few helpful terms
 
-The included standards are effective June 29, 2026. Housing uses the taxpayer's actual county; transportation uses a listed metropolitan area when one applies and otherwise uses the taxpayer's Census region.
+- **IRS collection deadline:** the last date the IRS can generally collect the debt.
+- **Settlement offer:** an Offer in Compromise, where the IRS may accept less than the full balance.
+- **Partial-payment plan:** a monthly plan used when the full balance will not be paid before the collection deadline.
 
-```mermaid
-flowchart TD
-    A[State + county + household size] --> B[Normalize state and county names]
-    B --> C[Search 3,223-county housing table]
-    C --> D[Select family-size housing limit]
-
-    B --> E{County belongs to a listed MSA?}
-    E -- Yes --> F[Use metro operating rate]
-    E -- No --> G[Find state Census region]
-    G --> H[Use regional operating rate]
-
-    D --> I[Allowable housing = min actual, county limit]
-    F --> J[Allowable operating = min actual, area limit]
-    H --> J
-```
-
-There is no national-median housing fallback and no hard-coded South-region fallback. An unknown county or state raises an error so the missing location can be corrected.
-
-## Asset equity calculation
-
-```mermaid
-flowchart LR
-    A[Cash and bank balances<br/>minus $1,000] --> T[Net realizable equity]
-    B[Investments<br/>net value] --> T
-    C[Retirement<br/>80% value minus loans] --> T
-    D[Life insurance<br/>cash value minus loans] --> T
-    E[Real property<br/>80% value minus loans] --> T
-    F[Vehicles<br/>80% value minus loans and allowed deductions] --> T
-    G[Other valuable assets<br/>80% value minus loans and $11,980] --> T
-```
-
-Vehicle equity is calculated vehicle by vehicle when individual values and loans are supplied:
-
-- The first vehicle receives the $3,450 deduction.
-- The second vehicle receives the $3,450 deduction only for a joint offer.
-- Additional vehicles receive no vehicle deduction.
-- The legacy aggregate vehicle totals remain supported for existing callers.
-
-## Compliance gate
-
-The decision tree stops for manual correction or review when any of these conditions apply:
-
-- Required tax returns are not filed.
-- The taxpayer is in an open bankruptcy proceeding.
-- Unexplained deposits average at least $200 per month.
-
-## Resolution decision tree
-
-```mermaid
-flowchart TD
-    A[Calculated income, expenses, equity, liability, and CSED] --> B{Compliance gate passes?}
-    B -- No --> X[Blocked — compliance gate failed]
-    B -- Yes --> C{NDI is zero?}
-
-    C -- Yes --> D{NRE is $500 or less?}
-    D -- Yes --> CNC[Currently Not Collectible]
-    D -- No --> MR[Manual review<br/>equity-funded OIC vs. hardship CNC]
-
-    C -- No --> E{Guaranteed IA tests pass?}
-    E -- Yes --> GIA[Guaranteed Installment Agreement]
-    E -- No --> F{Full balance is $50,000 or less<br/>and payable by CSED?}
-    F -- Yes --> SPP[Simple Payment Plan]
-    F -- No --> G{NDI can full-pay by CSED?}
-    G -- Yes --> NSIA[Non-Simple Installment Agreement]
-    G -- No --> H{RCP is less than total balance?}
-    H -- Yes --> OIC[Offer in Compromise]
-    H -- No --> PPIA[Partial Payment Installment Agreement]
-```
-
-### Installment agreement rules
-
-```mermaid
-flowchart LR
-    A[Total balance including penalties and interest] --> B[Divide by remaining CSED months]
-    B --> C[Round payment up to the next cent]
-    C --> D{NDI covers required payment?}
-    D -- Yes, tax-only balance ≤ $10,000<br/>and five-year tests pass --> E[Guaranteed IA<br/>earlier of 36 months or CSED]
-    D -- Yes, total balance ≤ $50,000 --> F[Simple Payment Plan]
-    D -- Yes, balance above simple-plan limit --> G[Non-Simple IA]
-    D -- No --> H[Evaluate OIC, then PPIA]
-```
-
-A Guaranteed Installment Agreement additionally requires an income-tax-only liability, a tax balance of $10,000 or less excluding penalties and interest, compliant filing/payment history for the preceding five tax years, and no income-tax installment agreement during that period.
-
-### Offer in Compromise math
-
-```mermaid
-flowchart TD
-    A[Proposed OIC payment term] --> B{Paid in 5 months or less?}
-    B -- Yes --> C[Base future-income factor: 12 months]
-    B -- No, paid in 6–24 months --> D[Base future-income factor: 24 months]
-    C --> E[Use the lesser of factor or remaining CSED months]
-    D --> E
-    E --> F[RCP = NRE + NDI × future-income months]
-    F --> G{RCP below total balance?}
-    G -- Yes --> H[OIC candidate]
-    G -- No --> I[PPIA candidate because full-pay-by-CSED already failed]
-```
-
-## Project files
+## Project layout
 
 ```text
-Tax Proplem/
-├── Examples/                      # Mock PDF case packets used as sample source evidence
-└── THIS ONE V2/
-    ├── README.md                  # This overview
-    ├── financial_data.py          # Shared taxpayer input model
-    ├── questions.py               # Client-facing intake field definitions
-    ├── standards.py               # 2026 national, county, and transportation lookups
-    ├── determination.py           # Calculations, compliance gate, and decision tree
-    ├── demo.py                    # Three runnable in-code sample cases
-    ├── data/
-    │   ├── housing_utilities_by_county.csv
-    │   ├── msa_counties.csv
-    │   └── state_regions.csv
-    └── irs_mvp_v2.zip             # Packaged source archive
+ResSpark/
+├── Examples/       # Made-up document packets
+├── Context/        # IRS forms and standards used for reference
+├── THIS ONE/       # Original version of the simple logic
+└── THIS ONE V2/    # Updated version with current county, payment, and offer rules
 ```
 
-## Run the demonstration
+The updated logic lives in `THIS ONE V2`:
 
-The project uses only Python's standard library and the local CSV data files.
+- `financial_data.py` holds the client information.
+- `questions.py` lists the simple intake questions.
+- `standards.py` holds the county and transportation cost lookups.
+- `determination.py` does the math and picks a suggested path.
+- `demo.py` runs sample cases.
+
+## Run the demo
 
 ```bash
 cd "THIS ONE V2"
 python demo.py
 ```
 
-The demo prints each case's income, allowable-expense breakdown, disposable income, realizable equity, recommended resolution path, reason, and suggested payment or offer.
-
-## Primary entry points
-
-```python
-from financial_data import FinancialData
-from determination import determine_resolution_path
-
-case = FinancialData(
-    state_of_residence="TX",
-    county_of_residence="Harris County",
-    household_size=1,
-    gross_wages_taxpayer=4_000,
-    total_tax_owed=30_000,
-    csed_months_remaining=72,
-)
-
-result = determine_resolution_path(case)
-print(result.path)
-print(result.suggested_offer_or_payment)
-```
-
-For local testing or review, the individual calculation functions in `determination.py` can also be called directly before running the complete decision tree.
-
-## IRS references represented in the logic
-
-- Form 433-A (OIC), Rev. 4-2026
-- IRS Collection Financial Standards, effective June 29, 2026
-- IRM 5.14.5.2, Simple Payment Plans
-- IRM 5.14.5.3, Guaranteed Installment Agreements
-- IRM 5.14.1.4, installment-agreement analysis
-- IRM 5.8.5.25, calculation of OIC future income
+The demo prints the monthly income, allowed costs, usable property value, and suggested next step for three sample cases.
