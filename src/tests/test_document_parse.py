@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import date
 from io import BytesIO
 import json
 import os
@@ -250,6 +251,34 @@ class DocumentParseTests(unittest.TestCase):
 
         self.assertEqual(parsed["actual_housing_utilities"], 1150.0)
         self.assertEqual(parsed["state_of_residence"], "TX")
+
+    def test_repeating_income_and_health_documents_add_up(self):
+        combined = merge_documents([
+            {"_kind": "pay_stub", "_employer": "Acme Co", "pay_frequency": "biweekly",
+             "gross_wages_taxpayer": 2000.0, "actual_current_taxes": 400.0},
+            {"_kind": "pay_stub", "_employer": "Other Co", "pay_frequency": "biweekly",
+             "gross_wages_taxpayer": 1000.0, "actual_current_taxes": 100.0},
+            {"_kind": "wage", "_employer": "Acme Co", "gross_wages_taxpayer": 5000.0},
+            {"_kind": "health", "actual_health_insurance_premiums": 100.0},
+            {"_kind": "health", "actual_health_insurance_premiums": 50.0},
+            {"_kind": "bank", "_account": "1", "_period_end": date(2026, 1, 31),
+             "_deposits": [("Payroll - Other Co", 100.0)], "ending_balance": 100.0},
+        ])
+
+        self.assertEqual(combined["gross_wages_taxpayer"], 3000.0)
+        self.assertEqual(combined["actual_current_taxes"], 500.0)
+        self.assertEqual(combined["pay_frequency"], "biweekly")
+        self.assertEqual(combined["actual_health_insurance_premiums"], 150.0)
+        self.assertFalse(combined["has_unexplained_deposits"])
+
+        mismatched = merge_documents([
+            {"_kind": "pay_stub", "_employer": "Acme Co", "pay_frequency": "weekly",
+             "gross_wages_taxpayer": 100.0, "actual_current_taxes": 10.0},
+            {"_kind": "pay_stub", "_employer": "Other Co", "pay_frequency": "monthly",
+             "gross_wages_taxpayer": 200.0, "actual_current_taxes": 20.0},
+        ])
+        self.assertEqual(mismatched["gross_wages_taxpayer"], 300.0)
+        self.assertNotIn("pay_frequency", mismatched)
 
 
 if __name__ == "__main__":

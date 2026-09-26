@@ -3,7 +3,9 @@
 ponytail: reads ReportLab text-show operators. Bank columns use the x y on `Tm`;
 every other field is read in draw order. A scanned PDF or another generator
 needs poppler (`pdftotext -layout`) instead.
-One earnings statement maps to the taxpayer. Auto statements sum.
+Pay stubs and unmatched W-2s sum into taxpayer wages. Auto statements sum.
+ponytail: a second earner is included in gross_wages_taxpayer. gross_wages_spouse
+stays unset; a spouse marker on the upload would split that line.
 Housing is the labeled rent or PITI; bank utility lines are not added.
 Gross pay is Regular Gross Pay, or Gross Pay when that is the line on the stub.
 ponytail: a failed parse can ask Sciforium for the columns that document type
@@ -89,13 +91,9 @@ def parse_packet(directory: Path | str) -> dict:
 
 
 def merge_documents(parts: list[dict]) -> dict:
-    """Combine parsed documents. A second auto statement adds to the first."""
+    """Combine parsed documents. Repeating stubs, W-2s, health, and auto files add up."""
     row: dict = {}
-    banks = []
-    autos = []
-    employer = None
-    wage_gross = None
-    stub = None
+    banks, autos, stubs, wages, healths = [], [], [], [], []
     for part in parts:
         kind = part.pop("_kind")
         if kind == "bank":
@@ -103,22 +101,55 @@ def merge_documents(parts: list[dict]) -> dict:
         elif kind == "auto":
             autos.append(part)
         elif kind == "pay_stub":
-            employer = part.pop("_employer")
-            stub = part
+            stubs.append(part)
         elif kind == "wage":
-            employer = employer or part.pop("_employer")
-            wage_gross = part.get("gross_wages_taxpayer")
+            wages.append(part)
+        elif kind == "health":
+            healths.append(part)
         else:
             row.update(part)
-    if wage_gross is not None:
-        row["gross_wages_taxpayer"] = wage_gross
-    if stub:
-        row.update(stub)
+    employers = _apply_income(row, stubs, wages)
+    if healths:
+        row["actual_health_insurance_premiums"] = float(sum(
+            (Decimal(str(item["actual_health_insurance_premiums"])) for item in healths), Decimal(0)
+        ))
     if banks:
-        row.update(_combine_banks(banks, employer))
+        row.update(_combine_banks(banks, employers))
     if autos:
         row.update(_combine_autos(autos))
     return row
+
+
+def _apply_income(row: dict, stubs: list[dict], wages: list[dict]) -> list[str]:
+    employers = [stub["_employer"] for stub in stubs if stub.get("_employer")]
+    if not stubs and not wages:
+        return employers
+    gross = sum((Decimal(str(stub["gross_wages_taxpayer"])) for stub in stubs), Decimal(0))
+    taxes = sum((Decimal(str(stub.get("actual_current_taxes") or 0)) for stub in stubs), Decimal(0))
+    for wage in wages:
+        employer = wage.get("_employer")
+        if _covered_by_stub(employer, employers):
+            continue
+        gross += Decimal(str(wage["gross_wages_taxpayer"]))
+        if employer:
+            employers.append(employer)
+    row["gross_wages_taxpayer"] = float(gross)
+    if stubs:
+        row["actual_current_taxes"] = float(taxes)
+        frequencies = {stub["pay_frequency"] for stub in stubs if stub.get("pay_frequency")}
+        if len(frequencies) == 1:
+            row["pay_frequency"] = next(iter(frequencies))
+        if any(stub.get("is_wage_earner") is True for stub in stubs):
+            row["is_wage_earner"] = True
+    return employers
+
+
+def _covered_by_stub(employer: str | None, employers: list[str]) -> bool:
+    if not employers:
+        return False
+    if not employer:
+        return True
+    return any(_same_payer(employer, known) or _same_payer(known, employer) for known in employers)
 
 
 def parse_pdf(path: Path | str, document_type: str | None = None) -> dict:
@@ -484,7 +515,7 @@ def _statement_balance(item: dict) -> Decimal:
     return Decimal(str(item["cash_and_bank_balances"]))
 
 
-def _combine_banks(statements: list[dict], employer: str | None) -> dict:
+def _combine_banks(statements: list[dict], employers: list[str]) -> dict:
     latest: dict[str, dict] = {}
     loose = []
     for statement in statements:
@@ -502,12 +533,12 @@ def _combine_banks(statements: list[dict], employer: str | None) -> dict:
     # No employer name means we cannot tell payroll from a stranger. Leave the
     # flag unknown instead of storing a false zero.
     months = {statement["_period_end"].strftime("%Y-%m") for statement in statements if "_period_end" in statement}
-    if not employer or not months:
+    if not employers or not months:
         return row
     unexplained = Decimal(0)
     for statement in statements:
         for description, amount in statement.get("_deposits") or []:
-            if not _same_payer(description, employer):
+            if not any(_same_payer(description, employer) for employer in employers):
                 unexplained += Decimal(str(amount))
     monthly = (unexplained / Decimal(len(months))).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
     row["has_unexplained_deposits"] = unexplained > 0
