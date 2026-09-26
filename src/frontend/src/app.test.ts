@@ -150,7 +150,6 @@ describe("intake interface", () => {
 
     await vi.waitFor(() => expect(root.textContent).toContain("Uploaded documents"));
     expect(root.textContent).toContain("compliance step first");
-    root.querySelector<HTMLButtonElement>('[data-result-view="documents"]')!.click();
     expect(root.textContent).toContain("irs_transcripts.pdf");
   });
 
