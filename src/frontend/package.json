@@ -3,14 +3,19 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
+    "generate:counties": "node scripts/generate-counties.mjs",
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "test": "vitest run"
   },
   "devDependencies": {
+    "jsdom": "^26.0.0",
     "typescript": "^5.7.3",
     "vite": "^6.1.0",
-    "vitest": "^3.0.5"
+    "vitest": "^5.0.2"
   }
 }
