@@ -9,7 +9,7 @@ provides facts that documents cannot reliably establish.
 QUESTIONS = [
     # --- Household (Form 433-A Section 1) ---
     {"id": "filing_status_married",        "prompt": "Are you married?",                                   "type": bool},
-    {"id": "filing_joint_offer",           "prompt": "If married, are you filing jointly with your spouse?", "type": bool},
+    {"id": "filing_joint_offer",           "prompt": "Are you filing jointly with your spouse?", "type": bool},
     {"id": "state_of_residence",           "prompt": "What state do you live in?",                          "type": str},
     {"id": "county_of_residence",          "prompt": "What county do you live in?",                         "type": str},
     {"id": "household_size",               "prompt": "How many people live in your household (incl. you)?", "type": int},

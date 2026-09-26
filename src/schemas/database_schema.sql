@@ -30,7 +30,7 @@ CREATE TABLE question_definitions (
 
 INSERT INTO question_definitions (question_id, prompt, value_type, canonical_column) VALUES
 ('filing_status_married', 'Are you married?', 'bool', 'filing_status_married'),
-('filing_joint_offer', 'If married, are you filing jointly with your spouse?', 'bool', 'filing_joint_offer'),
+('filing_joint_offer', 'Are you filing jointly with your spouse?', 'bool', 'filing_joint_offer'),
 ('state_of_residence', 'What state do you live in?', 'str', 'state_of_residence'),
 ('county_of_residence', 'What county do you live in?', 'str', 'county_of_residence'),
 ('household_size', 'How many people live in your household (incl. you)?', 'int', 'household_size'),

@@ -35,7 +35,7 @@ const numericOptions = (start: number, end: number) =>
 
 export const questions: QuestionDefinition[] = [
   { id: "filing_status_married", prompt: "Are you married?", valueType: "boolean", section: "Household" },
-  { id: "filing_joint_offer", prompt: "If married, are you filing jointly with your spouse?", valueType: "boolean", section: "Household", isApplicable: isMarried },
+  { id: "filing_joint_offer", prompt: "Are you filing jointly with your spouse?", valueType: "boolean", section: "Household", isApplicable: isMarried },
   { id: "state_of_residence", prompt: "What state do you live in?", valueType: "text", section: "Household", options: stateOptions },
   { id: "county_of_residence", prompt: "What county do you live in?", valueType: "text", section: "Household", optionsForAnswers: countyOptions },
   { id: "household_size", prompt: "How many people live in your household (incl. you)?", valueType: "integer", section: "Household", minimum: 1, options: numericOptions(1, 50) },
