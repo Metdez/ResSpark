@@ -1,7 +1,11 @@
 from __future__ import annotations
 
+from io import BytesIO
+import json
+import os
 from pathlib import Path
 import sys
+from unittest.mock import patch
 import unittest
 
 
@@ -159,7 +163,7 @@ class DocumentParseTests(unittest.TestCase):
         self.assertEqual(hinted_auto["vehicle_loan_balances"], [500.0])
 
         with self.assertRaises(ValueError):
-            parse_texts(hidden, document_type="irs_transcripts")
+            parse_texts(hidden)
 
         first = parse_texts([
             "Auto Loan Statement",
@@ -179,6 +183,73 @@ class DocumentParseTests(unittest.TestCase):
         self.assertEqual(combined["vehicle_market_values"], [8000.0])
         self.assertEqual(combined["vehicle_market_value_total"], 8000.0)
         self.assertEqual(combined["vehicle_count"], 2)
+
+    def test_failed_parse_asks_only_for_that_documents_columns(self):
+        texts = ["Case file"] + ["spacer"] * 11
+        captured = {}
+
+        class Response(BytesIO):
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *args):
+                return False
+
+        replies = [
+            {
+                "actual_housing_utilities": 900,
+                "state_of_residence": "TX",
+                "rents_home": True,
+                "owns_home": False,
+                "household_size": 4,
+                "bogus": 1,
+            },
+            {"actual_housing_utilities": 900, "owns_home": False},
+        ]
+
+        def fake_urlopen(request, timeout=60):
+            captured["body"] = json.loads(request.data.decode())
+            content = json.dumps(replies.pop(0))
+            payload = {"choices": [{"message": {"content": content}}]}
+            return Response(json.dumps(payload).encode())
+
+        env = {"SCIFORIUM_API_KEY": "test-key", "SCIFORIUM_API_ENDPOINT": "test-model"}
+        with patch.dict(os.environ, env), patch("document_parse.urllib.request.urlopen", fake_urlopen):
+            parsed = parse_texts(texts, document_type="lease_statement")
+            with self.assertRaises(ValueError):
+                parse_texts(texts, document_type="lease_statement")
+
+        prompt = captured["body"]["messages"][0]["content"]
+        self.assertEqual(captured["body"]["model"], "test-model")
+        self.assertIn("actual_housing_utilities", prompt)
+        self.assertNotIn("household_size", prompt)
+        self.assertEqual(parsed["_kind"], "lease")
+        self.assertEqual(parsed["actual_housing_utilities"], 900.0)
+        self.assertEqual(parsed["state_of_residence"], "TX")
+        self.assertIs(parsed["rents_home"], True)
+        self.assertIs(parsed["owns_home"], False)
+        self.assertNotIn("household_size", parsed)
+        self.assertNotIn("bogus", parsed)
+
+        banks = merge_documents([
+            {"_kind": "bank", "cash_and_bank_balances": 100.0},
+            {"_kind": "bank", "cash_and_bank_balances": 50.5},
+        ])
+        self.assertEqual(banks["cash_and_bank_balances"], 150.5)
+
+    def test_successful_parse_does_not_call_the_model(self):
+        def fail_if_called(*args, **kwargs):
+            raise AssertionError("model was called")
+
+        with patch("document_parse.urllib.request.urlopen", fail_if_called):
+            parsed = parse_texts([
+                "Lease Statement",
+                "Rent:", "$1,150.00",
+                "Property Address:", "4417 Bellaire Blvd, Houston, TX 77036",
+            ])
+
+        self.assertEqual(parsed["actual_housing_utilities"], 1150.0)
+        self.assertEqual(parsed["state_of_residence"], "TX")
 
 
 if __name__ == "__main__":
