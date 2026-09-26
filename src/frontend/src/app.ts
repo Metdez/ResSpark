@@ -1,3 +1,7 @@
+import "@material/web/select/outlined-select.js";
+import "@material/web/select/select-option.js";
+import type { MdOutlinedSelect } from "@material/web/select/outlined-select.js";
+
 import { formatCurrencyAnswer, getApplicableQuestions, parseAnswer, validateAnswer } from "./flow";
 import { questions, type Answers, type QuestionDefinition, type QuestionOption } from "./questions";
 import { renderDocumentUpload } from "./document-upload/screen";
@@ -98,11 +102,10 @@ export function createApp(root: HTMLElement, processCase: CaseProcessor = proces
     }
 
     if (options) {
-      return `<label class="input-label" for="answer">Select an answer</label>
-        <select id="answer" name="answer" required>
-          <option value="">Choose one</option>
-          ${options.map((option) => `<option value="${option.value}">${option.label}</option>`).join("")}
-        </select>`;
+      return `<md-outlined-select id="answer" name="answer" label="Select an answer" required>
+          <md-select-option value=""${currentAnswer === "" ? " selected" : ""}><div slot="headline">Choose one</div></md-select-option>
+          ${options.map((option) => `<md-select-option value="${option.value}"${String(currentAnswer) === option.value ? " selected" : ""}><div slot="headline">${option.label}</div></md-select-option>`).join("")}
+        </md-outlined-select>`;
     }
 
     const numeric = question.valueType !== "text";
@@ -155,7 +158,7 @@ export function createApp(root: HTMLElement, processCase: CaseProcessor = proces
     });
 
     const error = root.querySelector<HTMLElement>(".error-message")!;
-    const answerField = root.querySelector<HTMLInputElement | HTMLSelectElement>("#answer");
+    const answerField = root.querySelector<HTMLInputElement | MdOutlinedSelect>("#answer");
     if (answerField && typeof draft === "string") {
       answerField.value = question.valueType === "currency" && draft ? formatCurrencyAnswer(draft) : draft;
     }

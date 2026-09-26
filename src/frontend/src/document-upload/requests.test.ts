@@ -12,7 +12,11 @@ describe("document request selection", () => {
     ]);
     expect(requests.find((request) => request.code === "bank_statements")).toMatchObject({
       required: true,
-      maxFiles: 3,
+      slots: [
+        { id: "primary", label: "Choose file", required: true },
+        { id: "optional-1", label: "Optional file 1", required: false },
+        { id: "optional-2", label: "Optional file 2", required: false },
+      ],
     });
   });
 
@@ -59,6 +63,19 @@ describe("document request selection", () => {
     ["no open bankruptcy", { in_open_bankruptcy: false }, "bankruptcy"],
   ])("does not request documents for %s", (_label, answers, code) => {
     expect(getDocumentRequests(answers).map((request) => request.code)).not.toContain(code);
+  });
+
+  it.each([1, 2, 6])("creates required and optional upload slots for %i vehicle(s)", (vehicleCount) => {
+    const vehicle = getDocumentRequests({ vehicle_count: vehicleCount })
+      .find((request) => request.code === "vehicle")!;
+
+    expect(vehicle.slots).toHaveLength(vehicleCount * 2);
+    expect(vehicle.slots?.filter((slot) => slot.required)).toHaveLength(vehicleCount);
+    expect(vehicle.slots?.at(-1)).toMatchObject({
+      label: "Optional file",
+      required: false,
+      groupLabel: `Vehicle ${vehicleCount}`,
+    });
   });
 
   it.each([
