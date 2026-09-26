@@ -17,7 +17,8 @@ Use `npm test` for the focused flow/UI tests and `npm run build` for the product
 The browser keeps draft answers only for the open page session. On completion it
 posts a multipart request to `POST /api/cases`: `answers` and
 `document_metadata` are JSON strings, and each selected file uses the repeated
-`documents` field. The API must return a `ResolutionCaseResult` JSON object.
+`documents` field. `npm run dev` proxies `/api` to `python src/case_api.py` on
+port 8000, which returns a `ResolutionCaseResult` JSON object.
 
 ## Resolution-results module
 

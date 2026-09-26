@@ -46,6 +46,18 @@ psql "$DATABASE_URL" -f src/schemas/lookup_standards.seed.sql
 python src/demo.py
 ```
 
+The intake screen posts to `POST /api/cases`. Start that process, then the frontend. The dev server proxies `/api` to port 8000. A finished screening needs `DATABASE_URL`, `psycopg`, and the standards seed above. Without them the page still accepts the submit and names whatever facts are missing. Image files can be selected; reading a document still needs text in a PDF.
+
+```bash
+python src/case_api.py
+```
+
+```bash
+cd src/frontend
+npm install
+npm run dev
+```
+
 Frontend tests:
 
 ```bash
