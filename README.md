@@ -42,22 +42,32 @@ flowchart LR
 
 ```mermaid
 flowchart TD
-    A[Start with the client's information] --> B{Are basic tax requirements met?}
-    B -- No --> X[Stop and fix the missing issue]
-    B -- Yes --> C{Is there money left each month?}
-
-    C -- No --> D{Is there very little usable property or savings?}
-    D -- Yes --> E[Possible hardship status]
-    D -- No --> F[Human review needed]
-
-    C -- Yes --> G{Can the full balance be paid before the IRS deadline?}
-    G -- Yes --> H[Choose the payment plan that fits]
-    G -- No --> I{Would a settlement offer be lower than the full balance?}
-    I -- Yes --> J[Possible settlement offer]
-    I -- No --> K[Possible partial-payment plan]
+    A[Start] --> B{Basic requirements met?}
+    B -- No --> C[Stop and fix the issue]
+    B -- Yes --> D{Money left each month?}
+    D -- No --> E[Look at savings and property]
+    D -- Yes --> F[Look at payment options]
 ```
 
-In plain English, the tool first checks for anything that blocks a solution. Then it asks: is there money left after normal living costs, can the person pay everything before the deadline, and if not, is a smaller settlement realistic?
+If there is no money left each month, the tool uses this smaller check:
+
+```mermaid
+flowchart TD
+    A[No money left each month] --> B{Very little savings or property?}
+    B -- Yes --> C[Possible hardship status]
+    B -- No --> D[Human review needed]
+```
+
+If there is money left each month, it uses this payment check:
+
+```mermaid
+flowchart TD
+    A[Money left each month] --> B{Can the full balance be paid by the deadline?}
+    B -- Yes --> C[Choose a payment plan]
+    B -- No --> D{Would a smaller settlement make sense?}
+    D -- Yes --> E[Possible settlement offer]
+    D -- No --> F[Possible partial-payment plan]
+```
 
 ## What the tool counts
 
