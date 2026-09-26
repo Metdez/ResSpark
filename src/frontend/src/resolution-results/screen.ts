@@ -43,53 +43,60 @@ export function renderResolutionResults(root: HTMLElement, options: ResolutionRe
     const copy = statusCopy(activeOutcome);
     root.innerHTML = `
       <main class="results-shell">
-        <header class="results-header">
-          <a class="wordmark" href="#" aria-label="ResSpark home">ResSpark</a>
-          <div class="results-header-actions">
-            ${options.result.isSandbox ? '<span class="sandbox-badge">Sandbox preview</span>' : ""}
-            <button class="text-button" type="button" data-start-over>Start over</button>
-          </div>
-        </header>
+        <div class="results-frame">
+          <header class="results-header">
+            <a class="wordmark" href="#" aria-label="ResSpark home">ResSpark</a>
+            <div class="results-header-actions">
+              ${options.result.isSandbox ? '<span class="sandbox-badge">Sandbox preview</span>' : ""}
+              <button class="text-button" type="button" data-start-over>Start over</button>
+            </div>
+          </header>
 
-        <div class="results-layout">
-          <aside class="results-rail" aria-label="Review sections">
-            <p class="rail-progress">Complete</p>
-            <ol>
-              <li class="is-complete"><span aria-hidden="true">✓</span> Questions</li>
-              <li class="is-complete"><span aria-hidden="true">✓</span> Documents</li>
-              <li class="is-current"><span aria-hidden="true">3</span> Screening result</li>
+          <section class="results-progress" aria-label="Intake progress">
+            <div class="results-progress-label"><strong>Screening result</strong><span>Complete</span></div>
+            <div class="results-progress-track" aria-hidden="true"><span></span></div>
+            <ol aria-label="Completed steps">
+              <li><span aria-hidden="true">✓</span>Questions</li>
+              <li><span aria-hidden="true">✓</span>Documents</li>
+              <li class="is-current"><span aria-hidden="true">✓</span>Result</li>
             </ol>
-          </aside>
+          </section>
 
           <div class="results-content">
             ${options.result.isSandbox ? `
               <section class="scenario-control" aria-labelledby="scenario-label">
-                <div><strong id="scenario-label">Preview every determination state</strong><small>This switcher exists only in the sandbox.</small></div>
+                <div><strong id="scenario-label">Preview a screening outcome</strong><small>Sandbox-only control</small></div>
                 <select id="outcome-preview" aria-labelledby="scenario-label">
                   ${options.result.availableOutcomes.map((item) => `<option value="${item.id}"${item.id === activeOutcome.id ? " selected" : ""}>${escapeHtml(item.path)}</option>`).join("")}
                 </select>
               </section>` : ""}
 
             <section class="outcome-card outcome-${activeOutcome.status}" aria-labelledby="results-title">
-              <div class="outcome-icon" aria-hidden="true">${activeOutcome.status === "potential_match" ? "✓" : activeOutcome.status === "blocked" ? "!" : "↗"}</div>
-              <div>
-                <p class="eyebrow">${copy.eyebrow}</p>
+              <div class="outcome-heading">
+                <div class="outcome-icon" aria-hidden="true">${activeOutcome.status === "potential_match" ? "✓" : activeOutcome.status === "blocked" ? "!" : "↗"}</div>
+                <div class="outcome-labels"><p class="eyebrow">${copy.eyebrow}</p><span class="selected-resolution-badge">Selected resolution</span></div>
+              </div>
+              <div class="outcome-copy">
                 <h1 id="results-title" tabindex="-1">${escapeHtml(copy.title)}</h1>
                 <p class="outcome-path">${escapeHtml(activeOutcome.path)}</p>
                 <p class="outcome-reason">${escapeHtml(activeOutcome.reason)}</p>
+                <details class="requirements-panel">
+                  <summary><span>View requirements</span><span aria-hidden="true">+</span></summary>
+                  <div><p>Based on the current deterministic screening logic:</p><ul>${activeOutcome.requirements.map((requirement) => `<li><span aria-hidden="true">✓</span>${escapeHtml(requirement)}</li>`).join("")}</ul></div>
+                </details>
               </div>
             </section>
 
             <section class="summary-section" aria-labelledby="calculation-title">
               <div class="section-heading"><div><p class="section-kicker">Screening calculation</p><h2 id="calculation-title">How the numbers line up</h2></div><span>Monthly unless noted</span></div>
               <dl class="metric-grid">
-                <div><dt>Household income</dt><dd>${money.format(activeOutcome.monthlyIncome)}</dd></div>
-                <div><dt>Allowable expenses</dt><dd>${money.format(activeOutcome.monthlyExpenses)}</dd></div>
-                <div><dt>Disposable income</dt><dd>${money.format(activeOutcome.netDisposableIncome)}</dd></div>
-                <div><dt>Realizable equity</dt><dd>${money.format(activeOutcome.netRealizableEquity)}</dd></div>
-                <div class="metric-primary"><dt>${activeOutcome.id.includes("manual") ? "Amount for review" : "Suggested payment"}</dt><dd>${money.format(activeOutcome.suggestedOfferOrPayment)}</dd></div>
+                <div><dt>Household income</dt><dd>${money.format(activeOutcome.monthlyIncome)}</dd><small>Monthly</small></div>
+                <div><dt>Allowable expenses</dt><dd>${money.format(activeOutcome.monthlyExpenses)}</dd><small>Monthly</small></div>
+                <div><dt>Disposable income</dt><dd>${money.format(activeOutcome.netDisposableIncome)}</dd><small>Monthly</small></div>
+                <div><dt>Realizable equity</dt><dd>${money.format(activeOutcome.netRealizableEquity)}</dd><small>Total</small></div>
+                <div class="metric-primary"><dt>${activeOutcome.id.includes("manual") ? "Amount for review" : "Suggested payment"}</dt><dd>${money.format(activeOutcome.suggestedOfferOrPayment)}</dd><small>${activeOutcome.id.includes("manual") ? "Estimate" : "Monthly"}</small></div>
               </dl>
-              <div class="next-step"><strong>Recommended next step</strong><p>${escapeHtml(activeOutcome.nextStep)}</p></div>
+              <div class="next-step"><span class="next-step-icon" aria-hidden="true">→</span><div><strong>Recommended next step</strong><p>${escapeHtml(activeOutcome.nextStep)}</p></div></div>
               ${activeOutcome.reviewNotes.length ? `<ul class="review-notes">${activeOutcome.reviewNotes.map((note) => `<li>${escapeHtml(note)}</li>`).join("")}</ul>` : ""}
               <p class="professional-notice">This is a suggested screening path, not an IRS decision or tax/legal advice. A CPA or EA must verify the data and decide what to file.</p>
             </section>

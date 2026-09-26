@@ -77,6 +77,13 @@ describe("intake flow", () => {
     expect(applicable.map((question) => question.id)).toContain("rents_home");
   });
 
+  it("asks pay frequency only for wage earners", () => {
+    expect(getApplicableQuestions(questions, { is_wage_earner: true })
+      .map((question) => question.id)).toContain("pay_frequency");
+    expect(getApplicableQuestions(questions, { is_wage_earner: false })
+      .map((question) => question.id)).not.toContain("pay_frequency");
+  });
+
   it("requires a whole positive household size and accepts an explicit zero vehicle count", () => {
     const household = questions.find((question) => question.id === "household_size");
     const vehicles = questions.find((question) => question.id === "vehicle_count");

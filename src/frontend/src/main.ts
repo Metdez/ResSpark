@@ -1,5 +1,7 @@
 import "./styles.css";
 import { createApp } from "./app";
+import { renderDocumentUpload } from "./document-upload/screen";
+import { getExampleScreen } from "./example-route";
 import { createSandboxCase } from "./resolution-results/model";
 import { renderResolutionResults } from "./resolution-results/screen";
 
@@ -9,9 +11,25 @@ if (!root) {
   throw new Error("The ResSpark app root is missing.");
 }
 
-const showExample = new URLSearchParams(window.location.search).get("example") === "results";
+const example = getExampleScreen(window.location.search);
+const startApp = () => {
+  window.history.replaceState({}, "", window.location.pathname);
+  createApp(root);
+};
 
-if (showExample) {
+if (example === "documents") {
+  renderDocumentUpload(root, {
+    answers: {
+      is_wage_earner: true,
+      owns_home: false,
+      rents_home: true,
+      vehicle_count: 1,
+      has_real_property: false,
+    },
+    onBack: startApp,
+    onComplete: () => undefined,
+  });
+} else if (example === "results") {
   renderResolutionResults(root, {
     result: createSandboxCase(
       {
@@ -36,10 +54,7 @@ if (showExample) {
         { category: "pay_stubs", categoryLabel: "Recent pay stubs", name: "Pay_Stubs.pdf", type: "application/pdf", size: 194_800 },
       ],
     ),
-    onStartOver: () => {
-      window.history.replaceState({}, "", window.location.pathname);
-      createApp(root);
-    },
+    onStartOver: startApp,
   });
 } else {
   createApp(root);

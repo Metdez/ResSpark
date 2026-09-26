@@ -1,21 +1,30 @@
 import type { Answers } from "../questions";
+import type { SelectedDocument } from "../case-processing";
 import { getDocumentRequests } from "./requests";
 
 export interface DocumentUploadScreenOptions {
   answers: Answers;
   onBack: () => void;
-  onComplete: (documents: UploadedDocument[]) => void;
-}
-
-export interface UploadedDocument {
-  category: string;
-  categoryLabel: string;
-  name: string;
-  type: string;
-  size: number;
+  onComplete: (documents: SelectedDocument[]) => void;
 }
 
 const acceptedDocumentTypes = ".pdf,.jpg,.jpeg,.png,.tif,.tiff,.heic";
+
+function renderUploadControls(request: ReturnType<typeof getDocumentRequests>[number]): string {
+  if (request.maxFiles === 3) {
+    return `<div class="upload-slots">
+      ${["Statement 1", "Statement 2", "Statement 3"].map((label, index) => `
+        <label class="upload-button" for="upload-${request.code}-${index}">${label}</label>
+        <input id="upload-${request.code}-${index}" class="file-input" data-document-code="${request.code}" type="file" accept="${acceptedDocumentTypes}">
+      `).join("")}
+    </div>`;
+  }
+
+  return `<div class="upload-slots">
+    <label class="upload-button" for="upload-${request.code}">Choose files</label>
+    <input id="upload-${request.code}" class="file-input" data-document-code="${request.code}" type="file" accept="${acceptedDocumentTypes}" multiple>
+  </div>`;
+}
 
 export function renderDocumentUpload(root: HTMLElement, options: DocumentUploadScreenOptions): void {
   const requests = getDocumentRequests(options.answers);
@@ -41,8 +50,7 @@ export function renderDocumentUpload(root: HTMLElement, options: DocumentUploadS
                 <h2>${request.title}${request.required ? ' <span aria-label="required">Required</span>' : ' <span class="optional">Optional</span>'}</h2>
                 <p>${request.detail}</p>
               </div>
-              <label class="upload-button" for="upload-${request.code}">Choose files</label>
-              <input id="upload-${request.code}" class="file-input" data-document-code="${request.code}" type="file" accept="${acceptedDocumentTypes}" multiple>
+              ${renderUploadControls(request)}
               <p class="file-list" data-file-list="${request.code}" aria-live="polite">No files selected.</p>
             </section>`).join("")}
         </div>
@@ -64,28 +72,35 @@ export function renderDocumentUpload(root: HTMLElement, options: DocumentUploadS
   root.querySelectorAll<HTMLInputElement>(".file-input").forEach((input) => {
     input.addEventListener("change", () => {
       const code = input.dataset.documentCode!;
-      const files = Array.from(input.files ?? []);
+      const files = [...root.querySelectorAll<HTMLInputElement>(`[data-document-code="${code}"]`)]
+        .flatMap((field) => Array.from(field.files ?? []));
+      const request = requests.find((item) => item.code === code);
+      const fileList = root.querySelector<HTMLElement>(`[data-file-list="${code}"]`)!;
+      if (request?.maxFiles && files.length > request.maxFiles) {
+        uploads.delete(code);
+        fileList.textContent = `Select up to ${request.maxFiles} files.`;
+        return;
+      }
       uploads.set(code, files);
-      root.querySelector<HTMLElement>(`[data-file-list="${code}"]`)!.textContent = files.length
+      fileList.textContent = files.length
         ? files.map((file) => file.name).join(", ")
         : "No files selected.";
     });
   });
 
   root.querySelector<HTMLButtonElement>(".primary-button")!.addEventListener("click", () => {
-    const missing = requests.filter((request) => request.required && !(uploads.get(request.code)?.length));
+    const missing = requests.filter((request) =>
+      request.required && (uploads.get(request.code)?.length ?? 0) < (request.maxFiles ?? 1));
     const error = root.querySelector<HTMLElement>(".error-message")!;
     if (missing.length) {
-      error.textContent = `Select a file for: ${missing.map((request) => request.title).join(", ")}.`;
+      error.textContent = `Complete required uploads for: ${missing.map((request) => request.title).join(", ")}.`;
       return;
     }
     options.onComplete(requests.flatMap((request) =>
       (uploads.get(request.code) ?? []).map((file) => ({
         category: request.code,
         categoryLabel: request.title,
-        name: file.name,
-        type: file.type || "application/octet-stream",
-        size: file.size,
+        file,
       })),
     ));
   });

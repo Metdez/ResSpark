@@ -1,7 +1,8 @@
 import { formatCurrencyAnswer, getApplicableQuestions, parseAnswer, validateAnswer } from "./flow";
 import { questions, type Answers, type QuestionDefinition, type QuestionOption } from "./questions";
 import { renderDocumentUpload } from "./document-upload/screen";
-import { createSandboxCase, type ResolutionCaseResult } from "./resolution-results/model";
+import { processMockCase, type CaseProcessor } from "./case-processing";
+import type { ResolutionCaseResult } from "./resolution-results/model";
 import { renderResolutionResults } from "./resolution-results/screen";
 
 type Screen = "splash" | "intake" | "documents" | "results";
@@ -24,7 +25,7 @@ function loadDraft(): { answers: Answers; step: number; screen: SavedScreen } | 
   }
 }
 
-export function createApp(root: HTMLElement): void {
+export function createApp(root: HTMLElement, processCase: CaseProcessor = processMockCase): void {
   const savedDraft = loadDraft();
   let answers: Answers = savedDraft?.answers ?? {};
   let screen: Screen = savedDraft?.screen ?? "splash";
@@ -195,6 +196,9 @@ export function createApp(root: HTMLElement): void {
         delete answers.filing_joint_offer;
         delete answers.age_spouse;
       }
+      if (question.id === "is_wage_earner" && answer === false) {
+        delete answers.pay_frequency;
+      }
       step += 1;
       saveDraft();
       render();
@@ -220,8 +224,8 @@ export function createApp(root: HTMLElement): void {
           saveDraft();
           render();
         },
-        onComplete: (documents) => {
-          result = createSandboxCase(answers, documents);
+        onComplete: async (documents) => {
+          result = await processCase({ answers, documents });
           clearDraft();
           screen = "results";
           render();

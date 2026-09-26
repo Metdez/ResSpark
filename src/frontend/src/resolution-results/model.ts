@@ -1,5 +1,4 @@
 import type { Answers } from "../questions";
-import type { UploadedDocument } from "../document-upload/screen";
 
 export type ResolutionPathId =
   | "cnc"
@@ -16,6 +15,7 @@ export interface ResolutionOutcome {
   status: "potential_match" | "manual_review" | "blocked";
   reason: string;
   nextStep: string;
+  requirements: string[];
   monthlyIncome: number;
   monthlyExpenses: number;
   netDisposableIncome: number;
@@ -38,6 +38,14 @@ export interface FinancialSection {
   fields: FinancialField[];
 }
 
+export interface UploadedDocument {
+  category: string;
+  categoryLabel: string;
+  name: string;
+  type: string;
+  size: number;
+}
+
 export interface ResolutionCaseResult {
   caseLabel: string;
   generatedAt: string;
@@ -56,16 +64,17 @@ const outcome = (
   reason: string,
   nextStep: string,
   amounts: Pick<ResolutionOutcome, "monthlyIncome" | "monthlyExpenses" | "netDisposableIncome" | "netRealizableEquity" | "suggestedOfferOrPayment">,
+  requirements: string[],
   reviewNotes: string[] = [],
-): ResolutionOutcome => ({ id, path, shortLabel, status, reason, nextStep, ...amounts, reviewNotes });
+): ResolutionOutcome => ({ id, path, shortLabel, status, reason, nextStep, requirements, ...amounts, reviewNotes });
 
 export const sandboxOutcomes: ResolutionOutcome[] = [
-  outcome("cnc", "Currently Not Collectible (CNC / Status 53)", "Currently Not Collectible", "potential_match", "Allowable expenses consume all monthly income and the case has no meaningful realizable equity.", "A tax professional should verify the hardship calculation and supporting documents before requesting CNC status.", { monthlyIncome: 4_820, monthlyExpenses: 4_965, netDisposableIncome: 0, netRealizableEquity: 280, suggestedOfferOrPayment: 0 }),
-  outcome("simple_plan", "Simple Payment Plan", "Simple payment plan", "potential_match", "The balance is $50,000 or less and available monthly income can pay it before the collection statute expires.", "A tax professional should confirm the collection deadline and proposed monthly payment before contacting the IRS.", { monthlyIncome: 7_850, monthlyExpenses: 6_430, netDisposableIncome: 1_420, netRealizableEquity: 3_200, suggestedOfferOrPayment: 625 }),
-  outcome("non_simple_installment", "Non-Simple Installment Agreement", "Installment agreement", "potential_match", "The balance can be paid before the collection statute expires, but the case falls outside the simple-plan rules.", "A tax professional should review the financial statement and negotiate the agreement terms with the IRS.", { monthlyIncome: 12_400, monthlyExpenses: 9_950, netDisposableIncome: 2_450, netRealizableEquity: 18_700, suggestedOfferOrPayment: 1_875 }),
-  outcome("manual_equity", "MANUAL REVIEW — negative income, meaningful equity present", "Equity or hardship review", "manual_review", "There is no monthly disposable income, but realizable equity exceeds $500.", "A tax professional must compare a possible equity-funded offer with hardship CNC treatment.", { monthlyIncome: 5_100, monthlyExpenses: 5_480, netDisposableIncome: 0, netRealizableEquity: 14_200, suggestedOfferOrPayment: 14_200 }, ["Equity-funded OIC versus CNC requires professional judgment."]),
-  outcome("manual_payment", "MANUAL REVIEW — payment resolution needs review", "Payment resolution review", "manual_review", "The available data does not support an automatic payment-resolution selection.", "A tax professional should verify the transcript, collection deadline, and complete financial record.", { monthlyIncome: 6_750, monthlyExpenses: 5_980, netDisposableIncome: 770, netRealizableEquity: 8_400, suggestedOfferOrPayment: 0 }, ["No automatic payment path was selected."]),
-  outcome("blocked", "BLOCKED — Compliance gate failed", "Compliance action needed", "blocked", "Not all required tax returns are filed, or the taxpayer is currently in an open bankruptcy proceeding.", "Resolve the compliance issue before evaluating a collection alternative.", { monthlyIncome: 4_820, monthlyExpenses: 4_965, netDisposableIncome: -145, netRealizableEquity: 280, suggestedOfferOrPayment: 0 }, ["Compliance must be resolved before a path can be suggested."]),
+  outcome("cnc", "Currently Not Collectible (CNC / Status 53)", "Currently Not Collectible", "potential_match", "Allowable expenses consume all monthly income and the case has no meaningful realizable equity.", "A tax professional should verify the hardship calculation and supporting documents before requesting CNC status.", { monthlyIncome: 4_820, monthlyExpenses: 4_965, netDisposableIncome: 0, netRealizableEquity: 280, suggestedOfferOrPayment: 0 }, ["All required tax returns are filed", "No open bankruptcy proceeding", "No monthly disposable income remains after allowable expenses", "Net realizable equity is $500 or less"]),
+  outcome("simple_plan", "Simple Payment Plan", "Simple payment plan", "potential_match", "The balance is $50,000 or less and available monthly income can pay it before the collection statute expires.", "A tax professional should confirm the collection deadline and proposed monthly payment before contacting the IRS.", { monthlyIncome: 7_850, monthlyExpenses: 6_430, netDisposableIncome: 1_420, netRealizableEquity: 3_200, suggestedOfferOrPayment: 625 }, ["All required tax returns are filed", "No open bankruptcy proceeding", "Total assessed balance is $50,000 or less", "Collection statute has time remaining", "Available monthly income can fully pay the balance by the collection deadline"]),
+  outcome("non_simple_installment", "Non-Simple Installment Agreement", "Installment agreement", "potential_match", "The balance can be paid before the collection statute expires, but the case falls outside the simple-plan rules.", "A tax professional should review the financial statement and negotiate the agreement terms with the IRS.", { monthlyIncome: 12_400, monthlyExpenses: 9_950, netDisposableIncome: 2_450, netRealizableEquity: 18_700, suggestedOfferOrPayment: 1_875 }, ["All required tax returns are filed", "No open bankruptcy proceeding", "Collection statute has time remaining", "Available monthly income can fully pay the balance by the collection deadline", "Case falls outside one or more simple-plan conditions"]),
+  outcome("manual_equity", "MANUAL REVIEW — negative income, meaningful equity present", "Equity or hardship review", "manual_review", "There is no monthly disposable income, but realizable equity exceeds $500.", "A tax professional must compare a possible equity-funded offer with hardship CNC treatment.", { monthlyIncome: 5_100, monthlyExpenses: 5_480, netDisposableIncome: 0, netRealizableEquity: 14_200, suggestedOfferOrPayment: 14_200 }, ["All required tax returns are filed", "No open bankruptcy proceeding", "No monthly disposable income remains", "Net realizable equity is greater than $500", "CPA or EA judgment is required before selecting a path"], ["Equity-funded OIC versus CNC requires professional judgment."]),
+  outcome("manual_payment", "MANUAL REVIEW — payment resolution needs review", "Payment resolution review", "manual_review", "The available data does not support an automatic payment-resolution selection.", "A tax professional should verify the transcript, collection deadline, and complete financial record.", { monthlyIncome: 6_750, monthlyExpenses: 5_980, netDisposableIncome: 770, netRealizableEquity: 8_400, suggestedOfferOrPayment: 0 }, ["All required tax returns are filed", "No open bankruptcy proceeding", "Case does not satisfy an automatic payment-path branch", "Transcript and collection deadline must be verified", "CPA or EA review is required"], ["No automatic payment path was selected."]),
+  outcome("blocked", "BLOCKED — Compliance gate failed", "Compliance action needed", "blocked", "Not all required tax returns are filed, or the taxpayer is currently in an open bankruptcy proceeding.", "Resolve the compliance issue before evaluating a collection alternative.", { monthlyIncome: 4_820, monthlyExpenses: 4_965, netDisposableIncome: -145, netRealizableEquity: 280, suggestedOfferOrPayment: 0 }, ["File all required tax returns", "Resolve or exit any open bankruptcy proceeding", "Run the screening calculation again after compliance is restored"], ["Compliance must be resolved before a path can be suggested."]),
 ];
 
 const answer = (answers: Answers, key: string, fallback: string | number | boolean | null) =>

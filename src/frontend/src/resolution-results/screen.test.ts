@@ -18,6 +18,9 @@ describe("resolution results sandbox", () => {
     renderResolutionResults(root, { result, onStartOver: vi.fn() });
 
     expect(root.textContent).toContain("You may qualify for Simple payment plan.");
+    expect(root.textContent).toContain("Selected resolution");
+    expect(root.querySelector(".requirements-panel summary")?.textContent).toContain("View requirements");
+    expect(root.textContent).toContain("Total assessed balance is $50,000 or less");
     expect(root.textContent).toContain("account-transcript.pdf");
     expect(root.textContent).toContain("Structured financial data");
     expect(root.textContent).toContain("$42,000");

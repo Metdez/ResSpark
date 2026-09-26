@@ -23,6 +23,7 @@ export interface QuestionDefinition {
 
 const isMarried = (answers: Answers) => answers.filing_status_married === true;
 const doesNotOwnHome = (answers: Answers) => answers.owns_home === false;
+const isWageEarner = (answers: Answers) => answers.is_wage_earner === true;
 
 const stateOptions = Object.keys(countiesByState).map((state) => ({ value: state, label: state }));
 const countyOptions = (answers: Answers) =>
@@ -45,7 +46,7 @@ export const questions: QuestionDefinition[] = [
   { id: "rents_home", prompt: "Do you rent your home?", valueType: "boolean", section: "Housing", isApplicable: doesNotOwnHome },
   { id: "is_wage_earner", prompt: "Do you receive a W-2 paycheck from an employer?", valueType: "boolean", section: "Employment" },
   { id: "is_self_employed", prompt: "Are you self-employed (Schedule C/E/F)?", valueType: "boolean", section: "Employment" },
-  { id: "pay_frequency", prompt: "How often are you paid?", valueType: "text", section: "Employment", options: [
+  { id: "pay_frequency", prompt: "How often are you paid?", valueType: "text", section: "Employment", isApplicable: isWageEarner, options: [
     { value: "weekly", label: "Weekly" },
     { value: "biweekly", label: "Every two weeks" },
     { value: "semimonthly", label: "Twice a month" },

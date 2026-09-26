@@ -99,7 +99,7 @@ describe("intake interface", () => {
     expect(root.querySelector<HTMLSelectElement>("#answer")?.value).toBe("");
   });
 
-  it("moves from the questionnaire to the targeted document upload screen", () => {
+  it("moves from questionnaire answers through targeted documents to a mock result", async () => {
     const root = document.createElement("main");
     document.body.append(root);
     createApp(root);
@@ -127,5 +127,48 @@ describe("intake interface", () => {
     expect(root.textContent).toContain("IRS account transcript");
     expect(root.textContent).toContain("Recent personal bank statements");
     expect(root.textContent).not.toContain("resolution recommendation");
+
+    root.querySelectorAll<HTMLElement>("[data-document-request]").forEach((request) => {
+      if (!request.querySelector('[aria-label="required"]')) return;
+      const inputs = request.querySelectorAll<HTMLInputElement>(".file-input");
+      inputs.forEach((input, index) => {
+        const code = input.dataset.documentCode!;
+        const suffix = inputs.length > 1 ? `-${index + 1}` : "";
+        Object.defineProperty(input, "files", {
+          configurable: true,
+          value: [new File([code], `${code}${suffix}.pdf`, { type: "application/pdf" })],
+        });
+        input.dispatchEvent(new Event("change"));
+      });
+    });
+    clickButton(root, "Continue");
+
+    await vi.waitFor(() => expect(root.textContent).toContain("Uploaded for review"));
+    expect(root.textContent).toContain("irs_transcripts.pdf");
+    expect(root.textContent).toContain("compliance step first");
+  });
+
+  it("uses saved questionnaire answers to select the document list", () => {
+    sessionStorage.setItem("resspark.intake.v1", JSON.stringify({
+      answers: {
+        is_self_employed: true,
+        vehicle_count: 0,
+        has_retirement_accounts: true,
+        owns_home: false,
+        rents_home: true,
+      },
+      step: 0,
+      screen: "documents",
+    }));
+    const root = document.createElement("main");
+    document.body.append(root);
+
+    createApp(root);
+
+    expect(root.querySelector('[data-document-request="self_employment"]')).not.toBeNull();
+    expect(root.querySelector('[data-document-request="retirement"]')).not.toBeNull();
+    expect(root.querySelector('[data-document-request="vehicle"]')).toBeNull();
+    expect(root.querySelector('[data-document-request="lease"]')).not.toBeNull();
+    expect(root.querySelector('[data-document-request="housing_utilities"]')?.textContent).toContain("Optional");
   });
 });

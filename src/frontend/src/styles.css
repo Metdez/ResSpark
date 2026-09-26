@@ -56,6 +56,7 @@ footer { max-width: 620px; margin: 28px auto 0; text-align: center; }
 .document-request h2 .optional { color: #627d98; }
 .document-request p { margin: 8px 0 14px; color: #486581; font-size: .9rem; line-height: 1.45; }
 .file-input { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; clip-path: inset(50%); }
+.upload-slots { display: flex; flex-wrap: wrap; gap: 10px; }
 .upload-button { display: inline-flex; min-height: 42px; align-items: center; padding: 0 14px; border: 1px solid #486581; border-radius: 8px; color: #243b53; font-weight: 750; cursor: pointer; }
 .upload-button:hover, .file-input:focus + .file-list { border-color: #087e8b; }
 .file-list { min-height: 20px; margin-bottom: 0 !important; color: #627d98 !important; font-size: .82rem !important; overflow-wrap: anywhere; }
