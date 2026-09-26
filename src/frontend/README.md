@@ -1,7 +1,7 @@
 # ResSpark intake frontend
 
-Standalone Vite and vanilla TypeScript sandbox for the taxpayer-question flow,
-document upload, and follow-on resolution screening results.
+Vite and vanilla TypeScript frontend for the taxpayer-question flow, document
+upload, and follow-on resolution screening results.
 It requires Node.js 18 or later.
 
 ```powershell
@@ -14,19 +14,16 @@ Use `npm test` for the focused flow/UI tests and `npm run build` for the product
 
 ## Data boundary
 
-The browser keeps answers and selected files only for the open page session. It
-does not send files, call the Python workflow, PostgreSQL, or the IRS standards
-repository. The post-upload results are clearly marked sandbox fixtures; replace
-`processMockCase` in `src/case-processing.ts` with a processor that submits the
-same answers and `File` objects to the eventual API before production use.
+The browser keeps draft answers only for the open page session. On completion it
+posts a multipart request to `POST /api/cases`: `answers` and
+`document_metadata` are JSON strings, and each selected file uses the repeated
+`documents` field. The API must return a `ResolutionCaseResult` JSON object.
 
 ## Resolution-results module
 
 `src/resolution-results/` is the drop-in finish screen. Its typed result model
 mirrors the Python `Determination` output, lists uploaded files, and displays the
-canonical financial record in sections. The sandbox selector previews every
-path currently returned by `determination.py`; omit `isSandbox` and the selector
-when rendering a real backend result.
+canonical financial record in sections.
 
 ## Document-upload module
 
