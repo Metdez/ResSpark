@@ -10,6 +10,29 @@ body { margin: 0; min-width: 320px; }
 button, input, select { font: inherit; }
 button { cursor: pointer; }
 
+md-outlined-select {
+  width: 100%;
+  --md-outlined-select-text-field-container-shape: 9px;
+  --md-outlined-select-text-field-input-text-color: #102a43;
+  --md-outlined-select-text-field-input-text-font: Inter, ui-sans-serif, system-ui, sans-serif;
+  --md-outlined-select-text-field-label-text-color: #486581;
+  --md-outlined-select-text-field-focus-label-text-color: #087e8b;
+  --md-outlined-select-text-field-outline-color: #486581;
+  --md-outlined-select-text-field-focus-outline-color: #087e8b;
+  --md-outlined-select-text-field-hover-outline-color: #087e8b;
+  --md-sys-color-primary: #087e8b;
+  --md-sys-color-surface-container: #fff;
+  --md-sys-color-on-surface: #102a43;
+}
+
+md-outlined-select::part(menu) {
+  --md-menu-container-color: #fff;
+  --md-menu-container-shape: 10px;
+  --md-menu-container-elevation: 3;
+  --md-sys-color-secondary-container: #e7f4f3;
+  --md-sys-color-on-secondary-container: #175761;
+}
+
 .splash-shell, .intake-shell { min-height: 100vh; padding: 24px; }
 .splash-shell { display: grid; place-items: center; }
 .splash-card, .question-card { width: min(100%, 620px); background: #fff; border: 1px solid #ded8cc; border-radius: 16px; box-shadow: 0 12px 32px rgb(16 42 67 / 8%); }
@@ -34,6 +57,7 @@ h1 { margin: 0; color: #102a43; font-size: clamp(1.9rem, 4vw, 2.6rem); line-heig
 .progress-value { height: 100%; border-radius: inherit; background: #087e8b; transition: width .2s ease; }
 .question-card { margin: 0 auto; padding: clamp(24px, 5vw, 44px); }
 .question-card h1 { font-size: clamp(1.55rem, 3vw, 2rem); }
+.question-card h1:focus { outline: none; }
 .help-text { margin: 12px 0 0; color: #627d98; line-height: 1.5; }
 .answer-control { margin-top: 30px; }
 .answer-options { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
@@ -54,12 +78,18 @@ footer { max-width: 620px; margin: 28px auto 0; text-align: center; }
 .document-request h2 { margin: 0; color: #243b53; font-size: 1rem; }
 .document-request h2 span { margin-left: 6px; color: #ba2525; font-size: .75rem; text-transform: uppercase; }
 .document-request h2 .optional { color: #627d98; }
+.document-request h2 .request-status.is-complete { color: #157347; }
 .document-request p { margin: 8px 0 14px; color: #486581; font-size: .9rem; line-height: 1.45; }
 .file-input { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; clip-path: inset(50%); }
-.upload-slots { display: flex; flex-wrap: wrap; gap: 10px; }
+.upload-slots { display: grid; gap: 10px; }
+.upload-slot { display: grid; grid-template-columns: max-content minmax(0, 1fr); align-items: center; gap: 10px; }
 .upload-button { display: inline-flex; min-height: 42px; align-items: center; padding: 0 14px; border: 1px solid #486581; border-radius: 8px; color: #243b53; font-weight: 750; cursor: pointer; }
-.upload-button:hover, .file-input:focus + .file-list { border-color: #087e8b; }
-.file-list { min-height: 20px; margin-bottom: 0 !important; color: #627d98 !important; font-size: .82rem !important; overflow-wrap: anywhere; }
+.upload-button:hover, .upload-slot:has(.file-input:focus-visible) .upload-button { border-color: #087e8b; box-shadow: 0 0 0 3px rgb(8 126 139 / 18%); }
+.slot-file { min-width: 0; color: #627d98; font-size: .82rem; overflow-wrap: anywhere; }
+.slot-file.is-uploaded { color: #157347; font-weight: 700; }
+.vehicle-upload-groups { display: grid; gap: 12px; }
+.vehicle-upload-group { padding: 14px; border: 1px solid #d9e2ec; border-radius: 9px; background: #fff; }
+.vehicle-upload-group h3 { margin: 0 0 10px; color: #334e68; font-size: .88rem; }
 
 @media (max-width: 560px) {
   .splash-shell, .intake-shell { padding: 16px; }
@@ -67,4 +97,6 @@ footer { max-width: 620px; margin: 28px auto 0; text-align: center; }
   .splash-card, .question-card { border-radius: 12px; }
   .answer-options, .actions { grid-template-columns: 1fr; }
   .actions > .primary-button { grid-row: 1; }
+  .upload-slot { grid-template-columns: 1fr; }
+  .upload-button { justify-content: center; }
 }

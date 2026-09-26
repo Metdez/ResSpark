@@ -5,7 +5,14 @@ export interface DocumentRequest {
   title: string;
   detail: string;
   required: boolean;
-  maxFiles?: number;
+  slots?: DocumentUploadSlot[];
+}
+
+export interface DocumentUploadSlot {
+  id: string;
+  label: string;
+  required: boolean;
+  groupLabel?: string;
 }
 
 interface DocumentRule {
@@ -37,7 +44,11 @@ const documentRules: DocumentRule[] = [
       title: "Recent personal bank statements",
       detail: "Upload statements for each of the most recent three months.",
       required: true,
-      maxFiles: 3,
+      slots: [
+        { id: "primary", label: "Choose file", required: true },
+        { id: "optional-1", label: "Optional file 1", required: false },
+        { id: "optional-2", label: "Optional file 2", required: false },
+      ],
     },
     applies: always,
   },
@@ -90,5 +101,19 @@ const documentRules: DocumentRule[] = [
 ];
 
 export function getDocumentRequests(answers: Answers): DocumentRequest[] {
-  return documentRules.filter((rule) => rule.applies(answers)).map((rule) => rule.request);
+  return documentRules.filter((rule) => rule.applies(answers)).map((rule) => {
+    if (rule.request.code !== "vehicle") return rule.request;
+
+    const vehicleCount = Math.min(Number(answers.vehicle_count), 6);
+    return {
+      ...rule.request,
+      slots: Array.from({ length: vehicleCount }, (_, index) => index + 1).flatMap((vehicleNumber) => {
+        const groupLabel = `Vehicle ${vehicleNumber}`;
+        return [
+          { id: `vehicle-${vehicleNumber}-required`, label: "Choose file", required: true, groupLabel },
+          { id: `vehicle-${vehicleNumber}-optional`, label: "Optional file", required: false, groupLabel },
+        ];
+      }),
+    };
+  });
 }
