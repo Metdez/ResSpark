@@ -1,6 +1,6 @@
 import type { Answers } from "../questions";
 import type { SelectedDocument } from "../case-processing";
-import { getDocumentRequests } from "./requests";
+import { getDocumentRequests, type DocumentRequest, type DocumentUploadSlot } from "./requests";
 
 export interface DocumentUploadScreenOptions {
   answers: Answers;
@@ -10,25 +10,59 @@ export interface DocumentUploadScreenOptions {
 
 const acceptedDocumentTypes = ".pdf,.jpg,.jpeg,.png,.tif,.tiff,.heic";
 
-function renderUploadControls(request: ReturnType<typeof getDocumentRequests>[number]): string {
-  if (request.maxFiles === 3) {
-    return `<div class="upload-slots">
-      ${["Statement 1", "Statement 2", "Statement 3"].map((label, index) => `
-        <label class="upload-button" for="upload-${request.code}-${index}">${label}</label>
-        <input id="upload-${request.code}-${index}" class="file-input" data-document-code="${request.code}" type="file" accept="${acceptedDocumentTypes}">
-      `).join("")}
+const renderSlot = (request: DocumentRequest, slot: DocumentUploadSlot): string => {
+  const inputId = `upload-${request.code}-${slot.id}`;
+  return `<div class="upload-slot" data-upload-slot="${slot.id}">
+    <label class="upload-button" for="${inputId}">${slot.label}</label>
+    <input id="${inputId}" class="file-input" data-document-code="${request.code}" data-slot-id="${slot.id}" data-required="${slot.required}" type="file" accept="${acceptedDocumentTypes}">
+    <span class="slot-file" data-slot-file="${slot.id}" aria-live="polite">No file selected.</span>
+  </div>`;
+};
+
+function renderUploadControls(request: DocumentRequest): string {
+  if (request.code === "vehicle" && request.slots) {
+    const groupLabels = [...new Set(request.slots.map((slot) => slot.groupLabel!))];
+    return `<div class="vehicle-upload-groups">
+      ${groupLabels.map((groupLabel) => `<section class="vehicle-upload-group">
+        <h3>${groupLabel}</h3>
+        <div class="upload-slots">${request.slots!
+          .filter((slot) => slot.groupLabel === groupLabel)
+          .map((slot) => renderSlot(request, slot)).join("")}</div>
+      </section>`).join("")}
     </div>`;
   }
 
-  return `<div class="upload-slots">
-    <label class="upload-button" for="upload-${request.code}">Choose files</label>
-    <input id="upload-${request.code}" class="file-input" data-document-code="${request.code}" type="file" accept="${acceptedDocumentTypes}" multiple>
-  </div>`;
+  if (request.slots) {
+    return `<div class="upload-slots">${request.slots.map((slot) => renderSlot(request, slot)).join("")}</div>`;
+  }
+
+  const slot: DocumentUploadSlot = { id: "files", label: "Choose files", required: request.required };
+  const inputId = `upload-${request.code}-${slot.id}`;
+  return `<div class="upload-slots"><div class="upload-slot" data-upload-slot="${slot.id}">
+    <label class="upload-button" for="${inputId}">${slot.label}</label>
+    <input id="${inputId}" class="file-input" data-document-code="${request.code}" data-slot-id="${slot.id}" data-required="${slot.required}" type="file" accept="${acceptedDocumentTypes}" multiple>
+    <span class="slot-file" data-slot-file="${slot.id}" aria-live="polite">No files selected.</span>
+  </div></div>`;
 }
 
 export function renderDocumentUpload(root: HTMLElement, options: DocumentUploadScreenOptions): void {
   const requests = getDocumentRequests(options.answers);
   const uploads = new Map<string, File[]>();
+
+  const uploadKey = (code: string, slotId: string) => `${code}:${slotId}`;
+  const requestIsComplete = (request: DocumentRequest): boolean => {
+    const requiredSlots = request.slots?.filter((slot) => slot.required)
+      ?? (request.required ? [{ id: "files" }] : []);
+    return requiredSlots.every((slot) => (uploads.get(uploadKey(request.code, slot.id))?.length ?? 0) > 0);
+  };
+
+  const updateRequestStatus = (request: DocumentRequest): void => {
+    const status = root.querySelector<HTMLElement>(`[data-request-status="${request.code}"]`)!;
+    const hasUploads = [...uploads.entries()].some(([key, files]) => key.startsWith(`${request.code}:`) && files.length > 0);
+    const complete = request.required ? requestIsComplete(request) : hasUploads;
+    status.classList.toggle("is-complete", complete);
+    status.textContent = complete ? (request.required ? "Complete" : "Uploaded") : (request.required ? "Required" : "Optional");
+  };
 
   root.innerHTML = `
     <main class="intake-shell document-shell">
@@ -47,11 +81,10 @@ export function renderDocumentUpload(root: HTMLElement, options: DocumentUploadS
           ${requests.map((request) => `
             <section class="document-request" data-document-request="${request.code}">
               <div>
-                <h2>${request.title}${request.required ? ' <span aria-label="required">Required</span>' : ' <span class="optional">Optional</span>'}</h2>
+                <h2>${request.title} <span class="request-status${request.required ? "" : " optional"}" data-request-status="${request.code}"${request.required ? ' aria-label="required"' : ""}>${request.required ? "Required" : "Optional"}</span></h2>
                 <p>${request.detail}</p>
               </div>
               ${renderUploadControls(request)}
-              <p class="file-list" data-file-list="${request.code}" aria-live="polite">No files selected.</p>
             </section>`).join("")}
         </div>
         <p class="error-message" role="alert" aria-live="polite"></p>
@@ -72,37 +105,33 @@ export function renderDocumentUpload(root: HTMLElement, options: DocumentUploadS
   root.querySelectorAll<HTMLInputElement>(".file-input").forEach((input) => {
     input.addEventListener("change", () => {
       const code = input.dataset.documentCode!;
-      const files = [...root.querySelectorAll<HTMLInputElement>(`[data-document-code="${code}"]`)]
-        .flatMap((field) => Array.from(field.files ?? []));
-      const request = requests.find((item) => item.code === code);
-      const fileList = root.querySelector<HTMLElement>(`[data-file-list="${code}"]`)!;
-      if (request?.maxFiles && files.length > request.maxFiles) {
-        uploads.delete(code);
-        fileList.textContent = `Select up to ${request.maxFiles} files.`;
-        return;
-      }
-      uploads.set(code, files);
-      fileList.textContent = files.length
+      const slotId = input.dataset.slotId!;
+      const files = Array.from(input.files ?? []);
+      uploads.set(uploadKey(code, slotId), files);
+      const slotFile = root.querySelector<HTMLElement>(`[data-document-request="${code}"] [data-slot-file="${slotId}"]`)!;
+      slotFile.classList.toggle("is-uploaded", files.length > 0);
+      slotFile.textContent = files.length
         ? files.map((file) => file.name).join(", ")
-        : "No files selected.";
+        : input.multiple ? "No files selected." : "No file selected.";
+      updateRequestStatus(requests.find((request) => request.code === code)!);
     });
   });
 
   root.querySelector<HTMLButtonElement>(".primary-button")!.addEventListener("click", () => {
-    const missing = requests.filter((request) =>
-      request.required && (uploads.get(request.code)?.length ?? 0) < (request.maxFiles ?? 1));
+    const missing = requests.filter((request) => request.required && !requestIsComplete(request));
     const error = root.querySelector<HTMLElement>(".error-message")!;
     if (missing.length) {
       error.textContent = `Complete required uploads for: ${missing.map((request) => request.title).join(", ")}.`;
       return;
     }
-    options.onComplete(requests.flatMap((request) =>
-      (uploads.get(request.code) ?? []).map((file) => ({
-        category: request.code,
-        categoryLabel: request.title,
-        file,
-      })),
-    ));
+    options.onComplete(requests.flatMap((request) => {
+      const slots = request.slots ?? [{ id: "files", groupLabel: undefined }];
+      return slots.flatMap((slot) => (uploads.get(uploadKey(request.code, slot.id)) ?? []).map((file) => ({
+          category: request.code,
+          categoryLabel: slot.groupLabel ? `${request.title} — ${slot.groupLabel}` : request.title,
+          file,
+        })));
+    }));
   });
   root.querySelector<HTMLElement>("#documents-title")!.focus();
 }

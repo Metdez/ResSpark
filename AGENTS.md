@@ -1,7 +1,7 @@
 # ResSpark contributor guide
 
 ## Conections
-Use type script for all front end work
+Use type script for all front end be typescript
 
 ## Project purpose
 

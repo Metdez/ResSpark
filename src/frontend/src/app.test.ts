@@ -3,6 +3,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { createApp } from "./app";
 
+type SelectControl = HTMLElement & { value: string };
+
 function clickButton(root: HTMLElement, label: string): void {
   const button = [...root.querySelectorAll<HTMLButtonElement>("button")]
     .find((candidate) => candidate.textContent?.trim() === label);
@@ -57,7 +59,7 @@ describe("intake interface", () => {
 
     expect(document.activeElement).toBe(root.querySelector("#question-title"));
     expect(root.querySelector("#question-title")?.textContent).toContain("What state do you live in?");
-    expect(root.querySelector("#answer")).toBeInstanceOf(HTMLSelectElement);
+    expect(root.querySelector("#answer")?.tagName).toBe("MD-OUTLINED-SELECT");
     expect(root.textContent).not.toContain("One question at a time");
   });
 
@@ -83,20 +85,21 @@ describe("intake interface", () => {
     clickButton(root, "Get started");
     clickButton(root, "No");
     clickButton(root, "Continue");
-    const state = root.querySelector<HTMLSelectElement>("#answer");
+    const state = root.querySelector<SelectControl>("#answer");
     state!.value = "Florida";
     clickButton(root, "Continue");
-    const county = root.querySelector<HTMLSelectElement>("#answer");
-    expect([...county!.options].some((option) => option.value === "Miami-Dade County")).toBe(true);
-    expect([...county!.options].some((option) => option.value === "Los Angeles County")).toBe(false);
+    const county = root.querySelector<SelectControl>("#answer");
+    const countyValues = [...county!.querySelectorAll("md-select-option")].map((option) => option.getAttribute("value"));
+    expect(countyValues).toContain("Miami-Dade County");
+    expect(countyValues).not.toContain("Los Angeles County");
     county!.value = "Washington County";
     clickButton(root, "Continue");
     clickButton(root, "Back");
     clickButton(root, "Back");
-    root.querySelector<HTMLSelectElement>("#answer")!.value = "Alabama";
+    root.querySelector<SelectControl>("#answer")!.value = "Alabama";
     clickButton(root, "Continue");
 
-    expect(root.querySelector<HTMLSelectElement>("#answer")?.value).toBe("");
+    expect(root.querySelector<SelectControl>("#answer")?.value).toBe("");
   });
 
   it("moves from questionnaire answers through targeted documents to a mock result", async () => {
@@ -110,14 +113,16 @@ describe("intake interface", () => {
       if (choice) {
         choice.click();
       } else {
-        const field = root.querySelector<HTMLInputElement | HTMLSelectElement>("#answer");
+        const field = root.querySelector<HTMLInputElement | SelectControl>("#answer");
         expect(field).toBeDefined();
-        if (field instanceof HTMLSelectElement) {
-          field.value = field.options[1].value;
+        if (field?.tagName === "MD-OUTLINED-SELECT") {
+          const select = field as SelectControl;
+          select.value = select.querySelectorAll("md-select-option")[1].getAttribute("value")!;
         } else {
-          field!.value = field!.inputMode === "decimal" ? "12345.67" : field!.type === "text" ? "Miami-Dade" : "1";
-          field!.dispatchEvent(new Event("blur"));
-          if (field!.inputMode === "decimal") expect(field!.value).toBe("$12,345.67");
+          const input = field as HTMLInputElement;
+          input.value = input.inputMode === "decimal" ? "12345.67" : input.type === "text" ? "Miami-Dade" : "1";
+          input.dispatchEvent(new Event("blur"));
+          if (input.inputMode === "decimal") expect(input.value).toBe("$12,345.67");
         }
       }
       clickButton(root, "Continue");
@@ -130,7 +135,7 @@ describe("intake interface", () => {
 
     root.querySelectorAll<HTMLElement>("[data-document-request]").forEach((request) => {
       if (!request.querySelector('[aria-label="required"]')) return;
-      const inputs = request.querySelectorAll<HTMLInputElement>(".file-input");
+      const inputs = request.querySelectorAll<HTMLInputElement>('.file-input[data-required="true"]');
       inputs.forEach((input, index) => {
         const code = input.dataset.documentCode!;
         const suffix = inputs.length > 1 ? `-${index + 1}` : "";
@@ -143,9 +148,10 @@ describe("intake interface", () => {
     });
     clickButton(root, "Continue");
 
-    await vi.waitFor(() => expect(root.textContent).toContain("Uploaded for review"));
-    expect(root.textContent).toContain("irs_transcripts.pdf");
+    await vi.waitFor(() => expect(root.textContent).toContain("Uploaded documents"));
     expect(root.textContent).toContain("compliance step first");
+    root.querySelector<HTMLButtonElement>('[data-result-view="documents"]')!.click();
+    expect(root.textContent).toContain("irs_transcripts.pdf");
   });
 
   it("uses saved questionnaire answers to select the document list", () => {
