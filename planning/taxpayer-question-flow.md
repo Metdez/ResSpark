@@ -4,7 +4,7 @@
 flowchart TD
     A{Are you married?}
 
-    A -->|Yes| B[If married, are you filing jointly<br/>with your spouse?]
+    A -->|Yes| B[Are you filing jointly<br/>with your spouse?]
     A -->|No| C[What state do you live in?]
     B --> C
 

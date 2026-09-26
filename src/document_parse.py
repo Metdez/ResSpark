@@ -13,6 +13,8 @@ Schedule C and a profit-and-loss is not added twice.
 Gross pay is Regular Gross Pay, or Gross Pay when that is the line on the stub.
 ponytail: a failed parse can ask Sciforium for the columns that document type
 owns. Empty extracted text is not recovered (no OCR). A scan still fails.
+An upload is classified from its text into one of the 12 request codes
+before those parsers run. Health coverage and life insurance are both insurance.
 """
 
 from __future__ import annotations
@@ -214,17 +216,130 @@ def parse_texts(texts: list[str], rows: dict | None = None, document_type: str |
     return _parse_document(texts, rows or {}, document_type, "document")
 
 
+_UPLOAD_CODES = (
+    "irs_transcripts", "bank_statements", "pay_stubs", "self_employment",
+    "real_property", "lease", "housing_utilities", "vehicle",
+    "retirement", "insurance", "investments", "bankruptcy",
+)
+_CLASSIFY_PROMPT = (
+    'Return one JSON object and nothing else: {"error": "one sentence"}. '
+    "Say why this document is not an IRS transcript, bank statement, pay stub, W-2, "
+    "self-employment record, real-property record, lease, utility bill, vehicle record, "
+    "retirement statement, life or health insurance statement, investment statement, "
+    "or bankruptcy record. Do not include a filename."
+)
+
+
+def classify_upload(texts: list[str]) -> str | None:
+    """Pick one upload code from the document text. The slot it was filed under is ignored."""
+    head = _head(texts)
+    if not head:
+        return None
+    if _has(head, "account transcript") or _has(head, "balance notice") or (_has(head, "wage") and _has(head, "income")):
+        return "irs_transcripts"
+    if _has(head, "life insurance") or _has(head, "health insurance") or _has(head, "premium billing"):
+        return "insurance"
+    if _has(head, "retirement"):
+        return "retirement"
+    if any(_has(head, phrase) for phrase in ("profit and loss", "schedule c", "schedule e", "schedule f")):
+        return "self_employment"
+    if _has(head, "brokerage") or _has(head, "investment account"):
+        return "investments"
+    if _has(head, "bankruptcy"):
+        return "bankruptcy"
+    if _has(head, "utility"):
+        return "housing_utilities"
+    if _has(head, "checking") or _has(head, "bank statement"):
+        return "bank_statements"
+    if any(_has(head, phrase) for phrase in ("earnings statement", "pay stub", "paystub", "wage and tax statement")):
+        return "pay_stubs"
+    if _has(head, "lease") or _has(head, "monthly rent"):
+        return "lease"
+    if any(_has(head, phrase) for phrase in ("mortgage", "heloc", "tax assessment", "property valuation", "assessed value")):
+        return "real_property"
+    if any(_has(head, phrase) for phrase in ("auto loan", "vehicle loan", "registration")):
+        return "vehicle"
+    return None
+
+
+def parse_uploads(files: list[tuple[str, Path | str]]) -> tuple[dict, list[dict]]:
+    """Classify and parse each PDF. One failure does not drop the other files."""
+    parts: list[dict] = []
+    errors: list[dict] = []
+    for name, path in files:
+        texts, rows = _page_text(Path(path).read_bytes())
+        part, error = _parse_classified(name, texts, rows)
+        if error:
+            errors.append(error)
+        else:
+            parts.append(part)
+    return (merge_documents(parts) if parts else {}), errors
+
+
+def _parse_classified(name: str, texts: list[str], rows: dict) -> tuple[dict | None, dict | None]:
+    if not "\n".join(texts).strip():
+        return None, {"file": name, "error": "No readable text."}
+    code = classify_upload(texts)
+    if code not in _UPLOAD_CODES:
+        return None, {"file": name, "error": _classification_error("\n".join(texts))}
+    try:
+        return _from_kind(_kind_for_code(code, texts), texts, rows), None
+    except (ValueError, StopIteration):
+        return None, {"file": name, "error": "Could not read this file."}
+
+
+def _kind_for_code(code: str, texts: list[str]) -> str:
+    head = _head(texts)
+    if code == "irs_transcripts":
+        return "wage" if _has(head, "wage") and _has(head, "income") else "account"
+    if code == "pay_stubs":
+        if _has(head, "wage and tax statement") and not _has(head, "earnings statement") and not _has(head, "pay stub"):
+            return "wage"
+        return "pay_stub"
+    if code == "insurance":
+        return "life" if _has(head, "life insurance") else "health"
+    if code == "real_property":
+        return "mortgage" if _has(head, "mortgage") or _has(head, "heloc") else "valuation"
+    return {
+        "bank_statements": "bank",
+        "self_employment": "business",
+        "lease": "lease",
+        "housing_utilities": "utility",
+        "vehicle": "auto",
+        "retirement": "retirement",
+        "investments": "investment",
+        "bankruptcy": "bankruptcy",
+    }[code]
+
+
+def _classification_error(text: str) -> str:
+    try:
+        payload = _llm_json(_CLASSIFY_PROMPT, text)
+    except Exception:
+        return "Could not classify this file."
+    message = payload.get("error")
+    if isinstance(message, str) and message.strip():
+        return message.strip()
+    return "Could not classify this file."
+
+
+def _head(texts: list[str]) -> str:
+    return " ".join(text.strip().lower() for text in texts[:12])
+
+
 def _parse_document(texts: list[str], rows: dict, document_type: str | None, label: str) -> dict:
     kind = _classify(texts, document_type)
     try:
         if not kind:
             raise ValueError(f"No template matched {label}")
         return _from_kind(kind, texts, rows)
-    except ValueError as error:
+    except (ValueError, StopIteration) as caught:
+        # next() misses inside a template are StopIteration, same as a missing label.
+        error = caught if isinstance(caught, ValueError) else ValueError(f"No template matched {label}")
         fields = _fields_for(kind, document_type)
         blob = "\n".join(texts).strip()
         if not fields or not blob:
-            raise
+            raise error
         try:
             filled = _llm_fill(blob, fields)
         except Exception as api_error:
@@ -269,11 +384,6 @@ def _complete_document(kind: str | None, document_type: str | None, filled: dict
 
 
 def _llm_fill(text: str, fields: tuple[str, ...]) -> dict:
-    _load_env()
-    key = os.environ.get("SCIFORIUM_API_KEY")
-    model = os.environ.get("SCIFORIUM_API_ENDPOINT")
-    if not key or not model:
-        raise RuntimeError("SCIFORIUM_API_KEY and SCIFORIUM_API_ENDPOINT are required")
     listed = ", ".join(fields)
     prompt = (
         "Return one JSON object and nothing else. Use only these case_financial_data keys: "
@@ -283,6 +393,15 @@ def _llm_fill(text: str, fields: tuple[str, ...]) -> dict:
         "statement's ending balance. pay_frequency is weekly, biweekly, semimonthly, or monthly. "
         "If the document does not state every required value, return {}. Do not add keys."
     )
+    return _accept_fields(_llm_json(prompt, text), fields)
+
+
+def _llm_json(prompt: str, text: str) -> dict:
+    _load_env()
+    key = os.environ.get("SCIFORIUM_API_KEY")
+    model = os.environ.get("SCIFORIUM_API_ENDPOINT")
+    if not key or not model:
+        raise RuntimeError("SCIFORIUM_API_KEY and SCIFORIUM_API_ENDPOINT are required")
     body = json.dumps({
         "model": model,
         "messages": [
@@ -298,8 +417,7 @@ def _llm_fill(text: str, fields: tuple[str, ...]) -> dict:
     )
     with urllib.request.urlopen(request, timeout=60) as response:
         payload = json.load(response)
-    content = payload["choices"][0]["message"]["content"]
-    return _accept_fields(_json_object(content), fields)
+    return _json_object(payload["choices"][0]["message"]["content"])
 
 
 def _load_env() -> None:
@@ -376,7 +494,7 @@ def _has(head: str, phrase: str) -> bool:
 
 
 def _classify(texts: list[str], document_type: str | None) -> str | None:
-    head = " ".join(text.strip().lower() for text in texts[:12])
+    head = _head(texts)
     if (_has(head, "wage") and _has(head, "income")) or _has(head, "wage and tax statement"):
         return "wage"
     if _has(head, "account transcript") or _has(head, "balance notice"):
