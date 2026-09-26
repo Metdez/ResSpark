@@ -63,6 +63,21 @@ describe("intake interface", () => {
     expect(root.textContent).not.toContain("One question at a time");
   });
 
+  it("uses an age dropdown for the spouse question", () => {
+    sessionStorage.setItem("resspark.intake.v1", JSON.stringify({
+      answers: { filing_status_married: true },
+      step: 7,
+      screen: "intake",
+    }));
+    const root = document.createElement("main");
+    document.body.append(root);
+
+    createApp(root);
+
+    expect(root.textContent).toContain("What is your spouse's age");
+    expect(root.querySelector("#answer")?.tagName).toBe("MD-OUTLINED-SELECT");
+  });
+
   it("discards an in-progress questionnaire when Save and exit is confirmed", () => {
     const root = document.createElement("main");
     document.body.append(root);

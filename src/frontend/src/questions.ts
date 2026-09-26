@@ -41,7 +41,7 @@ export const questions: QuestionDefinition[] = [
   { id: "household_size", prompt: "How many people live in your household (incl. you)?", valueType: "integer", section: "Household", minimum: 1, options: numericOptions(1, 50) },
   { id: "dependents_count", prompt: "How many dependents do you claim on your tax return?", valueType: "integer", section: "Household", minimum: 0, options: numericOptions(0, 50) },
   { id: "age_taxpayer", prompt: "What is your age?", valueType: "integer", section: "Household", minimum: 0, options: numericOptions(0, 120) },
-  { id: "age_spouse", prompt: "What is your spouse's age (if married)?", valueType: "integer", section: "Household", minimum: 0, isApplicable: isMarried },
+  { id: "age_spouse", prompt: "What is your spouse's age (if married)?", valueType: "integer", section: "Household", minimum: 0, options: numericOptions(0, 120), isApplicable: isMarried },
   { id: "owns_home", prompt: "Do you own your home?", valueType: "boolean", section: "Housing" },
   { id: "rents_home", prompt: "Do you rent your home?", valueType: "boolean", section: "Housing", isApplicable: doesNotOwnHome },
   { id: "is_wage_earner", prompt: "Do you receive a W-2 paycheck from an employer?", valueType: "boolean", section: "Employment" },
