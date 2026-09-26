@@ -10,7 +10,7 @@ ROOT = SRC.parent
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from document_parse import parse_packet
+from document_parse import merge_documents, parse_texts, parse_packet
 
 
 class DocumentParseTests(unittest.TestCase):
@@ -64,6 +64,121 @@ class DocumentParseTests(unittest.TestCase):
         self.assertEqual(renata["actual_health_insurance_premiums"], 260.0)
         self.assertEqual(renata["cash_and_bank_balances"], 6394.3)
         self.assertFalse(renata["has_unexplained_deposits"])
+
+    def test_general_forms_and_document_type_hints(self):
+        account = parse_texts([
+            "IRS Account Transcript",
+            "Filing Status:", "Single",
+            "Address:", "4417 Bellaire Blvd, Houston, TX 77036",
+            "(CSED):", "05/12/2033",
+            "Request Date:", "09-26-2026",
+            "ACCOUNT BALANCE: $60,000.00",
+            "150", "$44,500.00",
+        ], document_type="irs_transcripts")
+        self.assertEqual(account["_kind"], "account")
+        self.assertEqual(account["total_tax_owed"], 60000.0)
+        self.assertFalse(account["filing_status_married"])
+
+        wage = parse_texts([
+            "Wage and Income Transcript",
+            "Form W-2 filed by: Acme Payroll LLC",
+            "Box 1", "$31,200.00",
+        ], document_type="irs_transcripts")
+        self.assertEqual(wage["_kind"], "wage")
+        self.assertEqual(wage["gross_wages_taxpayer"], 2600.0)
+
+        bank_rows = {
+            400.0: [
+                (72.0, "Date"), (180.0, "Description"), (360.0, "Withdrawals"),
+                (450.0, "Deposits"), (540.0, "Balance"),
+            ],
+        }
+        bank = parse_texts([
+            "Bank Statement",
+            "Account Number:", "****7742",
+            "Ending Balance: $100.00",
+            "01/01/2026 - 01/31/2026",
+        ], bank_rows)
+        self.assertEqual(bank["_kind"], "bank")
+        self.assertEqual(bank["ending_balance"], 100.0)
+
+        stub = parse_texts([
+            "Acme Payroll LLC",
+            "Pay Stub",
+            "Pay Frequency:", "Every two weeks",
+            "Gross Pay", "$1,200.00",
+        ])
+        self.assertEqual(stub["pay_frequency"], "biweekly")
+        self.assertEqual(stub["gross_wages_taxpayer"], 2600.0)
+        self.assertEqual(stub["actual_current_taxes"], 0.0)
+        twice = parse_texts([
+            "Acme Payroll LLC",
+            "Pay Stub",
+            "Pay Frequency:", "Twice a month",
+            "Gross Pay", "$2,000.00",
+        ])
+        self.assertEqual(twice["pay_frequency"], "semimonthly")
+        self.assertEqual(twice["gross_wages_taxpayer"], 4000.0)
+
+        lease = parse_texts([
+            "Lease Statement",
+            "Rent:", "$1,150.00",
+            "Property Address:", "4417 Bellaire Blvd, Houston, TX 77036",
+        ])
+        self.assertEqual(lease["actual_housing_utilities"], 1150.0)
+        self.assertTrue(lease["rents_home"])
+        self.assertEqual(lease["state_of_residence"], "TX")
+
+        mortgage = parse_texts([
+            "Mortgage Statement",
+            "PITI:", "$1,850.00",
+            "Principal Balance:", "$261,000.00",
+            "Estimated Market Value:", "$340,000.00",
+            "Property Address:", "8820 SW 112th St, Miami, FL 33176",
+        ])
+        self.assertEqual(mortgage["_kind"], "mortgage")
+        self.assertEqual(mortgage["actual_housing_utilities"], 1850.0)
+        self.assertEqual(mortgage["real_property_loan_balance"], 261000.0)
+        self.assertTrue(mortgage["owns_home"])
+
+        health = parse_texts(["Health Insurance Statement", "Premium:", "$178.00"])
+        self.assertEqual(health["actual_health_insurance_premiums"], 178.0)
+
+        hidden = ["Case file"] + ["spacer"] * 11
+        hinted_lease = parse_texts(hidden + [
+            "Rent:", "$900.00",
+            "Property Address:", "1 Main St, Columbus, OH 43215",
+        ], document_type="lease_statement")
+        self.assertEqual(hinted_lease["_kind"], "lease")
+        self.assertEqual(hinted_lease["actual_housing_utilities"], 900.0)
+        hinted_auto = parse_texts(hidden + [
+            "Monthly Payment:", "$100.00",
+            "Loan Balance:", "$500.00",
+        ], document_type="vehicle")
+        self.assertEqual(hinted_auto["_kind"], "auto")
+        self.assertEqual(hinted_auto["vehicle_loan_balances"], [500.0])
+
+        with self.assertRaises(ValueError):
+            parse_texts(hidden, document_type="irs_transcripts")
+
+        first = parse_texts([
+            "Auto Loan Statement",
+            "Monthly Payment:", "$348.00",
+            "Payoff Balance:", "$9,200.00",
+        ])
+        second = parse_texts([
+            "Vehicle Loan Statement",
+            "Monthly Payment:", "$200.00",
+            "Loan Balance:", "$4,000.00",
+            "Est. Market Value:", "$8,000.00",
+        ])
+        combined = merge_documents([first, second])
+        self.assertEqual(combined["actual_vehicle_loan_lease"], 548.0)
+        self.assertEqual(combined["vehicle_loan_balances"], [9200.0, 4000.0])
+        self.assertEqual(combined["vehicle_loan_balance_total"], 13200.0)
+        self.assertEqual(combined["vehicle_market_values"], [8000.0])
+        self.assertEqual(combined["vehicle_market_value_total"], 8000.0)
+        self.assertEqual(combined["vehicle_count"], 2)
 
 
 if __name__ == "__main__":
