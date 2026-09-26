@@ -25,14 +25,18 @@ describe("document upload screen", () => {
     });
     input.dispatchEvent(new Event("change"));
 
-    expect(root.querySelector('[data-file-list="irs_transcripts"]')?.textContent)
+    expect(root.querySelector('[data-document-request="irs_transcripts"] [data-slot-file="files"]')?.textContent)
       .toContain("IRS_Account_Transcript.pdf");
+    expect(root.querySelector('[data-document-request="irs_transcripts"] [data-slot-file="files"]')?.classList)
+      .toContain("is-uploaded");
+    expect(root.querySelector('[data-request-status="irs_transcripts"]')?.textContent).toBe("Complete");
+    expect(root.querySelector('[data-request-status="irs_transcripts"]')?.classList).toContain("is-complete");
 
     root.querySelector<HTMLButtonElement>(".primary-button")!.click();
     expect(onComplete).not.toHaveBeenCalled();
   });
 
-  it("requires three monthly bank statements", () => {
+  it("requires one bank statement and offers two optional slots", () => {
     const root = document.createElement("main");
     document.body.append(root);
     const onComplete = vi.fn();
@@ -43,26 +47,38 @@ describe("document upload screen", () => {
       .map((label) => label.textContent?.trim());
 
     expect(inputs).toHaveLength(3);
-    expect(labels).toEqual(["Statement 1", "Statement 2", "Statement 3"]);
+    expect(labels).toEqual(["Choose file", "Optional file 1", "Optional file 2"]);
 
-    ["Bank_January.pdf", "Bank_February.pdf", "Bank_March.pdf"].forEach((name, index) => {
-      Object.defineProperty(inputs[index], "files", {
-        configurable: true,
-        value: [new File([name], name, { type: "application/pdf" })],
-      });
-      inputs[index].dispatchEvent(new Event("change"));
+    Object.defineProperty(inputs[0], "files", {
+      configurable: true,
+      value: [new File(["January"], "Bank_January.pdf", { type: "application/pdf" })],
     });
+    inputs[0].dispatchEvent(new Event("change"));
 
     expect(inputs.every((input) => input.multiple === false)).toBe(true);
-    expect(request.textContent).toContain("Required");
-    expect(root.querySelector('[data-file-list="bank_statements"]')?.textContent).toContain("Bank_January.pdf");
-    expect(root.querySelector('[data-file-list="bank_statements"]')?.textContent).toContain("Bank_February.pdf");
-    expect(root.querySelector('[data-file-list="bank_statements"]')?.textContent).toContain("Bank_March.pdf");
+    expect(request.textContent).toContain("Complete");
+    expect(request.querySelector('[data-slot-file="primary"]')?.textContent).toContain("Bank_January.pdf");
+    expect(request.querySelector('[data-slot-file="optional-1"]')?.textContent).toBe("No file selected.");
 
-    Object.defineProperty(inputs[2], "files", { configurable: true, value: [] });
-    inputs[2].dispatchEvent(new Event("change"));
+    const transcript = root.querySelector<HTMLInputElement>('[data-document-code="irs_transcripts"]')!;
+    Object.defineProperty(transcript, "files", { configurable: true, value: [new File(["IRS"], "irs.pdf")] });
+    transcript.dispatchEvent(new Event("change"));
     root.querySelector<HTMLButtonElement>(".primary-button")!.click();
-    expect(onComplete).not.toHaveBeenCalled();
+    expect(onComplete).toHaveBeenCalledOnce();
+    expect((onComplete.mock.calls[0][0] as SelectedDocument[]).map((document) => document.file.name))
+      .toEqual(["irs.pdf", "Bank_January.pdf"]);
+  });
+
+  it("renders a required and optional upload for each vehicle", () => {
+    const root = document.createElement("main");
+    document.body.append(root);
+    renderDocumentUpload(root, { answers: { vehicle_count: 2 }, onBack: vi.fn(), onComplete: vi.fn() });
+
+    const request = root.querySelector<HTMLElement>('[data-document-request="vehicle"]')!;
+    expect(request.querySelectorAll(".vehicle-upload-group")).toHaveLength(2);
+    expect([...request.querySelectorAll(".vehicle-upload-group h3")].map((heading) => heading.textContent)).toEqual(["Vehicle 1", "Vehicle 2"]);
+    expect(request.querySelectorAll<HTMLInputElement>('[data-required="true"]')).toHaveLength(2);
+    expect(request.querySelectorAll<HTMLInputElement>('[data-required="false"]')).toHaveLength(2);
   });
 
   it("renders only document categories selected by the answers", () => {
@@ -102,9 +118,10 @@ describe("document upload screen", () => {
     root.querySelectorAll<HTMLInputElement>('[data-document-code="bank_statements"]')
       .forEach((_, index) => selectFile("bank_statements", index));
     selectFile("lease");
+    selectFile("housing_utilities");
 
-    expect(root.querySelector('[data-document-request="lease"]')?.textContent).toContain("Required");
-    expect(root.querySelector('[data-document-request="housing_utilities"]')?.textContent).toContain("Optional");
+    expect(root.querySelector('[data-document-request="lease"]')?.textContent).toContain("Complete");
+    expect(root.querySelector('[data-request-status="housing_utilities"]')?.textContent).toBe("Uploaded");
     root.querySelector<HTMLButtonElement>(".primary-button")!.click();
     expect(onComplete).toHaveBeenCalledOnce();
     const documents = onComplete.mock.calls[0][0] as SelectedDocument[];
