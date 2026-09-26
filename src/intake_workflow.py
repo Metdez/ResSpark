@@ -1,7 +1,7 @@
-"""V5 document-first chat flow using case_financial_data as its only input.
+"""Document-first chat flow using case_financial_data as its only input.
 
-The client flow remains: initial V2 questions -> targeted uploads -> document
-analysis -> only missing V2 follow-ups -> unchanged V2 determination.
+The client flow is: initial taxpayer questions -> targeted uploads -> document
+analysis -> only applicable follow-ups -> deterministic screening.
 """
 
 from __future__ import annotations
@@ -18,14 +18,16 @@ from standards_repository import StandardsRepository
 
 QUESTION_BY_ID = {question["id"]: question for question in QUESTIONS}
 
-# ai_flags is review output. The OIC term remains NULL until V2 first identifies
-# an OIC candidate, preserving the existing chat flow.
+# ai_flags is review output. The OIC term is backend-only and remains optional
+# until a future OIC calculation supplies it.
 REQUIRED_FINANCIAL_COLUMNS = set(FinancialData.__dataclass_fields__) - {
     "ai_flags",
     "oic_payment_months",
+    "tax_only_balance",
 }
 
-# Same original V2 questions; only their timing is different.
+# The initial subset of taxpayer-facing questions; the remaining applicable
+# questions are collected only when needed.
 INITIAL_QUESTION_IDS = (
     "filing_status_married", "filing_joint_offer", "state_of_residence",
     "county_of_residence", "household_size", "age_taxpayer", "age_spouse",
@@ -78,7 +80,7 @@ def _is_applicable(question_id: str, case_row: Mapping[str, object]) -> bool:
 
 
 def validate_answer(question_id: str, value: object) -> None:
-    """Validate a chat answer against the unchanged V2 declaration."""
+    """Validate a chat answer against its taxpayer-question declaration."""
     expected = QUESTION_BY_ID[question_id]["type"]
     valid = type(value) in {int, float} if expected is float else type(value) is expected
     if not valid:
@@ -95,11 +97,11 @@ def _database_value(value: object) -> object:
 
 
 def missing_question_ids(case_row: Mapping[str, object]) -> list[str]:
-    """Unanswered original V2 questions, based only on canonical row values."""
+    """Unanswered taxpayer questions, based only on canonical row values."""
     return sorted(
         question_id
         for question_id in QUESTION_BY_ID
-        if question_id != "oic_payment_months" and case_row.get(question_id) is None
+        if question_id != "tax_only_balance" and case_row.get(question_id) is None
     )
 
 
@@ -113,7 +115,7 @@ def missing_financial_columns(case_row: Mapping[str, object]) -> list[str]:
 
 
 def financial_data_from_case_row(case_row: Mapping[str, object]) -> FinancialData:
-    """Build unchanged V2 FinancialData directly from a canonical SQL row."""
+    """Build FinancialData directly from a canonical SQL row."""
     missing = missing_financial_columns(case_row)
     if missing:
         raise ValueError(f"Cannot build FinancialData; missing: {', '.join(missing)}")
@@ -122,15 +124,13 @@ def financial_data_from_case_row(case_row: Mapping[str, object]) -> FinancialDat
     for field_name in FinancialData.__dataclass_fields__:
         if field_name == "ai_flags":
             values[field_name] = case_row.get(field_name) or []
-        elif field_name == "oic_payment_months" and case_row.get(field_name) is None:
-            continue
         else:
             values[field_name] = _database_value(case_row.get(field_name))
     return FinancialData(**values)
 
 
 def initial_questions(case_row: Mapping[str, object] | None = None) -> list[dict]:
-    """Return the short initial subset of V2 questions."""
+    """Return the short initial subset of taxpayer questions."""
     case_row = case_row or {}
     return [
         QUESTION_BY_ID[question_id]
@@ -168,7 +168,6 @@ def _review_flags(case_row: Mapping[str, object]) -> list[str]:
         "filed_bankruptcy_past_7yrs": "Prior bankruptcy in the past seven years",
         "in_litigation": "Current litigation",
         "prior_ia_or_oic_default": "Prior IRS agreement or offer default",
-        "transferred_asset_10k_10yrs": "Asset transfer over $10,000 for less than value",
     }
     return [label for field, label in flag_labels.items() if case_row.get(field) is True]
 
@@ -176,7 +175,7 @@ def _review_flags(case_row: Mapping[str, object]) -> list[str]:
 def evaluate_case(
     case_row: Mapping[str, object], standards_repository: StandardsRepository | None = None
 ) -> WorkflowResult:
-    """Evaluate only canonical database data with the unchanged V2 engine."""
+    """Evaluate only canonical database data with the deterministic engine."""
     missing_questions = [
         question_id for question_id in missing_question_ids(case_row)
         if _is_applicable(question_id, case_row)
@@ -201,15 +200,6 @@ def evaluate_case(
     determination = determine_resolution_path(
         financial_data_from_case_row(case_row), standards_repository
     )
-    if determination.path.startswith("Offer in Compromise") and case_row.get("oic_payment_months") is None:
-        return WorkflowResult(
-            status="information_needed",
-            initial_questions=initial_questions(case_row),
-            document_requests=requests,
-            missing_question_ids=["oic_payment_months"],
-            review_flags=flags,
-        )
-
     status = "blocked" if determination.path.startswith("BLOCKED") else (
         "ready_for_review" if flags or determination.needs_manual_review else "ready"
     )

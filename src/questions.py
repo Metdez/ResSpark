@@ -1,15 +1,9 @@
-"""
-v2 — expanded per your request: every question needed to fill the 433-A,
-its data type, feeding straight into FinancialData (financial_data.py).
+"""Taxpayer-facing intake question declarations.
 
-INTAKE QUESTIONS — everything needed to populate Form 433-A / 433-A(OIC).
-Each question: id (maps to a FinancialData field), the plain-English prompt
-(Herberth's "make it simple" questionnaire), and the Python data type returned.
-
-This is the client-facing questionnaire. Answers get merged with whatever the
-AI extracts from uploaded documents (transcripts, bank statements, pay stubs,
-mortgage/auto statements) — documents win on numbers, the questionnaire wins
-on facts a document can't state (marital status, dependents, litigation).
+Each declaration has an id that maps to canonical case data, a plain-English
+prompt, and its Python answer type. Answers are merged with information from
+uploaded documents; documents provide financial values, while the taxpayer
+provides facts that documents cannot reliably establish.
 """
 
 QUESTIONS = [
@@ -47,15 +41,8 @@ QUESTIONS = [
     {"id": "prior_ia_or_oic_default",      "prompt": "Have you defaulted on a prior IRS payment plan or offer?", "type": bool},
     {"id": "filed_and_paid_timely_last_5_years", "prompt": "For the last 5 tax years, did you file and pay the tax shown on time?", "type": bool},
     {"id": "installment_agreement_last_5_years", "prompt": "Have you had an income-tax installment agreement in the last 5 tax years?", "type": bool},
-    {"id": "transferred_asset_10k_10yrs",  "prompt": "In the last 10 years, did you transfer any asset worth over $10,000 for less than its value?", "type": bool},
-
-    # --- Bank reconciliation flag (AI-detected, but confirmable by client) ---
-    {"id": "has_unexplained_deposits",     "prompt": "Are there recurring deposits in your bank account not from your stated employer/income source?", "type": bool},
-
     # --- Liability facts (from IRS transcripts, confirmable) ---
     {"id": "total_tax_owed",               "prompt": "Total amount owed to the IRS (all years, incl. penalties/interest)?", "type": float},
     {"id": "tax_only_balance",              "prompt": "Income tax owed before penalties and interest?",                    "type": float},
-    {"id": "income_tax_only",               "prompt": "Does the balance include only individual income tax?",              "type": bool},
     {"id": "csed_months_remaining",        "prompt": "Months remaining until the IRS collection statute expires (from transcript)?", "type": int},
-    {"id": "oic_payment_months",            "prompt": "Over how many months would you pay the proposed offer (1-24)?",      "type": int},
 ]

@@ -84,16 +84,12 @@ class FinancialData:
     prior_ia_or_oic_default: bool = False
     filed_and_paid_timely_last_5_years: bool = False
     installment_agreement_last_5_years: bool = False
-    transferred_asset_10k_10yrs: bool = False
-    has_unexplained_deposits: bool = False
-    unexplained_deposits_monthly: float = 0.0
 
     # ---- Liability (from IRS account transcript) ----
     total_tax_owed: float = 0.0
     tax_only_balance: float | None = None        # excludes penalties and interest
-    income_tax_only: bool = True
     csed_months_remaining: int = 120              # 10-yr collection statute, default max
-    oic_payment_months: int = 5                    # proposed offer payment term (1-24 months)
+    oic_payment_months: int | None = None          # backend-only future OIC payment term
 
     # ---- Free-form notes for anything a human reviewer should see ----
     ai_flags: list = field(default_factory=list)  # e.g. "3 deposits from unknown source, avg $850/mo"

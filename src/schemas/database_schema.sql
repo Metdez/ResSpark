@@ -1,11 +1,12 @@
 -- V5 simple canonical data schema (PostgreSQL 14+).
 --
 -- Source of truth:
---   * one case_financial_data row is the current official V2 data for a case;
+--   * one case_financial_data row is the current official data for a case;
 --   * NULL means unknown; an explicit 0 means known to be zero;
 --   * document_extractions are supporting evidence, never competing values.
 --
--- This schema does not change the V2 chat flow or determination formulas.
+-- This schema defines the current taxpayer questions and deterministic
+-- screening inputs.
 
 BEGIN;
 
@@ -18,7 +19,7 @@ CREATE TABLE cases (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
--- All 32 unchanged V2 questions. canonical_column is the exact field in
+-- All 28 taxpayer-facing questions. canonical_column is the exact field in
 -- case_financial_data where its current answer is stored.
 CREATE TABLE question_definitions (
     question_id TEXT PRIMARY KEY,
@@ -53,17 +54,13 @@ INSERT INTO question_definitions (question_id, prompt, value_type, canonical_col
 ('prior_ia_or_oic_default', 'Have you defaulted on a prior IRS payment plan or offer?', 'bool', 'prior_ia_or_oic_default'),
 ('filed_and_paid_timely_last_5_years', 'For the last 5 tax years, did you file and pay the tax shown on time?', 'bool', 'filed_and_paid_timely_last_5_years'),
 ('installment_agreement_last_5_years', 'Have you had an income-tax installment agreement in the last 5 tax years?', 'bool', 'installment_agreement_last_5_years'),
-('transferred_asset_10k_10yrs', 'In the last 10 years, did you transfer any asset worth over $10,000 for less than its value?', 'bool', 'transferred_asset_10k_10yrs'),
-('has_unexplained_deposits', 'Are there recurring deposits in your bank account not from your stated employer/income source?', 'bool', 'has_unexplained_deposits'),
 ('total_tax_owed', 'Total amount owed to the IRS (all years, incl. penalties/interest)?', 'float', 'total_tax_owed'),
 ('tax_only_balance', 'Income tax owed before penalties and interest?', 'float', 'tax_only_balance'),
-('income_tax_only', 'Does the balance include only individual income tax?', 'bool', 'income_tax_only'),
-('csed_months_remaining', 'Months remaining until the IRS collection statute expires (from transcript)?', 'int', 'csed_months_remaining'),
-('oic_payment_months', 'Over how many months would you pay the proposed offer (1-24)?', 'int', 'oic_payment_months');
+('csed_months_remaining', 'Months remaining until the IRS collection statute expires (from transcript)?', 'int', 'csed_months_remaining');
 
--- The canonical V2 record. It mirrors all FinancialData fields except that the
+-- The canonical record. It mirrors all FinancialData fields except that the
 -- five questionnaire-only values (pay_frequency and the four has_* flags) are
--- added so every original question has one official storage location.
+-- added so every current taxpayer question has one official storage location.
 CREATE TABLE case_financial_data (
     case_id UUID PRIMARY KEY REFERENCES cases(id) ON DELETE CASCADE,
 
@@ -82,7 +79,7 @@ CREATE TABLE case_financial_data (
     is_self_employed BOOLEAN,
     vehicle_count INTEGER,
 
-    -- Questionnaire-only V2 fields that are upload/follow-up triggers
+    -- Questionnaire-only fields that are upload/follow-up triggers
     pay_frequency TEXT,
     has_real_property BOOLEAN,
     has_retirement_accounts BOOLEAN,
@@ -139,14 +136,10 @@ CREATE TABLE case_financial_data (
     prior_ia_or_oic_default BOOLEAN,
     filed_and_paid_timely_last_5_years BOOLEAN,
     installment_agreement_last_5_years BOOLEAN,
-    transferred_asset_10k_10yrs BOOLEAN,
-    has_unexplained_deposits BOOLEAN,
-    unexplained_deposits_monthly NUMERIC(14, 2),
 
     -- IRS liability
     total_tax_owed NUMERIC(14, 2),
     tax_only_balance NUMERIC(14, 2),
-    income_tax_only BOOLEAN,
     csed_months_remaining INTEGER,
     oic_payment_months INTEGER,
 
@@ -259,7 +252,7 @@ CREATE TABLE transportation_operating_standards (
     PRIMARY KEY (area, vehicle_count)
 );
 
--- Files and raw AI extraction are supporting evidence. A value affects V2 only
+-- Files and raw AI extraction are supporting evidence. A value affects screening only
 -- after it has been saved into case_financial_data above.
 CREATE TABLE documents (
     id UUID PRIMARY KEY,
@@ -284,7 +277,7 @@ CREATE TABLE document_extractions (
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
--- A decision run is immutable and records exactly what V2 returned.
+-- A decision run is immutable and records exactly what screening returned.
 CREATE TABLE determination_runs (
     id UUID PRIMARY KEY,
     case_id UUID NOT NULL REFERENCES cases(id) ON DELETE CASCADE,

@@ -72,10 +72,14 @@ class V5IntakeWorkflowTests(unittest.TestCase):
     def test_initial_questions_are_a_subset_of_the_unchanged_v2_questions(self):
         source_ids = {question["id"] for question in QUESTIONS}
         asked_ids = {question["id"] for question in initial_questions({"filing_status_married": False})}
-        self.assertEqual(len(QUESTIONS), 32)
+        self.assertEqual(len(QUESTIONS), 28)
         self.assertTrue(asked_ids.issubset(source_ids))
         self.assertIn("all_returns_filed", asked_ids)
         self.assertNotIn("total_tax_owed", asked_ids)
+        self.assertNotIn("oic_payment_months", source_ids)
+        self.assertNotIn("income_tax_only", source_ids)
+        self.assertNotIn("transferred_asset_10k_10yrs", source_ids)
+        self.assertNotIn("has_unexplained_deposits", source_ids)
 
     def test_document_requests_are_selected_from_canonical_case_data(self):
         requests = document_requests_for({
@@ -104,6 +108,14 @@ class V5IntakeWorkflowTests(unittest.TestCase):
         financial_data = financial_data_from_case_row(row)
         self.assertEqual(financial_data.gross_wages_taxpayer, 0.0)
 
+    def test_unused_tax_only_balance_does_not_block_screening(self):
+        row = canonical_zero_row()
+        row["tax_only_balance"] = None
+
+        result = evaluate_case(row, STANDARDS)
+
+        self.assertEqual(result.status, "ready")
+
     def test_complete_database_row_reaches_v2_determination(self):
         row = canonical_zero_row()
         row.update({
@@ -129,7 +141,6 @@ class V5IntakeWorkflowTests(unittest.TestCase):
             "vehicle_loan_balances": [12000.0],
             "total_tax_owed": 28000.0,
             "tax_only_balance": 28000.0,
-            "income_tax_only": True,
             "csed_months_remaining": 90,
         })
         result = evaluate_case(row, STANDARDS)
@@ -144,7 +155,6 @@ class V5IntakeWorkflowTests(unittest.TestCase):
             "all_returns_filed": False,
             "total_tax_owed": 60000.0,
             "tax_only_balance": 60000.0,
-            "income_tax_only": True,
             "csed_months_remaining": 96,
         })
         result = evaluate_case(row, STANDARDS)
@@ -158,14 +168,13 @@ class V5IntakeWorkflowTests(unittest.TestCase):
             "county_of_residence": "Miami-Dade County",
             "total_tax_owed": 60000.0,
             "tax_only_balance": 60000.0,
-            "income_tax_only": True,
             "csed_months_remaining": 96,
         })
         result = evaluate_case(row, STANDARDS)
         self.assertEqual(result.status, "ready")
         self.assertEqual(result.determination.path, "Currently Not Collectible (CNC / Status 53)")
 
-    def test_oic_path_is_preserved(self):
+    def test_full_payment_failure_requires_manual_review_until_oic_calculator_exists(self):
         row = canonical_zero_row()
         row.update({
             "state_of_residence": "FL",
@@ -179,15 +188,13 @@ class V5IntakeWorkflowTests(unittest.TestCase):
             "all_returns_filed": True,
             "total_tax_owed": 100000.0,
             "tax_only_balance": 100000.0,
-            "income_tax_only": True,
             "csed_months_remaining": 12,
-            "oic_payment_months": 5,
         })
         result = evaluate_case(row, STANDARDS)
-        self.assertEqual(result.status, "ready")
-        self.assertEqual(result.determination.path, "Offer in Compromise (Doubt as to Collectibility)")
+        self.assertEqual(result.status, "ready_for_review")
+        self.assertEqual(result.determination.path, "MANUAL REVIEW — payment resolution needs review")
 
-    def test_ppia_path_is_preserved(self):
+    def test_partial_payment_case_requires_manual_review_until_oic_calculator_exists(self):
         row = canonical_zero_row()
         row.update({
             "state_of_residence": "FL",
@@ -202,13 +209,11 @@ class V5IntakeWorkflowTests(unittest.TestCase):
             "cash_and_bank_balances": 5000.0,
             "total_tax_owed": 15000.0,
             "tax_only_balance": 15000.0,
-            "income_tax_only": True,
             "csed_months_remaining": 6,
-            "oic_payment_months": 5,
         })
         result = evaluate_case(row, STANDARDS)
-        self.assertEqual(result.status, "ready")
-        self.assertEqual(result.determination.path, "Partial Payment Installment Agreement (PPIA)")
+        self.assertEqual(result.status, "ready_for_review")
+        self.assertEqual(result.determination.path, "MANUAL REVIEW — payment resolution needs review")
 
     def test_validation_matches_the_v2_declared_type(self):
         validate_answer("household_size", 3)

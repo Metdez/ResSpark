@@ -3,7 +3,7 @@ Hard-coded IRS resolution-path logic. No LLM judgment here — every number
 traces back to Form 433-A (OIC) line-item formulas (asset haircuts, the
 $1,000 bank reserve, the $3,450 vehicle equity exemption, the $11,980
 personal-effects deduction) and to published IRS collection policy
-(Guaranteed IA / Simple Payment Plan / PPIA / CNC thresholds).
+(Simple Payment Plan / CNC thresholds).
 
 Pipeline:  FinancialData --> calculate_income() --> calculate_allowable_expenses()
            --> calculate_net_disposable_income() --> calculate_net_realizable_equity()
@@ -125,8 +125,6 @@ def passes_compliance_gate(fd: FinancialData) -> tuple:
         reasons.append("Not all required tax returns are filed.")
     if fd.in_open_bankruptcy:
         reasons.append("Currently in an open bankruptcy proceeding.")
-    if fd.has_unexplained_deposits and fd.unexplained_deposits_monthly >= 200:
-        reasons.append(f"Unexplained deposits averaging ${fd.unexplained_deposits_monthly:,.0f}/mo need a source before filing.")
     return (len(reasons) == 0, reasons)
 
 
@@ -198,26 +196,6 @@ def determine_resolution_path(
     def full_pay_amount(months):
         return math.ceil((fd.total_tax_owed / months) * 100) / 100
 
-    # Guaranteed Installment Agreement: statutory tax-only and five-year tests
-    guaranteed_months = min(36, csed_months)
-    guaranteed_payment = full_pay_amount(guaranteed_months)
-    if (fd.csed_months_remaining > 0
-            and fd.income_tax_only
-            and fd.tax_only_balance is not None
-            and fd.tax_only_balance <= 10_000
-            and fd.filed_and_paid_timely_last_5_years
-            and not fd.installment_agreement_last_5_years
-            and ndi >= guaranteed_payment):
-        return Determination(
-            path="Guaranteed Installment Agreement",
-            reason="Income-tax balance excluding penalties and interest is $10,000 or less, "
-                   "the five-year history tests are met, and the full balance pays by the earlier "
-                   "of 36 months or the CSED.",
-            monthly_income=gross_income, monthly_expenses=expenses,
-            net_disposable_income=ndi, net_realizable_equity=nre,
-            suggested_offer_or_payment=guaranteed_payment,
-        )
-
     # Simple Payment Plan: full assessed balance, including penalties and interest, by CSED
     csed_payment = full_pay_amount(csed_months)
     if (fd.csed_months_remaining > 0 and fd.total_tax_owed <= 50_000
@@ -240,27 +218,11 @@ def determine_resolution_path(
             suggested_offer_or_payment=csed_payment,
         )
 
-    # Offer in Compromise: use the multiplier for the taxpayer's proposed payment terms.
-    offer_multiplier = 12 if fd.oic_payment_months <= 5 else 24
-    future_income_months = min(offer_multiplier, max(fd.csed_months_remaining, 0))
-    rcp = nre + (ndi * future_income_months)
-    if rcp < fd.total_tax_owed:
-        return Determination(
-            path="Offer in Compromise (Doubt as to Collectibility)",
-            reason=f"Reasonable Collection Potential (${rcp:,.0f}) is less than the balance owed "
-                   f"(${fd.total_tax_owed:,.0f}) — full payment isn't realistic within the collection window.",
-            monthly_income=gross_income, monthly_expenses=expenses,
-            net_disposable_income=ndi, net_realizable_equity=nre,
-            suggested_offer_or_payment=round(rcp, 2),
-        )
-
-    # A PPIA applies only after the full-pay-by-CSED calculation fails.
     return Determination(
-        path="Partial Payment Installment Agreement (PPIA)",
-        reason="Positive disposable income is not enough to pay the full balance by the CSED. "
-               "Payment is set at full disposable income and requires financial analysis; "
-               "subject to periodic financial re-review (IRM 5.14.2).",
+        path="MANUAL REVIEW — payment resolution needs review",
+        reason="The available data does not support an automatic payment-resolution selection.",
         monthly_income=gross_income, monthly_expenses=expenses,
         net_disposable_income=ndi, net_realizable_equity=nre,
-        suggested_offer_or_payment=round(ndi, 2),
+        suggested_offer_or_payment=0.0,
+        needs_manual_review=True,
     )

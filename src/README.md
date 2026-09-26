@@ -10,27 +10,25 @@ It looks at a client's income, monthly living costs, assets, IRS balance, and
 time remaining for the IRS to collect. It then suggests one of these paths:
 
 - Currently Not Collectible (CNC)
-- Installment Agreement
-- Offer in Compromise (OIC)
-- Partial Payment Installment Agreement (PPIA)
+- Simple or non-simple Installment Agreement
 - Compliance block or manual professional review
 
 ## How the client flow works
 
-1. The chat asks a short set of the existing V2 questions: household, location,
+1. The chat asks a short set of taxpayer questions: household, location,
    income type, housing, vehicles, major assets, return filing, and bankruptcy.
 2. Based on those answers, it asks for the right documents, such as pay stubs,
    bank statements, IRS transcripts, or mortgage statements.
 3. Document information fills the case data. If something important is still
    missing, the chat asks only that follow-up question.
-4. When the case data is complete, V5 runs the unchanged IRS decision logic and
-   shows the suggested path for professional review.
+4. When the case data is complete, V5 returns a suggested screening path or
+   sends the case to professional review.
 
 ## The important files
 
 | File | What it is for |
 |---|---|
-| `questions.py` | The 32 client questions. |
+| `questions.py` | The 28 client questions. |
 | `financial_data.py` | The complete financial record used by the calculator. |
 | `determination.py` | The IRS decision logic and calculations. |
 | `standards.py` | Thin facade that sends standards requests to the database-backed repository. |
@@ -48,7 +46,7 @@ The database is the source of truth.
 
 - `cases` holds one case per client situation.
 - `case_financial_data` holds the current financial facts used by the logic.
-- `question_definitions` lists the same 32 questions used in the chat.
+- `question_definitions` lists the same 28 questions used in the chat.
 - `documents` and `document_extractions` keep uploaded documents and what was
   found in them.
 - `determination_runs` saves each suggested result.
