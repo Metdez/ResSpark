@@ -6,7 +6,7 @@ export interface ResolutionResultsOptions {
   onStartOver: () => void;
 }
 
-const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const number = new Intl.NumberFormat("en-US");
 
 const escapeHtml = (value: unknown): string => String(value)
@@ -44,6 +44,17 @@ const renderFinancialSections = (sections: ResolutionCaseResult["financialSectio
         <dl class="financial-grid">${section.fields.map((field) => `<div><dt>${escapeHtml(field.label)}</dt><dd>${escapeHtml(formatValue(field.value, field.format))}</dd></div>`).join("")}</dl>
       </details>`).join("")}
   </div>`;
+
+const renderNeededDocuments = (result: ResolutionCaseResult): string => {
+  const needed = result.neededDocuments ?? [];
+  if (!needed.length) return "";
+  return `
+    <section class="summary-section detail-section needed-documents" aria-labelledby="needed-documents-title">
+      <div class="section-heading"><div><p class="section-kicker">Still needed</p><h2 id="needed-documents-title">Upload these to get a recommendation</h2></div><span>${needed.length} file${needed.length === 1 ? "" : "s"}</span></div>
+      <ul class="uploaded-document-list">${needed.map((document) => `
+        <li><span class="file-icon" aria-hidden="true">FILE</span><div><strong>${escapeHtml(document.title)}</strong><small>${escapeHtml(document.detail)}</small></div></li>`).join("")}</ul>
+    </section>`;
+};
 
 const renderDocuments = (result: ResolutionCaseResult): string => result.documents.length
   ? `<ul class="uploaded-document-list">${result.documents.map((document) => `
@@ -100,6 +111,8 @@ export function renderResolutionResults(root: HTMLElement, options: ResolutionRe
                 </div>
               </details>
             </section>
+
+            ${renderNeededDocuments(options.result)}
 
             <section class="summary-section detail-section case-data-section" aria-labelledby="case-data-title">
               <div class="section-heading"><div><p class="section-kicker">Canonical case record</p><h2 id="case-data-title">Full case data</h2></div><span>${fieldCount} fields</span></div>

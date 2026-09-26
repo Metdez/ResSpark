@@ -27,7 +27,10 @@ const result = (documentName = "account-transcript.pdf"): ResolutionCaseResult =
     id: "compliance",
     title: "Compliance & liability",
     description: "Eligibility facts.",
-    fields: [{ key: "total_tax_owed", label: "Total tax owed", value: 42_000, format: "currency" }],
+    fields: [
+      { key: "total_tax_owed", label: "Total tax owed", value: 42_000, format: "currency" },
+      { key: "cash_and_bank_balances", label: "Cash", value: 578.81, format: "currency" },
+    ],
   }],
 });
 
@@ -46,10 +49,27 @@ describe("resolution results", () => {
     resolutionDetails.querySelector("summary")!.click();
     expect(resolutionDetails.open).toBe(true);
     expect(resolutionDetails.textContent).toContain("Total assessed balance is $50,000 or less");
-    expect(root.querySelector(".case-data-section")?.textContent).toContain("$42,000");
+    expect(root.querySelector(".case-data-section")?.textContent).toContain("$42,000.00");
+    expect(root.querySelector(".case-data-section")?.textContent).toContain("$578.81");
+    expect(root.querySelector(".needed-documents")).toBeNull();
     expect(root.querySelector(".documents-section")?.textContent).toContain("account-transcript.pdf");
     expect(root.querySelector(".scenario-control")).toBeNull();
     expect(document.activeElement?.id).toBe("results-title");
+  });
+
+  it("names the files that would allow a recommendation", () => {
+    const root = document.createElement("main");
+    document.body.append(root);
+    const pending = result();
+    pending.outcome = { ...pending.outcome, id: "manual_payment", path: "Information still needed", shortLabel: "More information needed", status: "manual_review" };
+    pending.neededDocuments = [{ title: "Vehicle records", detail: "Upload registration and a current valuation for each vehicle." }];
+    renderResolutionResults(root, { result: pending, onStartOver: vi.fn() });
+
+    const needed = root.querySelector(".needed-documents");
+    expect(needed?.textContent).toContain("Upload these to get a recommendation");
+    expect(needed?.textContent).toContain("Vehicle records");
+    expect(needed?.textContent).toContain("current valuation");
+    expect(root.querySelector(".case-data-section")).not.toBeNull();
   });
 
   it("escapes document names before adding them to the page", () => {

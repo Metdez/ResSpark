@@ -11,6 +11,7 @@ Pipeline:  FinancialData --> calculate_income() --> calculate_allowable_expenses
 """
 
 from dataclasses import dataclass, field
+from decimal import Decimal, ROUND_HALF_UP
 import math
 from financial_data import FinancialData
 import standards
@@ -218,6 +219,21 @@ def determine_resolution_path(
             suggested_offer_or_payment=csed_payment,
         )
 
+    # Form 656-B (Rev. 4-2026) Section 8. A 5-month lump sum uses 12 months of
+    # remaining income. The 6-to-24-month option uses 24. Whole dollars only.
+    lump_sum = _whole_dollars(nre + ndi * 12)
+    periodic = _whole_dollars(nre + ndi * 24)
+    if 0 < lump_sum < fd.total_tax_owed:
+        return Determination(
+            path="Offer in Compromise",
+            reason="The balance cannot be full-paid by the collection deadline. "
+                   "The IRS lump-sum minimum offer is equity plus 12 months of remaining income.",
+            monthly_income=gross_income, monthly_expenses=expenses,
+            net_disposable_income=ndi, net_realizable_equity=nre,
+            suggested_offer_or_payment=float(lump_sum),
+            review_notes=[f"The 6-to-24-month minimum offer is ${periodic:,.0f}."],
+        )
+
     return Determination(
         path="MANUAL REVIEW — payment resolution needs review",
         reason="The available data does not support an automatic payment-resolution selection.",
@@ -226,3 +242,7 @@ def determine_resolution_path(
         suggested_offer_or_payment=0.0,
         needs_manual_review=True,
     )
+
+
+def _whole_dollars(amount: float) -> int:
+    return int(Decimal(str(amount)).quantize(Decimal("1"), rounding=ROUND_HALF_UP))

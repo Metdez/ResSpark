@@ -55,7 +55,7 @@ def _with_model(content, document_type, texts=None, env=None, payload=None):
 
 class DocumentParseTests(unittest.TestCase):
     def test_example_packets_fill_case_columns(self):
-        marcus = parse_packet(ROOT / "Examples/01_marcus_delgado_CNC")
+        marcus = parse_packet(ROOT / "examples/01_marcus_delgado_CNC")
         self.assertEqual(marcus["total_tax_owed"], 60000.0)
         self.assertEqual(marcus["tax_only_balance"], 44500.0)
         self.assertEqual(marcus["csed_months_remaining"], 79)
@@ -75,7 +75,7 @@ class DocumentParseTests(unittest.TestCase):
         self.assertFalse(marcus["has_unexplained_deposits"])
         self.assertEqual(marcus["unexplained_deposits_monthly"], 0.0)
 
-        whitfield = parse_packet(ROOT / "Examples/02_whitfield_gregory_OIC")
+        whitfield = parse_packet(ROOT / "examples/02_whitfield_gregory_OIC")
         self.assertEqual(whitfield["total_tax_owed"], 82600.0)
         self.assertEqual(whitfield["tax_only_balance"], 60000.0)
         self.assertEqual(whitfield["csed_months_remaining"], 55)
@@ -89,7 +89,7 @@ class DocumentParseTests(unittest.TestCase):
         self.assertEqual(whitfield["cash_and_bank_balances"], 2305.9)
         self.assertFalse(whitfield["has_unexplained_deposits"])
 
-        renata = parse_packet(ROOT / "Examples/03_renata_alves_streamlined_IA")
+        renata = parse_packet(ROOT / "examples/03_renata_alves_streamlined_IA")
         self.assertEqual(renata["total_tax_owed"], 28000.0)
         self.assertEqual(renata["tax_only_balance"], 24000.0)
         self.assertEqual(renata["csed_months_remaining"], 91)

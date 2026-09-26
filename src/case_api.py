@@ -37,6 +37,7 @@ _PATHS = {
     "Simple Payment Plan": ("simple_plan", "Simple payment plan"),
     "Non-Simple Installment Agreement": ("non_simple_installment", "Non-simple installment agreement"),
     "MANUAL REVIEW — payment resolution needs review": ("manual_payment", "Manual review"),
+    "Offer in Compromise": ("oic", "Offer in compromise"),
 }
 
 
@@ -49,16 +50,112 @@ def case_result(answers: dict, uploads: list[tuple[str, bytes, str]], metadata: 
     return result_for_row(row, _documents(uploads, metadata or []), errors, standards_repository)
 
 
+# These lines have no template. A missing value is screened as zero so a path
+# can still be suggested. ponytail: a household that does have one of these
+# lines is screened too low until a question or a document supplies it.
+# Health premiums and withholding are not here; a missing statement blocks.
+_ASSUMED_ZERO = (
+    "social_security_income", "pension_income", "other_income",
+    "interest_dividends_royalties", "distributions_income", "net_rental_income",
+    "child_support_received", "alimony_received", "actual_court_ordered_payments",
+    "actual_child_dependent_care", "actual_life_insurance_premiums",
+    "actual_delinquent_state_local_tax", "actual_secured_debts_other",
+    "actual_vehicle_operating", "actual_public_transportation",
+    "other_valuable_assets_value", "other_valuable_assets_loan",
+)
+
+# Titles match the document requests in intake_workflow.
+_FILES = {
+    "irs_transcripts": ("IRS account transcript", "Upload an IRS account transcript or balance notice. Include a wage and income transcript here if you have it."),
+    "bank_statements": ("Recent personal bank statements", "Upload statements for each of the most recent three months."),
+    "pay_stubs": ("Recent pay stubs and W-2", "Upload your recent pay stubs and latest W-2."),
+    "self_employment": ("Self-employment records", "Upload a recent profit-and-loss report, business bank statements, and the applicable Schedule C, E, or F."),
+    "real_property": ("Real-property records", "Upload a mortgage or HELOC statement if applicable, plus a property valuation or tax assessment."),
+    "lease": ("Lease agreement", "Upload your current residential lease agreement."),
+    "vehicle": ("Vehicle records", "Upload registration and a current valuation for each vehicle. Include a loan or lease statement only when one exists."),
+    "retirement": ("Retirement-account records", "Upload recent retirement-account and retirement-loan statements."),
+    "insurance": ("Life-insurance records", "Upload a cash-value statement and any policy-loan statement."),
+    "investments": ("Investment-account records", "Upload recent brokerage or investment-account statements."),
+    "health": ("Health insurance premium statement", "Upload a statement that shows the monthly premium."),
+}
+
+
+def _screenable(row: dict) -> tuple[dict, list[str]]:
+    """Copy a case and fill only the lines that can be screened without inventing a fact that was asked for."""
+    screened = dict(row)
+    notes = []
+
+    def known(key: str, value: object) -> None:
+        if screened.get(key) is None:
+            screened[key] = value
+
+    if screened.get("filing_status_married") is False:
+        known("filing_joint_offer", False)
+        known("age_spouse", 0)
+        known("gross_wages_spouse", 0.0)
+    elif screened.get("filing_status_married") is True and screened.get("gross_wages_spouse") is None:
+        known("gross_wages_spouse", 0.0)
+        notes.append("Spouse wages were not listed separately and were screened as zero.")
+    if screened.get("is_wage_earner") is False:
+        known("gross_wages_taxpayer", 0.0)
+        known("actual_current_taxes", 0.0)
+        known("pay_frequency", "")
+    if screened.get("is_self_employed") is False:
+        known("net_business_income", 0.0)
+    if screened.get("owns_home") is False and screened.get("rents_home") is False:
+        known("actual_housing_utilities", 0.0)
+    if screened.get("vehicle_count") == 0:
+        for key in (
+            "actual_vehicle_loan_lease", "actual_vehicle_operating",
+            "vehicle_market_value_total", "vehicle_loan_balance_total",
+        ):
+            known(key, 0.0)
+        known("vehicle_market_values", [])
+        known("vehicle_loan_balances", [])
+    elif screened.get("vehicle_count"):
+        known("actual_public_transportation", 0.0)
+        known("actual_vehicle_loan_lease", 0.0)
+        if screened.get("vehicle_loan_balances") is None and screened.get("vehicle_loan_balance_total") is None:
+            screened["vehicle_loan_balances"] = []
+            screened["vehicle_loan_balance_total"] = 0.0
+        elif screened.get("vehicle_loan_balances") is None:
+            screened["vehicle_loan_balances"] = []
+        elif screened.get("vehicle_loan_balance_total") is None:
+            screened["vehicle_loan_balance_total"] = sum(screened["vehicle_loan_balances"])
+        if screened.get("vehicle_market_values") is None and screened.get("vehicle_market_value_total") is not None:
+            screened["vehicle_market_values"] = []
+        if screened.get("vehicle_market_value_total") is None and screened.get("vehicle_market_values"):
+            screened["vehicle_market_value_total"] = sum(screened["vehicle_market_values"])
+    if screened.get("has_retirement_accounts") is False:
+        known("retirement_accounts_market_value", 0.0)
+        known("retirement_accounts_loan_balance", 0.0)
+    if screened.get("has_life_insurance_cash_value") is False:
+        known("life_insurance_cash_value", 0.0)
+        known("life_insurance_loan_balance", 0.0)
+    if screened.get("has_investment_accounts") is False:
+        known("investment_accounts_net", 0.0)
+    if screened.get("owns_home") is False and screened.get("has_real_property") is False:
+        known("real_property_market_value", 0.0)
+        known("real_property_loan_balance", 0.0)
+    assumed = [key for key in _ASSUMED_ZERO if screened.get(key) is None]
+    for key in assumed:
+        screened[key] = 0.0
+    if assumed:
+        notes.append("Income and expense lines that were not asked and not on a document were screened as zero.")
+    return screened, notes
+
+
 def result_for_row(row: dict, documents: list, errors: list, standards_repository=_DATABASE) -> dict:
-    """Screen a merged case row. A missing fact stays missing."""
+    """Screen a merged case row. A missing requested fact stays missing."""
+    screened, assumptions = _screenable(row)
     repository = None if standards_repository is _DATABASE else standards_repository
     try:
-        workflow = evaluate_case(row, repository)
+        workflow = evaluate_case(screened, repository)
     except ValueError as error:
         if standards_repository is not _DATABASE:
             return _unresolved(row, documents, errors, str(error))
         try:
-            workflow = _from_database(row)
+            workflow = _from_database(screened)
         except LookupError as db_error:
             return _unresolved(row, documents, errors, str(db_error))
         except Exception:
@@ -68,21 +165,22 @@ def result_for_row(row: dict, documents: list, errors: list, standards_repositor
 
     if workflow.status == "information_needed":
         missing = list(dict.fromkeys([*workflow.missing_question_ids, *workflow.missing_financial_fields]))
+        labels = [_label(key) for key in missing]
         notes = _file_notes(errors) + list(workflow.review_flags) + _compliance(row)
         outcome = _outcome(
             "manual_payment", "Information still needed", "More information needed", "manual_review",
-            "Some required facts are still missing, so no collection path was selected.",
+            "No collection path was selected. Still needed: " + "; ".join(labels) + ".",
             "Add the missing facts and submit the case again. " + _NEXT,
-            [_label(key) for key in missing], None, notes,
+            labels, None, notes,
         )
-        return _payload(row, documents, outcome)
+        return _payload(row, documents, outcome, _needed_documents(missing, row))
 
     determination = workflow.determination
     outcome_id, short = _PATHS.get(determination.path, ("manual_payment", "Manual review"))
     status = "blocked" if workflow.status == "blocked" else (
         "manual_review" if workflow.status == "ready_for_review" or errors else "potential_match"
     )
-    notes = _file_notes(errors) + list(workflow.review_flags)
+    notes = _file_notes(errors) + list(workflow.review_flags) + assumptions
     outcome = _outcome(
         outcome_id, determination.path, short, status, determination.reason, _NEXT,
         list(determination.review_notes) or [determination.reason], determination, notes,
@@ -119,14 +217,57 @@ def _unresolved(row: dict, documents: list, errors: list, reason: str) -> dict:
     return _payload(row, documents, outcome)
 
 
-def _payload(row: dict, documents: list, outcome: dict) -> dict:
+def _payload(row: dict, documents: list, outcome: dict, needed: list | None = None) -> dict:
     return {
         "caseLabel": "Tax resolution screening",
         "generatedAt": datetime.now(timezone.utc).isoformat(),
         "outcome": outcome,
         "documents": documents,
+        "neededDocuments": needed or [],
         "financialSections": _sections(row),
     }
+
+
+def _needed_documents(missing: list[str], row: dict) -> list[dict]:
+    found = []
+    seen = set()
+    for key in missing:
+        code = _file_code(key, row)
+        if code is None or code in seen:
+            continue
+        seen.add(code)
+        title, detail = _FILES[code]
+        found.append({"title": title, "detail": detail})
+    return found
+
+
+def _file_code(key: str, row: dict) -> str | None:
+    if key in {"total_tax_owed", "csed_months_remaining", "tax_only_balance"}:
+        return "irs_transcripts"
+    if key == "cash_and_bank_balances":
+        return "bank_statements"
+    if key in {"gross_wages_taxpayer", "actual_current_taxes"} and row.get("is_wage_earner") is not False:
+        return "pay_stubs"
+    if key == "net_business_income" and row.get("is_self_employed") is not False:
+        return "self_employment"
+    if key == "actual_housing_utilities":
+        if row.get("owns_home") is True or row.get("has_real_property") is True:
+            return "real_property"
+        if row.get("rents_home") is True:
+            return "lease"
+    if key in {"real_property_market_value", "real_property_loan_balance"}:
+        return "real_property"
+    if key in {"vehicle_market_value_total", "vehicle_market_values"}:
+        return "vehicle"
+    if key in {"retirement_accounts_market_value", "retirement_accounts_loan_balance"}:
+        return "retirement"
+    if key in {"life_insurance_cash_value", "life_insurance_loan_balance"}:
+        return "insurance"
+    if key == "investment_accounts_net":
+        return "investments"
+    if key == "actual_health_insurance_premiums":
+        return "health"
+    return None
 
 
 def _outcome(outcome_id, path, short, status, reason, next_step, requirements, determination, notes) -> dict:
@@ -197,6 +338,10 @@ def _sections(row: dict) -> list:
     for name in FinancialData.__dataclass_fields__:
         if name not in keys and row.get(name) not in (None, [], ""):
             keys.append(name)
+    for name, value in row.items():
+        if name.startswith("_") or name in keys or value in (None, [], ""):
+            continue
+        keys.append(name)
     fields = []
     for key in keys:
         value = row[key]

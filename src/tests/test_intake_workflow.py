@@ -182,7 +182,7 @@ class V5IntakeWorkflowTests(unittest.TestCase):
         self.assertEqual(result.status, "ready")
         self.assertEqual(result.determination.path, "Currently Not Collectible (CNC / Status 53)")
 
-    def test_full_payment_failure_requires_manual_review_until_oic_calculator_exists(self):
+    def test_a_balance_that_cannot_be_full_paid_uses_the_lump_sum_offer_minimum(self):
         row = canonical_zero_row()
         row.update({
             "state_of_residence": "FL",
@@ -199,10 +199,15 @@ class V5IntakeWorkflowTests(unittest.TestCase):
             "csed_months_remaining": 12,
         })
         result = evaluate_case(row, STANDARDS)
-        self.assertEqual(result.status, "ready_for_review")
-        self.assertEqual(result.determination.path, "MANUAL REVIEW — payment resolution needs review")
+        determination = result.determination
+        lump_sum = round(determination.net_realizable_equity + determination.net_disposable_income * 12)
+        self.assertEqual(result.status, "ready")
+        self.assertEqual(determination.path, "Offer in Compromise")
+        self.assertEqual(determination.suggested_offer_or_payment, float(lump_sum))
+        self.assertLess(lump_sum, row["total_tax_owed"])
+        self.assertIn("24", determination.review_notes[0])
 
-    def test_partial_payment_case_requires_manual_review_until_oic_calculator_exists(self):
+    def test_no_reduced_offer_when_the_lump_sum_minimum_meets_the_balance(self):
         row = canonical_zero_row()
         row.update({
             "state_of_residence": "FL",

@@ -2,6 +2,7 @@ export type ResolutionPathId =
   | "cnc"
   | "simple_plan"
   | "non_simple_installment"
+  | "oic"
   | "manual_equity"
   | "manual_payment"
   | "blocked";
@@ -44,10 +45,16 @@ export interface UploadedDocument {
   size: number;
 }
 
+export interface NeededDocument {
+  title: string;
+  detail: string;
+}
+
 export interface ResolutionCaseResult {
   caseLabel: string;
   generatedAt: string;
   outcome: ResolutionOutcome;
   documents: UploadedDocument[];
+  neededDocuments?: NeededDocument[];
   financialSections: FinancialSection[];
 }
