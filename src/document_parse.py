@@ -3,9 +3,9 @@
 ponytail: reads ReportLab text-show operators. Bank columns use the x y on `Tm`;
 every other field is read in draw order. A scanned PDF or another generator
 needs poppler (`pdftotext -layout`) instead.
-One earnings statement maps to the taxpayer. A second vehicle statement overwrites
-the first. Housing is the labeled rent or PITI; bank utility lines are not added.
-Only the Regular Gross Pay line is counted.
+One earnings statement maps to the taxpayer. Auto statements sum.
+Housing is the labeled rent or PITI; bank utility lines are not added.
+Gross pay is Regular Gross Pay, or Gross Pay when that is the line on the stub.
 """
 
 from __future__ import annotations
@@ -19,22 +19,51 @@ from pathlib import Path
 
 
 _PAY_PERIODS = {"weekly": 52, "biweekly": 26, "semimonthly": 24, "monthly": 12}
+_PAY_FREQUENCY = {
+    "weekly": "weekly",
+    "biweekly": "biweekly",
+    "everytwoweeks": "biweekly",
+    "semimonthly": "semimonthly",
+    "twiceamonth": "semimonthly",
+    "monthly": "monthly",
+}
 _TAX_LINES = ("Federal Income Tax", "Social Security Tax", "Medicare Tax", "State Income Tax")
 _MONEY = re.compile(r"\$[0-9,.-]+")
+# irs_transcripts is omitted: that slot holds both an account transcript and a wage transcript.
+_TYPE_HINTS = {
+    "bank_statements": "bank",
+    "personal_bank_statements": "bank",
+    "pay_stubs": "pay_stub",
+    "lease_statement": "lease",
+    "rent": "lease",
+    "mortgage_statement": "mortgage",
+    "real_property": "mortgage",
+    "auto_loan_statement": "auto",
+    "vehicle": "auto",
+    "health_insurance_statement": "health",
+}
 
 
 def parse_packet(directory: Path | str) -> dict:
     """Read every PDF in a client packet and return one case-column dict."""
+    parts = [parse_pdf(path) for path in sorted(Path(directory).glob("*.pdf"))]
+    return merge_documents(parts)
+
+
+def merge_documents(parts: list[dict]) -> dict:
+    """Combine parsed documents. A second auto statement adds to the first."""
     row: dict = {}
     banks = []
+    autos = []
     employer = None
     wage_gross = None
     stub = None
-    for path in sorted(Path(directory).glob("*.pdf")):
-        part = parse_pdf(path)
+    for part in parts:
         kind = part.pop("_kind")
         if kind == "bank":
             banks.append(part)
+        elif kind == "auto":
+            autos.append(part)
         elif kind == "pay_stub":
             employer = part.pop("_employer")
             stub = part
@@ -49,70 +78,71 @@ def parse_packet(directory: Path | str) -> dict:
         row.update(stub)
     if banks:
         row.update(_combine_banks(banks, employer))
+    if autos:
+        row.update(_combine_autos(autos))
     return row
 
 
-def parse_pdf(path: Path | str) -> dict:
-    """Parse one example PDF. `_kind` says which template matched."""
+def parse_pdf(path: Path | str, document_type: str | None = None) -> dict:
+    """Parse one PDF. `_kind` says which template matched."""
     texts, rows = _page_text(Path(path).read_bytes())
-    titles = {text.strip() for text in texts}
-    if "Account Transcript" in titles:
+    kind = _classify(texts, document_type)
+    if not kind:
+        raise ValueError(f"No template matched {path}")
+    return _from_kind(kind, texts, rows)
+
+
+def parse_texts(texts: list[str], rows: dict | None = None, document_type: str | None = None) -> dict:
+    """Parse document text already pulled out of a PDF."""
+    kind = _classify(texts, document_type)
+    if not kind:
+        raise ValueError("No template matched")
+    return _from_kind(kind, texts, rows or {})
+
+
+def _has(head: str, phrase: str) -> bool:
+    return re.search(rf"\b{re.escape(phrase)}\b", head) is not None
+
+
+def _classify(texts: list[str], document_type: str | None) -> str | None:
+    head = " ".join(text.strip().lower() for text in texts[:12])
+    if (_has(head, "wage") and _has(head, "income")) or _has(head, "wage and tax statement"):
+        return "wage"
+    if _has(head, "account transcript") or _has(head, "balance notice"):
+        return "account"
+    if _has(head, "checking") or _has(head, "bank statement") or _has(head, "account statement"):
+        return "bank"
+    if _has(head, "earnings statement") or _has(head, "pay stub") or _has(head, "paystub"):
+        return "pay_stub"
+    if _has(head, "rent") or _has(head, "lease"):
+        return "lease"
+    if _has(head, "mortgage"):
+        return "mortgage"
+    if _has(head, "auto loan") or _has(head, "vehicle loan"):
+        return "auto"
+    if _has(head, "premium") or _has(head, "health insurance"):
+        return "health"
+    return _TYPE_HINTS.get(document_type or "")
+
+
+def _from_kind(kind: str, texts: list[str], rows: dict) -> dict:
+    if kind == "account":
         return {"_kind": "account", **_account_transcript(texts)}
-    if "Wage & Income Transcript" in titles:
+    if kind == "wage":
         return {"_kind": "wage", **_wage_transcript(texts)}
-    if "Personal Checking Account Statement" in titles:
+    if kind == "bank":
         return {"_kind": "bank", **_bank_statement(texts, rows)}
-    if "Earnings Statement" in titles:
+    if kind == "pay_stub":
         return {"_kind": "pay_stub", **_pay_stub(texts)}
-    if "Monthly Rent Statement" in titles:
-        found = _require(_pairs(texts), "Monthly Rent", "Property Address")
-        return {
-            "_kind": "lease",
-            "actual_housing_utilities": _money(found["Monthly Rent"]),
-            "state_of_residence": _state_code(found["Property Address"]),
-            "rents_home": True,
-            "owns_home": False,
-        }
-    if "Monthly Mortgage Statement" in titles:
-        found = _require(
-            _pairs(texts),
-            "Monthly Payment (PITI)",
-            "Current Principal Balance",
-            "Estimated Market Value",
-            "Property Address",
-        )
-        return {
-            "_kind": "mortgage",
-            "actual_housing_utilities": _money(found["Monthly Payment (PITI)"]),
-            "real_property_loan_balance": _money(found["Current Principal Balance"]),
-            "real_property_market_value": _money(found["Estimated Market Value"]),
-            "state_of_residence": _state_code(found["Property Address"]),
-            "owns_home": True,
-            "rents_home": False,
-            "has_real_property": True,
-        }
-    if "Auto Loan Statement" in titles:
-        found = _require(_pairs(texts), "Monthly Payment", "Remaining Balance")
-        balance = _money(found["Remaining Balance"])
-        row = {
-            "_kind": "auto",
-            "actual_vehicle_loan_lease": _money(found["Monthly Payment"]),
-            "vehicle_loan_balances": [balance],
-            "vehicle_loan_balance_total": balance,
-            "vehicle_count": 1,
-        }
-        if "Est. Market Value" in found:
-            value = _money(found["Est. Market Value"])
-            row["vehicle_market_values"] = [value]
-            row["vehicle_market_value_total"] = value
-        return row
-    if "Premium Billing Statement" in titles:
-        found = _require(_pairs(texts), "Monthly Premium")
-        return {
-            "_kind": "health",
-            "actual_health_insurance_premiums": _money(found["Monthly Premium"]),
-        }
-    raise ValueError(f"No template matched {path}")
+    if kind == "lease":
+        return _lease(texts)
+    if kind == "mortgage":
+        return _mortgage(texts)
+    if kind == "auto":
+        return _auto(texts)
+    if kind == "health":
+        return _health(texts)
+    raise ValueError("No template matched")
 
 
 def _account_transcript(texts: list[str]) -> dict:
@@ -146,17 +176,88 @@ def _wage_transcript(texts: list[str]) -> dict:
 
 def _pay_stub(texts: list[str]) -> dict:
     found = _require(_pairs(texts), "Pay Frequency")
-    frequency = found["Pay Frequency"].lower().replace("-", "").replace(" ", "")
-    if frequency not in _PAY_PERIODS:
-        raise ValueError(f"Unknown pay frequency {found['Pay Frequency']}")
-    gross = Decimal(str(_labeled_current(texts, "Regular Gross Pay")))
-    taxes = sum(Decimal(str(_labeled_current(texts, label))) for label in _TAX_LINES)
+    raw_frequency = found["Pay Frequency"]
+    frequency = _PAY_FREQUENCY.get(raw_frequency.lower().replace("-", "").replace(" ", ""))
+    if frequency is None:
+        raise ValueError(f"Unknown pay frequency {raw_frequency}")
+    gross = Decimal(str(_first_labeled(texts, "Regular Gross Pay", "Gross Pay")))
+    taxes = sum(_labeled_amount(texts, label) for label in _TAX_LINES)
     return {
         "_employer": texts[0].strip(),
         "pay_frequency": frequency,
         "gross_wages_taxpayer": _to_monthly(gross, frequency),
         "actual_current_taxes": _to_monthly(abs(taxes), frequency),
     }
+
+
+def _lease(texts: list[str]) -> dict:
+    found = _pairs(texts)
+    return {
+        "_kind": "lease",
+        "actual_housing_utilities": _money(_pick(found, "Monthly Rent", "Rent")),
+        "state_of_residence": _state_code(_pick(found, "Property Address")),
+        "rents_home": True,
+        "owns_home": False,
+    }
+
+
+def _mortgage(texts: list[str]) -> dict:
+    found = _pairs(texts)
+    return {
+        "_kind": "mortgage",
+        "actual_housing_utilities": _money(_pick(found, "Monthly Payment (PITI)", "PITI")),
+        "real_property_loan_balance": _money(_pick(found, "Current Principal Balance", "Principal Balance")),
+        "real_property_market_value": _money(_pick(found, "Estimated Market Value")),
+        "state_of_residence": _state_code(_pick(found, "Property Address")),
+        "owns_home": True,
+        "rents_home": False,
+        "has_real_property": True,
+    }
+
+
+def _auto(texts: list[str]) -> dict:
+    found = _pairs(texts)
+    balance = _money(_pick(found, "Remaining Balance", "Payoff Balance", "Loan Balance"))
+    row = {
+        "_kind": "auto",
+        "actual_vehicle_loan_lease": _money(_pick(found, "Monthly Payment")),
+        "vehicle_loan_balances": [balance],
+        "vehicle_loan_balance_total": balance,
+        "vehicle_count": 1,
+    }
+    if "Est. Market Value" in found:
+        value = _money(found["Est. Market Value"])
+        row["vehicle_market_values"] = [value]
+        row["vehicle_market_value_total"] = value
+    return row
+
+
+def _health(texts: list[str]) -> dict:
+    found = _pairs(texts)
+    return {
+        "_kind": "health",
+        "actual_health_insurance_premiums": _money(_pick(found, "Monthly Premium", "Premium")),
+    }
+
+
+def _combine_autos(statements: list[dict]) -> dict:
+    balances: list[float] = []
+    values: list[float] = []
+    payment = Decimal(0)
+    for item in statements:
+        payment += Decimal(str(item["actual_vehicle_loan_lease"]))
+        balances.extend(item["vehicle_loan_balances"])
+        values.extend(item.get("vehicle_market_values") or [])
+    row = {
+        "actual_vehicle_loan_lease": float(payment),
+        "vehicle_loan_balances": balances,
+        "vehicle_loan_balance_total": float(sum((Decimal(str(value)) for value in balances), Decimal(0))),
+        "vehicle_count": len(statements),
+    }
+    if values:
+        row["vehicle_market_values"] = values
+        row["vehicle_market_value_total"] = float(sum((Decimal(str(value)) for value in values), Decimal(0)))
+    return row
 
 
 def _bank_statement(texts: list[str], rows: dict) -> dict:
@@ -270,6 +371,13 @@ def _require(found: dict[str, str], *labels: str) -> dict[str, str]:
     return found
 
 
+def _pick(found: dict[str, str], *labels: str) -> str:
+    for label in labels:
+        if label in found:
+            return found[label]
+    raise ValueError(f"Missing {labels[0]}")
+
+
 def _next_money(texts: list[str], start: int) -> float:
     for text in texts[start + 1:start + 6]:
         if "$" in text:
@@ -277,11 +385,20 @@ def _next_money(texts: list[str], start: int) -> float:
     raise ValueError(f"No amount after {texts[start]!r}")
 
 
-def _labeled_current(texts: list[str], label: str) -> float:
+def _first_labeled(texts: list[str], *labels: str) -> float:
+    for label in labels:
+        for index, text in enumerate(texts):
+            if text == label:
+                return _next_money(texts, index)
+    raise ValueError(f"Missing {labels[0]}")
+
+
+def _labeled_amount(texts: list[str], label: str) -> Decimal:
+    """Missing withholding lines are zero. A present line with no amount still fails."""
     for index, text in enumerate(texts):
         if text == label:
-            return _next_money(texts, index)
-    raise ValueError(f"Missing {label}")
+            return Decimal(str(_next_money(texts, index)))
+    return Decimal(0)
 
 
 def _money(value: str) -> float:
