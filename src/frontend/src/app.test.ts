@@ -79,7 +79,7 @@ describe("intake interface", () => {
     expect(root.querySelector("#answer")?.tagName).toBe("MD-OUTLINED-SELECT");
   });
 
-  it("discards an in-progress questionnaire when Save and exit is confirmed", () => {
+  it("discards an in-progress questionnaire when the wordmark is confirmed", () => {
     const root = document.createElement("main");
     document.body.append(root);
     vi.spyOn(window, "confirm").mockReturnValue(true);
@@ -87,7 +87,7 @@ describe("intake interface", () => {
 
     clickButton(root, "Get started");
     clickButton(root, "Yes");
-    clickButton(root, "Save and exit");
+    root.querySelector<HTMLAnchorElement>(".wordmark")!.click();
 
     expect(root.textContent).toContain("John Doe wants to understand your tax situation better");
     expect(root.textContent).not.toContain("Are you married?");
