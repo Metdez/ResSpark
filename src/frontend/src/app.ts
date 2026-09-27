@@ -134,7 +134,6 @@ export function createApp(root: HTMLElement, processCase: CaseProcessor = submit
       <main class="intake-shell">
         <header class="app-header">
           <a class="wordmark" href="#" aria-label="ResSpark home">ResSpark</a>
-          <button class="text-button" type="button">Save and exit</button>
         </header>
         <section class="progress-region" aria-label="Intake progress">
           <div class="progress-label">${question.section} <span>· ${step + 1} of ${applicable.length}</span></div>
@@ -153,7 +152,6 @@ export function createApp(root: HTMLElement, processCase: CaseProcessor = submit
         <footer>Information is used to help a tax professional evaluate possible next steps.</footer>
       </main>`;
 
-    root.querySelector<HTMLButtonElement>(".text-button")!.addEventListener("click", exit);
     root.querySelector<HTMLAnchorElement>(".wordmark")!.addEventListener("click", (event) => {
       event.preventDefault();
       exit();
