@@ -63,15 +63,10 @@ def push_case(result: dict, uploads: list[tuple[str, bytes, str]]) -> str | None
         update["State"] = state.upper()
     post_json("case update", "UpdateCase/UpdateCase", update)
 
-    post_json("screening note", "CaseActivity/Activity", {
+    post_json("case note", "CaseActivity/Activity", {
         "CaseID": case_id, "ActivityType": "General", "Pin": True,
         "Subject": f"ResSpark screening: {outcome['path']}",
-        "Comment": _summary(result),
-    })
-    post_json("case data note", "CaseActivity/Activity", {
-        "CaseID": case_id, "ActivityType": "General",
-        "Subject": "ResSpark case data (Form 433-A)",
-        "Comment": _case_data(result),
+        "Comment": _comment(result),
     })
 
     documents = result.get("documents", [])
@@ -93,36 +88,61 @@ def push_case(result: dict, uploads: list[tuple[str, bytes, str]]) -> str | None
     return f"Sent to IRS Logics case {case_id}."
 
 
-def _summary(result: dict) -> str:
+_STATUS = {
+    "potential_match": "Possible match",
+    "manual_review": "Needs professional review",
+    "blocked": "Blocked",
+}
+_NUMBERS = (
+    ("Monthly income", "monthlyIncome"), ("Monthly expenses", "monthlyExpenses"),
+    ("Net disposable income", "netDisposableIncome"), ("Net realizable equity", "netRealizableEquity"),
+    ("Suggested offer or payment", "suggestedOfferOrPayment"),
+)
+
+
+def _comment(result: dict) -> str:
     outcome = result["outcome"]
     lines = [
-        f"Path: {outcome['path']}",
-        f"Status: {outcome['status']}",
-        f"Reason: {outcome['reason']}",
+        "RESSPARK SCREENING",
+        "Suggested path for professional review, not a filing decision.",
+        "",
+        f"Suggested path: {outcome['path']}",
+        f"Status: {_STATUS.get(outcome['status'], outcome['status'])}",
+        f"Why: {outcome['reason']}",
     ]
-    for label, key in (
-        ("Monthly income", "monthlyIncome"), ("Monthly expenses", "monthlyExpenses"),
-        ("Net disposable income", "netDisposableIncome"), ("Net realizable equity", "netRealizableEquity"),
-        ("Suggested offer or payment", "suggestedOfferOrPayment"),
-    ):
-        if outcome.get(key) is not None:
-            lines.append(f"{label}: ${outcome[key]:,.2f}")
-    for item in result.get("neededDocuments", []):
-        lines.append(f"Still needed: {item['title']} - {item['detail']}")
-    for note in outcome.get("reviewNotes", []):
-        lines.append(f"Review note: {note}")
-    lines.append("Suggested path for professional review, not a filing decision.")
-    return "\n".join(lines)
-
-
-def _case_data(result: dict) -> str:
-    lines = []
+    numbers = [(label, outcome[key]) for label, key in _NUMBERS if outcome.get(key) is not None]
+    if numbers:
+        lines += ["", "KEY NUMBERS"] + [f"  {label}: ${value:,.2f}" for label, value in numbers]
+    if result.get("neededDocuments"):
+        lines += ["", "STILL NEEDED"]
+        lines += [f"  - {item['title']}: {item['detail']}" for item in result["neededDocuments"]]
+    if outcome.get("reviewNotes"):
+        lines += ["", "REVIEW NOTES"] + [f"  - {note}" for note in outcome["reviewNotes"]]
+    lines += ["", "CASE DATA (FORM 433-A)"]
     for section in result["sourceOfTruth"]["fieldSections"]:
-        lines.append(f"== {section['title']} ==")
+        lines += ["", section["title"]]
+        missing = []
         for field in section["fields"]:
-            source = ", ".join(item["label"] for item in field.get("sources", []))
-            lines.append(f"{field['label']}: {_shown(field)} ({source})")
+            if field["value"] in (None, ""):
+                missing.append(field["label"])
+            else:
+                separator = " " if field["label"].endswith("?") else ": "
+                lines.append(f"  {field['label']}{separator}{_shown(field)}{_source(field)}")
+        if missing:
+            lines.append("  Not provided: " + "; ".join(missing))
     return "\n".join(lines)
+
+
+def _source(field: dict) -> str:
+    kinds = {item.get("kind") for item in field.get("sources", [])}
+    documents = [item["documentName"] for item in field.get("sources", []) if item.get("documentName")]
+    if documents:
+        return f"  [from {', '.join(documents)}]"
+    if "assumption" in kinds:
+        return "  [assumed zero]"
+    if "derived" in kinds:
+        return "  [derived from answers]"
+    return ""
 
 
 def _shown(field: dict) -> str:

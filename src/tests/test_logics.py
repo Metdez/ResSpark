@@ -63,7 +63,7 @@ def _whitfield():
 
 
 class LogicsTests(unittest.TestCase):
-    def test_a_packet_sends_the_case_update_two_notes_and_every_file(self):
+    def test_a_packet_sends_the_case_update_one_pinned_note_and_every_file(self):
         result, uploads = _whitfield()
         recorder = Recorder()
         with patch.dict(os.environ, ENV), patch("urllib.request.urlopen", recorder):
@@ -76,16 +76,27 @@ class LogicsTests(unittest.TestCase):
         [update] = recorder.to("UpdateCase/UpdateCase")
         self.assertEqual(json.loads(update.data), {"CaseID": 52103, "TaxAmount": 82600, "State": "OH"})
 
-        summary, data = [json.loads(r.data) for r in recorder.to("CaseActivity/Activity")]
-        self.assertEqual(summary["CaseID"], 52103)
-        self.assertEqual(summary["ActivityType"], "General")
-        self.assertTrue(summary["Pin"])
-        self.assertIn(result["outcome"]["path"], summary["Subject"])
-        self.assertIn("professional review", summary["Comment"])
+        [activity] = recorder.to("CaseActivity/Activity")
+        note = json.loads(activity.data)
+        self.assertEqual(note["CaseID"], 52103)
+        self.assertEqual(note["ActivityType"], "General")
+        self.assertTrue(note["Pin"])
+        self.assertIn(result["outcome"]["path"], note["Subject"])
+        comment = note["Comment"]
+        self.assertTrue(comment.startswith("RESSPARK SCREENING\nSuggested path for professional review"))
+        self.assertIn(f"\nSuggested path: {result['outcome']['path']}\n", comment)
+        self.assertIn("\nStatus: Possible match\n", comment)
+        self.assertIn("\nKEY NUMBERS\n  Monthly income: $", comment)
+        self.assertLess(comment.index("REVIEW NOTES"), comment.index("CASE DATA (FORM 433-A)"))
         for section in result["sourceOfTruth"]["fieldSections"]:
-            self.assertIn(f"== {section['title']} ==", data["Comment"])
-        self.assertIn("$2,305.90", data["Comment"])
-        self.assertIn("Not provided", data["Comment"])
+            self.assertIn(f"\n\n{section['title']}\n", comment)
+        self.assertIn("\n  What county do you live in? Franklin County\n", comment)
+        self.assertIn("\n  Gross wages taxpayer: $4,200.00  [from ", comment)
+        self.assertIn("  [from 03_Bank_Statement_Month", comment)
+        self.assertIn("$2,305.90", comment)
+        self.assertIn("  [assumed zero]", comment)
+        self.assertIn("\n  Not provided: ", comment)
+        self.assertNotIn("None", comment)
 
         documents = recorder.to(UPLOAD)
         self.assertEqual(len(documents), len(uploads))
@@ -110,8 +121,7 @@ class LogicsTests(unittest.TestCase):
             note = push_case(result, uploads)
 
         self.assertEqual(len(recorder.to(UPLOAD)), len(uploads))
-        self.assertIn("screening note failed (HTTP 403)", note)
-        self.assertIn("case data note failed (HTTP 403)", note)
+        self.assertIn("case note failed (HTTP 403)", note)
         self.assertNotIn("Sent to", note)
 
     def test_a_reply_without_success_counts_as_a_failure(self):

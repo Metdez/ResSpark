@@ -52,7 +52,7 @@ The intake screen posts to `POST /api/cases`. Start that process, then the front
 python src/case_api.py
 ```
 
-After each submit the API also writes the case to IRS Logics when `IRS_LOGICS_KEY`, `IRS_LOGICS_SECRET`, and `IRS_LOGICS_CASEID_DEMO` are set (`.env` locally; the project environment on Vercel). It updates the case tax amount and state, adds two case activities (a pinned screening summary and the full case data by Form 433-A section), and uploads each file as a case document. Files over 6 MB are skipped. The result page gets one review note saying the case was sent or which step failed. A Logics failure never changes the screening result.
+After each submit the API also writes the case to IRS Logics when `IRS_LOGICS_KEY`, `IRS_LOGICS_SECRET`, and `IRS_LOGICS_CASEID_DEMO` are set (`.env` locally; the project environment on Vercel). It updates the case tax amount and state, adds one pinned case activity (the screening summary, then the full case data by Form 433-A section), and uploads each file as a case document. Files over 6 MB are skipped. The result page gets one review note saying the case was sent or which step failed. A Logics failure never changes the screening result.
 
 ```bash
 cd src/frontend
