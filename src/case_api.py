@@ -20,6 +20,7 @@ import tempfile
 from document_parse import parse_uploads_with_evidence
 from financial_data import FinancialData
 from intake_workflow import QUESTION_BY_ID, evaluate_case, validate_answer
+from logics import push_case
 from standards_repository import PostgresStandardsRepository
 
 
@@ -51,7 +52,7 @@ def _load_local_environment(path: Path | None = None) -> None:
         if not line or line.startswith("#") or "=" not in line:
             continue
         key, value = line.split("=", 1)
-        os.environ.setdefault(key.strip(), value.strip().strip("\"'"))
+        os.environ.setdefault(key.strip(), value.split(" #", 1)[0].strip().strip("\"'"))
 
 
 def case_result(answers: dict, uploads: list[tuple[str, bytes, str]], metadata: list | None = None,
@@ -271,9 +272,13 @@ def response_for(content_type: str, body: bytes) -> tuple[int, dict]:
     """Turn one multipart submission into a status and JSON body."""
     try:
         answers, uploads, metadata = _read_form(content_type, body)
-        return 200, case_result(answers, uploads, metadata)
+        result = case_result(answers, uploads, metadata)
     except ValueError as error:
         return 400, {"error": str(error)}
+    note = push_case(result, uploads)
+    if note:
+        result["outcome"]["reviewNotes"].append(note)
+    return 200, result
 
 
 def _from_database(row: dict):

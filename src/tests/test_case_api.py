@@ -93,7 +93,8 @@ class CaseApiTests(unittest.TestCase):
             [(LEASE.name, "application/pdf", lease), ("notes.png", "image/png", b"")],
         )
 
-        status, payload = response_for(content_type, body)
+        with patch.dict(os.environ, {"IRS_LOGICS_KEY": ""}):
+            status, payload = response_for(content_type, body)
 
         self.assertEqual(status, 200)
         self.assertEqual(payload["outcome"]["status"], "manual_review")
