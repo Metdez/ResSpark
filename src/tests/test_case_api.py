@@ -1,16 +1,19 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 import sys
+import tempfile
 import unittest
+from unittest.mock import patch
 
 
 SRC = Path(__file__).resolve().parents[1]
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from case_api import response_for, result_for_row
+from case_api import _load_local_environment, response_for, result_for_row
 from document_parse import parse_packet
 from test_intake_workflow import STANDARDS, canonical_zero_row
 
@@ -43,6 +46,15 @@ def _body(fields, files):
 
 
 class CaseApiTests(unittest.TestCase):
+    def test_local_environment_is_dynamic_and_does_not_override_process_settings(self):
+        with tempfile.TemporaryDirectory() as folder:
+            env_file = Path(folder) / ".env"
+            env_file.write_text('DATABASE_URL="from-file"\nSCIFORIUM_API_KEY=local-key\n', encoding="utf-8")
+            with patch.dict(os.environ, {"DATABASE_URL": "from-process"}, clear=True):
+                _load_local_environment(env_file)
+                self.assertEqual(os.environ["DATABASE_URL"], "from-process")
+                self.assertEqual(os.environ["SCIFORIUM_API_KEY"], "local-key")
+
     def test_upload_is_read_and_a_blank_file_is_named(self):
         lease = LEASE.read_bytes()
         body, content_type = _body(

@@ -501,6 +501,20 @@ class DocumentParseTests(unittest.TestCase):
         self.assertLessEqual(len(field["snippet"]), 240)
         self.assertTrue(field["usedInCanonical"])
 
+        whitfield = ROOT / "examples/02_whitfield_gregory_OIC"
+        _row, _errors, evidence = parse_uploads_with_evidence([
+            ("transcript.pdf", whitfield / "01_IRS_Account_Transcript.pdf"),
+            ("lease.pdf", whitfield / "05_Lease_Statement.pdf"),
+        ])
+        fields = {
+            field["key"]: field["snippet"]
+            for document in evidence
+            for field in document["fields"]
+        }
+        self.assertIn("3315 Olentangy River Rd", fields["state_of_residence"])
+        self.assertNotIn("$1,200.00", fields["state_of_residence"])
+        self.assertEqual(fields["tax_only_balance"].count("$20,000.00"), 3)
+
     def test_unreadable_file_is_named_and_the_rest_are_parsed(self):
         lease = ROOT / "examples/01_marcus_delgado_CNC/05_Lease_Statement.pdf"
 

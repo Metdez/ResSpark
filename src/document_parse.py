@@ -367,13 +367,21 @@ def _source_snippet(texts: list[str], labels: tuple[str, ...]) -> str | None:
             normalized = text.strip().casefold()
             if normalized == label.casefold() or normalized.startswith(label.casefold() + ":"):
                 candidates = [item.strip() for item in texts[index + 1:index + 5] if item.strip()]
-                following = "" if "$" in text else next(
-                    (item for item in candidates if "$" in item), candidates[0] if candidates else "",
-                )
+                if "$" in text:
+                    following = ""
+                elif label.isdigit():
+                    following = next((item for item in candidates if "$" in item), "")
+                else:
+                    following = candidates[0] if candidates else ""
                 chunk = text.strip() if not following else f"{text.strip()}: {following}"
+                if label.isdigit():
+                    period = next(
+                        (item.strip() for item in reversed(texts[:index]) if item.strip().startswith("Tax Period:")),
+                        "",
+                    )
+                    chunk = f"{period} · {chunk}" if period else chunk
                 if chunk not in chunks:
                     chunks.append(chunk)
-                break
     if not chunks:
         return None
     return " · ".join(chunks)[:_SNIPPET_LIMIT]

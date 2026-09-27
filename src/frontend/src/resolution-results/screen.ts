@@ -1,6 +1,7 @@
 import type { SelectedDocument } from "../case-processing";
 import type {
   CalculationSection,
+  DocumentEvidence,
   FieldSource,
   FinancialSection,
   ResolutionCaseResult,
@@ -67,6 +68,17 @@ const renderSources = (sources: FieldSource[]): string => sources.map((source) =
     ${source.kind === "document" ? `<small>${source.snippet ? escapeHtml(source.snippet) : "Exact source text unavailable."}</small>` : ""}
   </span>`).join("");
 
+const renderAuditFieldSection = (section: FinancialSection, title: string, id: string): string => `
+  <section class="audit-data-group" id="${id}" aria-labelledby="${id}-title">
+    <header><div><h2 id="${id}-title">${escapeHtml(title)}</h2><p>${escapeHtml(section.description)}</p></div><span>${section.fields.length} fields</span></header>
+    <dl class="audit-field-grid">${section.fields.map((field) => `
+      <div class="audit-field">
+        <div class="audit-field-heading"><dt>${escapeHtml(field.label)}</dt><dd>${escapeHtml(formatValue(field.value, field.format))}</dd></div>
+        <code>${escapeHtml(field.key)}</code>
+        <div class="field-sources">${renderSources(field.sources ?? [])}</div>
+      </div>`).join("")}</dl>
+  </section>`;
+
 const renderNeededDocuments = (result: ResolutionCaseResult): string => {
   const needed = result.neededDocuments ?? [];
   if (!needed.length) return "";
@@ -113,10 +125,9 @@ const formatCalculationInput = (label: string, value: string | number | boolean 
   return /people|months|count/i.test(label) ? number.format(value) : money.format(value);
 };
 
-const renderDocumentEvidence = (result: ResolutionCaseResult): string => {
-  const evidence = result.sourceOfTruth.documentEvidence;
+const renderDocumentEvidence = (evidence: DocumentEvidence[], className = ""): string => {
   if (!evidence.length) return '<p class="empty-state">No source documents were supplied.</p>';
-  return `<div class="evidence-list">${evidence.map((document) => `
+  return `<div class="evidence-list${className ? ` ${className}` : ""}">${evidence.map((document) => `
     <article class="evidence-card">
       <header><div><strong>${escapeHtml(document.name)}</strong><small>${escapeHtml(document.detectedType || document.categoryLabel)}</small></div><span class="evidence-status status-${escapeHtml(document.status)}">${document.status === "parsed" ? "Parsed" : "Needs review"}</span></header>
       ${document.error ? `<p class="document-error">${escapeHtml(document.error)}</p>` : ""}
@@ -176,7 +187,7 @@ export function renderResolutionResults(root: HTMLElement, options: ResolutionRe
     const outcome = options.result.outcome;
     const copy = statusCopy(outcome);
     const resultTitle = outcome.status === "potential_match"
-      ? `Your screening result is <mark class="result-path-highlight">${escapeHtml(outcome.shortLabel)}</mark>.`
+      ? `You may be qualified for a <mark class="result-path-highlight">${escapeHtml(outcome.shortLabel)}</mark>.`
       : escapeHtml(copy.title);
     const fieldCount = options.result.financialSections.reduce((total, section) => total + section.fields.length, 0);
     return `
@@ -188,10 +199,13 @@ export function renderResolutionResults(root: HTMLElement, options: ResolutionRe
       </section>
       <div class="results-content">
         <section class="outcome-card outcome-${outcome.status}" aria-labelledby="results-title">
-          <div class="outcome-heading"><div class="outcome-icon" aria-hidden="true">${outcome.status === "potential_match" ? "✓" : outcome.status === "blocked" ? "!" : "↗"}</div><div class="outcome-labels"><p class="eyebrow">${copy.eyebrow}</p><span class="selected-resolution-badge">Screening result</span></div></div>
-          <div class="outcome-copy"><h1 id="results-title" tabindex="-1">${resultTitle}</h1><p class="outcome-path">${escapeHtml(outcome.path)}</p><p class="outcome-reason">${escapeHtml(outcome.reason)}</p></div>
-          <div class="outcome-actions"><button class="audit-button" type="button" data-show-truth>${auditIcon}<span><strong>View source of truth</strong><small>See the data, documents, and calculation trail</small></span><span aria-hidden="true">→</span></button></div>
-          <details class="requirements-panel"><summary><span>Professional review details</span><span aria-hidden="true">+</span></summary><div><p>${escapeHtml(outcome.nextStep)}</p>${outcome.requirements.length ? `<ul>${outcome.requirements.map((item) => `<li><span aria-hidden="true">✓</span>${escapeHtml(item)}</li>`).join("")}</ul>` : ""}${outcome.reviewNotes.length ? `<ul class="review-notes">${outcome.reviewNotes.map((note) => `<li>${escapeHtml(note)}</li>`).join("")}</ul>` : ""}</div></details>
+          <div class="outcome-heading"><div class="outcome-icon" aria-hidden="true">${outcome.status === "potential_match" ? "✓" : outcome.status === "blocked" ? "!" : "↗"}</div><div class="outcome-labels"><p class="eyebrow">${copy.eyebrow}</p><span class="selected-resolution-badge">Selected resolution</span></div></div>
+          <div class="outcome-copy"><h1 id="results-title" tabindex="-1">${resultTitle}</h1><p class="outcome-path">${escapeHtml(outcome.path)}</p><p class="outcome-reason">${escapeHtml(outcome.reason)}</p><p class="professional-review-note"><strong>Your tax professional will review your case before any action is taken.</strong></p></div>
+          <details class="requirements-panel resolution-details"><summary><span>Resolution details</span><span aria-hidden="true">+</span></summary><div><p>${escapeHtml(outcome.nextStep)}</p>${outcome.requirements.length ? `<ul>${outcome.requirements.map((item) => `<li><span aria-hidden="true">✓</span>${escapeHtml(item)}</li>`).join("")}</ul>` : ""}${outcome.reviewNotes.length ? `<ul class="review-notes">${outcome.reviewNotes.map((note) => `<li>${escapeHtml(note)}</li>`).join("")}</ul>` : ""}</div></details>
+        </section>
+        <section class="result-navigation" aria-labelledby="result-details-title">
+          <div class="section-heading"><div><p class="section-kicker">Review the result</p><h2 id="result-details-title">Supporting details</h2></div></div>
+          <div class="result-card-grid is-single"><button class="result-detail-card" type="button" data-show-truth><span class="detail-card-icon" aria-hidden="true">${auditIcon}</span><span><strong>Source of truth</strong><small>Review the Form 433-A record, calculation trail, and document sources.</small></span><span aria-hidden="true">→</span></button></div>
         </section>
         ${renderNeededDocuments(options.result)}
         <section class="summary-section metrics-section" aria-labelledby="metrics-title"><div class="section-heading"><div><p class="section-kicker">Financial position</p><h2 id="metrics-title">How the case measures up</h2></div></div>${renderMetrics(outcome)}</section>
@@ -200,16 +214,37 @@ export function renderResolutionResults(root: HTMLElement, options: ResolutionRe
       </div>`;
   };
 
-  const renderTruth = (): string => `
+  const renderTruth = (): string => {
+    const sections = options.result.sourceOfTruth.fieldSections;
+    const findSection = (id: string): FinancialSection => sections.find((section) => section.id === id) ?? {
+      id,
+      title: id,
+      description: "No fields are available for this category.",
+      fields: [],
+    };
+    const primarySectionIds = new Set(["income", "expenses", "assets"]);
+    const remainingSections = sections.filter((section) => !primarySectionIds.has(section.id));
+    const transcriptEvidence = options.result.sourceOfTruth.documentEvidence.filter((document) =>
+      document.category === "irs_transcripts" || document.detectedType.toLowerCase().includes("transcript"));
+    const otherEvidence = options.result.sourceOfTruth.documentEvidence.filter((document) => !transcriptEvidence.includes(document));
+
+    return `
     ${renderHeader()}
     <div class="truth-content">
       <button class="back-to-overview" type="button" data-back-overview>← Back to result overview</button>
-      <header class="truth-heading"><p class="section-kicker">Audit trail</p><h1 id="truth-title" tabindex="-1">Source of truth</h1><p>Review every financial field, the calculation steps, and the document excerpts that support this screening result.</p></header>
-      <nav class="truth-navigation" aria-label="Source of truth sections"><a href="#calculation-trail">Calculation trail</a><a href="#complete-case-data">Form 433-A data</a><a href="#document-extraction">Document extraction</a></nav>
+        <header class="truth-heading"><h1 id="truth-title" tabindex="-1">433A Information</h1></header>
+      <nav class="truth-navigation" aria-label="Source of truth sections"><a href="#income">Income</a><a href="#expenses">Expenses</a><a href="#personal-assets">Personal assets</a><a href="#irs-transcripts">IRS transcripts</a><a href="#calculation-trail">Calculations</a></nav>
+      <div class="primary-433a-sections">
+        ${renderAuditFieldSection(findSection("income"), "Income", "income")}
+        ${renderAuditFieldSection(findSection("expenses"), "Expenses", "expenses")}
+        ${renderAuditFieldSection(findSection("assets"), "Personal asset information", "personal-assets")}
+      </div>
+      <section class="summary-section audit-section transcript-section" id="irs-transcripts" aria-labelledby="transcript-title"><div class="section-heading"><div><p class="section-kicker">IRS transcripts</p><h2 id="transcript-title">Information found in IRS records</h2><p>Extracted values are shown with their canonical schema key and exact source text when available.</p></div><span>${transcriptEvidence.length} file${transcriptEvidence.length === 1 ? "" : "s"}</span></div>${renderDocumentEvidence(transcriptEvidence, "transcript-evidence")}</section>
+      ${remainingSections.length ? `<section class="summary-section audit-section" id="additional-case-data" aria-labelledby="additional-data-title"><div class="section-heading"><div><p class="section-kicker">Additional case information</p><h2 id="additional-data-title">Filing, compliance, and review details</h2></div><span>Unknown values remain unknown</span></div>${renderFinancialSections(remainingSections, true)}</section>` : ""}
       <section class="summary-section audit-section" id="calculation-trail" aria-labelledby="calculation-title"><div class="section-heading"><div><p class="section-kicker">Calculation trail</p><h2 id="calculation-title">Math and decision logic</h2></div></div>${renderCalculationSections(options.result.sourceOfTruth.calculationSections, options.result.outcome)}</section>
-      <section class="summary-section audit-section" id="complete-case-data" aria-labelledby="complete-data-title"><div class="section-heading"><div><p class="section-kicker">Canonical record</p><h2 id="complete-data-title">Complete Form 433-A data</h2></div><span>Unknown values remain unknown</span></div>${renderFinancialSections(options.result.sourceOfTruth.fieldSections, true)}</section>
-      <section class="summary-section audit-section" id="document-extraction" aria-labelledby="evidence-title"><div class="section-heading"><div><p class="section-kicker">Document extraction</p><h2 id="evidence-title">Values read from each file</h2></div></div>${renderDocumentEvidence(options.result)}</section>
+      ${otherEvidence.length ? `<section class="summary-section audit-section" id="document-extraction" aria-labelledby="evidence-title"><div class="section-heading"><div><p class="section-kicker">Other document extraction</p><h2 id="evidence-title">Values read from supporting files</h2></div></div>${renderDocumentEvidence(otherEvidence)}</section>` : ""}
     </div>`;
+  };
 
   const bind = () => {
     root.querySelectorAll<HTMLElement>("[data-start-over], .wordmark").forEach((element) => element.addEventListener("click", (event) => {

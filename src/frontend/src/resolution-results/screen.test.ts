@@ -34,6 +34,39 @@ const result = (documentName = "account-transcript.pdf"): ResolutionCaseResult =
   }],
   sourceOfTruth: {
     fieldSections: [{
+      id: "income",
+      title: "Monthly household income",
+      description: "Form 433-A (OIC), Section 7, Box D.",
+      fields: [{
+        key: "gross_wages_taxpayer",
+        label: "Gross wages taxpayer",
+        value: 4_200,
+        format: "currency",
+        sources: [{ kind: "document", label: "pay-stub.pdf", documentName: "pay-stub.pdf", snippet: "Regular Gross Pay: $2,100.00" }],
+      }],
+    }, {
+      id: "expenses",
+      title: "Monthly household expenses",
+      description: "Form 433-A (OIC), Section 7, Box E.",
+      fields: [{
+        key: "actual_housing_utilities",
+        label: "Housing and utilities",
+        value: 1_200,
+        format: "currency",
+        sources: [{ kind: "questionnaire", label: "Taxpayer questionnaire" }],
+      }],
+    }, {
+      id: "assets",
+      title: "Personal assets",
+      description: "Form 433-A (OIC), Section 3.",
+      fields: [{
+        key: "cash_and_bank_balances",
+        label: "Cash and bank balances",
+        value: 578.81,
+        format: "currency",
+        sources: [{ kind: "document", label: "bank-statement.pdf", documentName: "bank-statement.pdf", snippet: "Ending balance: $578.81" }],
+      }],
+    }, {
       id: "compliance",
       title: "Compliance & liability",
       description: "Eligibility facts.",
@@ -95,9 +128,12 @@ describe("resolution results", () => {
     document.body.append(root);
     renderResolutionResults(root, { result: result(), onStartOver: vi.fn() });
 
-    expect(root.textContent).toContain("Your screening result is Simple payment plan.");
+    expect(root.textContent).toContain("You may be qualified for a Simple payment plan.");
+    expect(root.textContent).toContain("Your tax professional will review your case before any action is taken.");
     expect(root.textContent).toContain("How the case measures up");
     expect(root.querySelector(".result-path-highlight")?.textContent).toBe("Simple payment plan");
+    expect(root.querySelector(".outcome-card [data-show-truth]")).toBeNull();
+    expect(root.querySelector(".result-navigation [data-show-truth]")?.textContent).toContain("Source of truth");
     const reviewDetails = root.querySelector<HTMLDetailsElement>(".requirements-panel")!;
     reviewDetails.querySelector("summary")!.click();
     expect(reviewDetails.textContent).toContain("Total assessed balance is $50,000 or less");
@@ -113,11 +149,18 @@ describe("resolution results", () => {
 
     root.querySelector<HTMLButtonElement>("[data-show-truth]")!.click();
 
-    expect(root.textContent).toContain("Math and decision logic");
-    expect(root.textContent).toContain("Complete Form 433-A data");
+    expect(root.textContent).toContain("433A Information");
+    expect(root.textContent).toContain("Income");
+    expect(root.textContent).toContain("Expenses");
+    expect(root.textContent).toContain("Personal asset information");
+    expect(root.querySelectorAll(".primary-433a-sections details")).toHaveLength(0);
+    expect(root.querySelector("#income")?.textContent).toContain("gross_wages_taxpayer");
+    expect(root.querySelector("#income")?.textContent).toContain("Regular Gross Pay: $2,100.00");
+    expect(root.querySelector("#irs-transcripts")?.textContent).toContain("Information found in IRS records");
     expect(root.textContent).toContain("total_tax_owed");
     expect(root.textContent).toContain("ACCOUNT BALANCE: $42,000.00");
     expect(root.textContent).toContain("Not provided");
+    expect(root.textContent).toContain("Math and decision logic");
     expect(document.activeElement?.id).toBe("truth-title");
 
     root.querySelector<HTMLButtonElement>("[data-back-overview]")!.click();

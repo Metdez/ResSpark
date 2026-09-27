@@ -40,6 +40,19 @@ _PATHS = {
 }
 
 
+def _load_local_environment(path: Path | None = None) -> None:
+    """Load ignored local settings without overriding deployed environment variables."""
+    target = path or Path(__file__).resolve().parents[1] / ".env"
+    if not target.exists():
+        return
+    for raw_line in target.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        os.environ.setdefault(key.strip(), value.strip().strip("\"'"))
+
+
 def case_result(answers: dict, uploads: list[tuple[str, bytes, str]], metadata: list | None = None,
                 standards_repository=_DATABASE) -> dict:
     """Build the JSON result for one submitted case."""
@@ -583,6 +596,7 @@ class _Handler(BaseHTTPRequestHandler):
 
 
 def main() -> None:
+    _load_local_environment()
     ThreadingHTTPServer.allow_reuse_address = True
     server = ThreadingHTTPServer(("127.0.0.1", 8000), _Handler)
     print("ResSpark case API at http://127.0.0.1:8000/api/cases", flush=True)
