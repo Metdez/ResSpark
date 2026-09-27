@@ -62,10 +62,15 @@ class CaseApiTests(unittest.TestCase):
         self.assertEqual(payload["outcome"]["status"], "manual_review")
         self.assertIn("notes.png: No readable text.", payload["outcome"]["reviewNotes"])
         self.assertIn("Not all required tax returns are filed.", payload["outcome"]["reviewNotes"])
-        housing = next(field for field in payload["financialSections"][0]["fields"] if field["key"] == "actual_housing_utilities")
+        fields = [field for section in payload["financialSections"] for field in section["fields"]]
+        housing = next(field for field in fields if field["key"] == "actual_housing_utilities")
         self.assertEqual(housing["value"], 1150)
         self.assertEqual(payload["documents"][1]["name"], "notes.png")
         self.assertEqual(payload["documents"][1]["size"], 0)
+        evidence = payload["sourceOfTruth"]["documentEvidence"]
+        self.assertEqual(evidence[0]["status"], "parsed")
+        self.assertTrue(any(field["snippet"] for field in evidence[0]["fields"]))
+        self.assertEqual(evidence[1]["status"], "needs_review")
 
     def test_a_complete_row_uses_the_determination(self):
         result = result_for_row(canonical_zero_row(), [], [], STANDARDS)
@@ -172,13 +177,47 @@ class CaseApiTests(unittest.TestCase):
             row.update(parsed)
             fields = {
                 field["key"]: field["value"]
-                for field in result_for_row(row, [], [], STANDARDS)["financialSections"][0]["fields"]
+                for section in result_for_row(row, [], [], STANDARDS)["financialSections"]
+                for field in section["fields"]
             }
             for key, value in parsed.items():
                 if key.startswith("_") or value in (None, [], ""):
                     continue
                 shown = ", ".join(str(item) for item in value) if isinstance(value, list) else value
                 self.assertEqual(fields.get(key), shown, folder.name)
+
+    def test_source_of_truth_keeps_complete_schema_unknowns_and_calculation_totals(self):
+        row = canonical_zero_row()
+        row["age_spouse"] = None
+        row["social_security_income"] = None
+        row["tax_only_balance"] = None
+        sources = {
+            "filing_status_married": [{"kind": "questionnaire", "label": "Questionnaire response"}],
+            "cash_and_bank_balances": [{
+                "kind": "document", "label": "bank.pdf", "documentName": "bank.pdf",
+                "snippet": "Ending Balance: $0.00",
+            }],
+        }
+
+        result = result_for_row(row, [], [], STANDARDS, sources)
+
+        fields = {
+            field["key"]: field
+            for section in result["sourceOfTruth"]["fieldSections"]
+            for field in section["fields"]
+        }
+        self.assertEqual(fields["cash_and_bank_balances"]["value"], 0.0)
+        self.assertEqual(fields["cash_and_bank_balances"]["sources"][0]["kind"], "document")
+        self.assertEqual(fields["filing_status_married"]["sources"][0]["kind"], "questionnaire")
+        self.assertEqual(fields["age_spouse"]["sources"][0]["kind"], "derived")
+        self.assertEqual(fields["social_security_income"]["sources"][0]["kind"], "assumption")
+        self.assertIsNone(fields["tax_only_balance"]["value"])
+        self.assertEqual(fields["tax_only_balance"]["sources"][0]["kind"], "unknown")
+        calculations = {section["id"]: section for section in result["sourceOfTruth"]["calculationSections"]}
+        self.assertEqual(calculations["income"]["steps"][-1]["result"], result["outcome"]["monthlyIncome"])
+        self.assertEqual(calculations["expenses"]["steps"][-1]["result"], result["outcome"]["monthlyExpenses"])
+        self.assertEqual(calculations["equity"]["steps"][-1]["result"], result["outcome"]["netRealizableEquity"])
+        self.assertTrue(any(step["status"] == "matched" for step in calculations["decision"]["steps"]))
 
 
 if __name__ == "__main__":

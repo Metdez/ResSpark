@@ -141,6 +141,7 @@ describe("intake interface", () => {
       },
       documents: [{ category: "irs_transcripts", categoryLabel: "IRS transcript", name: "irs_transcripts.pdf", type: "application/pdf", size: 1 }],
       financialSections: [],
+      sourceOfTruth: { fieldSections: [], calculationSections: [], documentEvidence: [] },
     };
     createApp(root, async () => result);
     clickButton(root, "Get started");
@@ -185,7 +186,7 @@ describe("intake interface", () => {
     });
     clickButton(root, "Continue");
 
-    await vi.waitFor(() => expect(root.textContent).toContain("Uploaded documents"));
+    await vi.waitFor(() => expect(root.textContent).toContain("Preview and download"));
     expect(root.textContent).toContain("compliance step first");
     expect(root.textContent).toContain("irs_transcripts.pdf");
   });

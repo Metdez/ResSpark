@@ -5,7 +5,7 @@ import type { MdOutlinedSelect } from "@material/web/select/outlined-select.js";
 import { formatCurrencyAnswer, getApplicableQuestions, parseAnswer, validateAnswer } from "./flow";
 import { questions, type Answers, type QuestionDefinition, type QuestionOption } from "./questions";
 import { renderDocumentUpload } from "./document-upload/screen";
-import { processCase as submitCase, type CaseProcessor } from "./case-processing";
+import { processCase as submitCase, type CaseProcessor, type SelectedDocument } from "./case-processing";
 import type { ResolutionCaseResult } from "./resolution-results/model";
 import { renderResolutionResults } from "./resolution-results/screen";
 
@@ -35,6 +35,7 @@ export function createApp(root: HTMLElement, processCase: CaseProcessor = submit
   let screen: Screen = savedDraft?.screen ?? "splash";
   let step = savedDraft?.step ?? 0;
   let result: ResolutionCaseResult | null = null;
+  let submittedDocuments: SelectedDocument[] = [];
 
   const saveDraft = () => {
     try {
@@ -59,6 +60,7 @@ export function createApp(root: HTMLElement, processCase: CaseProcessor = submit
     answers = {};
     step = 0;
     result = null;
+    submittedDocuments = [];
     screen = "intake";
     render();
   };
@@ -229,13 +231,18 @@ export function createApp(root: HTMLElement, processCase: CaseProcessor = submit
         },
         onComplete: async (documents) => {
           result = await processCase({ answers, documents });
+          submittedDocuments = documents;
           clearDraft();
           screen = "results";
           render();
         },
       });
     }
-    else if (result) renderResolutionResults(root, { result, onStartOver: startFresh });
+    else if (result) renderResolutionResults(root, {
+      result,
+      localDocuments: submittedDocuments,
+      onStartOver: startFresh,
+    });
   };
 
   render();

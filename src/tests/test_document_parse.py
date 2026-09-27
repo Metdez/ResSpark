@@ -17,7 +17,8 @@ if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
 from document_parse import (
-    _CHAT_URL, _page_text, _parse_classified, classify_upload, merge_documents, parse_texts, parse_packet, parse_uploads,
+    _CHAT_URL, _page_text, _parse_classified, classify_upload, merge_documents, parse_texts,
+    parse_packet, parse_uploads, parse_uploads_with_evidence,
 )
 
 
@@ -486,6 +487,19 @@ class DocumentParseTests(unittest.TestCase):
         ], {})
         self.assertIsNone(error)
         self.assertEqual(merge_documents([part])["life_insurance_cash_value"], 5000.0)
+
+    def test_upload_evidence_keeps_only_short_matching_excerpts(self):
+        health = next((ROOT / "examples").rglob("07_Health_Insurance_Statement.pdf"))
+
+        row, errors, evidence = parse_uploads_with_evidence([("health.pdf", health)])
+
+        self.assertEqual(errors, [])
+        self.assertEqual(row["actual_health_insurance_premiums"], 178.0)
+        field = evidence[0]["fields"][0]
+        self.assertEqual(field["key"], "actual_health_insurance_premiums")
+        self.assertIn("Premium", field["snippet"])
+        self.assertLessEqual(len(field["snippet"]), 240)
+        self.assertTrue(field["usedInCanonical"])
 
     def test_unreadable_file_is_named_and_the_rest_are_parsed(self):
         lease = ROOT / "examples/01_marcus_delgado_CNC/05_Lease_Statement.pdf"
