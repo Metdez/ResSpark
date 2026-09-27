@@ -104,6 +104,45 @@ _FIELD_TYPES = {
 }
 _CHAT_URL = "https://api.sciforium.com/v1/chat/completions"
 _TEXT_LIMIT = 12_000
+_SNIPPET_LIMIT = 240
+_KIND_LABELS = {
+    "account": "IRS account transcript", "wage": "Wage and income transcript",
+    "pay_stub": "Pay stub", "bank": "Bank statement", "lease": "Lease",
+    "mortgage": "Mortgage statement", "auto": "Vehicle record",
+    "health": "Health insurance statement", "utility": "Utility statement",
+    "business": "Self-employment record", "retirement": "Retirement statement",
+    "life": "Life insurance statement", "investment": "Investment statement",
+    "valuation": "Property valuation", "bankruptcy": "Bankruptcy record",
+}
+_EVIDENCE_LABELS = {
+    "filing_status_married": ("Filing Status",),
+    "state_of_residence": ("Address", "Property Address"),
+    "total_tax_owed": ("ACCOUNT BALANCE",),
+    "tax_only_balance": ("150",),
+    "csed_months_remaining": ("(CSED)", "Request Date"),
+    "pay_frequency": ("Pay Frequency",),
+    "gross_wages_taxpayer": ("Regular Gross Pay", "Gross Pay", "Box 1"),
+    "actual_current_taxes": _TAX_LINES,
+    "cash_and_bank_balances": ("Ending Balance",),
+    "actual_housing_utilities": (
+        "Monthly Rent", "Rent", "Monthly Payment (PITI)", "PITI",
+        "Amount Due", "Current Charges", "Total Due",
+    ),
+    "real_property_loan_balance": ("Current Principal Balance", "Principal Balance"),
+    "real_property_market_value": ("Estimated Market Value", "Assessed Value", "Market Value"),
+    "actual_vehicle_loan_lease": ("Monthly Payment",),
+    "vehicle_loan_balances": ("Remaining Balance", "Payoff Balance", "Loan Balance"),
+    "vehicle_loan_balance_total": ("Remaining Balance", "Payoff Balance", "Loan Balance"),
+    "vehicle_market_values": ("Est. Market Value", "Estimated Market Value", "Market Value"),
+    "vehicle_market_value_total": ("Est. Market Value", "Estimated Market Value", "Market Value"),
+    "actual_health_insurance_premiums": ("Monthly Premium", "Premium"),
+    "net_business_income": ("Net Income", "Net Profit"),
+    "retirement_accounts_market_value": ("Market Value", "Account Value"),
+    "retirement_accounts_loan_balance": ("Loan Balance",),
+    "life_insurance_cash_value": ("Cash Value",),
+    "life_insurance_loan_balance": ("Policy Loan", "Loan Balance"),
+    "investment_accounts_net": ("Net Value", "Account Value"),
+}
 
 
 def parse_packet(directory: Path | str) -> dict:
@@ -264,16 +303,88 @@ def classify_upload(texts: list[str]) -> str | None:
 
 def parse_uploads(files: list[tuple[str, Path | str]]) -> tuple[dict, list[dict]]:
     """Classify and parse each PDF. One failure does not drop the other files."""
+    row, errors, _evidence = parse_uploads_with_evidence(files)
+    return row, errors
+
+
+def parse_uploads_with_evidence(files: list[tuple[str, Path | str]]) -> tuple[dict, list[dict], list[dict]]:
+    """Parse uploads and retain short, transient excerpts for result auditing."""
     parts: list[dict] = []
     errors: list[dict] = []
+    evidence: list[dict] = []
     for name, path in files:
         texts, rows = _page_text(Path(path).read_bytes())
         part, error = _parse_classified(name, texts, rows)
         if error:
             errors.append(error)
+            evidence.append({
+                "name": name,
+                "detectedType": "Unknown",
+                "status": "needs_review",
+                "error": error["error"],
+                "fields": [],
+            })
         else:
+            evidence.append(_document_evidence(name, part, texts))
             parts.append(part)
-    return (merge_documents(parts) if parts else {}), errors
+    row = merge_documents(parts) if parts else {}
+    for document in evidence:
+        for field in document["fields"]:
+            field["usedInCanonical"] = field["key"] in row
+    return row, errors, evidence
+
+
+def _document_evidence(name: str, part: dict, texts: list[str]) -> dict:
+    kind = part.get("_kind", "")
+    fields = []
+    for key, value in _canonical_evidence_fields(part).items():
+        fields.append({
+            "key": key,
+            "value": value,
+            "snippet": _source_snippet(texts, _EVIDENCE_LABELS.get(key, ())),
+            "usedInCanonical": False,
+        })
+    return {
+        "name": name,
+        "detectedType": _KIND_LABELS.get(kind, str(kind).replace("_", " ").title()),
+        "status": "parsed",
+        "error": None,
+        "fields": fields,
+    }
+
+
+def _canonical_evidence_fields(part: dict) -> dict:
+    fields = {key: value for key, value in part.items() if not key.startswith("_")}
+    if part.get("_kind") == "bank" and "ending_balance" in fields:
+        fields["cash_and_bank_balances"] = fields.pop("ending_balance")
+    return fields
+
+
+def _source_snippet(texts: list[str], labels: tuple[str, ...]) -> str | None:
+    chunks = []
+    for label in labels:
+        for index, text in enumerate(texts):
+            normalized = text.strip().casefold()
+            if normalized == label.casefold() or normalized.startswith(label.casefold() + ":"):
+                candidates = [item.strip() for item in texts[index + 1:index + 5] if item.strip()]
+                if "$" in text:
+                    following = ""
+                elif label.isdigit():
+                    following = next((item for item in candidates if "$" in item), "")
+                else:
+                    following = candidates[0] if candidates else ""
+                chunk = text.strip() if not following else f"{text.strip()}: {following}"
+                if label.isdigit():
+                    period = next(
+                        (item.strip() for item in reversed(texts[:index]) if item.strip().startswith("Tax Period:")),
+                        "",
+                    )
+                    chunk = f"{period} · {chunk}" if period else chunk
+                if chunk not in chunks:
+                    chunks.append(chunk)
+    if not chunks:
+        return None
+    return " · ".join(chunks)[:_SNIPPET_LIMIT]
 
 
 def _parse_classified(name: str, texts: list[str], rows: dict) -> tuple[dict | None, dict | None]:

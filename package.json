@@ -1,0 +1,7 @@
+{
+  "name": "resspark",
+  "private": true,
+  "devDependencies": {
+    "supabase": "2.118.0"
+  }
+}

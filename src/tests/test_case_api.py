@@ -1,16 +1,20 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 import sys
+import tempfile
+from types import SimpleNamespace
 import unittest
+from unittest.mock import patch
 
 
 SRC = Path(__file__).resolve().parents[1]
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from case_api import response_for, result_for_row
+from case_api import _from_database, _load_local_environment, response_for, result_for_row
 from document_parse import parse_packet
 from test_intake_workflow import STANDARDS, canonical_zero_row
 
@@ -43,6 +47,39 @@ def _body(fields, files):
 
 
 class CaseApiTests(unittest.TestCase):
+    def test_database_connection_is_safe_for_transaction_pooling(self):
+        class Connection:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *_args):
+                return None
+
+        calls = []
+
+        def connect(url, **options):
+            calls.append((url, options))
+            return Connection()
+
+        with patch.dict(os.environ, {"DATABASE_URL": "postgresql://example"}, clear=True), patch.dict(
+            sys.modules, {"psycopg": SimpleNamespace(connect=connect)}
+        ), patch("case_api.evaluate_case", return_value="screened"):
+            self.assertEqual(_from_database({}), "screened")
+
+        self.assertEqual(calls, [(
+            "postgresql://example",
+            {"prepare_threshold": None, "connect_timeout": 10},
+        )])
+
+    def test_local_environment_is_dynamic_and_does_not_override_process_settings(self):
+        with tempfile.TemporaryDirectory() as folder:
+            env_file = Path(folder) / ".env"
+            env_file.write_text('DATABASE_URL="from-file"\nSCIFORIUM_API_KEY=local-key\n', encoding="utf-8")
+            with patch.dict(os.environ, {"DATABASE_URL": "from-process"}, clear=True):
+                _load_local_environment(env_file)
+                self.assertEqual(os.environ["DATABASE_URL"], "from-process")
+                self.assertEqual(os.environ["SCIFORIUM_API_KEY"], "local-key")
+
     def test_upload_is_read_and_a_blank_file_is_named(self):
         lease = LEASE.read_bytes()
         body, content_type = _body(
@@ -62,10 +99,15 @@ class CaseApiTests(unittest.TestCase):
         self.assertEqual(payload["outcome"]["status"], "manual_review")
         self.assertIn("notes.png: No readable text.", payload["outcome"]["reviewNotes"])
         self.assertIn("Not all required tax returns are filed.", payload["outcome"]["reviewNotes"])
-        housing = next(field for field in payload["financialSections"][0]["fields"] if field["key"] == "actual_housing_utilities")
+        fields = [field for section in payload["financialSections"] for field in section["fields"]]
+        housing = next(field for field in fields if field["key"] == "actual_housing_utilities")
         self.assertEqual(housing["value"], 1150)
         self.assertEqual(payload["documents"][1]["name"], "notes.png")
         self.assertEqual(payload["documents"][1]["size"], 0)
+        evidence = payload["sourceOfTruth"]["documentEvidence"]
+        self.assertEqual(evidence[0]["status"], "parsed")
+        self.assertTrue(any(field["snippet"] for field in evidence[0]["fields"]))
+        self.assertEqual(evidence[1]["status"], "needs_review")
 
     def test_a_complete_row_uses_the_determination(self):
         result = result_for_row(canonical_zero_row(), [], [], STANDARDS)
@@ -172,13 +214,47 @@ class CaseApiTests(unittest.TestCase):
             row.update(parsed)
             fields = {
                 field["key"]: field["value"]
-                for field in result_for_row(row, [], [], STANDARDS)["financialSections"][0]["fields"]
+                for section in result_for_row(row, [], [], STANDARDS)["financialSections"]
+                for field in section["fields"]
             }
             for key, value in parsed.items():
                 if key.startswith("_") or value in (None, [], ""):
                     continue
                 shown = ", ".join(str(item) for item in value) if isinstance(value, list) else value
                 self.assertEqual(fields.get(key), shown, folder.name)
+
+    def test_source_of_truth_keeps_complete_schema_unknowns_and_calculation_totals(self):
+        row = canonical_zero_row()
+        row["age_spouse"] = None
+        row["social_security_income"] = None
+        row["tax_only_balance"] = None
+        sources = {
+            "filing_status_married": [{"kind": "questionnaire", "label": "Questionnaire response"}],
+            "cash_and_bank_balances": [{
+                "kind": "document", "label": "bank.pdf", "documentName": "bank.pdf",
+                "snippet": "Ending Balance: $0.00",
+            }],
+        }
+
+        result = result_for_row(row, [], [], STANDARDS, sources)
+
+        fields = {
+            field["key"]: field
+            for section in result["sourceOfTruth"]["fieldSections"]
+            for field in section["fields"]
+        }
+        self.assertEqual(fields["cash_and_bank_balances"]["value"], 0.0)
+        self.assertEqual(fields["cash_and_bank_balances"]["sources"][0]["kind"], "document")
+        self.assertEqual(fields["filing_status_married"]["sources"][0]["kind"], "questionnaire")
+        self.assertEqual(fields["age_spouse"]["sources"][0]["kind"], "derived")
+        self.assertEqual(fields["social_security_income"]["sources"][0]["kind"], "assumption")
+        self.assertIsNone(fields["tax_only_balance"]["value"])
+        self.assertEqual(fields["tax_only_balance"]["sources"][0]["kind"], "unknown")
+        calculations = {section["id"]: section for section in result["sourceOfTruth"]["calculationSections"]}
+        self.assertEqual(calculations["income"]["steps"][-1]["result"], result["outcome"]["monthlyIncome"])
+        self.assertEqual(calculations["expenses"]["steps"][-1]["result"], result["outcome"]["monthlyExpenses"])
+        self.assertEqual(calculations["equity"]["steps"][-1]["result"], result["outcome"]["netRealizableEquity"])
+        self.assertTrue(any(step["status"] == "matched" for step in calculations["decision"]["steps"]))
 
 
 if __name__ == "__main__":

@@ -15,12 +15,21 @@ export interface ResolutionOutcome {
   reason: string;
   nextStep: string;
   requirements: string[];
-  monthlyIncome: number;
-  monthlyExpenses: number;
-  netDisposableIncome: number;
-  netRealizableEquity: number;
-  suggestedOfferOrPayment: number;
+  monthlyIncome: number | null;
+  monthlyExpenses: number | null;
+  netDisposableIncome: number | null;
+  netRealizableEquity: number | null;
+  suggestedOfferOrPayment: number | null;
   reviewNotes: string[];
+}
+
+export type SourceKind = "questionnaire" | "document" | "derived" | "assumption" | "unknown";
+
+export interface FieldSource {
+  kind: SourceKind;
+  label: string;
+  documentName?: string;
+  snippet?: string | null;
 }
 
 export interface FinancialField {
@@ -28,6 +37,7 @@ export interface FinancialField {
   label: string;
   value: string | number | boolean | null;
   format?: "currency" | "boolean" | "number" | "text";
+  sources?: FieldSource[];
 }
 
 export interface FinancialSection {
@@ -50,6 +60,49 @@ export interface NeededDocument {
   detail: string;
 }
 
+export interface CalculationInput {
+  label: string;
+  value: string | number | boolean | null;
+}
+
+export interface CalculationStep {
+  label: string;
+  formula: string;
+  inputs: CalculationInput[];
+  inputKeys: string[];
+  result: string | number | boolean | null;
+  format: "currency" | "boolean" | "number" | "text";
+  status?: "pass" | "fail" | "matched" | "not_evaluated";
+}
+
+export interface CalculationSection {
+  id: string;
+  title: string;
+  description: string;
+  steps: CalculationStep[];
+}
+
+export interface DocumentEvidenceField extends FinancialField {
+  snippet?: string | null;
+  usedInCanonical: boolean;
+}
+
+export interface DocumentEvidence {
+  name: string;
+  category: string;
+  categoryLabel: string;
+  detectedType: string;
+  status: "parsed" | "needs_review";
+  error: string | null;
+  fields: DocumentEvidenceField[];
+}
+
+export interface SourceOfTruth {
+  fieldSections: FinancialSection[];
+  calculationSections: CalculationSection[];
+  documentEvidence: DocumentEvidence[];
+}
+
 export interface ResolutionCaseResult {
   caseLabel: string;
   generatedAt: string;
@@ -57,4 +110,5 @@ export interface ResolutionCaseResult {
   documents: UploadedDocument[];
   neededDocuments?: NeededDocument[];
   financialSections: FinancialSection[];
+  sourceOfTruth: SourceOfTruth;
 }

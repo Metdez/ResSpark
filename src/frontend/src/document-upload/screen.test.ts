@@ -7,6 +7,17 @@ import { renderDocumentUpload } from "./screen";
 describe("document upload screen", () => {
   afterEach(() => document.body.replaceChildren());
 
+  it("shows Plaid and Gusto connection options above document upload", () => {
+    const root = document.createElement("main");
+    document.body.append(root);
+    renderDocumentUpload(root, { answers: {}, onBack: vi.fn(), onComplete: vi.fn() });
+
+    const connections = root.querySelector(".account-connections")!;
+    expect(connections.textContent).toContain("Connect your bank account with Plaid");
+    expect(connections.textContent).toContain("Connect to payroll with Gusto");
+    expect(connections.querySelectorAll("img")).toHaveLength(2);
+  });
+
   it("lists selected files and blocks progress until required uploads are selected", () => {
     const root = document.createElement("main");
     document.body.append(root);

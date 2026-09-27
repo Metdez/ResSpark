@@ -5,7 +5,7 @@ import type { MdOutlinedSelect } from "@material/web/select/outlined-select.js";
 import { formatCurrencyAnswer, getApplicableQuestions, parseAnswer, validateAnswer } from "./flow";
 import { questions, type Answers, type QuestionDefinition, type QuestionOption } from "./questions";
 import { renderDocumentUpload } from "./document-upload/screen";
-import { processCase as submitCase, type CaseProcessor } from "./case-processing";
+import { processCase as submitCase, type CaseProcessor, type SelectedDocument } from "./case-processing";
 import type { ResolutionCaseResult } from "./resolution-results/model";
 import { renderResolutionResults } from "./resolution-results/screen";
 
@@ -35,6 +35,7 @@ export function createApp(root: HTMLElement, processCase: CaseProcessor = submit
   let screen: Screen = savedDraft?.screen ?? "splash";
   let step = savedDraft?.step ?? 0;
   let result: ResolutionCaseResult | null = null;
+  let submittedDocuments: SelectedDocument[] = [];
 
   const saveDraft = () => {
     try {
@@ -59,6 +60,7 @@ export function createApp(root: HTMLElement, processCase: CaseProcessor = submit
     answers = {};
     step = 0;
     result = null;
+    submittedDocuments = [];
     screen = "intake";
     render();
   };
@@ -78,7 +80,7 @@ export function createApp(root: HTMLElement, processCase: CaseProcessor = submit
       <main class="splash-shell">
         <section class="splash-card" aria-labelledby="splash-title">
           <p class="eyebrow">ResSpark</p>
-          <h1 id="splash-title">A calmer way to begin your tax resolution review.</h1>
+          <h1 id="splash-title">John Doe wants to understand your tax situation better</h1>
           <p>Answer a few questions so your tax professional can understand your situation and prepare the right next steps.</p>
           <button class="primary-button" type="button">Get started</button>
           <p class="notice">This screening tool supports professional review. It is not tax or legal advice and does not guarantee an IRS outcome.</p>
@@ -229,13 +231,18 @@ export function createApp(root: HTMLElement, processCase: CaseProcessor = submit
         },
         onComplete: async (documents) => {
           result = await processCase({ answers, documents });
+          submittedDocuments = documents;
           clearDraft();
           screen = "results";
           render();
         },
       });
     }
-    else if (result) renderResolutionResults(root, { result, onStartOver: startFresh });
+    else if (result) renderResolutionResults(root, {
+      result,
+      localDocuments: submittedDocuments,
+      onStartOver: startFresh,
+    });
   };
 
   render();

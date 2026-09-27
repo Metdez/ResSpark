@@ -17,6 +17,43 @@ export type CaseProcessor = (submission: CaseSubmission) => Promise<ResolutionCa
 const isObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 
+const isValue = (value: unknown): value is string | number | boolean | null =>
+  value === null || ["string", "number", "boolean"].includes(typeof value);
+
+const isFinancialField = (value: unknown): boolean => isObject(value)
+  && typeof value.key === "string"
+  && typeof value.label === "string"
+  && isValue(value.value)
+  && (value.sources === undefined || (Array.isArray(value.sources) && value.sources.every((source) =>
+    isObject(source)
+    && ["questionnaire", "document", "derived", "assumption", "unknown"].includes(String(source.kind))
+    && typeof source.label === "string")));
+
+const isFinancialSection = (value: unknown): boolean => isObject(value)
+  && [value.id, value.title, value.description].every((item) => typeof item === "string")
+  && Array.isArray(value.fields)
+  && value.fields.every(isFinancialField);
+
+const isCalculationSection = (value: unknown): boolean => isObject(value)
+  && [value.id, value.title, value.description].every((item) => typeof item === "string")
+  && Array.isArray(value.steps)
+  && value.steps.every((step) => isObject(step)
+    && typeof step.label === "string"
+    && typeof step.formula === "string"
+    && isValue(step.result)
+    && Array.isArray(step.inputs)
+    && step.inputs.every((input) => isObject(input) && typeof input.label === "string" && isValue(input.value)));
+
+const isDocumentEvidence = (value: unknown): boolean => isObject(value)
+  && [value.name, value.category, value.categoryLabel, value.detectedType].every((item) => typeof item === "string")
+  && ["parsed", "needs_review"].includes(String(value.status))
+  && (value.error === null || typeof value.error === "string")
+  && Array.isArray(value.fields)
+  && value.fields.every((field) => isFinancialField(field)
+    && isObject(field)
+    && typeof field.usedInCanonical === "boolean"
+    && (field.snippet === null || field.snippet === undefined || typeof field.snippet === "string"));
+
 const isCaseResult = (value: unknown): value is ResolutionCaseResult => {
   if (!isObject(value) || !isObject(value.outcome)) return false;
   const outcome = value.outcome;
@@ -24,14 +61,21 @@ const isCaseResult = (value: unknown): value is ResolutionCaseResult => {
     isObject(document)
     && [document.category, document.categoryLabel, document.name, document.type].every((item) => typeof item === "string")
     && typeof document.size === "number");
-  const sectionsAreValid = Array.isArray(value.financialSections) && value.financialSections.every((section) =>
-    isObject(section)
-    && [section.id, section.title, section.description].every((item) => typeof item === "string")
-    && Array.isArray(section.fields)
-    && section.fields.every((field) => isObject(field)
-      && typeof field.key === "string"
-      && typeof field.label === "string"
-      && (field.value === null || ["string", "number", "boolean"].includes(typeof field.value))));
+  const sectionsAreValid = Array.isArray(value.financialSections) && value.financialSections.every(isFinancialSection);
+  const sourceOfTruthIsValid = isObject(value.sourceOfTruth)
+    && Array.isArray(value.sourceOfTruth.fieldSections)
+    && value.sourceOfTruth.fieldSections.every(isFinancialSection)
+    && Array.isArray(value.sourceOfTruth.calculationSections)
+    && value.sourceOfTruth.calculationSections.every(isCalculationSection)
+    && Array.isArray(value.sourceOfTruth.documentEvidence)
+    && value.sourceOfTruth.documentEvidence.every(isDocumentEvidence);
+  const outcomeAmountsAreValid = [
+    outcome.monthlyIncome,
+    outcome.monthlyExpenses,
+    outcome.netDisposableIncome,
+    outcome.netRealizableEquity,
+    outcome.suggestedOfferOrPayment,
+  ].every((amount) => amount === null || typeof amount === "number");
   return typeof value.caseLabel === "string"
     && typeof value.generatedAt === "string"
     && documentsAreValid
@@ -43,7 +87,9 @@ const isCaseResult = (value: unknown): value is ResolutionCaseResult => {
     && typeof outcome.reason === "string"
     && typeof outcome.nextStep === "string"
     && Array.isArray(outcome.requirements)
-    && Array.isArray(outcome.reviewNotes);
+    && Array.isArray(outcome.reviewNotes)
+    && outcomeAmountsAreValid
+    && sourceOfTruthIsValid;
 };
 
 export const processCase: CaseProcessor = async ({ answers, documents }) => {
