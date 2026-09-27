@@ -153,6 +153,9 @@ describe("resolution results", () => {
     expect(root.textContent).toContain("Income");
     expect(root.textContent).toContain("Expenses");
     expect(root.textContent).toContain("Personal asset information");
+    expect(root.querySelector(".source-totals")?.textContent).toContain("Total monthly income$4,200.00");
+    expect(root.querySelector(".source-totals")?.textContent).toContain("Total allowable expenses$2,000.00");
+    expect(root.querySelector(".source-totals")?.textContent).toContain("Net realizable equity$578.81");
     expect(root.querySelectorAll(".primary-433a-sections details")).toHaveLength(0);
     expect(root.querySelector("#income")?.textContent).toContain("gross_wages_taxpayer");
     expect(root.querySelector("#income")?.textContent).toContain("Regular Gross Pay: $2,100.00");

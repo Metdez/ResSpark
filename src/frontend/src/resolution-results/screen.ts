@@ -104,6 +104,19 @@ const renderMetrics = (outcome: ResolutionOutcome): string => {
     </div>`).join("")}</dl>`;
 };
 
+const renderSourceTotals = (outcome: ResolutionOutcome): string => {
+  const totals = [
+    ["Total monthly income", outcome.monthlyIncome],
+    ["Total allowable expenses", outcome.monthlyExpenses],
+    ["Net realizable equity", outcome.netRealizableEquity],
+  ] as const;
+  return `
+    <section class="source-totals" aria-labelledby="source-totals-title">
+      <header><div><p class="section-kicker">Section totals</p><h2 id="source-totals-title">Financial totals</h2></div></header>
+      <dl>${totals.map(([label, value]) => `<div><dt>${label}</dt><dd>${escapeHtml(formatValue(value, "currency"))}</dd></div>`).join("")}</dl>
+    </section>`;
+};
+
 const renderCalculationSections = (sections: CalculationSection[], outcome: ResolutionOutcome): string => {
   if (!sections.length) {
     return `<div class="audit-empty"><strong>Calculation not completed</strong><p>${escapeHtml(outcome.reason)}</p></div>`;
@@ -239,6 +252,7 @@ export function renderResolutionResults(root: HTMLElement, options: ResolutionRe
         ${renderAuditFieldSection(findSection("expenses"), "Expenses", "expenses")}
         ${renderAuditFieldSection(findSection("assets"), "Personal asset information", "personal-assets")}
       </div>
+      ${renderSourceTotals(options.result.outcome)}
       <section class="summary-section audit-section transcript-section" id="irs-transcripts" aria-labelledby="transcript-title"><div class="section-heading"><div><p class="section-kicker">IRS transcripts</p><h2 id="transcript-title">Information found in IRS records</h2><p>Extracted values are shown with their canonical schema key and exact source text when available.</p></div><span>${transcriptEvidence.length} file${transcriptEvidence.length === 1 ? "" : "s"}</span></div>${renderDocumentEvidence(transcriptEvidence, "transcript-evidence")}</section>
       ${remainingSections.length ? `<section class="summary-section audit-section" id="additional-case-data" aria-labelledby="additional-data-title"><div class="section-heading"><div><p class="section-kicker">Additional case information</p><h2 id="additional-data-title">Filing, compliance, and review details</h2></div><span>Unknown values remain unknown</span></div>${renderFinancialSections(remainingSections, true)}</section>` : ""}
       <section class="summary-section audit-section" id="calculation-trail" aria-labelledby="calculation-title"><div class="section-heading"><div><p class="section-kicker">Calculation trail</p><h2 id="calculation-title">Math and decision logic</h2></div></div>${renderCalculationSections(options.result.sourceOfTruth.calculationSections, options.result.outcome)}</section>

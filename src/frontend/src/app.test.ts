@@ -32,7 +32,7 @@ describe("intake interface", () => {
     createApp(root);
 
     expect(root.textContent).toContain("What state do you live in?");
-    expect(root.textContent).not.toContain("A calmer way to begin your tax resolution review.");
+    expect(root.textContent).not.toContain("John Doe wants to understand your tax situation better");
   });
 
   it("starts a new questionnaire and preserves an answer when navigating back", () => {
@@ -89,7 +89,7 @@ describe("intake interface", () => {
     clickButton(root, "Yes");
     clickButton(root, "Save and exit");
 
-    expect(root.textContent).toContain("A calmer way to begin your tax resolution review.");
+    expect(root.textContent).toContain("John Doe wants to understand your tax situation better");
     expect(root.textContent).not.toContain("Are you married?");
   });
 

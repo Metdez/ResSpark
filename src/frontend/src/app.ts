@@ -80,7 +80,7 @@ export function createApp(root: HTMLElement, processCase: CaseProcessor = submit
       <main class="splash-shell">
         <section class="splash-card" aria-labelledby="splash-title">
           <p class="eyebrow">ResSpark</p>
-          <h1 id="splash-title">A calmer way to begin your tax resolution review.</h1>
+          <h1 id="splash-title">John Doe wants to understand your tax situation better</h1>
           <p>Answer a few questions so your tax professional can understand your situation and prepare the right next steps.</p>
           <button class="primary-button" type="button">Get started</button>
           <p class="notice">This screening tool supports professional review. It is not tax or legal advice and does not guarantee an IRS outcome.</p>
