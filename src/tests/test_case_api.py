@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 import sys
 import tempfile
+from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
@@ -13,7 +14,7 @@ SRC = Path(__file__).resolve().parents[1]
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from case_api import _load_local_environment, response_for, result_for_row
+from case_api import _from_database, _load_local_environment, response_for, result_for_row
 from document_parse import parse_packet
 from test_intake_workflow import STANDARDS, canonical_zero_row
 
@@ -46,6 +47,30 @@ def _body(fields, files):
 
 
 class CaseApiTests(unittest.TestCase):
+    def test_database_connection_is_safe_for_transaction_pooling(self):
+        class Connection:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *_args):
+                return None
+
+        calls = []
+
+        def connect(url, **options):
+            calls.append((url, options))
+            return Connection()
+
+        with patch.dict(os.environ, {"DATABASE_URL": "postgresql://example"}, clear=True), patch.dict(
+            sys.modules, {"psycopg": SimpleNamespace(connect=connect)}
+        ), patch("case_api.evaluate_case", return_value="screened"):
+            self.assertEqual(_from_database({}), "screened")
+
+        self.assertEqual(calls, [(
+            "postgresql://example",
+            {"prepare_threshold": None, "connect_timeout": 10},
+        )])
+
     def test_local_environment_is_dynamic_and_does_not_override_process_settings(self):
         with tempfile.TemporaryDirectory() as folder:
             env_file = Path(folder) / ".env"

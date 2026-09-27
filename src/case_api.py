@@ -11,6 +11,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
+import logging
 import os
 from pathlib import Path
 import re
@@ -221,7 +222,13 @@ def result_for_row(row: dict, documents: list, errors: list, standards_repositor
             workflow = _from_database(screened)
         except LookupError as db_error:
             return _unresolved(row, screened, documents, errors, str(db_error), sources, evidence)
-        except Exception:
+        except Exception as error:
+            detail = getattr(getattr(error, "diag", None), "message_primary", None)
+            logging.error(
+                "Could not read IRS standards from DATABASE_URL (%s: %s)",
+                type(error).__name__,
+                detail or "no database detail",
+            )
             return _unresolved(
                 row, screened, documents, errors,
                 "Could not read IRS standards from DATABASE_URL.", sources, evidence,
@@ -277,7 +284,9 @@ def _from_database(row: dict):
         import psycopg
     except ImportError as error:
         raise LookupError("Install psycopg to look up IRS standards.") from error
-    with psycopg.connect(url) as connection:
+    # Vercel uses Supabase's transaction pooler. Disable prepared statements,
+    # which transaction pooling does not support, and fail fast on network issues.
+    with psycopg.connect(url, prepare_threshold=None, connect_timeout=10) as connection:
         return evaluate_case(row, PostgresStandardsRepository(connection))
 
 
