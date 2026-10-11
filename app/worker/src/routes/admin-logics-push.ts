@@ -52,7 +52,8 @@ export const adminLogicsPushRoute = new Hono<AdminApp>()
     const { staff } = c.var
     const id = requestIdParam(c)
     const body = await readBody(c)
-    const pushAgain = body.push_again ?? []
+    // D-04: unknown rows resolve only through the resolve dialog, so a client-sent push_again is ignored.
+    const pushAgain: string[] = []
     if (!Array.isArray(body.document_ids)) return refuse(c, 400, 'bad_request')
     if (body.document_ids.length === 0) return refuse(c, 400, 'no_items')
     if (body.document_ids.length > MAX_DOCUMENTS || !isUuidList(body.document_ids) || !isUuidList(pushAgain)) {

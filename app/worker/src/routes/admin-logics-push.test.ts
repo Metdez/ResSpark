@@ -125,6 +125,11 @@ describe('POST /requests/:id/logics-push', () => {
     expect(send).toHaveBeenCalledWith({ type: 'logics_push', provider: 'logics', ref: PUSH })
   })
 
+  it('ignores a client-sent push_again (unknown rows resolve only via the dialog)', async () => {
+    await pushDocs({ document_ids: [DOC], push_again: [DOC] })
+    expect(createBatch).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ pushAgain: [] }))
+  })
+
   it('passes the firm settings through', async () => {
     vi.mocked(getIntegration).mockResolvedValue({
       settings: { file_category_id: 7, activity_type: 'Document sent', write_enabled: true },

@@ -1,8 +1,8 @@
 ---
 phase: 05-push-to-logics
-verified: 2026-10-11T15:30:00Z
-status: gaps_found
-score: 6/8 must-haves verified
+verified: 2026-10-11T16:06:08Z
+status: human_needed
+score: 8/8 must-haves verified
 covered_files:
   - .planning/phases/05-push-to-logics/05-01-PLAN.md
   - .planning/phases/05-push-to-logics/05-01-SUMMARY.md
@@ -15,6 +15,7 @@ covered_files:
   - .planning/phases/05-push-to-logics/05-05-PLAN.md
   - .planning/phases/05-push-to-logics/05-05-SUMMARY.md
   - app/src/features/logics-push/api.ts
+  - app/src/features/logics-push/logics-push-card.test.tsx
   - app/src/features/logics-push/logics-push-card.tsx
   - app/src/features/logics-push/plan.ts
   - app/src/features/logics-push/push-sheet.tsx
@@ -30,40 +31,45 @@ covered_files:
   - app/worker/src/jobs/logics-push-finalize.ts
   - app/worker/src/jobs/logics-push-normalize.ts
   - app/worker/src/jobs/logics-push-sweep.ts
+  - app/worker/src/jobs/logics-push.test.ts
   - app/worker/src/jobs/logics-push.ts
   - app/worker/src/pdf/image-to-pdf.ts
   - app/worker/src/pdf/normalize-for-logics.ts
   - app/worker/src/pdf/split-pdf.ts
+  - app/worker/src/routes/admin-logics-push.test.ts
   - app/worker/src/routes/admin-logics-push.ts
   - app/worker/src/storage/logics-parts.ts
   - app/wrangler.jsonc
   - supabase/migrations/0006_logics_push.sql
-covered_digest: "v3:sha256:cdd18e4ff412936ea822c276b343ba7a16696cee885ed1c80ab612c3074a237f"
+  - supabase/migrations/0008_433a_prepopulation.sql
+covered_digest: "v3:sha256:642258a64b03be9a95d59ae554d6bf75e54eaa4a0bc059b6b2afb63f868cb22c"
 behavior_unverified: 0
-overrides_applied: 0
-gaps:
-  - truth: "In live mode every Logics write path applies the env guard (LOGICS_WRITE_ENABLED), the test-CaseID allowlist, and the firm write_enabled toggle"
-    status: failed
-    reason: "The firm write_enabled toggle is checked only in POST /requests/:id/logics-push. POST /logics-pushes/:pushId/resolve (action=resend) does not check it, and the consumer's prepare() does not check it either. In live mode, after an admin turns Write enabled off, a staff Re-send (or a row already queued or re-enqueued by the sweeper) still POSTs to Logics. The env guard and the allowlist still run in the consumer, so only test CaseIDs are reachable."
-    artifacts:
-      - path: "app/worker/src/jobs/logics-push.ts"
-        issue: "prepare() runs logicsWriteGuard in live mode but never reads readSettings(integration).write_enabled"
-      - path: "app/worker/src/routes/admin-logics-push.ts"
-        issue: "the resolve route queues a resend without the firm toggle (and without the env guard; only the consumer catches that)"
-    missing:
-      - "In prepare() (jobs/logics-push.ts), read the firm row with getIntegration(env, job.firm_id, 'logics') in both modes (it is already read in live mode) and, if !readSettings(row).write_enabled, return { code: 'logics_write_blocked', detail: 'Logics writes are turned off for this firm in Settings', noteClient: refusedNote('logics_write_blocked') } before any client is built"
-      - "Optional, for a clear message in the UI: in the resolve route, when action === 'resend', apply the same live-mode env guard and firm toggle as the create route and return 403 logics_write_blocked"
-      - "One unit test in jobs/logics-push.test.ts: live mode, guard passes, settings.write_enabled false -> row failed logics_write_blocked, createCaseDocument never called"
+overrides_applied: 1
+overrides:
+  - must_have: "With LOGICS_WRITE_ENABLED off or a CaseID outside the allowlist the push is refused with a clear message"
+    reason: "D-10: the env guard protects real Logics writes and runs in live mode in both route and consumer; fake mode writes nothing real and must push for the demo. The firm write_enabled toggle still refuses in both modes."
+    accepted_by: "orchestrator (per locked CONTEXT D-10: in fake mode nothing is written to Logics, so simulated pushes are allowed with LOGICS_WRITE_ENABLED=false; live mode still refuses; user may revoke)"
+    accepted_at: 2026-10-11
+re_verification:
+  previous_status: gaps_found
+  previous_score: 6/8
+  gaps_closed:
+    - "In live mode every Logics write path applies the env guard (LOGICS_WRITE_ENABLED), the test-CaseID allowlist, and the firm write_enabled toggle (627dd9f)"
+    - "Warning: Push again on an unknown row could duplicate, closed in the UI (c1d52ed)"
+  gaps_remaining: []
+  regressions: []
+advisory:
+  - finding: "The Worker route POST /requests/:id/logics-push still accepts push_again, and logics_push_create_batch (0008 body) lets a push_again document whose latest row is unknown be re-queued while that row stays unknown. Nothing in the UI sends push_again after c1d52ed, so only a hand-made staff API call reaches it."
+    category: other
+    reason: "Residual server-side half of the closed warning. Smallest fix: in admin-logics-push.ts pass pushAgain: [] (drop body.push_again), since no caller uses it; or exclude 'unknown' from the push_again bypass in create_batch."
+    evidence_status: "none provided"
 human_verification:
-  - test: "Accept or reject the D-10 deviation from roadmap SC1. SC1 says that with LOGICS_WRITE_ENABLED off the push is refused. Since 05-05 (d3e5304), in fake mode the push is accepted and simulated while the flag is off. The deployed config is fake/false, so demo pushes go through as simulated."
-    expected: "A human accepts this as an override (fake mode writes nothing real; the guard applies in live mode) or asks for a change"
-    why_human: "It was a deliberate design choice (locked D-10 and the Demo Cut), so a human must accept it; the verifier cannot"
-  - test: "Deployed UI rehearsal on https://resspark.zh-a16.workers.dev after the orchestrator's deploy. Turn on Write enabled under Settings > Integrations > Push settings. Open a request that has an approved, ready upload and push one small PDF."
-    expected: "The banner reads 'SANDBOX · Logics writes simulated'. The button reads 'Push to Logics (simulated)'. The sheet shows the comment preview 'Uploaded via ResSpark by {agent} — {file}' and the activity note preview. The chip goes Queued -> Sending -> Sent with a #id and a 'Simulated' badge. One logics.activity_sent event appears for the batch."
-    why_human: "Visual, real-time UI flow. 05-05 records it as not done; only the automated live fake-mode e2e ran"
-  - test: "Firm 'Write enabled' switch: with the switch off, try a push"
-    expected: "403 with 'Logics writes are turned off for this firm in Settings', shown in the sheet. With the switch on, the push queues."
-    why_human: "This is a USER ACTION demo step on live firm settings, and the verifier must not write to the live DB"
+  - test: "Deployed UI rehearsal on https://resspark.zh-a16.workers.dev after the orchestrator deploys 627dd9f and c1d52ed. Turn on Write enabled under Settings > Integrations > Push settings. Open a request that has an approved, ready upload and push one small PDF."
+    expected: "The banner reads 'SANDBOX · Logics writes simulated'. The button reads 'Push to Logics (simulated)'. The sheet shows the comment preview 'Uploaded via ResSpark by {agent} — {file}' and the activity note preview. The chip goes Queued -> Sending -> Sent with a #id and a 'Simulated' badge, then 'Already pushed' with no checkbox. One logics.activity_sent event appears for the batch."
+    why_human: "Visual, real-time UI flow on the deployed Worker; only unit tests and the earlier fake-mode e2e ran"
+  - test: "Firm 'Write enabled' switch: with the switch off, try a push (and, if an unknown row exists, a Re-send)"
+    expected: "403 with 'Logics writes are turned off for this firm in Settings', shown in the sheet or dialog. With the switch on, the push queues. Note: since 627dd9f the consumer also re-checks the switch, so it must stay on until the demo batch reaches Sent."
+    why_human: "USER ACTION demo step on live firm settings; the verifier must not write to the live DB"
   - test: "Before LOGICS_MODE=live: Andrew provides a write-scoped key (case.write and activity.write), its Secret Token, 2-3 test CaseIDs, and the FileCategoryID. Then follow docs/app/logics-live-switch.md in order."
     expected: "Test connection is green, LOGICS_TEST_CASE_IDS holds only test ids, and the first live push records a real CaseDocumentID and ActivityID on a test case"
     why_human: "External vendor credentials and a deliberate config flip; Logics has no sandbox"
@@ -72,19 +78,19 @@ human_verification:
 # Phase 5: Push to Logics Verification Report
 
 **Phase Goal:** As a ValorTax case manager, I want to push approved documents into the client's Logics case with one click, so that the file is complete in the system of record without downloading and re-uploading by hand.
-**Verified:** 2026-10-11T15:30:00Z
-**Status:** gaps_found (1 small gap, live mode only; it does not affect the fake-mode demo)
-**Re-verification:** No (initial verification)
+**Verified:** 2026-10-11T16:06:08Z (re-verification; initial 2026-10-11T15:30:00Z)
+**Status:** human_needed (no gaps; 3 human items, 1 override applied)
+**Re-verification:** Yes, after gap closure (627dd9f, c1d52ed, dbc38ea). See "Re-verification (2026-10-11)" at the end.
 
 ## User Flow Coverage (MVP)
 
 | Step | Expected | Evidence in codebase | Status |
 |------|----------|----------------------|--------|
-| Staff opens a request with approved items | The push card lists approved, ready files | `request-page.tsx:183` (HEAD) mounts `LogicsPushCard`; card tests pass | VERIFIED |
-| Staff selects files and clicks Push | Sheet shows the plan, the comment preview and the note preview; confirm sends ids only | `push-sheet.tsx` posts `{document_ids, push_again?}`; route `admin-logics-push.ts` creates a batch and one queue message per row | VERIFIED |
+| Staff opens a request with approved items | The push card lists approved, ready files | `request-page.tsx:185` (HEAD) mounts `LogicsPushCard`; card tests pass | VERIFIED |
+| Staff selects files and clicks Push | Sheet shows the plan, the comment preview and the note preview; confirm sends ids only | `push-sheet.tsx` posts `{document_ids}` (push_again removed in c1d52ed); route `admin-logics-push.ts` creates a batch and one queue message per row | VERIFIED |
 | The file reaches the Logics case | Consumer normalizes and POSTs `Documents/CaseDocument` with a comment and FileCategoryID | `jobs/logics-push.ts` and `client.ts:147`; `client-write.test.ts` multipart test | VERIFIED (fake); live depends on Andrew's key |
 | One note per batch | `CaseActivity/Activity` posted once by the finalize winner | SQL `activity_state='pending'` flip in `logics_push_finalize_batch` + `finalize.test.ts` | VERIFIED |
-| Staff sees the ledger and resolves unknowns | Chips for queued/sending/sent/failed/unknown; a two-action dialog | `logics-push-card.tsx`, `resolve-unknown-dialog.tsx` (mark_sent / Re-send) | VERIFIED |
+| Staff sees the ledger and resolves unknowns | Chips for queued/sending/sent/failed/unknown; a two-action dialog is the only way out of `unknown` | `logics-push-card.tsx` (unknown and sent rows not selectable), `resolve-unknown-dialog.tsx` (mark_sent / Re-send) | VERIFIED |
 
 Outcome clause ("the file is complete in the system of record"): achieved in fake mode end to end. In live mode it waits on the vendor key (USER ACTION).
 
@@ -94,39 +100,29 @@ Outcome clause ("the file is complete in the system of record"): achieved in fak
 
 | # | Truth | Status | Evidence |
 |---|-------|--------|----------|
-| 1 | Staff push approved items with a comment and the configured file category; the ledger shows queued/sending/sent/failed/unknown (SC1, PUSH-01) | VERIFIED | Comment is `Uploaded via ResSpark by {agent} — {file} (part n of m)` (`buildDocumentComment`). This meets SC1's "a comment such as" Andrew's wording. `FileCategoryID` is omitted when null (`client-write.test.ts` "adds FileCategoryID only when configured"). Ledger states are a CHECK in 0006 |
-| 2 | With LOGICS_WRITE_ENABLED off or a CaseID outside the allowlist the push is refused with a clear message (SC1, PLAT-05) | UNCERTAIN | Live mode: refused with clear messages (route tests "403 ... writes are off in live mode", "403 ... allowlist"; consumer test "write guard refusing in live mode"). Fake mode: accepted on purpose (d3e5304, D-10), so the literal SC1 wording is not met. Needs an override decision; see Human Verification 1 |
-| 3 | One activity note per push batch names the agent and the documents (SC2, PUSH-03) | VERIFIED | `logics_push_finalize_batch` flips `pending -> sending` only when no part is queued or sending; losers get NULL. `buildActivityComment` names the agent and every sent part. Tests: "does nothing when another caller won", "posts one note", "posts nothing for an all-failed batch" |
-| 4 | Nothing over the gate is ever sent; oversize files are split into parts of at most 5,767,168 bytes or marked needs_manual_compression (SC3, PUSH-02) | VERIFIED | Four layers. (1) `splitPdf` throws `split_invariant`. (2) `normalizeForLogics` throws `normalize_invariant`. (3) The live and fake `createCaseDocument` both refuse `> LOGICS_MAX_PART_BYTES` (5,767,168) before fetch (test "refuses a 5_767_169-byte part ... never calls fetch", "sends exactly 5_767_168"). (4) Every normalize error code sets `needs_manual_compression=true` (`ensureNormalized` sets `manual: true`; consumer test "a file that cannot be shrunk ... never sent"). The UI flags HEIC, >40 MB, and unsupported types before the click (`plan.ts`) |
-| 5 | An `unknown` result asks staff to decide; there is no blind retry (SC4, PUSH-04) | VERIFIED | Consumer acks in `finally` once dispatch starts. The only `retry` is a refused claim (nothing sent). `jobs/index.ts` routes `logics_push` around the generic retry. The DLQ never touches push rows. The sweeper moves stale `sending` to `unknown`. The dialog has exactly two actions. Tests: "unknown ... acks once", "runtime throw mid-dispatch is acked once and recorded unknown" |
-| 6 | No code path can write to real Logics while LOGICS_MODE=fake | VERIFIED | `prepare()` builds `createFakeLogicsClient()` whenever `LOGICS_MODE !== 'live'` and never reads credentials. The fake client never calls fetch. A row queued in another mode fails `mode_changed`. The only other live-client use is Test connection (`admin-integrations.ts:133`), which does GETs only (`findByEmail`, `listActivities`). Deployed `/api/config` returns `logics_mode: fake`, `logics_write_enabled: false`. Live DB: 0 rows with `mode='live'` |
-| 7 | In live mode the env guard, the test-CaseID allowlist, and the firm write_enabled toggle all apply to every write | FAILED | The env guard and allowlist run in the route and in the consumer (live). The firm toggle runs only in the create route. The resend route and the consumer skip it. See Gaps |
-| 8 | A document part is never pushed twice | VERIFIED | Partial unique index `logics_pushes_fingerprint_live` (queued/sending/sent) on sha256(case, doc sha256, part). `create_batch` refuses queued/sending/sent/unknown unless `push_again`, and `sent` still hits 23505 -> `already_pushed`. The claim is state-guarded with a per-case advisory lock. `add_parts` skips any existing fingerprint. Re-sends reuse stored, hash-checked bytes. Live DB: 0 duplicate live fingerprints. Warning: see Anti-Patterns row 1 |
+| 1 | Staff push approved items with a comment and the configured file category; the ledger shows queued/sending/sent/failed/unknown (SC1, PUSH-01) | VERIFIED | Comment is `Uploaded via ResSpark by {agent} — {file} (part n of m)` (`buildDocumentComment`). `FileCategoryID` is omitted when null (`client-write.test.ts`). Ledger states are a CHECK in 0006 |
+| 2 | With LOGICS_WRITE_ENABLED off or a CaseID outside the allowlist the push is refused with a clear message (SC1, PLAT-05) | PASSED (override) | Override: D-10, fake mode writes nothing real; accepted by orchestrator (per locked CONTEXT D-10; user may revoke) on 2026-10-11. Live mode still refuses in route and consumer (route tests "403 ... writes are off in live mode", "403 ... allowlist"; consumer test "write guard refusing in live mode") |
+| 3 | One activity note per push batch names the agent and the documents (SC2, PUSH-03) | VERIFIED | `logics_push_finalize_batch` flips `pending -> sending` only when no part is queued or sending; losers get NULL. Tests: "does nothing when another caller won", "posts one note", "posts nothing for an all-failed batch" |
+| 4 | Nothing over the gate is ever sent; oversize files are split into parts of at most 5,767,168 bytes or marked needs_manual_compression (SC3, PUSH-02) | VERIFIED | Four layers (split invariant, normalize invariant, client size gate before fetch, `manual: true` on every normalize error). Tests unchanged and passing |
+| 5 | An `unknown` result asks staff to decide; there is no blind retry (SC4, PUSH-04) | VERIFIED | Consumer acks in `finally` once dispatch starts; sweeper moves stale `sending` to `unknown`; the UI now offers only the two-action dialog for `unknown` (c1d52ed, test "D-04: an unknown row cannot be selected or pushed again") |
+| 6 | No code path can write to real Logics while LOGICS_MODE=fake | VERIFIED | `prepare()` builds the fake client whenever `LOGICS_MODE !== 'live'`; the only other live-client use is Test connection (GETs only). Unchanged by the closure |
+| 7 | In live mode the env guard, the test-CaseID allowlist, and the firm write_enabled toggle all apply to every write | VERIFIED | Closed by 627dd9f. `prepare()` (`jobs/logics-push.ts:47-55`) reads the firm row in both modes and fails `logics_write_blocked` before any client is built; the resolve route (`admin-logics-push.ts:135-138`) returns 403 for `resend`. The only `createCaseDocument`/`createActivity` callers are the consumer and `finalizeBatchIfDone`, both behind `prepare()`. Behavioral tests pass (see Re-verification) |
+| 8 | A document part is never pushed twice | VERIFIED | Fingerprint partial unique index, state-guarded claim, hash-checked re-sends. UI vector for "Push again on unknown" removed (c1d52ed). Residual server-side path recorded as advisory (see Re-verification) |
 
-**Score:** 6/8 truths verified (0 present, behavior-unverified; 1 uncertain, 1 failed)
-
-**Override suggestion for truth 2.** This looks intentional. To accept it, add to the frontmatter:
-
-```yaml
-overrides:
-  - must_have: "With LOGICS_WRITE_ENABLED off or a CaseID outside the allowlist the push is refused with a clear message"
-    reason: "D-10: the env guard protects real Logics writes and runs in live mode in both route and consumer; fake mode writes nothing real and must push for the demo. The firm write_enabled toggle still refuses in both modes."
-    accepted_by: "{name}"
-    accepted_at: "{ISO timestamp}"
-```
+**Score:** 8/8 truths verified (1 by override; 0 present, behavior-unverified)
 
 ### Required Artifacts
 
 | Artifact | Status | Details |
 |----------|--------|---------|
-| `supabase/migrations/0006_logics_push.sql` | VERIFIED | Applied (`db-migrate --status` lists 0006). RLS on, grants revoked, 8 RPCs |
-| `app/worker/src/routes/admin-logics-push.ts` | VERIFIED | Mounted at `index.ts:66` |
-| `app/worker/src/jobs/logics-push*.ts` | VERIFIED | Wired from `jobs/index.ts` (HEAD) and `cron.ts:72` (sweep) |
+| `supabase/migrations/0006_logics_push.sql` (+ `create_batch` replaced in 0008) | VERIFIED | RLS on, grants revoked; 0008 re-grants `create_batch` to service_role only |
+| `app/worker/src/routes/admin-logics-push.ts` | VERIFIED | Mounted at `index.ts:68` |
+| `app/worker/src/jobs/logics-push*.ts` | VERIFIED | Wired from `jobs/index.ts:87-89` and `cron.ts:72` (sweep) |
 | `app/worker/src/pdf/*` | VERIFIED | Used by `logics-push-normalize.ts` |
 | `app/worker/src/integrations/logics/client.ts`, `fixtures.ts`, `write-types.ts` | VERIFIED | Live and fake write methods with the size gate |
-| `app/src/features/logics-push/*` | VERIFIED | Card, sheet, dialog and hooks are mounted on the request page |
+| `app/src/features/logics-push/*` | VERIFIED | Mounted on the request page; all files under 500 lines (card 229) |
 | `push-settings-card.tsx` | VERIFIED | File category, activity type, Write enabled |
-| Companion docs | VERIFIED | `docs/` mirrors exist for all 19 Phase 5 code files; every file is under 500 lines |
+| Companion docs | VERIFIED | Updated in 627dd9f and c1d52ed for every touched file |
 
 ### Key Link Verification
 
@@ -139,27 +135,13 @@ overrides:
 | Consumer | `finalizeBatchIfDone` -> `createActivity` | WIRED |
 | Cron | `logicsPushSweep` | WIRED |
 | Resolve dialog | `POST /logics-pushes/:id/resolve` -> `logics_push_resolve` | WIRED |
-| Firm `write_enabled` | consumer / resend | NOT_WIRED (gap) |
-
-### Behavioral Spot-Checks
-
-| Behavior | Command | Result | Status |
-|----------|---------|--------|--------|
-| Phase 5 unit suites (21 files) | `pnpm -C app exec vitest run <phase 5 files>` | 157/157 passed | PASS |
-| Deployed mode | `node app/scripts/smoke.mjs https://resspark.zh-a16.workers.dev` | 13/13 ok, `logics_mode=fake` | PASS |
-| Deployed config | `GET /api/config` | `logics_write_enabled:false, logics_mode:fake` | PASS |
-| Migration applied | `node app/scripts/db-migrate.mjs --status` | 0006_logics_push listed | PASS |
-| Ledger state (read-only) | `supabase db query` on `logics_pushes` | 0 rows, 0 live rows, 0 duplicate live fingerprints, RLS on | PASS |
-
-### Probe Execution
-
-No probes declared for this phase. Not applicable.
+| Firm `write_enabled` | create route, resend route, consumer `prepare()` | WIRED (was NOT_WIRED) |
 
 ### Requirements Coverage
 
 | Requirement | Status | Evidence |
 |-------------|--------|----------|
-| PUSH-01 | SATISFIED (fake); live gating gap on the resend path | Truths 1, 2, 7 |
+| PUSH-01 | SATISFIED (fake); live waits on vendor key | Truths 1, 2 (override), 7 |
 | PUSH-02 | SATISFIED | Truth 4 |
 | PUSH-03 | SATISFIED | Truth 3 |
 | PUSH-04 | SATISFIED | Truths 5, 8 |
@@ -170,31 +152,25 @@ No orphaned requirements.
 
 | File | Line | Pattern | Severity | Impact |
 |------|------|---------|----------|--------|
-| `logics-push-card.tsx` / `0006` `create_batch` | 61-73 / 140 | "Push again" on an `unknown` row queues a new part-0 row and leaves the old row `unknown`. The unique index excludes `unknown`, so this bypasses the two-action dialog and D-04's "only after the old one is marked failed" | Warning | A deliberate staff action can create a duplicate in Logics. Smallest fix: offer Push again only for `sent` rows, or have `create_batch` mark a pushed-again `unknown` row `failed` (`resent_by_staff`) like `resolve` does |
-| `logics-push-card.tsx` | 61 | "Push again" on a `sent` row always ends in 409 `already_pushed` (unique index) | Info | Dead UI option; harmless to data |
-| `jobs/logics-push.ts` | n/a | D-03 "401/403 stops the whole batch" is not implemented; sibling parts are still sent and fail `auth` one by one | Info | No duplicate risk; extra failed calls only |
-| `0006` `logics_push_resolve` | 408-420 | A resent row joins a batch whose note is already written, so the resent file never appears in an activity note | Info | Keeps "one note per batch"; a resend is not noted |
+| `admin-logics-push.ts` / `0008` `create_batch` | 55, 113 / 432-437 | Route still accepts `push_again`; `create_batch` lets an `unknown` row's document be re-queued with the old row left `unknown`. No UI caller since c1d52ed | Warning (advisory) | Only a hand-made staff API call can create a duplicate. Smallest fix: drop `body.push_again` in the route (pass `pushAgain: []`) |
+| `jobs/logics-push.ts` | n/a | D-03 "401/403 stops the whole batch" not implemented | Info | Extra failed calls only (unchanged) |
+| `0006` `logics_push_resolve` | 408-420 | A resent file never appears in an activity note | Info | Unchanged |
 
-No TBD/FIXME/XXX markers in Phase 5 files.
+No TBD/FIXME/XXX/TODO/HACK markers in the files touched by the closure.
 
 ### Human Verification Required
 
-1. **D-10 override decision (truth 2).** Accept fake-mode pushes while `LOGICS_WRITE_ENABLED=false`, or change it.
-2. **Deployed UI rehearsal.** Push one small PDF in fake mode and watch the chips go Queued -> Sending -> Sent with the Simulated badge, the activity preview, and the SANDBOX banner wording.
-3. **Firm "Write enabled" switch.** An admin turns it on for the demo; with it off, the push is refused in the sheet.
-4. **Andrew's write key and test CaseIDs.** Required before `LOGICS_MODE=live` (`docs/app/logics-live-switch.md`).
+1. **Deployed UI rehearsal.** After the orchestrator deploys 627dd9f and c1d52ed, push one small PDF in fake mode and watch Queued -> Sending -> Sent with the Simulated badge, then "Already pushed" with no checkbox.
+2. **Firm "Write enabled" switch.** With it off, push and Re-send are refused with the Settings message. Keep it on until the demo batch is Sent, because the consumer now re-checks it.
+3. **Andrew's write key and test CaseIDs.** Required before `LOGICS_MODE=live` (`docs/app/logics-live-switch.md`).
 
 ### Gaps Summary
 
-There is one gap, and it only matters in live mode. The firm `write_enabled` toggle is enforced only when a batch is created. The staff Re-send path and the consumer do not check it. Real-tenant writes are still blocked unless the env flag is on and the CaseID is on the allowlist, which both run in the consumer. Fix it in `prepare()` in `app/worker/src/jobs/logics-push.ts`: read the firm settings and refuse `logics_write_blocked` when `write_enabled` is false, then add one unit test. The fake-mode demo path is unaffected. Everything else that was asked to be confirmed holds in code and tests:
-- Fake mode cannot reach real Logics.
-- A document part is not pushed twice, apart from the "Push again on unknown" warning above.
-- There is one note per batch.
-- Nothing over 5,767,168 bytes is sent.
+No gaps remain. The truth 7 gap is closed in the consumer and the resend route, with passing behavioral tests. The SC1 deviation is accepted by override (D-10). One advisory remains: the server still accepts `push_again`, which nothing in the UI sends.
 
 ---
 
-_Verified: 2026-10-11T15:30:00Z_
+_Verified: 2026-10-11T16:06:08Z_
 _Verifier: Claude (gsd-verifier)_
 
 ## Gap closure (2026-10-11)
@@ -231,3 +207,38 @@ Choice: **"Push again" removed for both `unknown` and `sent`.** `logics_push_cre
 Companion docs updated: `docs/app/worker/src/jobs/logics-push.md`, `logics-push.test.md`, `docs/app/worker/src/routes/admin-logics-push.md`, `docs/app/src/features/logics-push/{logics-push-card,plan,push-sheet,api,use-logics-push}.md`.
 
 Still open (unchanged by this closure): Human Verification 1 (D-10 override), 2 (deployed UI rehearsal), 3 (firm switch demo step), 4 (Andrew's write key). Info rows 3 (D-03 batch stop on 401/403) and 4 (resent file not in an activity note) are not addressed.
+
+## Re-verification (2026-10-11)
+
+Verifier re-checked the committed code at HEAD (`10d04da`, branch `zack`). The working tree has unrelated uncommitted edits (`connect-copy.ts`, `esign-settings.ts`, `statement-cells.tsx`); none is a Phase 5 file, and the result is based on committed code only. Nothing was deployed or written to the live database, Storage, or Logics.
+
+### Gap (truth 7): CLOSED
+
+- `jobs/logics-push.ts:47-55` (HEAD): `getIntegration` + `readSettings(row).write_enabled` run in both modes, after the live env guard and the `mode_changed` check and before any client is built or `ensureNormalized` runs. `readSettings(null)` returns `write_enabled: false` (`db/integrations.ts:30-38`), so a missing firm row also refuses.
+- `routes/admin-logics-push.ts:135-138`: `resend` with the switch off returns 403 `logics_write_blocked` before `resolvePush`.
+- Write-path inventory (grep, non-test): `createCaseDocument` is called only at `jobs/logics-push.ts:119`, and `createActivity` only through `finalizeBatchIfDone` (`logics-push.ts:111, 138`). Both run after `prepare()`. A refused row gets `refusedNote`, so no activity POST. The only other live-client use is Test connection (`admin-integrations.ts:133`, GETs only).
+- Named behavioral tests run individually, all pass: "D-08: the firm switch turned off after queueing fails the row in fake mode; the client is never called", "D-08: live mode with the env guard passing but the firm switch off never builds a live client", "D-08: resend is 403 when the firm turned Logics writes off; nothing resolved or enqueued". The test bodies assert that the client spy, `liveClientFromRow`, `ensureNormalized`, `resolvePush` and `JOBS.send` are never called.
+
+Side effect worth knowing for the demo: the consumer now also refuses in fake mode when the switch is off, so turning it off mid-batch fails the remaining parts `logics_write_blocked`. That is the intended D-08 behavior.
+
+### Warning ("Push again" on `unknown`): CLOSED in the UI; residual server path is advisory
+
+- `logics-push-card.tsx` (HEAD): `disabled: plan.kind === 'manual' || inFlight || sent || unknown`; the "Push again" checkbox and the `again` state are gone. `push-sheet.tsx` posts `{ document_ids }` only; `api.ts` `createPush` no longer accepts `push_again`. Grep finds no `pushAgain`/`push_again` left in `app/src`.
+- Tests pass: "D-04: an unknown row cannot be selected or pushed again; only the decision dialog resolves it", "shows a sent row ... with no way to push it again", "a failed row can be pushed again fresh".
+- Residual (advisory, not blocking): `admin-logics-push.ts:55` still reads `body.push_again`, and the 0008 `logics_push_create_batch` (lines 432-437) bypasses the `unknown` check for listed ids without failing the old row. Only an authenticated staff member sending a hand-made request can reach it. Smallest fix: pass `pushAgain: []` in the route, or remove `'unknown'` from what `push_again` bypasses.
+
+### SC1 / truth 2: override applied
+
+The frontmatter `overrides` entry, accepted by the orchestrator per locked CONTEXT D-10 on 2026-10-11, is counted (`overrides_applied: 1`). Live mode still refuses in both the route and the consumer. The user may revoke it.
+
+### Regression check
+
+| Check | Command | Result | Status |
+|-------|---------|--------|--------|
+| Phase 5 unit suites (23 files: logics-push UI, settings/integrations, worker logics integrations, push jobs, pdf, route, storage) | `pnpm -C app exec vitest run src/features/logics-push src/features/settings/integrations worker/src/integrations/logics worker/src/jobs/logics-push worker/src/pdf worker/src/routes/admin-logics-push worker/src/storage/logics-parts` | 23 files, 202/202 passed | PASS |
+| Gap-closure named tests | `vitest run ... -t "D-08\|D-04\|Already pushed\|pushed again fresh"` | 6/6 passed | PASS |
+| Wiring | grep | `request-page.tsx:185` card, `jobs/index.ts:87-89` consumer, `cron.ts:72` sweep, `index.ts:68` route | PASS |
+| File sizes | `wc -l` | largest touched file 229 lines | PASS |
+| Debt markers | grep TBD/FIXME/XXX/TODO/HACK on touched files | none | PASS |
+
+Not run: `tsc -b` (other executors' uncommitted edits could pollute it), the `worker/test/*` live suites, the deployed smoke, and read-only DB queries. The closure is not deployed yet, so the deployed Worker does not have it until the orchestrator deploys.
