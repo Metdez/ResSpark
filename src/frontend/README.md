@@ -4,6 +4,8 @@ Vite and vanilla TypeScript frontend for the taxpayer-question flow, document
 upload, and follow-on resolution screening results.
 It requires Node.js 18 or later.
 
+Legacy: frozen as of Phase 1; new work lives in `app/`. This folder and its `package-lock.json` are deleted in Phase 7.
+
 ```powershell
 cd src/frontend
 npm install
