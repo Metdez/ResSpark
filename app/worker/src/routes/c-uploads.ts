@@ -28,6 +28,7 @@ type Ctx = Context<Env_>
 
 const SHA256 = /^[a-f0-9]{64}$/
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+const UPLOAD_KINDS: readonly string[] = ['upload', 'bank_connect', 'payroll_connect']
 
 // Plain-sentence messages (the client copy lives in the SPA); the envelope matches app.onError.
 function fail(c: Ctx, status: ContentfulStatusCode, code: string, message: string) {
@@ -69,7 +70,8 @@ export const cUploadsRoute = new Hono<Env_>()
     const itemId = c.req.param('itemId')
     const item = UUID.test(itemId) ? await findSessionItem(c.env, s, itemId) : null
     if (!item) return notFound(c)
-    if (item.kind !== 'upload') return fail(c, 409, 'item_not_upload', 'This step does not take files.')
+    // the connect steps take files too: manual pay stubs, W-2s and statements (PAY-03, BANK-03)
+    if (!UPLOAD_KINDS.includes(item.kind)) return fail(c, 409, 'item_not_upload', 'This step does not take files.')
     if (item.status === 'approved') return fail(c, 409, 'item_approved', 'Your agent already approved this item.')
     // shortcut: two simultaneous mints can both pass at 9 and reach 11; the bucket and per-file caps still hold. Upgrade to a FOR UPDATE count inside an RPC if a real client hits it.
     if ((await countActiveDocuments(c.env, item.id)) >= MAX_FILES_PER_ITEM)

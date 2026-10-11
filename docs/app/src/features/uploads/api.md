@@ -19,7 +19,7 @@ Typed calls to the four client upload routes from Plan 03-01. Every call goes th
 
 | Function | Route | Notes |
 |----------|-------|-------|
-| `mintUpload(itemId, { name, mime, size })` | `POST /api/c/items/:itemId/uploads` | 201. Creates an `uploading` document row and a token. Errors: `unsupported_type`, `file_too_large`, `item_not_upload`, `item_approved`, `too_many_files`, `not_found`. |
+| `mintUpload(itemId, { name, mime, size })` | `POST /api/c/items/:itemId/uploads` | 201. Creates an `uploading` document row and a token. Works on `upload`, `bank_connect` and `payroll_connect` items (the connect sheets reuse `UploadSheet` for their manual fallback); any other kind is `item_not_upload`. Errors: `unsupported_type`, `file_too_large`, `item_not_upload`, `item_approved`, `too_many_files`, `not_found`. |
 | `remintToken(documentId)` | `POST /api/c/uploads/:documentId/token` | A fresh token for the same object, used to resume after a reload. 409 `document_not_uploading` when the document is no longer waiting. |
 | `completeUpload(documentId, { sha256, size })` | `POST /api/c/uploads/:documentId/complete` | The Worker checks the stored bytes. Errors: `upload_incomplete`, `bad_file_type` and `file_too_large` (the object and row are deleted), `document_not_uploading`. |
 | `listItemDocuments(itemId)` | `GET /api/c/items/:itemId/documents` | Ready and rejected documents in `uploaded_at, id` order, plus the item's status and rejection note. |

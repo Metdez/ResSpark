@@ -133,8 +133,17 @@ describe('POST /items/:itemId/uploads', () => {
     expect(await code(res)).toBe('not_found')
   })
 
+  it.each(['bank_connect', 'payroll_connect'])('%s item takes a manual upload → 201', async (kind) => {
+    vi.mocked(docs.findSessionItem).mockResolvedValue(item({ kind }))
+    const res = await mint()
+    expect(res.status).toBe(201)
+    expect(docs.createUploadingDocument).toHaveBeenCalledOnce()
+  })
+
   it.each([
-    ['not an upload item', { kind: 'bank_connect' }, 'item_not_upload'],
+    ['address item', { kind: 'address' }, 'item_not_upload'],
+    ['signature item', { kind: 'signature' }, 'item_not_upload'],
+    ['intake item', { kind: 'intake' }, 'item_not_upload'],
     ['already approved', { status: 'approved' }, 'item_approved'],
   ])('%s → 409', async (_name, over, errorCode) => {
     vi.mocked(docs.findSessionItem).mockResolvedValue(item(over))

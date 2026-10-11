@@ -17,7 +17,7 @@ Helpers: `item()` / `doc()` build rows with overrides; `send` adds `X-Requested-
 | Group | Proves |
 |-------|--------|
 | CSRF header | Mint, complete and token without the header → 403 `bad_origin` and no `db/documents` call. |
-| Mint | 201 shape and `signedUploadToken(env, storage_key)`; HEIC → 415, size 0 → 400, 26,214,401 bytes → 413, a 201-character name → 400, an array body → 400, none of which create a document; item of another request → 404; `bank_connect` item → 409 `item_not_upload`; approved item → 409 `item_approved`; 10 active files → 409 `too_many_files` without an insert. |
+| Mint | 201 shape and `signedUploadToken(env, storage_key)`; HEIC → 415, size 0 → 400, 26,214,401 bytes → 413, a 201-character name → 400, an array body → 400, none of which create a document; item of another request → 404; `bank_connect` and `payroll_connect` items → 201 with one insert (the connect steps' manual fallback); `address`, `signature` and `intake` items → 409 `item_not_upload`; approved item → 409 `item_approved`; 10 active files → 409 `too_many_files` without an insert. |
 | Complete | 200 with the RPC statuses and the RPC called with the session's request; bad hash → 400; unknown document → 404; no object → 409 `upload_incomplete` without the RPC; `GIF89a` bytes for a declared JPEG → 422, one `removeObject` with the storage key, one `markDocumentDeleted`, no RPC; already `ready` → 200 `already: true` without the RPC. |
 | Token | `ready` document → 409 `document_not_uploading` and no token; `uploading` → 200 with a new token for the same path; unknown → 404. |
 | Documents list | 200 with the item (including its rejection note) and the documents mapped to `{ id, name, mime, size_bytes, status, uploaded_at }`; item of another request → 404. |
