@@ -22,9 +22,10 @@ Run from the repo root. Every script that needs a secret loads it with `dotenv -
 
 - **dev** — `pnpm -C app run dev`: Vite dev server with the Worker running in workerd via `@cloudflare/vite-plugin`.
 - **build** — `pnpm -C app run build`: `tsc -b` then `vite build` (SPA + Worker bundle).
-- **check** — `pnpm -C app run check`: 500-line size gate, `tsc -b`, `eslint .`, then `pnpm test`. Must be green before a commit.
+- **check** — `pnpm -C app run check`: 500-line size gate, golden-fixture freshness (`python ../src/tools/export_golden_fixtures.py --check`), `tsc -b`, `eslint .`, then `pnpm test`. Must be green before a commit.
 - **test** — `pnpm -C app run test`: Vitest `web` (jsdom) + `worker-node` projects. `pnpm -C app run test:workerd` runs the Workers-runtime project (spike a).
 - **test:live** — `pnpm -C app run test:live`: live suites in `app/worker/test` against the real Supabase project (RLS, events, sign-up disabled). Env-gated: they skip when the vars are absent.
+- **test:live:file** — `pnpm -C app run test:live:file worker/test/<file>.test.ts`: one live file with the same env files as `test:live`, so no env file is named on the command line.
 - **deploy** — `pnpm -C app run deploy`: builds and runs `wrangler deploy` with `CLOUDFLARE_API_TOKEN` loaded from the root env file. Deploy refuses to run if a name in `secrets.required` is missing on the Worker.
 - **smoke** — `pnpm -C app run smoke https://resspark.zh-a16.workers.dev`: post-deploy proof (4 checks).
 - **db:migrate** — `pnpm -C app run db:migrate` (or `node app/scripts/db-migrate.mjs`): applies pending `supabase/migrations/*.sql` in order and records them in `public.app_migrations`. `--status`, `--dry-run`, and `--query "<sql>"` are also accepted.
@@ -74,7 +75,7 @@ Names only. Values live in the places listed and nowhere else. Only the first th
 
 ## Checks
 
-- `pnpm check` runs `pnpm -C app check`, which starts with `node scripts/check-file-sizes.mjs` and continues with `tsc -b`, `eslint .`, and `pnpm test`.
+- `pnpm check` runs `pnpm -C app check`, which starts with `node scripts/check-file-sizes.mjs`, then `python ../src/tools/export_golden_fixtures.py --check` (fails when `app/worker/test/fixtures/engine/golden.json` is stale against the Python oracle; needs Python 3.11 on PATH), and continues with `tsc -b`, `eslint .`, and `pnpm test`.
 - `pnpm hygiene` runs `bash app/scripts/hygiene-check.sh` — the PLAT-06 gate (ignore rules, no tracked build output, one lockfile, engines, size gate, 500/501 boundary self-test, no `sb_secret_` in the client bundle).
 - `app/scripts/check-file-sizes.mjs` fails on any code file over 500 lines. It excludes only `src/components/ui/**` (vendored shadcn), `routeTree.gen.ts`, and `worker-configuration.d.ts`; the limit itself is a CLAUDE.md rule, not a setting.
 

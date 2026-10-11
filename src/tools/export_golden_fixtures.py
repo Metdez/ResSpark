@@ -398,12 +398,22 @@ def render(payload: dict) -> str:
     return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
 
 
-def main() -> int:
+def main(args: list[str]) -> int:
     if sum([0.1] * 10) == 1.0:
         print("Golden fixtures need left-to-right float sum (Python <= 3.11); the TS engine mirrors that.",
               file=sys.stderr)
         return 1
+    if args not in ([], ["--check"]):
+        print("usage: export_golden_fixtures.py [--check]", file=sys.stderr)
+        return 2
     text = render(build_payload())
+    if args == ["--check"]:
+        # Parsed compare: a CRLF checkout of the same JSON is still fresh.
+        fresh = OUT.exists() and json.loads(OUT.read_text(encoding="utf-8")) == json.loads(text)
+        if not fresh:
+            print("golden.json is stale: run python src/tools/export_golden_fixtures.py", file=sys.stderr)
+            return 1
+        return 0
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(text, encoding="utf-8", newline="\n")
     print(f"Wrote {OUT.relative_to(ROOT).as_posix()}")
@@ -411,4 +421,4 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(main(sys.argv[1:]))

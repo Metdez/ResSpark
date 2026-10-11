@@ -5,7 +5,8 @@ The oracle exporter (D-03, FORM-01). The Python engine in `src/` is the source o
 Stdlib only. Run from the repo root (or anywhere; paths come from `__file__`):
 
 ```powershell
-python src/tools/export_golden_fixtures.py
+python src/tools/export_golden_fixtures.py          # write golden.json
+python src/tools/export_golden_fixtures.py --check  # exit 1 if golden.json is stale
 ```
 
 ## Parts, in file order
@@ -31,12 +32,18 @@ python src/tools/export_golden_fixtures.py
 | `standards_samples()` | A descriptive snapshot of what the fake returns (national 1-8, health 30/64/65, ownership and operating 0-3, housing). The tests replay recorded calls, not this table. |
 | `build_payload()` | Builds all cases (existing, grid, boundary, other), checks coverage, and returns the top-level object: `python` (major.minor), `generated_by`, `questions` (id, prompt, Python type name), `initial_question_ids`, sorted `required_financial_columns`, `paths` (`_PATHS` as lists), `next`, `validations`, `standards`, `cases`. |
 | `render(payload)` | `json.dumps(indent=2, ensure_ascii=False)` plus a trailing newline. Insertion order is deterministic, so two runs write byte-identical files. |
-| `main()` | **Version guard first:** if `sum([0.1] * 10) == 1.0` the interpreter uses compensated summation (Python 3.12+), which changes last-bit float totals; the script exits 1 with "Golden fixtures need left-to-right float sum (Python <= 3.11); the TS engine mirrors that." Then writes the file with LF line endings. |
+| `main(args)` | **Version guard first:** if `sum([0.1] * 10) == 1.0` the interpreter uses compensated summation (Python 3.12+), which changes last-bit float totals; the script exits 1 with "Golden fixtures need left-to-right float sum (Python <= 3.11); the TS engine mirrors that." Any argument other than a single `--check` prints the usage and exits 2. Without arguments it writes the file with LF line endings. With `--check` it builds the payload in memory and compares it, parsed, with the file on disk (a parsed compare survives a CRLF checkout); a missing or different file prints "golden.json is stale: run python src/tools/export_golden_fixtures.py" and exits 1. |
 
 ## Fixture contents (as generated with Python 3.11)
 
 12 existing-test cases, 69 `grid_*`, 15 `boundary_*`, 1 `pay_frequency_not_applicable`, 63 `null_*` (58 required columns + 5 question-only), 140 validations. Every one of the six paths appears.
 
+## How freshness is enforced
+
+`app/package.json` runs `python ../src/tools/export_golden_fixtures.py --check` inside `pnpm check`, right after the file-size gate (cwd is `app/`; the script resolves its own paths from `__file__`). A Python change that alters any output, or a hand edit of `golden.json`, fails `pnpm check` until the fixture is regenerated. `parity.test.ts` then compares the TS engine against the regenerated file with `toEqual` (threat T-07-01).
+
+`app/package.json` also defines `test:live:file` (`dotenv` with the same env files as `test:live`, then `vitest run --project worker-node`), so later plans run one live file with `pnpm -C app test:live:file worker/test/<file>` without naming env files on the command line.
+
 ## Regenerating after a Python change
 
-Any change to `src/determination.py`, `src/intake_workflow.py`, `src/questions.py`, `src/case_api.py` wording or the test fake changes the oracle. Rerun the script, then run the parity test; if it fails, fix the TypeScript port (never loosen the assertion).
+Any change to `src/determination.py`, `src/intake_workflow.py`, `src/questions.py`, `src/case_api.py` wording or the test fake changes the oracle. Rerun the script (Python 3.11), commit the regenerated `golden.json` together with the Python change, then run the parity test; if it fails, fix the TypeScript port (never loosen the assertion) and bump `ENGINE_VERSION` in `app/worker/src/engine/outcome.ts` if the port's behavior changed.
