@@ -100,7 +100,7 @@ Requirements for the first release. Each maps to a roadmap phase. The Oct 12 202
 
 ### 433-A Pre-population & Intake
 
-- [ ] **FORM-01**: The determination engine is ported to TypeScript with golden fixtures generated from the existing Python tests; the parity suite passes with identical outputs and no constant changed
+- [x] **FORM-01**: The determination engine is ported to TypeScript with golden fixtures generated from the existing Python tests; the parity suite passes with identical outputs and no constant changed
 - [ ] **FORM-02**: Client can answer the intake questions (existing contract, reconciled against the 28 rows in `question_definitions`) in the redesigned portal, pre-filled from connected data and Logics case data where available
 - [ ] **FORM-03**: Staff see a 433-A pre-population view of income, expenses, and assets with source badges (Truv, Plaid, intake, Logics), proposed versus confirmed values, and evidence drill-down to the transaction or pay stub
 - [ ] **FORM-04**: Staff can accept or edit each proposed value; only accepted values enter `case_financial_data`, and unknown values stay null
@@ -219,7 +219,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | WEBH-01 | Phase 4 | Pending |
 | WEBH-02 | Phase 4 | Pending |
 | WEBH-03 | Phase 4 | Pending |
-| FORM-01 | Phase 7 | Pending |
+| FORM-01 | Phase 7 | Complete |
 | FORM-02 | Phase 7 | Pending |
 | FORM-03 | Phase 7 | Pending |
 | FORM-04 | Phase 7 | Pending |
