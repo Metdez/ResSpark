@@ -153,13 +153,13 @@ Plans:
   3. A file over 6 MB is converted to PDF or split into parts of at most 5.5 MiB, or flagged "needs manual compression" before the click; nothing over 6 MB is ever sent (PUSH-02)
   4. When Logics gives no clear answer, the file shows "unknown" and the UI asks staff to decide (check Logics, mark sent, or retry); a push is never blindly retried, so Logics never receives duplicate documents (PUSH-04)
 
-**Plans:** 2/5 plans executed
+**Plans:** 3/5 plans executed
 
 Plans:
 - [x] 05-01-PLAN.md — Tracer: ledger migration 0006 + RPCs, Logics write client (live + fake), `logics_push` queue handler with ack-after-dispatch, one activity note per batch, admin routes (create/ledger/resolve), proven live in fake mode
 - [x] 05-02-PLAN.md — PUSH-02 normalization modules: `@cantoo/pdf-lib@2.11.1`, generated fixtures, greedy splitter, image→PDF, `normalizeForLogics`
 - [ ] 05-03-PLAN.md — Consumer expansion: normalization in the job, parts stored under `logics/`, sibling rows, cron sweeper + DLQ rule, D-08 firm settings and ActivityType listing
-- [ ] 05-04-PLAN.md — Staff UI: push card with multi-select, computed plan, ledger chips + Simulated badge, confirmation sheet, two-action `unknown` resolution dialog, fake-mode banner
+- [x] 05-04-PLAN.md — Staff UI: push card with multi-select, computed plan, ledger chips + Simulated badge, confirmation sheet, two-action `unknown` resolution dialog, fake-mode banner
 - [ ] 05-05-PLAN.md — Settings page push fields, `LOGICS_MODE=live` runbook (USER ACTION), smoke mode check, phase gate + fake-mode demo rehearsal
 
 **Scope notes**: Local ledger because Logics cannot list documents; serial, low-concurrency pushes; `FileCategoryID` and `ActivityType` taken from a config table; PDF work (`@cantoo/pdf-lib`, `unpdf`) runs in the Queue consumer; until Andrew confirms write scopes, push is exercised against a fake behind the allowlist.
@@ -271,7 +271,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 2. Find the Client & Send the Link | 8/8 | In Progress | - |
 | 3. Uploads, Review & Live Status | 7/7 | In Progress | - |
 | 4. Connect Payroll & Bank | 2/7 | In Progress | - |
-| 5. Push to Logics | 2/5 | In Progress | - |
+| 5. Push to Logics | 3/5 | In Progress | - |
 | 6. Address & E-Sign | 0/TBD | Not started | - |
 | 7. 433-A Pre-Population | 1/12 | In Progress | - |
 | 8. Reminders, Teller & Production Readiness | 0/12 | Not started | - |
