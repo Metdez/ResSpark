@@ -75,15 +75,15 @@ Requirements for the first release. Each maps to a roadmap phase. The Oct 12 202
 
 ### Address
 
-- [ ] **ADDR-01**: Client confirms their home address with Smarty autocomplete, and the selected USPS-validated address, county, and residential or commercial flag are stored on the case
+- [x] **ADDR-01**: Client confirms their home address with Smarty autocomplete, and the selected USPS-validated address, county, and residential or commercial flag are stored on the case
 - [x] **ADDR-02**: The stored county feeds the IRS local standards lookup so staff never pick a county from a dropdown
 
 ### E-Signature
 
-- [ ] **SIGN-01**: Staff can attach an e-sign template (engagement letter, Form 2848, Form 8821) to a request, and the client signs it embedded in the portal step on a phone; the provider is DocuSeal first, with Anvil evaluated against the same acceptance test
-- [ ] **SIGN-02**: On completion the signed PDF and the audit-trail PDF are stored in the case immediately with a content hash, the item is marked signed, and the signed PDF can be pushed to Logics like any other document
-- [ ] **SIGN-03**: Staff get a copyable signing link, and an ESIGN consent record is captured before the client signs
-- [ ] **SIGN-04**: The signing experience passes the "senior on the phone" test: after opening the link on a phone the client reaches the first signature field in at most 3 taps with no pinch-zoom or horizontal scrolling, and the agent can see which step the client is on
+- [x] **SIGN-01**: Staff can attach an e-sign template (engagement letter, Form 2848, Form 8821) to a request, and the client signs it embedded in the portal step on a phone; the provider is DocuSeal first, with Anvil evaluated against the same acceptance test
+- [x] **SIGN-02**: On completion the signed PDF and the audit-trail PDF are stored in the case immediately with a content hash, the item is marked signed, and the signed PDF can be pushed to Logics like any other document
+- [x] **SIGN-03**: Staff get a copyable signing link, and an ESIGN consent record is captured before the client signs
+- [x] **SIGN-04**: The signing experience passes the "senior on the phone" test: after opening the link on a phone the client reaches the first signature field in at most 3 taps with no pinch-zoom or horizontal scrolling, and the agent can see which step the client is on
 
 ### Logics Push
 
@@ -206,12 +206,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PAY-02 | Phase 4 | Complete |
 | PAY-03 | Phase 4 | Complete |
 | PAY-04 | Phase 4 | Complete |
-| ADDR-01 | Phase 6 | Pending |
+| ADDR-01 | Phase 6 | Complete |
 | ADDR-02 | Phase 7 | Complete |
-| SIGN-01 | Phase 6 | Pending |
-| SIGN-02 | Phase 6 | Pending |
-| SIGN-03 | Phase 6 | Pending |
-| SIGN-04 | Phase 6 | Pending |
+| SIGN-01 | Phase 6 | Complete |
+| SIGN-02 | Phase 6 | Complete |
+| SIGN-03 | Phase 6 | Complete |
+| SIGN-04 | Phase 6 | Complete |
 | PUSH-01 | Phase 5 | Complete |
 | PUSH-02 | Phase 5 | Complete |
 | PUSH-03 | Phase 5 | Complete |
