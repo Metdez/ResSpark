@@ -14,6 +14,7 @@ Route tests for templates, draft creation, the list, one request, and send. They
 - `GET /templates` returns both templates with their items and reads them for the staff firm.
 - `POST /` returns 201 with the request id. `createRequest` receives the staff firm, the staff id as creator, the staff display name as agent, the template name looked up by id, and the items in the posted order (reversed here to prove order is kept).
 - Zero items return 400 `no_items`. An unknown kind, a blank or over-long label, a non-boolean `required`, and an array `config` each return 400. `createRequest` is not called for any of them.
+- A `signature` item with `config: { template: 'form_433a' }` or `config: {}` returns 400 `bad_template`, and `createRequest` is not called (Plan 06-05, D-01). A `form_2848` signature item is accepted, and a non-signature item carrying `template: 'form_433a'` is not checked.
 - A non-UUID `case_id` returns 400, and an unknown `template_id` returns 404.
 - An RPC `case_not_found` returns 404 with that code.
 - The same body posted twice calls `createRequest` twice (no dedupe).

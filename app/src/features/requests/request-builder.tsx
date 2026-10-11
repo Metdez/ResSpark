@@ -1,12 +1,22 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Plus } from 'lucide-react'
 import { ApiError } from '@/lib/api'
+import {
+  ESIGN_TEMPLATE_KEYS,
+  ESIGN_TEMPLATE_LABELS,
+} from '@/lib/esign-templates'
 import { GENERIC_ERROR } from '@/lib/handle-server-error'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
@@ -17,6 +27,10 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
+import {
+  ESIGN_SETTINGS_KEY,
+  getEsignSettings,
+} from '@/features/settings/integrations/esign-api'
 import {
   createRequest,
   getCase,
@@ -70,6 +84,13 @@ export function RequestBuilder({
   const templatesQuery = useQuery({
     queryKey: ['request-templates'],
     queryFn: () => getTemplates(),
+  })
+  // A failed read only disables "Add a form to sign"; the rest of the builder keeps working.
+  const esignQuery = useQuery({
+    queryKey: ESIGN_SETTINGS_KEY,
+    queryFn: getEsignSettings,
+    retry: false,
+    meta: { errorShown: true },
   })
   // null until staff touch anything: the default template's rows, all on.
   const [chosen, setChosen] = useState<{ templateId: string; rows: Row[] } | null>(
@@ -126,6 +147,14 @@ export function RequestBuilder({
     create.error instanceof ApiError
       ? CREATE_COPY.get(create.error.code)
       : undefined
+
+  // D-01, D-11: only the three allowed forms, and only those the firm has mapped.
+  const esign = esignQuery.data
+  const mappedKeys = esign?.configured
+    ? ESIGN_TEMPLATE_KEYS.filter((k) => esign.mapping[k] !== null)
+    : []
+  const inRequest = (key: string) =>
+    rows.some((r) => r.kind === 'signature' && r.config.template === key)
 
   const update = (i: number, patch: Partial<Row>) =>
     setChosen({
@@ -205,6 +234,48 @@ export function RequestBuilder({
               </li>
             ))}
           </ul>
+
+          <div className='grid gap-2 sm:justify-items-start'>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild disabled={mappedKeys.length === 0}>
+                <Button type='button' variant='outline' className='h-10'>
+                  <Plus className='size-4' />
+                  Add a form to sign
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align='start'>
+                {mappedKeys.map((key) => (
+                  <DropdownMenuItem
+                    key={key}
+                    disabled={inRequest(key)}
+                    onSelect={() =>
+                      setChosen({
+                        templateId,
+                        rows: [
+                          ...rows,
+                          {
+                            kind: 'signature',
+                            label: ESIGN_TEMPLATE_LABELS[key],
+                            required: true,
+                            config: { template: key },
+                            enabled: true,
+                          },
+                        ],
+                      })
+                    }
+                  >
+                    {ESIGN_TEMPLATE_LABELS[key]}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            {mappedKeys.length === 0 && (
+              <p className='text-sm text-muted-foreground'>
+                E-sign not set up. An admin maps templates in Settings →
+                Integrations.
+              </p>
+            )}
+          </div>
 
           {createError && <ErrorAlert {...createError} />}
 

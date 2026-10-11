@@ -127,6 +127,21 @@ describe('templates and drafts', () => {
     expect(createRequest).not.toHaveBeenCalled()
   })
 
+  it('refuses a signature item without an allowed template with bad_template', async () => {
+    for (const config of [{ template: 'form_433a' }, {}]) {
+      const res = await call('POST', '/api/admin/requests', draft([{ ...ITEMS[4], config }]))
+      expect(res.status).toBe(400)
+      expect(await errorCode(res)).toBe('bad_template')
+    }
+    expect(createRequest).not.toHaveBeenCalled()
+  })
+
+  it('accepts an allowed signature template and leaves other kinds unchecked', async () => {
+    const items = [{ ...ITEMS[4], config: { template: 'form_2848' } }, { ...ITEMS[0], config: { template: 'form_433a' } }]
+    const res = await call('POST', '/api/admin/requests', draft(items))
+    expect(res.status).toBe(201)
+  })
+
   it('refuses a case id that is not a uuid', async () => {
     const res = await call('POST', '/api/admin/requests', { ...draft(), case_id: '900001' })
     expect(res.status).toBe(400)

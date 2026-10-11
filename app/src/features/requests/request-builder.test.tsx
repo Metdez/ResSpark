@@ -42,7 +42,7 @@ const TEMPLATES = {
         item('payroll_connect', 'Connect your payroll'),
         item('address', 'Confirm your address'),
         item('upload', 'Government ID', { doc_code: 'government_id' }),
-        item('signature', 'Engagement letter'),
+        item('signature', 'Engagement letter', { template: 'engagement_letter' }),
       ],
     },
   ],
@@ -57,10 +57,17 @@ const CASE = {
   logics_fetched_at: '2026-10-11T12:00:00Z',
 }
 
+const ESIGN = '/api/admin/esign/settings'
+const esign = (
+  configured: boolean,
+  mapping: Record<string, number | null> = { engagement_letter: 1001, form_2848: 2002, form_8821: null }
+): Reply => ({ status: 200, body: { configured, env: 'test', mapping } })
+
 const onCreated = vi.fn()
 const base = (): Record<string, Reply> => ({
   'GET /api/admin/cases/c1': { status: 200, body: CASE },
   'GET /api/admin/requests/templates': { status: 200, body: TEMPLATES },
+  [`GET ${ESIGN}`]: esign(true),
 })
 async function render(extra: Record<string, Reply> = {}) {
   const out = await renderWithQuery(
@@ -76,6 +83,12 @@ const rowLabels = (el: HTMLElement) =>
   rows(el).map((r) => r.querySelector<HTMLInputElement>('input')!.value)
 const checkbox = (el: HTMLElement, i: number) =>
   rows(el)[i].querySelector('[role="checkbox"]')!
+const NOT_SET_UP = 'E-sign not set up. An admin maps templates in Settings → Integrations.'
+async function openFormMenu(el: HTMLElement) {
+  await waitFor(() => !button('Add a form to sign', el)!.disabled)
+  await keyDown(button('Add a form to sign', el)!, 'Enter')
+  return [...document.querySelectorAll('[role="menuitem"]')]
+}
 
 describe('RequestBuilder', () => {
   afterEach(cleanup)
@@ -114,7 +127,7 @@ describe('RequestBuilder', () => {
         item('bank_connect', 'Connect your bank'),
         item('address', 'Confirm your address'),
         item('upload', "Driver's license", { doc_code: 'government_id' }),
-        item('signature', 'Engagement letter'),
+        item('signature', 'Engagement letter', { template: 'engagement_letter' }),
       ],
     })
     expect(onCreated).toHaveBeenCalledWith('r9')
@@ -182,5 +195,54 @@ describe('RequestBuilder', () => {
     await click(button('Create request', el)!)
     expect(el.querySelector('[role="alert"]')?.textContent).toContain('Case not found')
     expect(onCreated).not.toHaveBeenCalled()
+  })
+
+  it('lists only mapped forms, disables one already in the request, and never offers 433', async () => {
+    const { el } = await render()
+    expect(rowLabels(el)).toContain('Engagement letter')
+    const items = await openFormMenu(el)
+    expect(items.map((i) => i.textContent)).toEqual(['Engagement letter', 'Form 2848 (power of attorney)'])
+    expect(items[0].getAttribute('aria-disabled')).toBe('true')
+    expect(items[1].getAttribute('aria-disabled')).toBeNull()
+    expect(document.body.textContent).not.toContain('Form 8821')
+    expect(document.body.textContent).not.toMatch(/433/)
+  })
+
+  it('appends the chosen form and posts it with its template key', async () => {
+    const { el, fetchMock } = await render({
+      'POST /api/admin/requests': { status: 201, body: { request_id: 'r9' } },
+    })
+    const items = await openFormMenu(el)
+    await click(items[1])
+    expect(rowLabels(el)[5]).toBe('Form 2848 (power of attorney)')
+    expect(rows(el)[5].querySelector('[role="checkbox"]')!.getAttribute('aria-checked')).toBe('true')
+    await click(button('Create request', el)!)
+    const posted = postedBody(fetchMock, '/api/admin/requests') as { items: unknown[] }
+    expect(posted.items[5]).toEqual({
+      kind: 'signature',
+      label: 'Form 2848 (power of attorney)',
+      required: true,
+      config: { template: 'form_2848' },
+    })
+  })
+
+  it.each([
+    ['not configured', esign(false)],
+    ['nothing mapped', esign(true, { engagement_letter: null, form_2848: null, form_8821: null })],
+  ])('disables Add a form to sign when %s', async (_, reply) => {
+    const { el } = await render({ [`GET ${ESIGN}`]: reply })
+    await waitFor(() => el.textContent!.includes(NOT_SET_UP))
+    expect(button('Add a form to sign', el)!.disabled).toBe(true)
+  })
+
+  it('keeps the builder working when the e-sign settings read fails', async () => {
+    const { el, fetchMock } = await render({
+      [`GET ${ESIGN}`]: { status: 500, body: { error: { code: 'internal', message: 'x' } } },
+      'POST /api/admin/requests': { status: 201, body: { request_id: 'r9' } },
+    })
+    await waitFor(() => el.textContent!.includes(NOT_SET_UP))
+    expect(button('Add a form to sign', el)!.disabled).toBe(true)
+    await click(button('Create request', el)!)
+    expect(postedBody(fetchMock, '/api/admin/requests')).toBeDefined()
   })
 })

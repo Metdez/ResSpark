@@ -1,5 +1,6 @@
 import { Hono, type Context } from 'hono'
 import { HTTPException } from 'hono/http-exception'
+import { isEsignTemplateKey } from '../../../src/lib/esign-templates'
 import { hmacKey, mintLinkToken, uuidToBytes } from '../auth/client-link'
 import { DASHBOARD_STATUSES, type DashboardStatus, listDashboardRequests, sanitizeQuery } from '../db/dashboard'
 import { createRequest, getRequest, getTemplates, type TemplateItem } from '../db/requests'
@@ -86,6 +87,9 @@ export const adminRequestsRoute = new Hono<AdminApp>()
     if (items.length > MAX_ITEMS) throw badRequest()
     const parsed = items.map(parseItem)
     if (parsed.some((i) => i === null)) throw badRequest()
+    // D-01: a signature item names one of the three allowed forms, so no request can carry a 433-A.
+    if ((parsed as TemplateItem[]).some((i) => i.kind === 'signature' && !isEsignTemplateKey(i.config.template)))
+      throw new HTTPException(400, { message: 'bad_template' })
     const { staff } = c.var
     const template = (await getTemplates(c.env, staff.firmId)).find((t) => t.id === template_id)
     if (!template) throw notFound()
