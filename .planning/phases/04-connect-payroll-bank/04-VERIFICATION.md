@@ -215,3 +215,41 @@ No later phase (5 to 8) covers this, so it is not deferred.
 
 _Verified: 2026-10-11T13:40:00Z_
 _Verifier: Claude (gsd-verifier)_
+
+---
+
+## Gap closure (2026-10-11)
+
+The frontmatter and the report above are left as the verifier wrote them. This section records the fixes made after that report, with the evidence for each. A re-verification should judge the tree at or after `14a72af`.
+
+### Fixes
+
+| # | Gap or warning | Fix | Commit |
+|---|----------------|-----|--------|
+| 1 | PAY-03 / BANK-03: uploads on connect items refused with 409 `item_not_upload` | `c-uploads.ts`: the mint guard accepts `UPLOAD_KINDS = ['upload', 'bank_connect', 'payroll_connect']`. `address`, `signature`, `intake` and any other kind still get 409 `item_not_upload`. | `93a7b52` |
+| 2 | Warning: no "Add another employer" once payroll is `done` | `payroll-step.tsx`: every non-fresh status (including `done`) offers `Add another employer`. `startPayroll` reuses only a `pending`/`connected` order, so a tap at `done` opens a new order on the same item. | `533c246` |
+| 3 | Warning: README "Uploaded files land in the review panel" | No edit needed. With fix 1 the statement is true: `listReviewItems` (`db/review.ts`) returns the documents of every item regardless of kind, and with no keys both sheets show the upload as their only action. | n/a |
+| 4 | Info: missing companion docs | Added `docs/app/worker/src/integrations/truv/orders.test.md`, `docs/app/worker/src/jobs/index.test.md`, `docs/app/worker/src/webhooks/plaid.test.md`, `docs/app/worker/src/webhooks/truv.test.md`. | `14a72af` |
+
+### DB functions: no kind change needed
+
+- `upload_complete` (0004) checks only that the document belongs to the request. It has no item-kind check. It sets the document `ready` and the item `submitted`, which is the same item status `connection_set_status` (0005) gives a `connected`/`syncing`/`done` connection. A manual upload on a connect item therefore lands the way a connection does.
+- `request_items.status` allows only `pending`, `in_progress`, `submitted`, `approved` and `rejected`. There is no connect-specific status, and the mint route still refuses an `approved` item before any insert.
+- `createUploadingDocument` falls back to the item label for `document_type` when `config.doc_code` is absent (connect items have none). The Storage path is `firm/<firm>/case/<case>/item/<item>/<doc>/<name>`, the same as for upload items.
+
+### Evidence
+
+| Check | Command | Result |
+|-------|---------|--------|
+| Unit: mint guard | `pnpm -C app exec vitest run --project worker-node worker/src/routes/c-uploads.test.ts` | 28/28 pass. New cases: `bank_connect` and `payroll_connect` → 201 with one insert. `address`, `signature`, `intake` → 409 `item_not_upload` with no insert. |
+| Live, unmocked: bank manual fallback end to end | `pnpm -C app run test:live:file worker/test/bank-manual-upload.test.ts` | 2/2 pass (not skipped). A PDF minted on a `bank_connect` item → PUT to Storage → complete: `ready` / `submitted`. `POST /api/c/connections/:id/statements/manual` → 200 `{ status: 'manual' }`, and the `bank_statement_months` row reads `{ status: 'manual', document_id }`. `afterAll` removes the objects and documents, then the connection (accounts and cells cascade) and the request. The test case is never deleted. |
+| Unit: payroll step | `pnpm -C app exec vitest run --project web src/features/client-portal/connect/payroll-step.test.tsx` | 16/16 pass. The `done` case now also asserts a 44 px `Add another employer`. |
+| Full check | `pnpm -C app run check` | `check-file-sizes` and the golden-fixture check pass. `tsc -b` fails only in files owned by other executors: `src/features/requests/requests-api.test.ts` (uncommitted foreign edit, `.at` on ES2021 lib), `worker/src/financials/propose/{bank,payroll}.test.ts` and `worker/test/financials-bank-payroll.test.ts` (07-07). No error is in a file touched here. The remaining stages were run directly: `eslint .` has 0 errors (9 pre-existing warnings), and `pnpm test` reports 156 files passed, 33 skipped; 1907 tests passed, 235 skipped. |
+
+### Status after closure
+
+- Truth 2 (SC1b / PAY-03) and truth 5 (SC3b / BANK-03): the server no longer refuses the fallback. The bank path is proven against the live project by `bank-manual-upload.test.ts`. The payroll path takes the same branch through the same guard and RPC, and is covered by unit tests.
+- Still human: item 4 above (no-keys manual fallback on the deployed URL). The fix is not deployed, and this closure did not deploy.
+- Not changed: REQUIREMENTS.md, ROADMAP.md and STATE.md.
+
+_Gap closure: 2026-10-11, Claude (gsd-executor)_
