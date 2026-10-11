@@ -12,6 +12,7 @@ import {
   FIRM,
   initKeys,
   LINK,
+  linkRow,
   ORIGIN,
   outboundCalls,
   REQ,
@@ -150,5 +151,66 @@ describe('firm scoping', () => {
     expect(regenerateLink).not.toHaveBeenCalled()
     expect(revokeRequest).not.toHaveBeenCalled()
     expect(logEvent).not.toHaveBeenCalled()
+  })
+})
+
+describe('POST /:id/email', () => {
+  const resendOk = () =>
+    stubFetch(async (url) =>
+      url === 'https://api.resend.com/emails'
+        ? new Response(JSON.stringify({ id: 'em_1' }), { status: 200 })
+        : new Response('{}', { status: 500 })
+    )
+  const withKey = { env: { RESEND_API_KEY: 're_x' } }
+
+  it('sends to the stored contact, never a body-supplied address, and logs request.email_sent', async () => {
+    const f = resendOk()
+    const res = await action('email', { to: 'attacker@example.com' }, withKey)
+    expect(res.status).toBe(200)
+    expect(await res.json()).toEqual({ ok: true, id: 'em_1' })
+    const [, init] = outboundCalls(f)[0]
+    expect(JSON.parse(String(init?.body)).to).toEqual(['jordan.rivera@example.com'])
+    expect(logEvent).toHaveBeenCalledWith(expect.anything(), {
+      ...staffEvent,
+      action: 'request.email_sent',
+      payload: { to: 'jordan.rivera@example.com', resend_id: 'em_1' },
+    })
+  })
+
+  it('reports not_configured without a Resend key and makes no outbound call', async () => {
+    const f = resendOk()
+    const res = await action('email')
+    expect(res.status).toBe(200)
+    expect(await res.json()).toEqual({ ok: false, reason: 'not_configured' })
+    expect(outboundCalls(f)).toHaveLength(0)
+  })
+
+  it('reports send_failed on a Resend error and logs request.email_failed', async () => {
+    stubFetch(async () => new Response('{}', { status: 500 }))
+    const res = await action('email', undefined, withKey)
+    expect(res.status).toBe(200)
+    expect(await res.json()).toEqual({ ok: false, reason: 'send_failed' })
+    expect(logEvent).toHaveBeenCalledWith(expect.anything(), {
+      ...staffEvent,
+      action: 'request.email_failed',
+      payload: { to: 'jordan.rivera@example.com', reason: 'send_failed' },
+    })
+  })
+
+  it.each([
+    ['a revoked link', linkRow({ revoked_at: '2026-10-11T01:00:00Z' })],
+    ['no link', null],
+  ])('reports no_link for %s without calling Resend', async (_name, link) => {
+    vi.mocked(getRequest).mockResolvedValue(sentBundle(link))
+    const f = resendOk()
+    const res = await action('email', undefined, withKey)
+    expect(await res.json()).toEqual({ ok: false, reason: 'no_link' })
+    expect(outboundCalls(f)).toHaveLength(0)
+  })
+
+  it('is 404 for a request outside the firm', async () => {
+    vi.mocked(getRequest).mockResolvedValue(null)
+    const res = await action('email', undefined, withKey)
+    expect(res.status).toBe(404)
   })
 })
