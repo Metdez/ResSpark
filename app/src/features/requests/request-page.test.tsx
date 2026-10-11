@@ -10,6 +10,14 @@ vi.mock('@/lib/supabase', () => ({
   supabase: { auth: { getSession: async () => ({ data: { session: null } }) } },
 }))
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }))
+// The page renders a typed router Link; outside a RouterProvider it becomes a plain anchor.
+vi.mock('@tanstack/react-router', () => ({
+  Link: ({ to, params, children, className }: { to: string; params: { caseId: string }; children: React.ReactNode; className?: string }) => (
+    <a href={to.replace('$caseId', params.caseId)} className={className}>
+      {children}
+    </a>
+  ),
+}))
 
 const item = (position: number, label: string) => ({
   id: 'i' + position,
@@ -191,6 +199,12 @@ describe('RequestPage', () => {
     expect(byLabel('Client email').value).toBe('jordan.rivera@example.com')
     expect(byLabel('Client phone').value).toBe('(555) 010-0001')
     expect(button('Send link')?.disabled).toBe(false)
+  })
+
+  it('links to the case 433-A worksheet', async () => {
+    const el = await render({ status: 200, body: DRAFT })
+    const link = [...el.querySelectorAll('a')].find((a) => a.textContent === '433-A worksheet')
+    expect(link?.getAttribute('href')).toBe('/admin/cases/c1/433a')
   })
 
   it('polls the detail query so the header badge follows client uploads', async () => {

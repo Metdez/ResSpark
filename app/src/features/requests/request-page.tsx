@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Link } from '@tanstack/react-router'
 import { Copy } from 'lucide-react'
 import { toast } from 'sonner'
 import { ApiError } from '@/lib/api'
@@ -120,6 +121,13 @@ export function RequestPage({ requestId }: { requestId: string }) {
         <span className='text-sm text-muted-foreground'>
           Template: {d.template_name}
         </span>
+        <Link
+          to='/admin/cases/$caseId/433a'
+          params={{ caseId: d.case.case_id }}
+          className='text-sm font-medium text-primary underline-offset-4 hover:underline'
+        >
+          433-A worksheet
+        </Link>
       </div>
 
       <div className='grid gap-6'>

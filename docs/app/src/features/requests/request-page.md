@@ -1,6 +1,6 @@
 # `app/src/features/requests/request-page.tsx`
 
-`RequestPage({ requestId })`: the staff view of one request (REQ-02, REQ-03, D-08, D-09, and since Plan 03-03 UPL-03/UPL-04). A draft shows the send form and its items; a sent request shows the copyable client link and the review panel. The component has no router dependency; the route file supplies `requestId` and the page chrome.
+`RequestPage({ requestId })`: the staff view of one request (REQ-02, REQ-03, D-08, D-09, and since Plan 03-03 UPL-03/UPL-04). A draft shows the send form and its items; a sent request shows the copyable client link and the review panel. The route file supplies `requestId` and the page chrome; the only router dependency is the typed `Link` to the case's 433-A worksheet (Plan 07-09).
 
 | Part | What it does |
 |------|--------------|
@@ -12,7 +12,7 @@
 | Send mutation | `sendRequest(id, { email, phone, keep_flagged })`. On success it invalidates the detail query. `onError` is `unlessHandled(...)`: form codes and alert codes render here; anything else goes to the app's default handler (401 sign-out, 403, generic toast). |
 | Pending | Title `Request` plus three `Skeleton` rows; no form. |
 | Error | Title `Request` plus a destructive `Alert` with the generic staff copy and the muted error code. |
-| Header | `Request for {First Last}` (or `Request`), the request `StatusBadge`, and the muted `Template: {name}`. |
+| Header | `Request for {First Last}` (or `Request`), the request `StatusBadge`, the muted `Template: {name}`, and (Plan 07-09) a `433-A worksheet` text link: TanStack `Link` to `/admin/cases/$caseId/433a` with `params={{ caseId: d.case.case_id }}`. See `docs/app/src/features/financials/financials-page.md`. |
 | Send card | Only while `status === 'draft'` and before a send succeeds: Heading `Send the link`, the send alert when there is one, and `RequestContactForm`. Editing a field resets the mutation, which clears the old refusal. |
 | `link` | The stored link once it exists (so a regenerate refetch shows the new URL and expiry); `null` when the stored link is revoked (no URL); before the post-send refetch, the fresh `send.data`. |
 | Client link card | Rendered when there is a link or the request is revoked. Heading `Client link`, then `LinkRow`, or the muted line `This link was revoked.` in its place. Below, once the request is past `draft`, `RequestLinkActions` (email, regenerate, revoke, SMS consent) with `onChanged` refetching the detail query. |
@@ -29,7 +29,7 @@
 
 ## Tests
 
-`request-page.test.tsx` (`web` project; `fetch` stubbed per method and path, `sonner` and `@/lib/supabase` mocked, `navigator.clipboard` and `ResizeObserver` stubbed):
+`request-page.test.tsx` (`web` project; `fetch` stubbed per method and path, `sonner`, `@/lib/supabase` and `@tanstack/react-router` mocked, `navigator.clipboard` and `ResizeObserver` stubbed):
 
 - a draft renders the title, `Draft`, five items in position order with `Not started`, `Send the link`, the prefilled email and `(555) 010-0001`, and an enabled `Send link`;
 - `jordan@gmial.com` shows `Did you mean jordan@gmail.com?`, the `Use` button, the keep checkbox, and disables `Send link`;
@@ -46,3 +46,4 @@
 - the link actions (`Email link`, `Revoke link`) sit inside the `Client link` card, and `Email link` is an outline button (Copy link stays the only primary);
 - a revoked request shows `Revoked`, `This link was revoked.`, and no URL, `Copy link`, or `Revoke link`;
 - loading shows three skeletons and no input.
+- the header links `433-A worksheet` to `/admin/cases/c1/433a` (`@tanstack/react-router` is mocked so `Link` renders a plain `<a>` with `$caseId` filled in; the page is rendered without a `RouterProvider`).
