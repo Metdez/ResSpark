@@ -74,7 +74,7 @@ function lineView(meta: LineMeta, row: Record<string, unknown>, rows: ProposalRo
   }
 }
 
-const settingsOf = (raw: Record<string, unknown> | null | undefined): FinancialsView['settings'] => {
+export const settingsOf = (raw: Record<string, unknown> | null | undefined): FinancialsView['settings'] => {
   const ids = raw?.spouse_employer_ids
   return {
     window_months: raw?.window_months === 6 ? 6 : 3,

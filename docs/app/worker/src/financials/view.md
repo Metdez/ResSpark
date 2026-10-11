@@ -11,7 +11,7 @@ A pure function that builds the staff 433-A view (D-14, FORM-03/04) from the row
 | `toProposalView` | Maps a `ProposalRow` to a `ProposalView`. |
 | `latestDecided` | Returns the newest `accepted` or `edited` row for a column, by `decided_at`. That is the decision that set the current value. |
 | `lineView` | Applies the status rules (listed below). |
-| `settingsOf` | Reads `cases.financials_settings` with defaults. `window_months` is 6 only when it is exactly 6, and 3 otherwise. `spouse_employer_ids` keeps only string entries and defaults to `[]`. |
+| `settingsOf` | Exported, because the propose job (`propose/run.ts`) reads the same settings. Reads `cases.financials_settings` with defaults. `window_months` is 6 only when it is exactly 6, and 3 otherwise. `spouse_employer_ids` keeps only string entries and defaults to `[]`. |
 | `buildFinancialsView` | Groups proposals by column and computes `required`. It builds every line and groups the lines into `SECTIONS` order. |
 
 ## Status rules

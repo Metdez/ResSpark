@@ -4,7 +4,7 @@ The Cloudflare Queues consumer for `resspark-jobs` and its dead-letter queue `re
 
 ## Exports
 
-- `Job`: the message union. Messages carry ids only (`ref`), never payloads or secrets (128 KB limit, Phase 1 D-20): `webhook` (`ref` = `webhook_events.id`; `provider` is `plaid`, `truv` or `docuseal`), `reconcile` (`ref` = connection id), `remove_item` (`ref` = connection id, Plan 04-04), and `LogicsPushJob` (`{ type: 'logics_push', provider: 'logics', ref }`, `ref` = `logics_pushes.id`, Phase 5).
+- `Job`: the message union. Messages carry ids only (`ref`), never payloads or secrets (128 KB limit, Phase 1 D-20): `webhook` (`ref` = `webhook_events.id`; `provider` is `plaid`, `truv` or `docuseal`), `reconcile` (`ref` = connection id), `remove_item` (`ref` = connection id, Plan 04-04), `LogicsPushJob` (`{ type: 'logics_push', provider: 'logics', ref }`, `ref` = `logics_pushes.id`, Phase 5), and `financials_propose` (`ref` = case id; `reason` is `connection_done`, `address_confirmed`, `intake_done` or `refresh`, Phase 7 D-07).
 - `NonRetryableError`: re-exported from `integrations/provider-error.ts`.
 - `retryDelaySeconds(attempts)`: `min(60 * 2^attempts, 86_400)`; 120 s at attempt 1, 240 s at attempt 2, capped at the 24-hour Queues maximum.
 - `queue(batch, env)`: the consumer. Never throws.
@@ -18,14 +18,14 @@ The Cloudflare Queues consumer for `resspark-jobs` and its dead-letter queue `re
   - `'unmatched_payroll'`: reconciles every non-terminal payroll connection (up to 20), so the first Truv task events of a new order are not lost;
   - an id: `reconcileConnection(env, id, { source: 'webhook', hint: payload })`, then stamps `last_webhook_at`;
   then marks the row `done`.
-- `runJob(env, job)`: `webhook` → `runWebhook`; `reconcile` → `reconcileConnection(..., { source: 'cron' })`; `remove_item` → `removeItem(env, ref)` (`jobs/remove-items.ts`; a transient `ProviderError` retries with backoff like any other job); unknown → `NonRetryableError('unknown_job')`.
+- `runJob(env, job)`: `webhook` → `runWebhook`; `reconcile` → `reconcileConnection(..., { source: 'cron' })`; `remove_item` → `removeItem(env, ref)` (`jobs/remove-items.ts`; a transient `ProviderError` retries with backoff like any other job); `financials_propose` → `runFinancialsPropose(env, ref)` (`financials/propose/run.ts`); unknown → `NonRetryableError('unknown_job')`.
 
 ## `queue(batch, env)`
 
-- DLQ batch (`batch.queue === 'resspark-jobs-dlq'`): a `webhook` message marks its ledger row `dead` with `dead_lettered`; any other job writes `job.dead_lettered` on its connection. Every message is acked; a failed record is logged as `dlq_record_failed`.
+- DLQ batch (`batch.queue === 'resspark-jobs-dlq'`): a `webhook` message marks its ledger row `dead` with `dead_lettered`; a `financials_propose` message is only acked (its `ref` is a case, not a connection); any other job writes `job.dead_lettered` on its connection. Every message is acked; a failed record is logged as `dlq_record_failed`.
 - A DLQ `logics_push` message is acked with no record: its ledger row is still `queued` and the Phase 5 sweeper re-enqueues it.
 - Main queue, `logics_push` messages: handed whole to `handleLogicsPushPart(m, env)` (`jobs/logics-push.ts`) and skipped by the generic wrapper below. That handler owns `ack` and `retry` (ack-after-dispatch, Phase 5 D-03), so the generic transient retry can never redeliver a document POST. A throw from the handler (a database error) is only logged (`error_code` via `codeOf`) and never turned into a retry: a message the handler did not ack or retry is implicitly acked when `queue()` returns, and a row it left `sending` is moved to `unknown` (`consumer_lost`) by the sweeper.
-- Main queue, every other message: `runJob`, then `ack()`. On a transient `ProviderError` (network, 429, 5xx): `retry({ delaySeconds: retryDelaySeconds(attempts) })`; after `max_retries` the platform moves the message to the DLQ. On anything else: log, mark the ledger row `dead` with the code (webhook) or write `job.failed` on the connection (other jobs), then `ack()`, so a poison message never loops.
+- Main queue, every other message: `runJob`, then `ack()`. On a transient error, as decided by `isTransient` from `financials/propose/run.ts` (a transient `ProviderError`: network, 429, 5xx; or a `LogicsError` `network`/`upstream`): the warning logs `codeOf(e)`, then `retry({ delaySeconds: retryDelaySeconds(attempts) })`; after `max_retries` the platform moves the message to the DLQ. On anything else: log, mark the ledger row `dead` with the code (webhook) or write `job.failed` on the connection (other jobs except `financials_propose`, which logs its own per-source `financials.propose_failed` events), then `ack()`, so a poison message never loops.
 
 ## Tests
 

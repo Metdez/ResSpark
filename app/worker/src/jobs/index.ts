@@ -1,5 +1,6 @@
 import { listNonTerminalConnections, recordConnectionEvent, updateConnection } from '../db/connections'
 import { getWebhookEvent, markWebhookEvent } from '../db/webhook-events'
+import { isTransient, runFinancialsPropose } from '../financials/propose/run'
 import { NonRetryableError, ProviderError } from '../integrations/provider-error'
 import { handleLogicsPushPart, type LogicsPushJob } from './logics-push'
 import { connectionIdForWebhook, reconcileConnection } from './reconcile'
@@ -13,6 +14,7 @@ export type Job =
   | { type: 'reconcile'; ref: string }
   | { type: 'remove_item'; ref: string }
   | LogicsPushJob
+  | { type: 'financials_propose'; ref: string; reason: 'connection_done' | 'address_confirmed' | 'intake_done' | 'refresh' }
 
 const DLQ = 'resspark-jobs-dlq'
 const UNMATCHED_LIMIT = 20
@@ -59,6 +61,9 @@ async function runJob(env: Env, job: Job): Promise<void> {
       return
     case 'remove_item':
       return removeItem(env, job.ref)
+    case 'financials_propose':
+      await runFinancialsPropose(env, job.ref) // ref = case id
+      return
     default:
       throw new NonRetryableError('unknown_job')
   }
@@ -72,7 +77,7 @@ export async function queue(batch: MessageBatch<Job>, env: Env): Promise<void> {
       try {
         if (m.body.type === 'webhook') await markWebhookEvent(env, m.body.ref, 'dead', 'dead_lettered')
         // a dead-lettered push row is still queued; the Phase 5 sweeper re-enqueues it
-        else if (m.body.type !== 'logics_push') await recordConnectionEvent(env, m.body.ref, 'job.dead_lettered', { type: m.body.type })
+        else if (m.body.type !== 'logics_push' && m.body.type !== 'financials_propose') await recordConnectionEvent(env, m.body.ref, 'job.dead_lettered', { type: m.body.type })
       } catch {
         log('error', String(m.body?.type), m.attempts, 'dlq_record_failed')
       }
@@ -96,8 +101,8 @@ export async function queue(batch: MessageBatch<Job>, env: Env): Promise<void> {
       await runJob(env, job)
       m.ack()
     } catch (e) {
-      if (e instanceof ProviderError && e.transient) {
-        log('warn', job.type, m.attempts, e.code)
+      if (isTransient(e)) {
+        log('warn', job.type, m.attempts, codeOf(e))
         m.retry({ delaySeconds: retryDelaySeconds(m.attempts) })
         continue
       }
@@ -105,7 +110,8 @@ export async function queue(batch: MessageBatch<Job>, env: Env): Promise<void> {
       log('error', String(job?.type), m.attempts, code)
       try {
         if (job.type === 'webhook') await markWebhookEvent(env, job.ref, 'dead', code)
-        else await recordConnectionEvent(env, job.ref, 'job.failed', { type: job.type, code })
+        // financials_propose refs a case and logs its own per-source failures
+        else if (job.type !== 'financials_propose') await recordConnectionEvent(env, job.ref, 'job.failed', { type: job.type, code })
       } catch {
         // the job is acked regardless; the cron reconciler is the backstop
       }
