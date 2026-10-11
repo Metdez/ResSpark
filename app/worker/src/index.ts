@@ -1,4 +1,5 @@
 import { Hono } from 'hono'
+import { createMiddleware } from 'hono/factory'
 import { HTTPException } from 'hono/http-exception'
 import { requestId, type RequestIdVariables } from 'hono/request-id'
 import { secureHeaders } from 'hono/secure-headers'
@@ -21,12 +22,14 @@ export const app = new Hono<{
 app.use('*', requestId())
 app.use('*', logger())
 app.use('/api/*', secureHeaders())
-app.use('/c/*', secureHeaders(), async (c, next) => {
+const clientPrivacyHeaders = createMiddleware(async (c, next) => {
   await next()
   // set after next(): a raw asset Response returned by a handler drops headers prepared before it
   c.res.headers.set('Cache-Control', 'no-store')
   c.res.headers.set('X-Robots-Tag', 'noindex')
 })
+app.use('/c/*', secureHeaders(), clientPrivacyHeaders)
+app.use('/api/c/*', clientPrivacyHeaders)
 
 // Envelope { error: { code, message } } with fixed strings only; err.message of unknown errors
 // is never serialized (T-01-10).

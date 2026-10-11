@@ -1,6 +1,6 @@
 import { Hono } from 'hono'
 import { setSignedCookie } from 'hono/cookie'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } from 'vitest'
 import { cookieSecret, hmacKey, mintLinkToken, uuidToBytes, type ClientLinkRow } from '../src/auth/client-link'
 import { createAdminClient } from '../src/db/client'
 import { findClientLink } from '../src/db/client-links'
@@ -93,7 +93,7 @@ function expectPrivacy(res: Response) {
   expect(res.headers.get('referrer-policy')).toBe('no-referrer')
 }
 
-let logSpy: ReturnType<typeof vi.spyOn>
+let logSpy: MockInstance<(...args: unknown[]) => void>
 
 beforeEach(() => {
   _resetRateLimitForTests()
@@ -185,6 +185,7 @@ describe('session failures are one uniform 401', () => {
   it('returns byte-identical bodies for every failure', async () => {
     const bodies = new Set<string>()
     for (const [, cookie, found] of cases) {
+      vi.mocked(findClientLink).mockResolvedValue(row())
       const c = await cookie()
       vi.mocked(findClientLink).mockResolvedValue(found)
       bodies.add(await (await getState(c)).text())
