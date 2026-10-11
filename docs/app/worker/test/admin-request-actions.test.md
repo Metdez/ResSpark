@@ -6,7 +6,7 @@ Route tests for the link lifecycle and the event-only actions on one request. Th
 
 - `vi.mock` replaces `db/staff`, `db/events`, `db/integrations`, `db/cases`, and `db/requests`.
 - `action(name, body, opts)` posts to `/api/admin/requests/<REQ>/<name>`. `staffEvent` holds the event fields every staff action must carry.
-- `beforeEach` stubs `fetch` and keeps the stub for outbound checks. It returns a request already sent to the fixture contact, a regenerate result at version 2, and event id 41.
+- `beforeEach` stubs `fetch` (email tests replace the stub with one that answers Resend) and keeps the stub for outbound checks. It returns a request already sent to the fixture contact, a regenerate result at version 2, and event id 41.
 
 ## Regenerate
 
@@ -28,6 +28,14 @@ Route tests for the link lifecycle and the event-only actions on one request. Th
 
 - Returns 200 and logs `request.link_copied` with the staff actor and an empty payload. Two calls log two events.
 - Consent and copied make no outbound `fetch`.
+
+## Email
+
+- With `RESEND_API_KEY` set and Resend answering `{ id: "em_1" }`, the route returns `{ ok: true, id: "em_1" }`. The outbound `to` is `["jordan.rivera@example.com"]` even though the body posts `to: attacker@example.com`, and `request.email_sent` is logged with `{ to, resend_id }`.
+- Without a key it returns `not_configured` and makes no outbound call.
+- A Resend 500 returns `send_failed` and logs `request.email_failed` with `{ to, reason }`.
+- A revoked link and a missing link each return `no_link` without calling Resend.
+- A request outside the firm returns 404.
 
 ## Firm scoping
 

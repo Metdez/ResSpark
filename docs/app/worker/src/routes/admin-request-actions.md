@@ -1,10 +1,10 @@
 # `app/worker/src/routes/admin-request-actions.ts`
 
-The staff actions on one request (D-05, D-07, D-08, D-09, LOOK-04, REQ-02, REQ-03, REQ-05). It is mounted in `index.ts` at `/api/admin/requests`, after `admin-requests.ts`, and every path runs behind `staffAuth`. Because `staffAuth` skips its work when `staff` is already set, the token is verified once per request even though both sub-apps declare it.
+The staff actions on one request (D-05, D-07, D-08, D-09, LOOK-04, REQ-02, REQ-03, REQ-04, REQ-05). It is mounted in `index.ts` at `/api/admin/requests`, after `admin-requests.ts`, and every path runs behind `staffAuth`. Because `staffAuth` skips its work when `staff` is already set, the token is verified once per request even though both sub-apps declare it.
 
 ## Imports and helpers
 
-- **Imports:** Hono, the shared `checkContact` and `normalizePhone` from `app/src/lib/contact.ts` (the same code the SPA form runs), the case row type, `getIntegration`, `logEvent`, the request DB helpers and `RequestRow`, `resolveLogicsClient` and `fetchCaseSummary` (Plan 02), `staffAuth`, the Logics error mapper `toHttp` from `admin-lookup.ts` (imported as `logicsToHttp`), and the helpers exported by `admin-requests.ts`.
+- **Imports:** Hono, the shared `checkContact` and `normalizePhone` from `app/src/lib/contact.ts` (the same code the SPA form runs), the case row type, `getIntegration`, `logEvent`, the request DB helpers and `RequestRow`, `sendLinkEmail` (Resend), `resolveLogicsClient` and `fetchCaseSummary` (Plan 02), `staffAuth`, the Logics error mapper `toHttp` from `admin-lookup.ts` (imported as `logicsToHttp`), and the helpers exported by `admin-requests.ts`.
 - **`norm`:** trims and lowercases a possibly-null string, so null and `''` compare equal.
 - **`refuse`:** answers with the standard envelope `{ error: { code, message } }` plus extra fields that let the SPA explain the refusal (field errors, the suggestion, the changed fields). It sets `errorCode` so the logger records the code.
 - **`loadRequest`:** a firm-scoped `getRequest`. A non-UUID id returns 400, and a request outside the firm returns 404 `not_found`.
@@ -39,12 +39,16 @@ Body `{ agreed: true }`. Only the literal boolean `true` counts. `false`, the st
 
 Reads no body. It writes one `request.link_copied` event per call, with the staff user as actor and an empty payload, so a copy is recorded whether or not email is configured (D-09). It returns `{ ok: true, event_id }`.
 
+## `POST /:id/email`
+
+Reads no body. The recipient is always the request's stored, validated `contact_email`, so a body such as `{ to: "attacker@example.com" }` changes nothing (T-02-20). When the request has no link, a revoked link, or no stored email, the route returns `{ ok: false, reason: "no_link" }` and sends nothing. Otherwise it re-derives the URL with `linkUrl` and calls `sendLinkEmail` with the firm name, the agent display name stored on the request, the URL, and the link expiry. It logs `request.email_sent` with `{ to, resend_id }` or `request.email_failed` with `{ to, reason }`, then returns the result with 200 in every case: `{ ok: true, id }`, `not_configured` (no `RESEND_API_KEY`), or `send_failed`. The SPA decides the copy, for example "Email not configured, copy the link and send it yourself". The URL never enters the event payload.
+
 ## Security
 
 - The recipient stored on the request is the validated, lowercased email and the E.164 phone. It is never a raw body value.
 - No token or URL is stored or logged.
-- Nothing in this file calls `fetch`. Outbound calls live in the integrations modules.
+- Nothing in this file calls `fetch`. Outbound calls live in the integrations modules (`email/resend.ts`, the Logics client).
 
 ## Tests
 
-`app/worker/test/admin-requests.test.ts` (send) and `app/worker/test/admin-request-actions.test.ts` (regenerate, revoke, consent, copied).
+`app/worker/test/admin-requests.test.ts` (send) and `app/worker/test/admin-request-actions.test.ts` (regenerate, revoke, consent, copied, email).

@@ -4,6 +4,7 @@ import type { CaseRow } from '../db/cases'
 import { getIntegration } from '../db/integrations'
 import { logEvent } from '../db/events'
 import { getRequest, regenerateLink, revokeRequest, sendRequest, type RequestRow } from '../db/requests'
+import { sendLinkEmail } from '../integrations/email/resend'
 import { resolveLogicsClient } from '../integrations/logics/config'
 import { fetchCaseSummary } from '../integrations/logics/lookup'
 import type { LogicsCaseSummary } from '../integrations/logics/mapper'
@@ -140,4 +141,26 @@ export const adminRequestActionsRoute = new Hono<AdminApp>()
     const { request } = await loadRequest(c)
     const event_id = await logEvent(c.env, { ...staffEvent(c, request), action: 'request.link_copied', payload: {} })
     return c.json({ ok: true, event_id })
+  })
+  // Best-effort (D-09): always 200 with a truthful result. The recipient is the stored, validated
+  // contact; no body is read, so a caller cannot redirect the email (T-02-20).
+  .post('/:id/email', async (c) => {
+    const { request, link, firm_name } = await loadRequest(c)
+    const to = request.contact_email
+    const url = link && (await linkUrl(c, link))
+    if (!link || !url || !to) return c.json({ ok: false, reason: 'no_link' })
+    const result = await sendLinkEmail(c.env, {
+      to,
+      firmName: firm_name,
+      agentName: request.agent_display_name,
+      url,
+      expiresAt: link.expires_at,
+    })
+    await logEvent(c.env, {
+      ...staffEvent(c, request),
+      ...(result.ok
+        ? { action: 'request.email_sent', payload: { to, resend_id: result.id } }
+        : { action: 'request.email_failed', payload: { to, reason: result.reason } }),
+    })
+    return c.json(result)
   })

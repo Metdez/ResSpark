@@ -25,7 +25,9 @@ describe('sendLinkEmail', () => {
 
   it('posts JSON to Resend with the bearer key and returns the email id', async () => {
     const f = ok()
-    expect(await sendLinkEmail(ENV, INPUT, f)).toEqual({ ok: true, id: 'em_1' })
+    const result = await sendLinkEmail(ENV, INPUT, f)
+    expect(result.ok).toBe(true)
+    expect(result).toEqual({ ok: true, id: 'em_1' })
     const [url, init] = f.mock.calls[0]
     expect(url).toBe('https://api.resend.com/emails')
     expect(init?.method).toBe('POST')
