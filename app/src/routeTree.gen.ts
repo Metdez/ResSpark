@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AdminRouteRouteImport } from './routes/admin/route'
+import { Route as IndexRouteImport } from './routes/index'
 import { Route as CIndexRouteImport } from './routes/c/index'
 import { Route as CReturnRouteImport } from './routes/c/return'
 import { Route as CTokenRouteImport } from './routes/c/$token'
@@ -29,6 +30,11 @@ import { Route as AdminShellCasesCaseId433aRouteImport } from './routes/admin/_s
 const AdminRouteRoute = AdminRouteRouteImport.update({
   id: '/admin',
   path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CIndexRoute = CIndexRouteImport.update({
@@ -111,6 +117,7 @@ const AdminShellCasesCaseId433aRoute =
   } as any)
 
 export interface FileRoutesByFullPath {
+  '/': typeof IndexRoute
   '/admin': typeof AdminShellRouteRouteWithChildren
   '/admin/sign-in': typeof AdminSignInRoute
   '/c/$token': typeof CTokenRoute
@@ -128,6 +135,7 @@ export interface FileRoutesByFullPath {
   '/admin/cases/$caseId/433a': typeof AdminShellCasesCaseId433aRoute
 }
 export interface FileRoutesByTo {
+  '/': typeof IndexRoute
   '/admin': typeof AdminShellIndexRoute
   '/admin/sign-in': typeof AdminSignInRoute
   '/c/$token': typeof CTokenRoute
@@ -145,6 +153,7 @@ export interface FileRoutesByTo {
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
+  '/': typeof IndexRoute
   '/admin': typeof AdminRouteRouteWithChildren
   '/admin/_shell': typeof AdminShellRouteRouteWithChildren
   '/admin/sign-in': typeof AdminSignInRoute
@@ -165,6 +174,7 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
+    | '/'
     | '/admin'
     | '/admin/sign-in'
     | '/c/$token'
@@ -182,6 +192,7 @@ export interface FileRouteTypes {
     | '/admin/cases/$caseId/433a'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/'
     | '/admin'
     | '/admin/sign-in'
     | '/c/$token'
@@ -198,6 +209,7 @@ export interface FileRouteTypes {
     | '/admin/cases/$caseId/433a'
   id:
     | '__root__'
+    | '/'
     | '/admin'
     | '/admin/_shell'
     | '/admin/sign-in'
@@ -217,6 +229,7 @@ export interface FileRouteTypes {
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
+  IndexRoute: typeof IndexRoute
   AdminRouteRoute: typeof AdminRouteRouteWithChildren
   CTokenRoute: typeof CTokenRoute
   CReturnRoute: typeof CReturnRoute
@@ -231,6 +244,13 @@ declare module '@tanstack/react-router' {
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AdminRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/c/': {
@@ -396,6 +416,7 @@ const AdminRouteRouteWithChildren = AdminRouteRoute._addFileChildren(
 )
 
 const rootRouteChildren: RootRouteChildren = {
+  IndexRoute: IndexRoute,
   AdminRouteRoute: AdminRouteRouteWithChildren,
   CTokenRoute: CTokenRoute,
   CReturnRoute: CReturnRoute,
