@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 4
+open_count: 5
 waived_count: 0
 fixed_count: 2
-total_count: 6
-last_updated: 2026-10-11T06:36:20.919Z
+total_count: 7
+last_updated: 2026-10-11T07:53:16.483Z
 ---
 
 # Broken Windows Ledger
@@ -21,6 +21,7 @@ last_updated: 2026-10-11T06:36:20.919Z
 | 4 | 01 | stub | app/src/features/auth/sign-in/components/user-auth-form.tsx | 56 | Sign-in form still uses the fork's mock toast.promise(sleep) auth and zustand auth-store; Plan 06 replaces with Supabase Auth | open |  | 2026-10-11T03:04:21.068Z |  |
 | 5 | 01 | deviation | app/.env.example |  | app/.env was not created: the auto-mode classifier blocked both the heredoc and the scratchpad script that copy src/frontend/.env; human must copy it and append VITE_APP_NAME=ResSpark before pnpm -C app dev needs Supabase | open |  | 2026-10-11T03:04:21.992Z |  |
 | 6 | 01 | unrun-verify | app/src/features/client-link/client-shell.tsx |  | 01-07 Task 3 human-check pending: /c/ and /c/not-a-valid-token at 320 px width and 200% zoom (no horizontal scroll, text >= 16 px, firm name one line, tab title = firm name) | open |  | 2026-10-11T06:36:20.919Z |  |
+| 7 | 02 | stub | app/src/features/requests/request-page.tsx |  | RequestLinkActions slot (email, regenerate, revoke, SMS consent) left for Plan 02-06 | open |  | 2026-10-11T07:53:16.483Z |  |
 
 ````json
 [
@@ -99,6 +100,19 @@ last_updated: 2026-10-11T06:36:20.919Z
     "status": "open",
     "reason": "",
     "recorded_at": "2026-10-11T06:36:20.919Z",
+    "resolved_at": null,
+    "milestone": null
+  },
+  {
+    "id": 7,
+    "kind": "stub",
+    "phase": "02",
+    "file": "app/src/features/requests/request-page.tsx",
+    "line": null,
+    "description": "RequestLinkActions slot (email, regenerate, revoke, SMS consent) left for Plan 02-06",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-10-11T07:53:16.483Z",
     "resolved_at": null,
     "milestone": null
   }
