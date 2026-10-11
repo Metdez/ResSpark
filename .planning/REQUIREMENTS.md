@@ -96,7 +96,7 @@ Requirements for the first release. Each maps to a roadmap phase. The Oct 12 202
 
 - [ ] **WEBH-01**: Plaid, Truv, and DocuSeal webhooks are signature-verified on the raw body, stored idempotently by provider and event key, acknowledged within one second, and processed by a queue consumer with retries and a dead-letter queue
 - [ ] **WEBH-02**: A cron reconciler and a staff Refresh button re-read provider state so a missed webhook never leaves a request stuck
-- [ ] **WEBH-03**: Status transitions are monotonic, so an out-of-order event can never move a step from done back to pending
+- [x] **WEBH-03**: Status transitions are monotonic, so an out-of-order event can never move a step from done back to pending
 
 ### 433-A Pre-population & Intake
 
@@ -218,7 +218,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PUSH-04 | Phase 5 | Pending |
 | WEBH-01 | Phase 4 | Pending |
 | WEBH-02 | Phase 4 | Pending |
-| WEBH-03 | Phase 4 | Pending |
+| WEBH-03 | Phase 4 | Complete |
 | FORM-01 | Phase 7 | Complete |
 | FORM-02 | Phase 7 | Pending |
 | FORM-03 | Phase 7 | Pending |
