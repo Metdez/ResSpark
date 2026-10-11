@@ -1,6 +1,6 @@
 # `app/src/features/client-portal/step-list.tsx`
 
-`StepList({ steps, firmName, onView, onUploadError })`: the client's checklist (D-11, PORT-03).
+`StepList({ steps, firmName, onView, onCloseStep, onUploadError })`: the client's checklist (D-11, PORT-03).
 
 - **Empty:** a centered block with the Lucide `Inbox` icon (48 px), heading "Nothing to do yet", and "Your agent hasn't added any steps yet. You can close this page."
 - **Order:** a sorted copy by `position`. The Worker already sorts; this is defensive and never mutates the prop.
@@ -30,3 +30,7 @@
 - `intake` and `signature` (until its own sheet lands) still open `ComingNextSheet`.
 
 Tests: the Coming next cases now use an `intake` step ("Answer a few questions"), since bank steps open the bank sheet. New cases: View on the payroll step opens the real payroll sheet (answered by a `GET /api/c/items/s4/connection` reply) showing `Connect payroll` and no Coming next; View on the bank step shows `Upload statements instead`; an `intake` step still opens Coming next.
+
+## Closing a step (Plan 04-05 Task 3)
+
+`onCloseStep` (optional, a no-op by default) is called whenever a step's sheet closes. Every sheet's close goes through one `close()` helper: it clears `viewing` and calls `onCloseStep()`, so `PortalPage`'s heartbeat `last_step` returns to `list`. The connect sheets read the step's `rejection_note` themselves (see `connect/payroll-step.md`). Test: closing the Coming next sheet calls `onCloseStep` once.

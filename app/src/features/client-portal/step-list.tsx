@@ -17,6 +17,7 @@ interface StepListProps {
   steps: PortalStep[]
   firmName: string
   onView?: (step: PortalStep) => void
+  onCloseStep?: () => void
   onUploadError?: (code: UploadErrorCode) => void
 }
 
@@ -25,10 +26,15 @@ export function StepList({
   steps,
   firmName,
   onView = () => {},
+  onCloseStep = () => {},
   onUploadError,
 }: StepListProps) {
   const [viewing, setViewing] = useState<PortalStep | null>(null)
   const qc = useQueryClient()
+  const close = () => {
+    setViewing(null)
+    onCloseStep()
+  }
   if (steps.length === 0)
     return (
       <div className='flex flex-col items-center gap-2 text-center'>
@@ -93,19 +99,19 @@ export function StepList({
           open
           onError={onUploadError}
           onClose={() => {
-            setViewing(null)
+            close()
             // the chip turns into "With your agent" once the Worker marks the item submitted
             void qc.invalidateQueries({ queryKey: ['portal', 'state'] })
           }}
         />
       ) : viewing?.kind === 'address' ? (
-        <AddressSheet step={viewing} open onClose={() => setViewing(null)} />
+        <AddressSheet step={viewing} open onClose={close} />
       ) : viewing?.kind === 'payroll_connect' ? (
-        <PayrollStep step={viewing} firmName={firmName} open onClose={() => setViewing(null)} />
+        <PayrollStep step={viewing} firmName={firmName} open onClose={close} />
       ) : viewing?.kind === 'bank_connect' ? (
-        <BankStep step={viewing} firmName={firmName} open onClose={() => setViewing(null)} />
+        <BankStep step={viewing} firmName={firmName} open onClose={close} />
       ) : (
-        <ComingNextSheet step={viewing} onClose={() => setViewing(null)} />
+        <ComingNextSheet step={viewing} onClose={close} />
       )}
     </>
   )

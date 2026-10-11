@@ -11,3 +11,7 @@ TanStack Query wrapper for `getItemConnection`.
 - `useItemConnection(itemId, enabled)`: `useQuery(itemConnectionQuery(itemId, enabled))`.
 
 Tested in `payroll-step.test.tsx` (5 000 for `pending`, `false` for `done`, `false` when not enabled).
+
+## `useRejectionNote(step, open)`
+
+`/api/c/state` steps carry no `rejection_note`, so this reads it from `listItemDocuments(step.id).item.rejection_note`. Query key `['portal', 'item', step.id, 'documents']`, the same key `UploadSheet` uses, so the two share one fetch. Enabled only while the sheet is open and `step.status === 'rejected'`; `retry: false`. Returns the note or `null`.

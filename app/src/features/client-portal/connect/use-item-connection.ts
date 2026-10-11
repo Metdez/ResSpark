@@ -1,4 +1,6 @@
 import { queryOptions, useQuery } from '@tanstack/react-query'
+import { listItemDocuments } from '@/features/uploads/api'
+import type { PortalStep } from '../portal-api'
 import { getItemConnection, type ClientConnectionView } from './connection-api'
 
 const ACTIVE: ReadonlySet<ClientConnectionView['status']> = new Set(['pending', 'connected', 'syncing'])
@@ -16,3 +18,12 @@ export const itemConnectionQuery = (itemId: string, enabled: boolean) =>
 
 export const useItemConnection = (itemId: string, enabled: boolean) =>
   useQuery(itemConnectionQuery(itemId, enabled))
+
+// /api/c/state carries no rejection note; the item's document list does (same key as UploadSheet).
+export const useRejectionNote = (step: PortalStep, open: boolean): string | null =>
+  useQuery({
+    queryKey: ['portal', 'item', step.id, 'documents'],
+    queryFn: () => listItemDocuments(step.id),
+    enabled: open && step.status === 'rejected',
+    retry: false,
+  }).data?.item.rejection_note ?? null

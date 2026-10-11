@@ -145,3 +145,15 @@ describe('StepList connect steps', () => {
     await waitFor(() => text().includes('Coming next'))
   })
 })
+
+describe('StepList close callback', () => {
+  it('closing a sheet calls onCloseStep so the heartbeat returns to list', async () => {
+    const onCloseStep = vi.fn()
+    await renderWithQuery(<StepList firmName='ValorTax' steps={STEPS} onCloseStep={onCloseStep} />, {})
+    await click(viewOf('Answer a few questions'))
+    await waitFor(() => text().includes('Coming next'))
+    expect(onCloseStep).not.toHaveBeenCalled()
+    await click(button('Close', document.querySelector('[role="dialog"]')!)!)
+    expect(onCloseStep).toHaveBeenCalledOnce()
+  })
+})

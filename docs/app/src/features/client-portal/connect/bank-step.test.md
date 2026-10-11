@@ -1,6 +1,6 @@
 # `app/src/features/client-portal/connect/bank-step.test.tsx`
 
-Renders `BankStep` (step `I2`, firm `ValorTax`) with `./connection-api`, `@/features/uploads/api` (`listItemDocuments`), and `sonner` mocked, and `UploadSheet` replaced by a stub showing the item id and a `close upload` button that calls `onClose`. `window.location` is stubbed so `assign` is a spy. `conn(over, caps)` builds an `ItemConnection` with all capabilities on; `view()` builds a connection; `ACCOUNT` has six months in shuffled order (mask `0000`).
+Renders `BankStep` (step `I2`, firm `ValorTax`) with `./connection-api`, `@/features/uploads/api` (`listItemDocuments`), and `sonner` mocked, and `UploadSheet` replaced by a stub showing the item id and a `close upload` button that calls `onClose`. `window.location` is stubbed so `assign` is a spy. `render(data, step?)` resolves the connection and waits for the message. `conn(over, caps)` builds an `ItemConnection` with all capabilities on; `view()` builds a connection; `ACCOUNT` has six months in shuffled order (mask `0000`).
 
 ## States
 
@@ -22,3 +22,9 @@ Renders `BankStep` (step `I2`, firm `ValorTax`) with `./connection-api`, `@/feat
 13. The Jun upload: on close, of two ready documents only the one uploaded after the sheet opened is attributed, once, as `{ document_id: 'D1', bank_account_id: 'A1', year: 2026, month: 6 }`, and the connection is refetched.
 14. A 409 `month_available` from attribution is swallowed (no toast).
 15. `Upload statements instead` never lists documents or attributes.
+
+## Polish (Task 3)
+
+16. A `rejected` step with `rejection_note` "June is missing a page." shows the "Your agent asked for a new copy: " line, and the filled upload button comes before `Connect bank`.
+17. A start failure with `consent_required` reopens the consent sheet with "Please read and agree again." and no toast; agreeing again navigates to the new hosted link.
+18. Every button in the sheet (except the hidden vendored icon close) is 44 px, including the month upload buttons.

@@ -110,6 +110,7 @@ export function PortalPage() {
             steps={data.steps}
             firmName={data.firm_name}
             onView={(s) => setViewed(s.kind)}
+            onCloseStep={() => setViewed(undefined)}
             onUploadError={setUploadError}
           />
         </>

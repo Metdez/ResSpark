@@ -9,6 +9,7 @@ export function ConsentSheet({
   firmName,
   open,
   busy,
+  notice,
   onAgree,
   onClose,
 }: {
@@ -16,6 +17,7 @@ export function ConsentSheet({
   firmName: string
   open: boolean
   busy: boolean
+  notice?: string | null
   onAgree(): void
   onClose(): void
 }) {
@@ -27,6 +29,7 @@ export function ConsentSheet({
           <SheetTitle className='text-xl leading-tight'>{t.title}</SheetTitle>
           <SheetDescription asChild>
             <div className='grid gap-2 text-base'>
+              {notice && <p className='font-medium text-foreground'>{notice}</p>}
               <p className='text-foreground'>{t.body}</p>
               <p>{t.detail.replace('{firm}', firmName)}</p>
             </div>

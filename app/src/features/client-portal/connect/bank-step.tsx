@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { Skeleton } from '@/components/ui/skeleton'
 import { listItemDocuments } from '@/features/uploads/api'
+import { uploadCopy } from '@/features/uploads/copy'
 import { UploadSheet } from '@/features/uploads/upload-sheet'
 import { PortalError, type PortalStep } from '../portal-api'
 import { CONNECT_COPY, connectErrorCopy } from './connect-copy'
@@ -12,7 +13,7 @@ import { attributeStatement } from './connection-api'
 import { ConsentSheet } from './consent-sheet'
 import { StatementCells, type MonthCell } from './statement-cells'
 import { useConnectFlow } from './use-connect-flow'
-import { useItemConnection } from './use-item-connection'
+import { useItemConnection, useRejectionNote } from './use-item-connection'
 
 const T = CONNECT_COPY.bank
 
@@ -38,6 +39,7 @@ export function BankStep({
 }) {
   const qc = useQueryClient()
   const { data, isError, refetch } = useItemConnection(step.id, open)
+  const note = useRejectionNote(step, open)
   const [uploading, setUploading] = useState<{ month: PendingMonth | null } | null>(null)
   const [redirecting, setRedirecting] = useState(false)
 
@@ -45,6 +47,7 @@ export function BankStep({
     kind: 'bank',
     itemId: step.id,
     consented: data?.consented ?? false,
+    onConsentStale: () => void refetch(),
     open: ({ hosted_link_url }) => {
       if (!hosted_link_url) throw new Error('provider_error')
       setRedirecting(true)
@@ -94,6 +97,7 @@ export function BankStep({
         firmName={firmName}
         open
         busy={flow.busy}
+        notice={flow.notice}
         onAgree={flow.agree}
         onClose={flow.cancelConsent}
       />
@@ -105,7 +109,14 @@ export function BankStep({
   const unavailable = !notConfigured && caps?.hostedLink !== true
   const status = conn?.status
   const fresh = !conn || status === 'removed'
-  const canConnect = !isError && !notConfigured && !unavailable && (fresh || status === 'error')
+  const canConnect = !!data && !isError && !notConfigured && !unavailable && (fresh || status === 'error')
+
+  // a rejected step makes the upload the primary action (D-07: the fallback is first-class)
+  const uploadButton = (primary: boolean) => (
+    <Button size='xl' variant={primary ? 'default' : 'outline'} className='w-full' onClick={() => setUploading({ month: null })}>
+      {T.upload}
+    </Button>
+  )
 
   const message = isError
     ? connectErrorCopy('', 'bank')
@@ -143,51 +154,60 @@ export function BankStep({
               <Skeleton className='h-4 w-2/3' />
             </div>
           ) : (
-            <>
-              <p className='text-base' data-connect-message>
-                {message}
-              </p>
-              {canConnect && (
-                <Button size='xl' className='w-full' disabled={flow.busy || redirecting} onClick={flow.connect}>
-                  {flow.busy || redirecting ? (
-                    <>
-                      <Loader2 className='animate-spin motion-reduce:animate-none' aria-hidden='true' />
-                      {T.opening}
-                    </>
-                  ) : (
-                    T.connect
-                  )}
-                </Button>
-              )}
-              {conn &&
-                !notConfigured &&
-                conn.accounts.map((a) => (
-                  <section key={a.id} data-account className='grid gap-1'>
-                    <h3 className='text-base font-semibold'>
-                      {a.name ?? T.accountFallback}
-                      {a.mask ? ` ••${a.mask}` : ''}
-                    </h3>
-                    <StatementCells
-                      account={a}
-                      onUploadMonth={(cell: MonthCell) =>
-                        setUploading({
-                          month: {
-                            connectionId: conn.id,
-                            accountId: a.id,
-                            year: cell.year,
-                            month: cell.month,
-                            openedAt: Date.now(),
-                          },
-                        })
-                      }
-                    />
-                  </section>
-                ))}
-            </>
+            <p className='text-base' data-connect-message>
+              {message}
+            </p>
           )}
-          <Button size='xl' variant='outline' className='w-full' onClick={() => setUploading({ month: null })}>
-            {T.upload}
-          </Button>
+          {note && (
+            <p className='text-base text-muted-foreground' data-rejection-note>
+              {uploadCopy.rejectedPrefix}
+              {note}
+            </p>
+          )}
+          {note && uploadButton(true)}
+          {canConnect && (
+            <Button
+              size='xl'
+              variant={note ? 'outline' : 'default'}
+              className='w-full'
+              disabled={flow.busy || redirecting}
+              onClick={flow.connect}
+            >
+              {flow.busy || redirecting ? (
+                <>
+                  <Loader2 className='animate-spin motion-reduce:animate-none' aria-hidden='true' />
+                  {T.opening}
+                </>
+              ) : (
+                T.connect
+              )}
+            </Button>
+          )}
+          {conn &&
+            !notConfigured &&
+            conn.accounts.map((a) => (
+              <section key={a.id} data-account className='grid gap-1'>
+                <h3 className='text-base font-semibold'>
+                  {a.name ?? T.accountFallback}
+                  {a.mask ? ` ••${a.mask}` : ''}
+                </h3>
+                <StatementCells
+                  account={a}
+                  onUploadMonth={(cell: MonthCell) =>
+                    setUploading({
+                      month: {
+                        connectionId: conn.id,
+                        accountId: a.id,
+                        year: cell.year,
+                        month: cell.month,
+                        openedAt: Date.now(),
+                      },
+                    })
+                  }
+                />
+              </section>
+            ))}
+          {!note && uploadButton(false)}
         </div>
       </SheetContent>
     </Sheet>

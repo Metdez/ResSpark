@@ -51,6 +51,21 @@ Each tap creates a new connection server-side, which is how a client with two jo
 
 Errors from any step show one sentence through `useConnectFlow`'s toast.
 
+## Rejected step (`rejection_note`)
+
+`/api/c/state` steps carry no rejection note, so `useRejectionNote(step, open)` reads `rejection_note` from `listItemDocuments(step.id).item` (query key `['portal', 'item', id, 'documents']`, shared with `UploadSheet`), only while the sheet is open and the step is `rejected`. When a note exists:
+
+- "Your agent asked for a new copy: {note}" (Phase 3's `uploadCopy.rejectedPrefix`, 16 px, muted) appears under the message;
+- the upload button becomes the primary action: it moves above the connect button and uses the default (filled) variant, while the connect button turns outline.
+
+## Stale consent and errors
+
+`onConsentStale` refetches the item connection. A start failure with `consent_text_stale` or `consent_required` (handled in `useConnectFlow`) reopens the consent sheet with "Please read and agree again." as its notice and shows no toast; agreeing again records the consent and starts. Every other failure shows exactly one `toast.error` and no inline alert.
+
+## Accessibility gates
+
+Every button is `size='xl'` (44 px, or `min-h-11` where the label may wrap), text is never below 16 px, and status is always a word plus a tone. The spinners carry `motion-reduce:animate-none`.
+
 ## Tests
 
 See `payroll-step.test.md`.

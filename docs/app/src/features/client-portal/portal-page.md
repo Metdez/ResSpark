@@ -19,7 +19,7 @@
    - loading: three 16 px `Skeleton` bars (`aria-busy`).
    A refetch error while data is cached keeps showing the data.
 3. **Unopened** (`opened_at === null`): heading "{agent} at {firm} needs a few things from you" (or "{firm} needs ..." without an agent), "It takes a few minutes. You can stop and come back any time from the same link.", and one full-width `Button size='xl'` "Start" (the only accent element). While pending it reads "Starting…" with a spinning `Loader2` and is disabled.
-4. **Opened:** heading "Your steps" and `StepList` (given `firmName={data.firm_name}` for the connect steps' consent sheets), whose `onView` records the viewed step kind for the heartbeat. Reopening the link later lands here directly, because `opened_at` is saved on the server (PORT-04).
+4. **Opened:** heading "Your steps" and `StepList` (given `firmName={data.firm_name}` for the connect steps' consent sheets, and `onCloseStep` that clears the viewed kind so `last_step` returns to `list` when a sheet closes), whose `onView` records the viewed step kind for the heartbeat. Reopening the link later lands here directly, because `opened_at` is saved on the server (PORT-04).
 
 `ClientShell` owns the firm heading (`truncate` + `title`), the "Your agent: {name}" line, `document.title`, and the robots `noindex` meta. Names render as React text, so they are escaped.
 
@@ -30,3 +30,7 @@ In Phase 2 "progress saved per step" means the server-side `request_items.status
 ## Tests
 
 `portal-page.test.tsx` uses the `query-render` harness with a stubbed `fetch`: the 401 page, the generic error, the intro with and without an agent, the tab title, Start's header and pending label, the step list after Start with one state fetch, a Start 401, a Start failure toast, the opened shortcut, the empty list, row sizing and chips, same-kind rows, the heartbeat step values (`intro`, `list`, the viewed kind), the latest upload error code (`unsupported_type` after picking a `.txt` in the upload sheet) as `last_error`, and no heartbeat without a session.
+
+## Connect steps (Plan 04-05)
+
+The payroll and bank sheets open from `StepList`; `last_step` is the step kind (`payroll_connect` / `bank_connect`) while one is open and `list` again after it closes. The sheets read a rejected step's `rejection_note` from the item's document list; nothing in this page changes for that.

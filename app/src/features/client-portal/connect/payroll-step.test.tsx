@@ -12,6 +12,7 @@ const m = vi.hoisted(() => ({
   startConnection: vi.fn(),
   reconcileConnection: vi.fn(),
   loadTruvBridge: vi.fn(),
+  listItemDocuments: vi.fn(),
   init: vi.fn(),
   open: vi.fn(),
   toastError: vi.fn(),
@@ -23,6 +24,7 @@ vi.mock('./connection-api', () => ({
   reconcileConnection: m.reconcileConnection,
 }))
 vi.mock('./use-truv-bridge', () => ({ loadTruvBridge: m.loadTruvBridge }))
+vi.mock('@/features/uploads/api', () => ({ listItemDocuments: m.listItemDocuments }))
 vi.mock('sonner', () => ({ toast: { error: m.toastError } }))
 vi.mock('@/features/uploads/upload-sheet', () => ({
   UploadSheet: ({ item }: { item: { id: string } }) => <div data-testid='upload-sheet'>{item.id}</div>,
@@ -48,9 +50,9 @@ const view = (status: string, employers: unknown[] = [], error_code: string | nu
 const text = () => document.body.textContent ?? ''
 const sheetText = () => document.querySelector('[role="dialog"]')?.textContent ?? ''
 
-async function render(data: ItemConnection) {
+async function render(data: ItemConnection, step: PortalStep = STEP) {
   m.getItemConnection.mockResolvedValue(data)
-  await renderWithQuery(<PayrollStep step={STEP} firmName='ValorTax' open onClose={() => {}} />, {})
+  await renderWithQuery(<PayrollStep step={step} firmName='ValorTax' open onClose={() => {}} />, {})
   await waitFor(() => document.querySelector('[data-connect-message]') !== null)
 }
 
@@ -176,5 +178,58 @@ describe('PayrollStep', () => {
     expect(interval(q('done'))).toBe(false)
     const closed = itemConnectionQuery('I1', false).refetchInterval as (q: unknown) => number | false
     expect(closed(q('pending'))).toBe(false)
+  })
+})
+
+describe('PayrollStep polish', () => {
+  // the vendored 16 px icon close (hidden by the sheet) is the dialog's last child
+  const dialogButtons = () => {
+    const dialog = document.querySelector('[role="dialog"]')!
+    return [...dialog.querySelectorAll('button')].filter((b) => b !== dialog.lastElementChild)
+  }
+
+  it('a rejected step shows the note and makes the upload the primary action', async () => {
+    m.listItemDocuments.mockResolvedValue({
+      item: { id: 'I1', label: STEP.label, status: 'rejected', rejection_note: 'The W-2 was cut off.' },
+      documents: [],
+    })
+    await render(conn(), { ...STEP, status: 'rejected' })
+    await waitFor(() => text().includes('Your agent asked for a new copy: The W-2 was cut off.'))
+    const labels = dialogButtons().map((b) => b.textContent)
+    expect(labels.indexOf('Upload pay stubs instead')).toBeLessThan(labels.indexOf('Connect payroll'))
+    expect(button('Upload pay stubs instead')!.className).toContain('bg-primary')
+    expect(button('Connect payroll')!.className).toContain('bg-background')
+  })
+
+  it('stale consent reopens the consent sheet with a notice; agreeing again connects', async () => {
+    m.startConnection
+      .mockRejectedValueOnce(new PortalError(409, 'consent_text_stale'))
+      .mockResolvedValueOnce({ connection_id: 'C1', bridge_token: 'bt_1' })
+    await render(conn({ consented: true }))
+    const loads = m.getItemConnection.mock.calls.length
+    await click(button('Connect payroll')!)
+    await waitFor(() => text().includes('Please read and agree again.'))
+    expect(text()).toContain(CONSENT_TEXT.payroll_data.title)
+    expect(m.toastError).not.toHaveBeenCalled()
+    await waitFor(() => m.getItemConnection.mock.calls.length > loads)
+    await click(button('I agree')!)
+    await waitFor(() => m.open.mock.calls.length === 1)
+    expect(m.recordConsent).toHaveBeenCalledWith('payroll_data')
+  })
+
+  it('a network failure shows one toast and no inline alert', async () => {
+    m.startConnection.mockRejectedValue(new TypeError('Failed to fetch'))
+    await render(conn({ consented: true }))
+    await click(button('Connect payroll')!)
+    await waitFor(() => m.toastError.mock.calls.length > 0)
+    expect(m.toastError).toHaveBeenCalledTimes(1)
+    expect(m.toastError).toHaveBeenCalledWith('Something went wrong. Try again.')
+    expect(document.querySelector('[role="alert"]')).toBeNull()
+  })
+
+  it('every button in the sheet is 44 px', async () => {
+    await render(conn({ connection: view('pending') }))
+    expect(dialogButtons().length).toBeGreaterThan(0)
+    expect(dialogButtons().every((b) => /\b(min-)?h-11\b/.test(b.className))).toBe(true)
   })
 })

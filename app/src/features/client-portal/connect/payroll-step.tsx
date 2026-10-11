@@ -6,13 +6,14 @@ import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { Skeleton } from '@/components/ui/skeleton'
 import { StatusBadge } from '@/components/status-badge'
+import { uploadCopy } from '@/features/uploads/copy'
 import { UploadSheet } from '@/features/uploads/upload-sheet'
 import type { PortalStep } from '../portal-api'
 import { CONNECT_COPY, connectErrorCopy } from './connect-copy'
 import { reconcileConnection, type ClientConnectionView } from './connection-api'
 import { ConsentSheet } from './consent-sheet'
 import { useConnectFlow } from './use-connect-flow'
-import { useItemConnection } from './use-item-connection'
+import { useItemConnection, useRejectionNote } from './use-item-connection'
 import { loadTruvBridge } from './use-truv-bridge'
 
 const T = CONNECT_COPY.payroll
@@ -43,6 +44,7 @@ export function PayrollStep({
 }) {
   const qc = useQueryClient()
   const { data, isError, refetch } = useItemConnection(step.id, open)
+  const note = useRejectionNote(step, open)
   const [uploading, setUploading] = useState(false)
   // the Radix sheet blocks pointer events on the page, so it steps aside while Bridge is open
   const [bridgeOpen, setBridgeOpen] = useState(false)
@@ -51,6 +53,7 @@ export function PayrollStep({
     kind: 'payroll',
     itemId: step.id,
     consented: data?.consented ?? false,
+    onConsentStale: () => void refetch(),
     errorCopy: (code) => (code === 'bridge_load_failed' ? T.bridgeFailed : connectErrorCopy(code, 'payroll')),
     open: async ({ connection_id, bridge_token }) => {
       if (!bridge_token) throw new Error('provider_error')
@@ -93,6 +96,7 @@ export function PayrollStep({
         firmName={firmName}
         open
         busy={flow.busy}
+        notice={flow.notice}
         onAgree={flow.agree}
         onClose={flow.cancelConsent}
       />
@@ -103,10 +107,20 @@ export function PayrollStep({
   const status = conn?.status
   const fresh = !conn || status === 'error' || status === 'removed'
 
+  const active = status === 'pending' || status === 'connected' || status === 'syncing'
+  const connectLabel =
+    !data || isError || notConfigured ? null : fresh ? (status === 'error' ? 'Try again' : T.connect) : active ? T.another : null
+
+  // a rejected step makes the upload the primary action (D-07: the fallback is first-class)
   const connectButton = (label: string) => (
-    <Button size='xl' className='w-full' disabled={flow.busy} onClick={flow.connect}>
+    <Button size='xl' variant={note ? 'outline' : 'default'} className='w-full' disabled={flow.busy} onClick={flow.connect}>
       {flow.busy ? <Loader2 className='animate-spin motion-reduce:animate-none' aria-hidden='true' /> : null}
       {label}
+    </Button>
+  )
+  const uploadButton = (primary: boolean) => (
+    <Button size='xl' variant={primary ? 'default' : 'outline'} className='w-full' onClick={() => setUploading(true)}>
+      {T.upload}
     </Button>
   )
 
@@ -142,31 +156,32 @@ export function PayrollStep({
               <Skeleton className='h-4 w-2/3' />
             </div>
           ) : (
-            <>
-              <p className='text-base' data-connect-message>
-                {message}
-              </p>
-              {!notConfigured && !isError && conn && conn.employers.length > 0 && (
-                <ul className='grid'>
-                  {conn.employers.map((e, i) => (
-                    <li key={i} data-employer className='flex min-h-11 flex-wrap items-center gap-3 border-b py-3 last:border-0'>
-                      <div className='min-w-0 flex-1'>
-                        <p className='text-base font-medium break-words'>{e.company_name ?? 'Employer'}</p>
-                        {counts(e) && <p className='text-base text-muted-foreground'>{counts(e)}</p>}
-                      </div>
-                      <StatusBadge tone={BADGE[e.status].tone} label={BADGE[e.status].label} size='lg' />
-                    </li>
-                  ))}
-                </ul>
-              )}
-              {!notConfigured && !isError && fresh && connectButton(status === 'error' ? 'Try again' : T.connect)}
-              {!notConfigured && !isError && (status === 'pending' || status === 'connected' || status === 'syncing') &&
-                connectButton(T.another)}
-            </>
+            <p className='text-base' data-connect-message>
+              {message}
+            </p>
           )}
-          <Button size='xl' variant='outline' className='w-full' onClick={() => setUploading(true)}>
-            {T.upload}
-          </Button>
+          {note && (
+            <p className='text-base text-muted-foreground' data-rejection-note>
+              {uploadCopy.rejectedPrefix}
+              {note}
+            </p>
+          )}
+          {!notConfigured && !isError && conn && conn.employers.length > 0 && (
+            <ul className='grid'>
+              {conn.employers.map((e, i) => (
+                <li key={i} data-employer className='flex min-h-11 flex-wrap items-center gap-3 border-b py-3 last:border-0'>
+                  <div className='min-w-0 flex-1'>
+                    <p className='text-base font-medium break-words'>{e.company_name ?? 'Employer'}</p>
+                    {counts(e) && <p className='text-base text-muted-foreground'>{counts(e)}</p>}
+                  </div>
+                  <StatusBadge tone={BADGE[e.status].tone} label={BADGE[e.status].label} size='lg' />
+                </li>
+              ))}
+            </ul>
+          )}
+          {note && uploadButton(true)}
+          {connectLabel && connectButton(connectLabel)}
+          {!note && uploadButton(false)}
         </div>
       </SheetContent>
     </Sheet>

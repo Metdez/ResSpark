@@ -2,7 +2,8 @@
 
 Renders `PayrollStep` (step `I1`, firm `ValorTax`) with `./connection-api`, `./use-truv-bridge`, `sonner`, and `UploadSheet` mocked through `vi.hoisted` mocks (`m`).
 
-- `render(data)` resolves `getItemConnection` with `data` and waits for the message paragraph (`data-connect-message`).
+- `@/features/uploads/api` (`listItemDocuments`) is mocked too, for the rejection note.
+- `render(data, step?)` resolves `getItemConnection` with `data` and waits for the message paragraph (`data-connect-message`).
 - `beforeEach` makes consent and reconcile resolve, `startConnection` return `{ connection_id: 'C1', bridge_token: 'bt_1' }`, and Bridge `init` return `{ open }`.
 - `conn()` and `view()` build `ItemConnection` fixtures.
 
@@ -18,3 +19,10 @@ Renders `PayrollStep` (step `I1`, firm `ValorTax`) with `./connection-api`, `./u
 10. `error` / `order_expired`: the expired sentence and no Bridge load.
 11. `Upload pay stubs instead` renders the mocked `UploadSheet` with item id `I1`.
 12. `itemConnectionQuery`'s `refetchInterval` is 5 000 for `pending`, `false` for `done`, and `false` when the sheet is closed.
+
+## Polish (Task 3)
+
+13. A `rejected` step whose `rejection_note` is "The W-2 was cut off." shows "Your agent asked for a new copy: The W-2 was cut off."; the upload button comes before `Connect payroll` and is filled (`bg-primary`), and the connect button is outline (`bg-background`).
+14. A start failure with `consent_text_stale` reopens the consent sheet with "Please read and agree again.", shows no toast, refetches the connection, and a second `I agree` records consent and opens Bridge.
+15. A network failure (`TypeError`) shows exactly one `toast.error("Something went wrong. Try again.")` and no `role="alert"`.
+16. Every button in the sheet (except the hidden vendored icon close, the dialog's last child) is 44 px.

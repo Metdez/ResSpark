@@ -59,9 +59,9 @@ const text = () => document.body.textContent ?? ''
 const message = () => document.querySelector('[data-connect-message]')?.textContent
 const uploadStub = () => document.querySelector('[data-testid="upload-sheet"]')
 
-async function render(data: ItemConnection) {
+async function render(data: ItemConnection, step: PortalStep = STEP) {
   m.getItemConnection.mockResolvedValue(data)
-  await renderWithQuery(<BankStep step={STEP} firmName='ValorTax' open onClose={() => {}} />, {})
+  await renderWithQuery(<BankStep step={step} firmName='ValorTax' open onClose={() => {}} />, {})
   await waitFor(() => message() !== undefined)
 }
 
@@ -222,5 +222,43 @@ describe('BankStep statement months', () => {
     await click(button('close upload')!)
     expect(m.listItemDocuments).not.toHaveBeenCalled()
     expect(m.attributeStatement).not.toHaveBeenCalled()
+  })
+})
+
+describe('BankStep polish', () => {
+  // the vendored 16 px icon close (hidden by the sheet) is the dialog's last child
+  const dialogButtons = () => {
+    const dialog = document.querySelector('[role="dialog"]')!
+    return [...dialog.querySelectorAll('button')].filter((b) => b !== dialog.lastElementChild)
+  }
+
+  it('a rejected step shows the note and makes the upload the primary action', async () => {
+    m.listItemDocuments.mockResolvedValue({
+      item: { id: 'I2', label: STEP.label, status: 'rejected', rejection_note: 'June is missing a page.' },
+      documents: [],
+    })
+    await render(conn(), { ...STEP, status: 'rejected' })
+    await waitFor(() => text().includes('Your agent asked for a new copy: June is missing a page.'))
+    const labels = dialogButtons().map((b) => b.textContent)
+    expect(labels.indexOf('Upload statements instead')).toBeLessThan(labels.indexOf('Connect bank'))
+    expect(button('Upload statements instead')!.className).toContain('bg-primary')
+  })
+
+  it('stale consent reopens the consent sheet with a notice; agreeing again connects', async () => {
+    m.startConnection
+      .mockRejectedValueOnce(new PortalError(409, 'consent_required'))
+      .mockResolvedValueOnce({ connection_id: 'C1', hosted_link_url: 'https://secure.plaid.com/hl/y' })
+    await render(conn({ consented: true }))
+    await click(button('Connect bank')!)
+    await waitFor(() => text().includes('Please read and agree again.'))
+    expect(m.toastError).not.toHaveBeenCalled()
+    await click(button('I agree')!)
+    await waitFor(() => m.assign.mock.calls.length === 1)
+    expect(m.assign).toHaveBeenCalledWith('https://secure.plaid.com/hl/y')
+  })
+
+  it('every button in the sheet is 44 px', async () => {
+    await render(conn({ connection: view('syncing', null, [ACCOUNT]) }))
+    expect(dialogButtons().every((b) => /\b(min-)?h-11\b/.test(b.className))).toBe(true)
   })
 })
