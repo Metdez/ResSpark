@@ -3,6 +3,7 @@ import { createMiddleware } from 'hono/factory'
 import { HTTPException } from 'hono/http-exception'
 import { requestId, type RequestIdVariables } from 'hono/request-id'
 import { secureHeaders } from 'hono/secure-headers'
+import { queue, type Job } from './jobs/index'
 import { logger } from './log/logger'
 import { type StaffCtx } from './middleware/staff-auth'
 import { adminIntegrationsRoute } from './routes/admin-integrations'
@@ -14,6 +15,7 @@ import { cUploadsRoute } from './routes/c-uploads'
 import { clientLinkRoute } from './routes/client-link'
 import { clientPortalRoute } from './routes/client-portal'
 import { configRoute } from './routes/config'
+import { webhooksRoute } from './routes/webhooks'
 
 export const app = new Hono<{
   Bindings: Env
@@ -54,6 +56,7 @@ app.route('/api/admin', adminLookupRoute)
 app.route('/c', clientLinkRoute)
 app.route('/api/c', clientPortalRoute)
 app.route('/api/c', cUploadsRoute)
+app.route('/api/webhooks', webhooksRoute)
 
 app.notFound(async (c) => {
   // path read for routing only, never logged
@@ -69,6 +72,6 @@ app.notFound(async (c) => {
 
 export default {
   fetch: app.fetch,
-  queue: async (_batch: MessageBatch, _env: Env) => {}, // Phase 4 fills the consumer
+  queue,
   scheduled: async (_c: ScheduledController, _env: Env) => {}, // Phase 2 fills the cron
-} satisfies ExportedHandler<Env>
+} satisfies ExportedHandler<Env, Job>

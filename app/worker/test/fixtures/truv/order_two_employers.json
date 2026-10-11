@@ -1,0 +1,28 @@
+{
+  "id": "ord_fixture_1",
+  "bridge_token": "bt_fixture_1",
+  "is_expired": false,
+  "expired_at": "2026-10-24T15:00:00.000000Z",
+  "employers": [
+    {
+      "id": "emp_1",
+      "status": "completed",
+      "link_id": "link_acme",
+      "product_type": "income",
+      "data_source": "payroll",
+      "company": {
+        "name": "Acme Inc"
+      }
+    },
+    {
+      "id": "emp_2",
+      "status": "completed",
+      "link_id": "link_beta",
+      "product_type": "income",
+      "data_source": "payroll",
+      "company": {
+        "name": "Beta LLC"
+      }
+    }
+  ]
+}

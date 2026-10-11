@@ -1,0 +1,15 @@
+{
+  "webhook_id": "wh_fixture_order_1",
+  "event_type": "order-status-updated",
+  "order_id": "ord_fixture_1",
+  "order_number": "set-by-test",
+  "employer_id": "emp_1",
+  "product": "income",
+  "data_source": "payroll",
+  "link_id": "link_acme",
+  "status": "completed",
+  "user_id": "usr_fixture_1",
+  "template_id": null,
+  "event_created_at": "2026-10-10T15:00:00.000000Z",
+  "updated_at": "2026-10-10T15:00:00.000000Z"
+}

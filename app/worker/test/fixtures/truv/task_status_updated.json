@@ -1,0 +1,10 @@
+{
+  "webhook_id": "wh_fixture_task_1",
+  "event_type": "task-status-updated",
+  "task_id": "task_fixture_1",
+  "link_id": "link_acme",
+  "product": "income",
+  "tracking_info": null,
+  "status": "done",
+  "updated_at": "2026-10-10T14:59:00.000000Z"
+}
