@@ -4,6 +4,7 @@ import { Inbox } from 'lucide-react'
 import { itemStatusBadge } from '@/lib/status'
 import { Button } from '@/components/ui/button'
 import { StatusBadge } from '@/components/status-badge'
+import type { UploadErrorCode } from '@/features/uploads/copy'
 import { UploadSheet } from '@/features/uploads/upload-sheet'
 import { AddressSheet } from './address/address-sheet'
 import { ComingNextSheet } from './coming-next-sheet'
@@ -13,10 +14,15 @@ import { STEP_DESCRIPTIONS } from './step-copy'
 interface StepListProps {
   steps: PortalStep[]
   onView?: (step: PortalStep) => void
+  onUploadError?: (code: UploadErrorCode) => void
 }
 
 // D-11: one column of 44 px rows in position order; View opens the step (upload) or Coming next.
-export function StepList({ steps, onView = () => {} }: StepListProps) {
+export function StepList({
+  steps,
+  onView = () => {},
+  onUploadError,
+}: StepListProps) {
   const [viewing, setViewing] = useState<PortalStep | null>(null)
   const qc = useQueryClient()
   if (steps.length === 0)
@@ -81,6 +87,7 @@ export function StepList({ steps, onView = () => {} }: StepListProps) {
             status: viewing.status,
           }}
           open
+          onError={onUploadError}
           onClose={() => {
             setViewing(null)
             // the chip turns into "With your agent" once the Worker marks the item submitted

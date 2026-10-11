@@ -1,3 +1,4 @@
+import { act } from 'react'
 import {
   button,
   cleanup,
@@ -269,6 +270,36 @@ describe('PortalPage', () => {
     await click(button('View', rows()[0])!)
     await waitFor(() => sent().length === 2)
     expect(sent()[1]).toBe('bank_connect')
+  })
+
+  it('sends the latest upload error code as last_error', async () => {
+    const { fetchMock } = await render({
+      ...okState({ opened_at: OPENED }),
+      'GET /api/c/items/s4/documents': {
+        status: 200,
+        body: {
+          item: { id: 's4', label: 'Upload your ID', status: 'submitted', rejection_note: null },
+          documents: [],
+        },
+      },
+    })
+    await waitFor(() => rows().length === 5)
+    await click(button('View', rows()[3])!)
+    const camera = () =>
+      document.querySelector<HTMLInputElement>('input[type="file"][capture]')
+    await waitFor(() => !!camera())
+    const input = camera()!
+    Object.defineProperty(input, 'files', {
+      value: [new File(['x'], 'notes.txt', { type: 'text/plain' })],
+    })
+    await act(async () => {
+      input.dispatchEvent(new Event('change', { bubbles: true }))
+    })
+    const errors = () =>
+      fetchMock.mock.calls
+        .filter(([p]) => p === '/api/c/heartbeat')
+        .map(([, init]) => JSON.parse(String((init as RequestInit).body)).last_error)
+    await waitFor(() => errors().includes('unsupported_type'))
   })
 
   it('sends intro as the step before Start', async () => {

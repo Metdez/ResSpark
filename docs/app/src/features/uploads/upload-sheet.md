@@ -1,6 +1,6 @@
 # `app/src/features/uploads/upload-sheet.tsx`
 
-`UploadSheet({ item, open, onClose })`: the client's upload step (D-11, UPL-01, UPL-02, UPL-03). `StepList` opens it when the client taps `View` on an `upload` step. `item` is the step's `{ id, label, status }`; the agent's rejection note is not on the step (the `/api/c/state` DTO is allow-listed) and comes from the documents list instead.
+`UploadSheet({ item, open, onClose, onError })`: the client's upload step (D-11, UPL-01, UPL-02, UPL-03). `StepList` opens it when the client taps `View` on an `upload` step. `item` is the step's `{ id, label, status }`; the agent's rejection note is not on the step (the `/api/c/state` DTO is allow-listed) and comes from the documents list instead. `onError` (optional) receives `uploadErrorCode(code)` every time a row fails, so the portal can report the latest upload error to staff (STAT-03).
 
 ## Layout (bottom sheet, one column, max 30 rem)
 
@@ -36,4 +36,4 @@ Each picked file runs on its own; `onPick` starts them with `Promise.allSettled`
 
 ## Tests
 
-`upload-sheet.test.tsx` mocks `./api`, `./transport` and `./preprocess` and renders with `renderWithQuery` (createRoot + act). It covers: title, intro, both inputs' attributes (`accept`, `capture`, `multiple`), control heights and the disabled Done; two files mint, upload and complete in parallel, show "Sent to your agent", enable Done, and Done calls `onClose`; zero files does nothing; a `.txt` is refused with no API call and offers Remove; `too_many_files` from mint shows the 10-file sentence; one file failing leaves the other ready and offers Try again; a rejected item shows "Your agent asked for a new copy: blurry", "Upload again" and "Needs a new copy"; an approved item shows the approval and no file input; listed files come first in server order, then the new file.
+`upload-sheet.test.tsx` mocks `./api`, `./transport` and `./preprocess` and renders with `renderWithQuery` (createRoot + act). It covers: title, intro, both inputs' attributes (`accept`, `capture`, `multiple`), control heights and the disabled Done; two files mint, upload and complete in parallel, show "Sent to your agent", enable Done, and Done calls `onClose`; zero files does nothing; a `.txt` is refused with no API call and offers Remove; `onError` gets `unsupported_type` for the `.txt` and `upload_failed` for an unknown server code from mint; `too_many_files` from mint shows the 10-file sentence; one file failing leaves the other ready and offers Try again; a rejected item shows "Your agent asked for a new copy: blurry", "Upload again" and "Needs a new copy"; an approved item shows the approval and no file input; listed files come first in server order, then the new file.

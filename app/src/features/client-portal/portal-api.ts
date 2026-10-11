@@ -1,3 +1,4 @@
+import type { UploadErrorCode } from '@/features/uploads/copy'
 // Contracts of the Worker's /api/c/* routes (Plan 02-07), mirrored, not imported. The client bundle
 // never imports the admin api() or supabase-js: identity is the HttpOnly rs_client cookie only.
 export type StepKind =
@@ -105,7 +106,7 @@ export const start = () =>
 
 export type HeartbeatBody = {
   last_step: string
-  last_error?: 'state_failed' | 'start_failed'
+  last_error?: 'state_failed' | 'start_failed' | UploadErrorCode
   user_agent_class: 'phone' | 'tablet' | 'desktop'
 }
 

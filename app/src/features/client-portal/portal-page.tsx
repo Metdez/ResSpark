@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ClientShell } from '@/features/client-link/client-shell'
 import { InvalidLinkPage } from '@/features/client-link/invalid-link-page'
+import type { UploadErrorCode } from '@/features/uploads/copy'
 import { getState, PortalError, start, type PortalState } from './portal-api'
 import { StepList } from './step-list'
 import { useHeartbeat } from './use-heartbeat'
@@ -36,6 +37,7 @@ export function PortalPage() {
   })
 
   const [viewed, setViewed] = useState<string>()
+  const [uploadError, setUploadError] = useState<UploadErrorCode>()
   const lost = noSession(state.error) || noSession(begin.error)
   const opened = Boolean(state.data?.opened_at)
   // a revoke turns the next refetch into a 401, which stops the heartbeat with the page
@@ -46,7 +48,7 @@ export function PortalPage() {
       ? 'state_failed'
       : begin.isError
         ? 'start_failed'
-        : undefined,
+        : uploadError,
   })
 
   if (lost) return <InvalidLinkPage />
@@ -104,7 +106,11 @@ export function PortalPage() {
           <h2 className='mb-2 text-xl leading-tight font-semibold'>
             Your steps
           </h2>
-          <StepList steps={data.steps} onView={(s) => setViewed(s.kind)} />
+          <StepList
+            steps={data.steps}
+            onView={(s) => setViewed(s.kind)}
+            onUploadError={setUploadError}
+          />
         </>
       )}
     </ClientShell>

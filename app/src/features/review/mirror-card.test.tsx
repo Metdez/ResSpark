@@ -81,6 +81,15 @@ describe('MirrorCard', () => {
     expect(q('[data-mirror-step]')!.textContent).toContain(text)
   })
 
+  it.each([
+    ['file_too_large', 'Last error: Upload refused: file over 25 MB'],
+    ['network', 'Last error: Upload failed: connection dropped'],
+    ['heic_failed', "Last error: Couldn't convert a HEIC photo"],
+  ])('maps the upload code %s to staff wording', async (code, text) => {
+    await render(OPENED, session(2, { last_error: code }))
+    expect(q('[data-mirror-error]')!.textContent).toBe(text)
+  })
+
   it('falls back to the words of an unknown error code', async () => {
     await render(OPENED, session(2, { last_error: 'foo_bar' }))
     expect(q('[data-mirror-error]')!.textContent).toBe('Last error: foo bar')

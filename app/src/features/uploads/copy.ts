@@ -17,7 +17,7 @@ export const uploadCopy = {
   close: 'Close',
 } as const
 
-const ERRORS: Record<string, string> = {
+const ERRORS = {
   unsupported_type: 'We can take PDFs and photos (JPG, PNG, HEIC).',
   file_too_large:
     'That file is too big (over 25 MB). Try a smaller scan or photo.',
@@ -28,11 +28,16 @@ const ERRORS: Record<string, string> = {
   item_approved: 'Your agent already approved this item.',
   heic_failed: "We couldn't read that photo. Try a JPG or PDF.",
   network: 'Your connection dropped. Check your signal and try again.',
-}
+} satisfies Record<string, string>
+
+// The fixed set reported to staff in the heartbeat; any other code reads as upload_failed (never free text).
+export type UploadErrorCode = keyof typeof ERRORS | 'upload_failed'
+const known = (code: string): code is keyof typeof ERRORS =>
+  Object.prototype.hasOwnProperty.call(ERRORS, code)
+export const uploadErrorCode = (code: string): UploadErrorCode =>
+  known(code) ? code : 'upload_failed'
 
 // Clients never see an error code (UI-SPEC Error convention).
 export function errorCopy(code: string): string {
-  return Object.prototype.hasOwnProperty.call(ERRORS, code)
-    ? ERRORS[code]
-    : 'Something went wrong. Try again.'
+  return known(code) ? ERRORS[code] : 'Something went wrong. Try again.'
 }

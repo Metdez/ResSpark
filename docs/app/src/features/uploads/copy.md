@@ -22,6 +22,10 @@ Every sentence the client sees in the upload step, in one place. The voice follo
 | `remove` | Remove | Row button after a final error. |
 | `close` | Close | Footer button that closes the sheet without finishing. |
 
+## `UploadErrorCode`, `uploadErrorCode(code)`
+
+`ERRORS` is a plain object checked with `satisfies Record<string, string>`, so its keys are a literal type. `UploadErrorCode` is those keys plus `upload_failed`: the fixed set the upload sheet reports to staff through the heartbeat's `last_error` (STAT-03). `uploadErrorCode(code)` returns the code when it is one of the keys and `upload_failed` otherwise, so a server code with no client sentence never reaches the database as free text. `known(code)` is the shared own-property type guard used here and by `errorCopy`.
+
 ## `errorCopy(code)`
 
 Maps a Worker or client error code to one sentence. Clients never see a code (UI-SPEC Error convention).

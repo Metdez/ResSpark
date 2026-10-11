@@ -9,7 +9,7 @@
 
 ## Heartbeat
 
-`useHeartbeat` runs once the state has loaded and the session is valid. `last_step` is `intro` before Start, then `list`, then the kind of the last step whose `View` was tapped. `last_error` is `state_failed` while a state refetch is failing (data still cached) or `start_failed` after a failed Start. A 401 renders the invalid-link page and turns `enabled` off, so a revoke stops the heartbeat at the next refetch.
+`useHeartbeat` runs once the state has loaded and the session is valid. `last_step` is `intro` before Start, then `list`, then the kind of the last step whose `View` was tapped. `last_error` is `state_failed` while a state refetch is failing (data still cached) or `start_failed` after a failed Start; otherwise it is the latest upload error code (`uploadError` state, set by `StepList`'s `onUploadError` from the upload sheet), so staff see what the client hit while uploading. `useHeartbeat` re-sends when `last_error` changes. A 401 renders the invalid-link page and turns `enabled` off, so a revoke stops the heartbeat at the next refetch.
 
 ## Render order
 
@@ -29,4 +29,4 @@ In Phase 2 "progress saved per step" means the server-side `request_items.status
 
 ## Tests
 
-`portal-page.test.tsx` uses the `query-render` harness with a stubbed `fetch`: the 401 page, the generic error, the intro with and without an agent, the tab title, Start's header and pending label, the step list after Start with one state fetch, a Start 401, a Start failure toast, the opened shortcut, the empty list, row sizing and chips, same-kind rows, the heartbeat step values (`intro`, `list`, the viewed kind), and no heartbeat without a session.
+`portal-page.test.tsx` uses the `query-render` harness with a stubbed `fetch`: the 401 page, the generic error, the intro with and without an agent, the tab title, Start's header and pending label, the step list after Start with one state fetch, a Start 401, a Start failure toast, the opened shortcut, the empty list, row sizing and chips, same-kind rows, the heartbeat step values (`intro`, `list`, the viewed kind), the latest upload error code (`unsupported_type` after picking a `.txt` in the upload sheet) as `last_error`, and no heartbeat without a session.

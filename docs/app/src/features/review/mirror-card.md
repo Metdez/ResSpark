@@ -28,7 +28,7 @@ A pure function, exported for tests.
 
 Step words: the heartbeat sends a step kind (`upload`, `bank_connect`, `payroll_connect`, `address`, `signature`, `intake`), `list` for the step list, or `intro` before the client starts. `list` and null read `the step list`, `intro` reads `the welcome screen`, and any other value has its underscores replaced by spaces. The `shortcut:` comment notes that two upload items read alike; the upgrade is for the portal to send `kind:item_id`.
 
-`Last error:` appears in muted text only when `last_error` is set. The Phase 2 fixed codes map to staff copy through `HEARTBEAT_ERROR_COPY` (`state_failed` → `Couldn't load the page`, `start_failed` → `Couldn't start`); any other value falls back to its words.
+`Last error:` appears in muted text only when `last_error` is set. The Phase 2 fixed codes map to staff copy through `HEARTBEAT_ERROR_COPY` (`state_failed` → `Couldn't load the page`, `start_failed` → `Couldn't start`). The upload codes from the client's upload sheet map too: `unsupported_type`, `file_too_large`, `empty`, `too_many_files`, `bad_file_type`, `item_approved` read `Upload refused: …`; `upload_incomplete`, `network`, `upload_failed` read as failures; `heic_failed` → `Couldn't convert a HEIC photo`. Any other value falls back to its words.
 
 `Client may be stuck — last seen {ago}` appears in `text-red-700` with an `AlertTriangle` icon when `stuck` is true. The hint is passive: it sends no reminder or alert (reminders are Phase 8). Nothing in the card is interactive.
 
@@ -38,4 +38,4 @@ Step words: the heartbeat sends a step kind (`upload`, `bank_connect`, `payroll_
 
 ## Tests
 
-`mirror-card.test.tsx` covers every `mirrorState` branch (including the exact 10-minute edge and terminal statuses) and renders the card with a mocked `useReview` for the step words, the error copy and fallback, the stuck hint, and both empty states.
+`mirror-card.test.tsx` covers every `mirrorState` branch (including the exact 10-minute edge and terminal statuses) and renders the card with a mocked `useReview` for the step words, the error copy (including three upload codes) and fallback, the stuck hint, and both empty states.

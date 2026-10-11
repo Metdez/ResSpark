@@ -8,7 +8,7 @@ The client portal's own fetch wrapper for the Worker's `/api/c/*` routes (Plan 0
 - `StepStatus`: `pending`, `in_progress`, `submitted`, `approved`, `rejected`.
 - `PortalStep` / `PortalState`: the allow-listed DTO of `GET /api/c/state` (firm name, agent name, request status, `opened_at`, `expires_at`, steps). No contact fields and no case or request ids reach the browser.
 - `PortalError(status, code)`: every non-2xx answer, plus `invalid_response` (status 500) when a 200 body fails its guard. The Worker's uniform session failure is `PortalError(401, 'no_session')`.
-- `HeartbeatBody`: `last_step`, an optional fixed `last_error` code (`state_failed` or `start_failed`, never free text), and `user_agent_class` (`phone`, `tablet`, `desktop`).
+- `HeartbeatBody`: `last_step`, an optional fixed `last_error` code (`state_failed`, `start_failed`, or an `UploadErrorCode` from `features/uploads/copy`; never free text. The Worker stores up to 200 characters with no allowlist), and `user_agent_class` (`phone`, `tablet`, `desktop`).
 
 ## Functions
 

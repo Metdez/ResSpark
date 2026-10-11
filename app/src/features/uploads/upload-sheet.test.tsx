@@ -61,8 +61,11 @@ async function pick(input: HTMLInputElement, files: File[]) {
   })
 }
 
-async function open(item = ITEM, onClose = vi.fn()) {
-  await renderWithQuery(<UploadSheet item={item} open onClose={onClose} />, {})
+async function open(item = ITEM, onClose = vi.fn(), onError = vi.fn()) {
+  await renderWithQuery(
+    <UploadSheet item={item} open onClose={onClose} onError={onError} />,
+    {}
+  )
   await waitFor(() => vi.mocked(listItemDocuments).mock.calls.length > 0)
   return onClose
 }
@@ -139,6 +142,22 @@ describe('UploadSheet', () => {
     )
     expect(mintUpload).not.toHaveBeenCalled()
     expect(button('Remove')).toBeDefined()
+  })
+
+  it('reports each failure code through onError, unknown codes as upload_failed', async () => {
+    const onError = vi.fn()
+    await open(ITEM, vi.fn(), onError)
+    await pick(cameraInput(), [
+      new File(['x'], 'notes.txt', { type: 'text/plain' }),
+    ])
+    await waitFor(() => onError.mock.calls.length === 1)
+    expect(onError).toHaveBeenLastCalledWith('unsupported_type')
+    vi.mocked(mintUpload).mockRejectedValueOnce(
+      Object.assign(new Error('x'), { code: 'some_server_code' })
+    )
+    await pick(cameraInput(), [pdf('a.pdf')])
+    await waitFor(() => onError.mock.calls.length === 2)
+    expect(onError).toHaveBeenLastCalledWith('upload_failed')
   })
 
   it('shows the 10-file limit in plain words', async () => {

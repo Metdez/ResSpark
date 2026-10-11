@@ -18,7 +18,12 @@ import {
   remintToken,
   type MintResponse,
 } from './api'
-import { errorCopy, uploadCopy } from './copy'
+import {
+  errorCopy,
+  uploadCopy,
+  uploadErrorCode,
+  type UploadErrorCode,
+} from './copy'
 import { FileRow, type FileRowData } from './file-row'
 import { preprocess, sha256Hex } from './preprocess'
 import {
@@ -57,10 +62,12 @@ export function UploadSheet({
   item,
   open,
   onClose,
+  onError,
 }: {
   item: { id: string; label: string; status: string }
   open: boolean
   onClose: () => void
+  onError?: (code: UploadErrorCode) => void
 }) {
   const listed = useQuery({
     queryKey: ['portal', 'item', item.id, 'documents'],
@@ -82,12 +89,14 @@ export function UploadSheet({
   const note = listed.data?.item.rejection_note
   const update = (key: string, patch: Partial<Local>) =>
     setRows((rs) => rs.map((r) => (r.key === key ? { ...r, ...patch } : r)))
-  const fail = (key: string, code: string) =>
+  const fail = (key: string, code: string) => {
     update(key, {
       phase: 'error',
       error: errorCopy(code),
       canRetry: !FINAL.has(code),
     })
+    onError?.(uploadErrorCode(code))
+  }
 
   async function send(key: string, file: File) {
     const accepted = acceptFile(file)

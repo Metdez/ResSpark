@@ -34,6 +34,16 @@ export function mirrorState({ opened_at, status, session }: MirrorInput, now = D
 const HEARTBEAT_ERROR_COPY: Record<string, string> = {
   state_failed: "Couldn't load the page",
   start_failed: "Couldn't start",
+  unsupported_type: 'Upload refused: not a PDF or photo',
+  file_too_large: 'Upload refused: file over 25 MB',
+  empty: 'Upload refused: empty file',
+  too_many_files: 'Upload refused: 10-file limit for the item',
+  bad_file_type: 'Upload refused: file content is not a PDF or photo',
+  upload_incomplete: 'Upload incomplete: the file did not arrive whole',
+  item_approved: 'Upload refused: item already approved',
+  heic_failed: "Couldn't convert a HEIC photo",
+  network: 'Upload failed: connection dropped',
+  upload_failed: 'Upload failed',
 }
 
 // shortcut: `last_step` is the step kind, so two upload items read alike; have the portal send
