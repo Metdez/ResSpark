@@ -207,7 +207,7 @@ Plans:
   4. IRS standards for the county from the client's confirmed address are applied with no county dropdown, and the engine's recommendation (OIC, installment, CNC, or manual review) is shown with its math; the TypeScript engine matches the Python tests on golden fixtures with no constant changed (FORM-01, FORM-05, ADDR-02)
   5. Staff export the worksheet as a PDF labeled "Not an IRS form" and push it to Logics like any other document (FORM-06)
 
-**Plans:** 1/12 plans executed
+**Plans:** 2/12 plans executed
 
 Plans:
 - [x] 07-01-PLAN.md — [Wave 1] TS engine port (`engine/*`, `app/shared/questions.ts`) proven by Python golden fixtures with recorded standards calls, 60+ grid rows, `pnpm check` freshness gate (FORM-01)
@@ -220,7 +220,7 @@ Plans:
 - [ ] 07-08-PLAN.md — [Wave 4] Client intake step (one question per screen, prefill, resume), live question_definitions parity, removal of `src/frontend/` (FORM-02)
 - [ ] 07-09-PLAN.md — [Wave 4] Staff 433-A view: sections, chips, source badges, decisions, county state, recommendation rail with the math, export (FORM-03, FORM-04, FORM-05, ADDR-02)
 - [ ] 07-10-PLAN.md — [Wave 5] Evidence drill-down Sheet: transactions by month, pay stubs with signed links, intake/Logics/address/staff (FORM-03)
-- [ ] 07-11-PLAN.md — [Wave 5, non-gating] Regex document extractors ported with `_page_text`, golden-extract parity (FORM-03)
+- [x] 07-11-PLAN.md — [Wave 5, non-gating] Regex document extractors ported with `_page_text`, golden-extract parity (FORM-03)
 - [ ] 07-12-PLAN.md — [Wave 6, non-gating] Extract values route and button → document proposals (FORM-03)
 
 **Scope notes**: Mechanical TypeScript port of `src/determination.py` with Python kept as the test oracle; thresholds and formulas unchanged (any change needs an authoritative source and tests); standards through Postgres RPC functions; Plaid-category-to-433-A-line and Truv deduction mappings in SQL tables; interview Nicole and Sandra on the layout before planning; port the `document_parse.py` extractors split under 500 lines.
@@ -273,5 +273,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 4. Connect Payroll & Bank | 3/7 | In Progress | - |
 | 5. Push to Logics | 4/5 | In Progress | - |
 | 6. Address & E-Sign | 1/8 | In Progress | - |
-| 7. 433-A Pre-Population | 1/12 | In Progress | - |
+| 7. 433-A Pre-Population | 2/12 | In Progress | - |
 | 8. Reminders, Teller & Production Readiness | 0/12 | Not started | - |
