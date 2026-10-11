@@ -30,7 +30,7 @@ Discussion ran in `--auto` mode. `[auto] Selected all gray areas: reminder caden
 
 - The Worker is the only data path, scoped by `firm_id`. The logger is allowlisted.
 - `rs_client` is a signed 24 h cookie, `{ link_id, exp }`, set by `GET /c/:token`. `clientSession` trusts only that cookie, plus `X-Requested-With: ResSpark` on POSTs.
-- Email goes through Resend over `fetch`.
+- Email goes through Cloudflare Email Service (`EMAIL` binding, `email/cloudflare-email.ts`). *Updated 2026-10-11: this replaced Resend.*
 - `client_sessions` records heartbeats.
 - Every mutation goes through an RPC that writes its own event.
 - `request_status()`, `request_dashboard_v`, and 5 s polling stay as they are.
@@ -58,8 +58,8 @@ Discussion ran in `--auto` mode. `[auto] Selected all gray areas: reminder caden
   Reminders stop at `complete`, `revoked`, link expiry, or `waiting_on_staff`. If the client made progress in the last 24 h, the next reminder moves back 24 h instead of sending. *Why:* this is REM-01's stop rule, and a client who is acting is not "quiet".
 - **D-03: Sending at most once.**
   - `send_reminder` first runs `reminder_claim(request_id, expected_count)`, a state-guarded increment.
-  - It then sends through Phase 2's `email/resend.ts` and logs `reminder.sent {n}` or `reminder.failed`. A claimed reminder is never re-sent.
-  - With no `RESEND_API_KEY`, the step does nothing and Settings shows "Reminders paused: email not configured".
+  - It then sends through `email/cloudflare-email.ts` (was `email/resend.ts`) and logs `reminder.sent {n}` or `reminder.failed`. A claimed reminder is never re-sent.
+  - With no `EMAIL_FROM` (no onboarded sending domain), the step does nothing and Settings shows "Reminders paused: email not configured".
   - *Why:* a missed reminder costs less than duplicate emails.
 - **D-04: Templates and controls.**
   - There are 3 fixed email templates in `app/worker/src/reminders/templates.ts`. The copy is written ahead of time, not by AI.

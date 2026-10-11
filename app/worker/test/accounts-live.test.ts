@@ -13,8 +13,8 @@ const { SUPABASE_URL, SUPABASE_SECRET_KEY, SUPABASE_PUBLISHABLE_KEY } = process.
 const live = Boolean(SUPABASE_URL && SUPABASE_SECRET_KEY && SUPABASE_PUBLISHABLE_KEY)
 
 describe.skipIf(!live)('staff accounts (live)', () => {
-  // RESEND_API_KEY blanked: nothing is emailed to the fake addresses.
-  const env = { ...process.env, RESEND_API_KEY: '' } as unknown as Env
+  // No EMAIL binding in Node tests, so nothing is emailed to the fake addresses.
+  const env = { ...process.env } as unknown as Env
   const admin = live ? createAdminClient(env) : (undefined as unknown as ReturnType<typeof createAdminClient>)
   const anon = () => createClient(SUPABASE_URL!, SUPABASE_PUBLISHABLE_KEY!, { auth: { persistSession: false } })
   const tag = randomBytes(5).toString('hex')

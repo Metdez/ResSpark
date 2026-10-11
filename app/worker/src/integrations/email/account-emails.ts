@@ -1,4 +1,4 @@
-import { escapeHtml, sendEmail, type EmailEnv, type SendResult } from './resend'
+import { escapeHtml, sendEmail, type EmailEnv, type SendResult } from './cloudflare-email'
 
 // Staff-account emails (invite, password reset). Same rules as the link email: plain copy,
 // names escaped in HTML and raw in text, one send attempt.
@@ -20,26 +20,22 @@ export interface InviteEmailInput {
   expiresAt: string
 }
 
-export function sendInviteEmail(env: EmailEnv, input: InviteEmailInput, fetchImpl: typeof fetch = fetch): Promise<SendResult> {
+export function sendInviteEmail(env: EmailEnv, input: InviteEmailInput): Promise<SendResult> {
   const lines = [
     `${input.inviterName} invited you to join ${input.firmName} on ResSpark.`,
     'Set your password here: {link}',
     `This invite expires on ${DATE.format(new Date(input.expiresAt))}.`,
     "If you weren't expecting this, you can ignore it.",
   ]
-  return sendEmail(env, message(input.to, `Join ${input.firmName} on ResSpark`, lines, input.url), fetchImpl)
+  return sendEmail(env, message(input.to, `Join ${input.firmName} on ResSpark`, lines, input.url))
 }
 
-export function sendPasswordResetEmail(
-  env: EmailEnv,
-  input: { to: string; url: string },
-  fetchImpl: typeof fetch = fetch
-): Promise<SendResult> {
+export function sendPasswordResetEmail(env: EmailEnv, input: { to: string; url: string }): Promise<SendResult> {
   const lines = [
     'Someone asked to reset the password for your ResSpark account.',
     'Choose a new password here: {link}',
     'The link works once and expires in one hour.',
     "If you didn't ask for this, you can ignore it; your password stays the same.",
   ]
-  return sendEmail(env, message(input.to, 'Reset your ResSpark password', lines, input.url), fetchImpl)
+  return sendEmail(env, message(input.to, 'Reset your ResSpark password', lines, input.url))
 }

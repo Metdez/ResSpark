@@ -24,6 +24,5 @@ SMARTY_AUTH_TOKEN=
 # LOGICS_SECRET_TOKEN=
 # Local override of the wrangler.jsonc var (keep fake; live is a USER ACTION, docs/app/logics-live-switch.md):
 # LOGICS_MODE=fake
-# Reserved for later phases:
-# RESEND_API_KEY=
-# RESEND_FROM=   a wrangler.jsonc var in production; set here only to override locally
+# Email goes through the Cloudflare Email Service binding (EMAIL in wrangler.jsonc); no API key.
+# EMAIL_FROM=   a wrangler.jsonc var in production; set here only to override locally

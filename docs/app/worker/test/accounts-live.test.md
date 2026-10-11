@@ -6,7 +6,7 @@ Live proof of the staff-account flows against the real Supabase project, run in 
 pnpm -C app run test:live:file worker/test/accounts-live.test.ts
 ```
 
-The suite is skipped without `SUPABASE_URL`, `SUPABASE_SECRET_KEY` and `SUPABASE_PUBLISHABLE_KEY`. `RESEND_API_KEY` is blanked in the test env, so nothing is emailed to the fake `@resspark.test` addresses.
+The suite is skipped without `SUPABASE_URL`, `SUPABASE_SECRET_KEY` and `SUPABASE_PUBLISHABLE_KEY`. The Node test env has no `EMAIL` binding, so nothing is emailed to the fake `@resspark.test` addresses.
 
 **Setup:** ensures the test firm exists, creates an admin "inviter" user with a profile in it, and signs that user in.
 

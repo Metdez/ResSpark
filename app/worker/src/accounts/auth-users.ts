@@ -8,7 +8,7 @@ type AuthEnv = Pick<Env, 'SUPABASE_URL' | 'SUPABASE_SECRET_KEY'>
 export type CreateUserResult = { ok: true; id: string } | { ok: false; reason: 'email_exists' | 'weak_password' | 'failed' }
 
 // email_confirm: true because the Worker vouches for the address. shortcut: public sign-up does not
-// verify email ownership yet; add a confirmation email once RESEND_API_KEY is set for every deploy.
+// verify email ownership yet; add a confirmation email once EMAIL_FROM is set on an onboarded domain.
 export async function createAuthUser(
   env: AuthEnv,
   input: { email: string; password: string; appMetadata?: Record<string, string> }

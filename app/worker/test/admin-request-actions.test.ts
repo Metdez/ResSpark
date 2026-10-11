@@ -154,39 +154,40 @@ describe('firm scoping', () => {
 })
 
 describe('POST /:id/email', () => {
-  const resendOk = () =>
-    stubFetch(async (url) =>
-      url === 'https://api.resend.com/emails'
-        ? new Response(JSON.stringify({ id: 'em_1' }), { status: 200 })
-        : new Response('{}', { status: 500 })
-    )
-  const withKey = { env: { RESEND_API_KEY: 're_x' } }
+  // Fake Cloudflare Email Service binding: records each message and answers with a message id,
+  // or throws an error carrying `code` the way the real binding does.
+  const binding = (failCode?: string) => ({
+    send: vi.fn(async (_m: { to: string; text: string }) => {
+      if (failCode) throw Object.assign(new Error('send failed'), { code: failCode })
+      return { messageId: 'em_1' }
+    }),
+  })
+  const withEmail = (email: ReturnType<typeof binding>) => ({ env: { EMAIL: email, EMAIL_FROM: 'notifications@valortax.test' } })
+  const sentText = (email: ReturnType<typeof binding>) => email.send.mock.calls[0][0].text
 
   it('sends to the stored contact, never a body-supplied address, and logs request.email_sent', async () => {
-    const f = resendOk()
-    const res = await action('email', { to: 'attacker@example.com' }, withKey)
+    const email = binding()
+    const res = await action('email', { to: 'attacker@example.com' }, withEmail(email))
     expect(res.status).toBe(200)
     expect(await res.json()).toEqual({ ok: true, id: 'em_1' })
-    const [, init] = outboundCalls(f)[0]
-    expect(JSON.parse(String(init?.body)).to).toEqual(['jordan.rivera@example.com'])
+    expect(email.send.mock.calls[0][0].to).toBe('jordan.rivera@example.com')
     expect(logEvent).toHaveBeenCalledWith(expect.anything(), {
       ...staffEvent,
       action: 'request.email_sent',
-      payload: { to: 'jordan.rivera@example.com', resend_id: 'em_1' },
+      payload: { to: 'jordan.rivera@example.com', message_id: 'em_1' },
     })
   })
 
-  it('reports not_configured without a Resend key and makes no outbound call', async () => {
-    const f = resendOk()
-    const res = await action('email')
+  it('reports not_configured without EMAIL_FROM and sends nothing', async () => {
+    const email = binding()
+    const res = await action('email', undefined, { env: { EMAIL: email } })
     expect(res.status).toBe(200)
     expect(await res.json()).toEqual({ ok: false, reason: 'not_configured' })
-    expect(outboundCalls(f)).toHaveLength(0)
+    expect(email.send).not.toHaveBeenCalled()
   })
 
-  it('reports send_failed on a Resend error and logs request.email_failed', async () => {
-    stubFetch(async () => new Response('{}', { status: 500 }))
-    const res = await action('email', undefined, withKey)
+  it('reports send_failed on a delivery error and logs request.email_failed', async () => {
+    const res = await action('email', undefined, withEmail(binding('E_DELIVERY_FAILED')))
     expect(res.status).toBe(200)
     expect(await res.json()).toEqual({ ok: false, reason: 'send_failed' })
     expect(logEvent).toHaveBeenCalledWith(expect.anything(), {
@@ -199,17 +200,17 @@ describe('POST /:id/email', () => {
   it.each([
     ['a revoked link', linkRow({ revoked_at: '2026-10-11T01:00:00Z' })],
     ['no link', null],
-  ])('reports no_link for %s without calling Resend', async (_name, link) => {
+  ])('reports no_link for %s without sending', async (_name, link) => {
     vi.mocked(getRequest).mockResolvedValue(sentBundle(link))
-    const f = resendOk()
-    const res = await action('email', undefined, withKey)
+    const email = binding()
+    const res = await action('email', undefined, withEmail(email))
     expect(await res.json()).toEqual({ ok: false, reason: 'no_link' })
-    expect(outboundCalls(f)).toHaveLength(0)
+    expect(email.send).not.toHaveBeenCalled()
   })
 
   it('is 404 for a request outside the firm', async () => {
     vi.mocked(getRequest).mockResolvedValue(null)
-    const res = await action('email', undefined, withKey)
+    const res = await action('email', undefined, withEmail(binding()))
     expect(res.status).toBe(404)
   })
 
@@ -222,12 +223,10 @@ describe('POST /:id/email', () => {
     })
 
     it('emails the client link plus ?step=<signature item id>', async () => {
-      const f = resendOk()
-      const res = await action('email', { step: SIGN }, withKey)
+      const email = binding()
+      const res = await action('email', { step: SIGN }, withEmail(email))
       expect(await res.json()).toEqual({ ok: true, id: 'em_1' })
-      const [, init] = outboundCalls(f)[0]
-      const text = String(JSON.parse(String(init?.body)).text)
-      const line = text.split('\n').find((l) => l.includes(ORIGIN)) ?? ''
+      const line = sentText(email).split('\n').find((l) => l.includes(ORIGIN)) ?? ''
       expect(line.endsWith(`?step=${SIGN}`)).toBe(true)
       expect(line.slice(line.indexOf(ORIGIN))).toMatch(/^\S+$/)
     })
@@ -238,20 +237,19 @@ describe('POST /:id/email', () => {
       ['a non-UUID', 'not-a-uuid'],
       ['a non-string', 42],
     ])('refuses %s with 400 bad_request and sends nothing', async (_name, step) => {
-      const f = resendOk()
-      const res = await action('email', { step }, withKey)
+      const email = binding()
+      const res = await action('email', { step }, withEmail(email))
       expect(res.status).toBe(400)
       expect(await errorCode(res)).toBe('bad_request')
-      expect(outboundCalls(f)).toHaveLength(0)
+      expect(email.send).not.toHaveBeenCalled()
       expect(logEvent).not.toHaveBeenCalled()
     })
 
     it('keeps the Phase 2 URL without a step', async () => {
-      const f = resendOk()
-      await action('email', undefined, withKey)
-      const text = String(JSON.parse(String(outboundCalls(f)[0][1]?.body)).text)
-      expect(text).toContain(ORIGIN)
-      expect(text).not.toContain('?step=')
+      const email = binding()
+      await action('email', undefined, withEmail(email))
+      expect(sentText(email)).toContain(ORIGIN)
+      expect(sentText(email)).not.toContain('?step=')
     })
   })
 })

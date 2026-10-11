@@ -4,7 +4,7 @@ import type { CaseRow } from '../db/cases'
 import { getIntegration } from '../db/integrations'
 import { logEvent } from '../db/events'
 import { getRequest, regenerateLink, revokeRequest, sendRequest, type RequestRow } from '../db/requests'
-import { sendLinkEmail } from '../integrations/email/resend'
+import { sendLinkEmail } from '../integrations/email/cloudflare-email'
 import { resolveLogicsClient } from '../integrations/logics/config'
 import { fetchCaseSummary } from '../integrations/logics/lookup'
 import type { LogicsCaseSummary } from '../integrations/logics/mapper'
@@ -162,7 +162,7 @@ export const adminRequestActionsRoute = new Hono<AdminApp>()
     await logEvent(c.env, {
       ...staffEvent(c, request),
       ...(result.ok
-        ? { action: 'request.email_sent', payload: { to, resend_id: result.id } }
+        ? { action: 'request.email_sent', payload: { to, message_id: result.id } }
         : { action: 'request.email_failed', payload: { to, reason: result.reason } }),
     })
     return c.json(result)

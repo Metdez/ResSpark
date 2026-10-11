@@ -5,7 +5,7 @@ Shared setup for the request route tests (`admin-requests.test.ts`, `admin-reque
 | Part | What it does |
 |------|--------------|
 | Ids | `FIRM`, `SUB` (the staff user), `CASE`, `REQ`, `LINK`, the fake Supabase origin `SUPA`, and `ORIGIN`, the prefix every minted URL starts with in `app.request()` (`http://localhost/c/`). |
-| `env(over)` | A mock `Env` in fixture mode with a test HMAC key and `RESEND_FROM`. `over` adds or replaces bindings, for example `LOGICS_MODE: 'live'` or `RESEND_API_KEY`. |
+| `env(over)` | A mock `Env` in fixture mode with a test HMAC key and no email binding (so email reports `not_configured`). `over` adds or replaces bindings, for example `LOGICS_MODE: 'live'` or a fake `EMAIL` binding with `EMAIL_FROM`. |
 | `initKeys()` / `token()` | Generate an ES256 key pair once and sign a short-lived staff JWT for `SUB` in `FIRM`. This is the same fabrication as `admin-lookup.test.ts`. |
 | `stubFetch(other)` | Stubs global `fetch`. JWKS requests to `SUPA` get the public key, and every other URL goes to `other`, which defaults to a 500. The stub is returned so tests can inspect calls. |
 | `outboundCalls(f)` | The stub's calls that were not JWKS requests, that is, calls that left the Worker. |

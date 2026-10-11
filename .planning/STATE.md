@@ -114,6 +114,7 @@ Recent decisions affecting current work:
 - [Phase 01]: 01-07: rs_client cookie = signed JSON {link_id, exp}, key = SHA-256(CLIENT_LINK_HMAC_KEY + ':cookie'); link tokens use the key's UTF-8 bytes
 - [Phase 02]: 02-03: lookup sub-app (use('*', staffAuth)) is mounted last among /api/admin routes so siblings never re-verify the token
 - [Phase 02]: 02-03: LOGICS_MODE/RESEND_FROM/INTEGRATION_ENC_KEY declared in Task 1 so tsc stays green; LogicsEnv is now Pick<Env, ...>
+- [2026-10-11]: Email provider switched from Resend to Cloudflare Email Service (`send_email` binding `EMAIL`, var `EMAIL_FROM`); `email/resend.ts` renamed `email/cloudflare-email.ts`. Needs a domain onboarded in Cloudflare before anything sends.
 - [Phase 02]: 02-03: assumption-delta for the staff-selected Logics case identity is no-change (explicit confirm step by design)
 - [Phase 02]: Send: one keep_flagged acknowledgement covers both the did-you-mean and differs-from-Logics flags; contact_overridden records only a kept flagged value
 - [Phase 02]: requests.contact_email/contact_phone_e164 hold the validated checkContact output; the email action reads no body and sends only to contact_email

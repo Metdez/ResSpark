@@ -32,7 +32,8 @@ Live: https://resspark.zh-a16.workers.dev, deployed from commit `4219f2b` (Worke
 
 ## Before the demo (Mon Oct 12, 11:30)
 
-- Provider keys via `pnpm -C app run secrets:provider`: Plaid, Truv, DocuSeal, Smarty, Resend (plus a verified `RESEND_FROM` domain). Until then, those steps run on stubs or report `not_configured`.
+- Provider keys via `pnpm -C app run secrets:provider`: Plaid, Truv, DocuSeal, Smarty. Until then, those steps run on stubs or report `not_configured`.
+- **Email = Cloudflare Email Service** (replaced Resend 2026-10-11). Add a domain to Cloudflare, onboard it under Compute → Email Service → Email Sending, set `EMAIL_FROM` in `app/wrangler.jsonc`, redeploy. No API key. Until then emails report `not_configured` and staff copy links.
 - To show a real push: enter the Logics key and secret in Settings → Integrations, click Test connection, and turn on "Write enabled". Keep `LOGICS_MODE=fake` unless Andrew has given a write key and test CaseIDs.
 - Run each step on a real phone: link → intake → bank → payroll → address → upload → sign.
 

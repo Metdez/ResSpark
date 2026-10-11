@@ -23,6 +23,6 @@ Public (no session) account endpoints, mounted at `/api/auth` in `worker/src/ind
 
 - At most 3 links per address per 15 minutes (`forgot:<email>` window), which stops email bombing. Requests past that limit get the same 200 and send nothing.
 - When an account exists, the reset URL is built from the request origin and sent with `sendPasswordResetEmail`.
-- Without Resend configured nothing is sent. The page tells the person to ask an admin, who can copy a reset link from Settings → Team.
+- Until a sending domain is onboarded in Cloudflare Email Service (`EMAIL_FROM` set), nothing is sent. The page tells the person to ask an admin, who can copy a reset link from Settings → Team.
 
 Tests: `auth-public.test.ts` (see `auth-public.test.md`).

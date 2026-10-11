@@ -61,8 +61,8 @@ Names only. Values live in the places listed and nowhere else. Only the five req
 | `VITE_SUPABASE_URL` | `app/.env` (copied from `src/frontend/.env`) | developer copies the file; never printed |
 | `VITE_SUPABASE_PUBLISHABLE_KEY` | `app/.env` (copied from `src/frontend/.env`) | developer copies the file; never printed |
 | `CLOUDFLARE_API_TOKEN` | repo root `.env` | developer; never printed |
-| `RESEND_API_KEY` | optional Worker secret — not set until the user creates a Resend key | `pnpm -C app wrangler secret put RESEND_API_KEY` |
-| `RESEND_FROM` | `wrangler.jsonc` var (not a secret), default `onboarding@resend.dev` | Resend delivers that sender only to the account owner until a domain is verified (D-09) |
+| `EMAIL` | `send_email` binding in `wrangler.jsonc` (Cloudflare Email Service; no key) | built in to Workers Paid |
+| `EMAIL_FROM` | `wrangler.jsonc` var (not a secret), empty by default | set to an address on a domain onboarded in Cloudflare Email Service; empty means email reports `not_configured` |
 | `LOGICS_MODE` | `wrangler.jsonc` var (not a secret) | `fake` for the demo; `live` after Test connection succeeds (see § Logics mode) |
 | `TOKEN_ENC_KEY_1` | Worker secret + `app/.dev.vars` (required) | `pnpm -C app secrets:provision` (Phase 4, D-15). It seals Plaid access tokens in `connection_secrets` and is kept if it already exists, because rotating it orphans every stored token. |
 | `PLAID_CLIENT_ID`, `PLAID_SECRET` | optional Worker secrets + `app/.dev.vars` | `pnpm -C app secrets:provider plaid`, entered at the prompt (echo off). Without them, bank `/start` returns `provider_not_configured` and the portal offers manual upload only. |
@@ -93,7 +93,7 @@ Pushing documents into Logics (Phase 5) has its own ordered USER ACTION runbook:
 
 ## Demo script (Phase 2)
 
-Runs end to end in fixture mode (`LOGICS_MODE=fake`), with no Logics credentials and no Resend key. The fixture cases use `example.com` emails and `555-010-xxxx` phones.
+Runs end to end in fixture mode (`LOGICS_MODE=fake`), with no Logics credentials and no email sending domain. The fixture cases use `example.com` emails and `555-010-xxxx` phones.
 
 1. Open https://resspark.zh-a16.workers.dev/admin and sign in as the demo admin.
 2. Click `Find a client` and type `(555) 010-0001`. Two cards appear, because the spouses on the fixture share that phone.
@@ -104,7 +104,7 @@ Runs end to end in fixture mode (`LOGICS_MODE=fake`), with no Logics credentials
 7. Open the copied link in a phone-sized private window. The client sees the firm, the agent, and one `Start` button.
 8. Tap `Start`. The step list appears, with a status chip on each step.
 9. Tap `View` on a step. The `Coming next` sheet opens; close it.
-10. Back in admin, click `Email link`. It shows `Email not configured` until Resend is set up.
+10. Back in admin, click `Email link`. It shows `Email not configured` until Cloudflare Email Service has a sending domain (`EMAIL_FROM`).
 11. Tick the SMS consent checkbox.
 12. Click `Revoke link`, then refresh the phone window. The client now sees the ask-your-agent page ("This link isn't active").
 
@@ -115,7 +115,7 @@ The same path, minus the clicks, is checked by `pnpm -C app run smoke:auth https
 Phase 2 works in fixture mode today. These items need the user (or Andrew at ValorTax) before it runs against real data:
 
 1. **Logics credentials.** Paste a Logics API key and secret token in Settings → Integrations and click Test connection; it must succeed. Then set `"LOGICS_MODE": "live"` in `app/wrangler.jsonc` and redeploy (see § Logics mode).
-2. **Email.** Create a Resend API key and store it with `pnpm -C app wrangler secret put RESEND_API_KEY`. Verify a sending domain in Resend and set `RESEND_FROM` in `app/wrangler.jsonc` to an address on it. Until the domain is verified, Resend only delivers to the account owner.
+2. **Email (Cloudflare Email Service).** Add the firm's domain to Cloudflare, onboard it under Compute → Email Service → Email Sending, then set `EMAIL_FROM` in `app/wrangler.jsonc` to an address on it and redeploy. No API key is needed. Until then every email reports `not_configured` and staff copy links instead.
 3. **Questions for Andrew.** Which permission scopes the Logics API key should carry; the `FileCategoryID` to use for uploaded documents; and the `ActivityType` for the case notes ResSpark will write.
 4. **Two open `shortcut:` questions in the Logics client.**
    - What `CaseInfo` returns for an unknown case id (`app/worker/src/integrations/logics/client.ts`). The code currently treats the undocumented answer as "not found".
@@ -227,7 +227,7 @@ Phase 6 deploys and runs without any vendor key: the address step uses the manua
 - The Cloudflare account is on **Workers Paid** as of 2026-10-10 (verified via the subscriptions API, CONTEXT D-06 update).
 - Limits that apply: 30 s CPU per invocation, 1,000 subrequests per invocation.
 - Queues and cron are available. Plan 03 created `resspark-jobs` and its dead-letter queue `resspark-jobs-dlq`, with the `JOBS` producer and consumer bound to `resspark`, and a `*/15 * * * *` cron trigger. Plan 04-02 set the consumer to `max_retries: 5` / `retry_delay: 60`, added a consumer on `resspark-jobs-dlq`, and added the daily `0 3 * * *` trigger (`worker/src/cron.ts`).
-- Cloudflare Email Sending is available on this plan but needs a sending domain on Cloudflare DNS, which the firm does not have yet. Phase 2 sends email through Resend over `fetch` (spike d).
+- Email goes through Cloudflare Email Service (the `EMAIL` `send_email` binding; 3,000 emails a month included, then $0.35 per 1,000). It needs a sending domain on Cloudflare DNS, which the account does not have yet, so `EMAIL_FROM` is empty. Resend was used until 2026-10-11 and has been removed.
 - Platform invocation logs are off (`observability.logs.invocation_logs: false`) so URLs carrying client-link tokens are never logged; the Worker's allowlisted logger is the only log sink.
 
 ## Checks

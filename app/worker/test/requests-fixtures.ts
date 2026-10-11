@@ -22,7 +22,6 @@ export const env = (over: Record<string, unknown> = {}) =>
     INTEGRATION_ENC_KEY: '00'.repeat(32),
     APP_ENV: 'sandbox',
     CLIENT_LINK_HMAC_KEY: 'test-key',
-    RESEND_FROM: 'onboarding@resend.dev',
     ...over,
   }) as unknown as Env
 
