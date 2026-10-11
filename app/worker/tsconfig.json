@@ -12,7 +12,11 @@
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "types": ["../worker-configuration.d.ts", "node"]
+    "types": [
+      "../worker-configuration.d.ts",
+      "node",
+      "@cloudflare/vitest-plugin/types"
+    ]
   },
   "include": ["src/**/*.ts", "test/**/*.ts"]
 }

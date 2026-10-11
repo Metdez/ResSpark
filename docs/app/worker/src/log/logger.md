@@ -9,7 +9,7 @@ The Worker's only log sink (D-20, PLAT-08): one JSON line per request with exact
 | 15-19 | The context variables the logger reads: `requestId` (set by `hono/request-id`), optional `staff` (Plan 06), optional `errorCode` (set by `onError`/`notFound`). |
 | 23-26 | `logger()` returns middleware that records the start time, lets the chain run, then builds the record. |
 | 27-36 | The record. `route` is `routePath(c, -1)` — the **pattern** of the last matched route (`/api/config`, `/c/*`, later `/c/:token`), never `c.req.path`/`c.req.url`; `'/[unmatched]'` if nothing matched. `firm_id`/`actor_id` come from `staff` (Supabase user UUID — not PII); `error_code` is a fixed enum string. |
-| 37-38 | The single `console.log` in `worker/src` (ESLint `no-console` is disabled for this one line). `Object.fromEntries(LOG_FIELDS.map(...))` guarantees no extra key can ever be emitted even if `rec` grows. |
+| 37-39 | The single `console.log` in `worker/src` (ESLint `no-console` is disabled for this one line). `Object.fromEntries(LOG_FIELDS.map(...))` guarantees no extra key can ever be emitted even if `rec` grows; `?? null` keeps absent values (no staff, no error) as `null` so every line has all eight keys — `JSON.stringify` would otherwise drop `undefined` members. |
 
 ## Notes
 

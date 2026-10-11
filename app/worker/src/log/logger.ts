@@ -34,7 +34,8 @@ export function logger() {
       actor_id: c.get('staff')?.userId,
       error_code: c.get('errorCode'),
     }
+    // `?? null` keeps every allowlisted key present (JSON.stringify drops undefined)
     // eslint-disable-next-line no-console
-    console.log(JSON.stringify(Object.fromEntries(LOG_FIELDS.map((k) => [k, rec[k]]))))
+    console.log(JSON.stringify(Object.fromEntries(LOG_FIELDS.map((k) => [k, rec[k] ?? null]))))
   })
 }
