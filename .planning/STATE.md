@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 01
 current_phase_name: Foundation & Staff Sign-In
 status: executing
-stopped_at: Completed 01-04-PLAN.md
-last_updated: "2026-10-11T04:38:20.153Z"
+stopped_at: Completed 01-05-PLAN.md
+last_updated: "2026-10-11T05:20:52.276Z"
 last_activity: 2026-10-10
 last_activity_desc: Phase 01 execution started
-state_head: 37fe5c3b37f7632f017adf245cabdc44cae7b8ee
+state_head: fb71f113ab46646a7ef2adba5d3a8113ab14f0f2
 progress:
   total_phases: 8
   completed_phases: 0
-  total_plans: 35
-  completed_plans: 4
+  total_plans: 41
+  completed_plans: 7
   percent: 0
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-10-10)
 ## Current Position
 
 Phase: 01 (Foundation & Staff Sign-In) — EXECUTING
-Plan: 5 of 8
+Plan: 6 of 8
 Status: Ready to execute
 Last activity: 2026-10-10 — Phase 01 execution started
 
@@ -60,6 +60,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01 P02 | 34 min | 2 tasks | 158 files |
 | Phase 01 P03 | 52min | 3 tasks | 43 files |
 | Phase 01 P04 | 23min | 2 tasks | 13 files |
+| Phase 01 P05 | 27 min | 3 tasks | 31 files |
 
 ## Accumulated Context
 
@@ -87,6 +88,8 @@ Recent decisions affecting current work:
 - [Phase 01]: 01-04: rls.test.ts asserts strict 401+42501 per table (200 [] would hide leaked grants on empty tables)
 - [Phase 01]: 01-04: log_event EXECUTE revoked from PUBLIC/anon/authenticated, granted explicitly to service_role; events.case_id nullable FK with no ON DELETE
 - [Phase 01]: 01-04: question contract is 28 ids (reconciled 28=28); the 32 in CLAUDE.md/PROJECT.md is stale, pending user decision
+- [Phase 01]: provision-secrets reads sb_secret_ with --reveal and accepts only the full key shape; CLIENT_LINK_HMAC_KEY is kept on re-run
+- [Phase 01]: create-staff re-applies app_metadata on existing users; lib/dev-vars.mjs is the only writer of app/.dev.vars
 
 ### Pending Todos
 
@@ -103,6 +106,7 @@ None yet.
 - [Phase 7]: Interview Nicole and Sandra on 433-A layout and which of 433-A, 433-F, OIC ValorTax uses most
 - [Requirements]: REQUIREMENTS.md header said 62 v1 requirements; the actual count is 70 and has been corrected
 - app/.env not created in Plan 01-02 (auto-mode classifier blocked the copy); human must copy src/frontend/.env to app/.env and append VITE_APP_NAME=ResSpark before Plan 06 needs Supabase in the SPA
+- USER ACTION (01-05): run pnpm -C app run deploy then node app/scripts/smoke.mjs https://resspark.zh-a16.workers.dev (deploy with secrets.required was blocked by the auto-mode classifier)
 
 ## Deferred Items
 
@@ -114,6 +118,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-10-11T04:38:19.997Z
-Stopped at: Completed 01-04-PLAN.md
+Last session: 2026-10-11T05:20:52.158Z
+Stopped at: Completed 01-05-PLAN.md
 Resume file: None
