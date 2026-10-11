@@ -1,0 +1,65 @@
+import { act } from 'react'
+import { createRoot, type Root } from 'react-dom/client'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { SandboxBanner } from './sandbox-banner'
+
+vi.mock('@/lib/supabase', () => ({
+  supabase: { auth: { getSession: async () => ({ data: { session: null } }) } },
+}))
+
+const COPY = 'Test environment — nothing here is sent to IRS Logics.'
+let root: Root | undefined
+let container: HTMLDivElement | undefined
+
+async function render(fetchImpl: () => Promise<unknown>) {
+  vi.stubGlobal('fetch', vi.fn(fetchImpl))
+  const client = new QueryClient()
+  container = document.createElement('div')
+  document.body.append(container)
+  root = createRoot(container)
+  await act(async () => {
+    root!.render(
+      <QueryClientProvider client={client}>
+        <SandboxBanner />
+      </QueryClientProvider>
+    )
+  })
+  // let the query settle (fetch mock + json + state update)
+  await act(async () => {
+    await new Promise((r) => setTimeout(r, 0))
+  })
+  return container
+}
+
+const json = (body: unknown) => async () => ({ ok: true, status: 200, json: async () => body })
+
+describe('SandboxBanner', () => {
+  afterEach(() => {
+    act(() => root?.unmount())
+    container?.remove()
+    vi.unstubAllGlobals()
+  })
+
+  it('shows SANDBOX and the fixed copy when app_env is sandbox, with no close control', async () => {
+    const el = await render(json({ app_env: 'sandbox', logics_write_enabled: false, app_name: 'ResSpark' }))
+    expect(el.textContent).toContain('SANDBOX')
+    expect(el.textContent).toContain(COPY)
+    expect(el.querySelector('button')).toBeNull()
+  })
+
+  it('shows while /api/config is still pending (app_env undefined)', async () => {
+    const el = await render(() => new Promise(() => {}))
+    expect(el.textContent).toContain(COPY)
+  })
+
+  it('shows when /api/config fails (absence of proof is sandbox)', async () => {
+    const el = await render(() => Promise.reject(new Error('down')))
+    expect(el.textContent).toContain(COPY)
+  })
+
+  it('is absent only when app_env is production', async () => {
+    const el = await render(json({ app_env: 'production', logics_write_enabled: false, app_name: 'ResSpark' }))
+    expect(el.textContent).toBe('')
+  })
+})
