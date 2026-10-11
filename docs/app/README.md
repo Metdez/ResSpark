@@ -66,6 +66,10 @@ Names only. Values live in the places listed and nowhere else. Only the five req
 | `PLAID_CLIENT_ID`, `PLAID_SECRET` | optional Worker secrets + `app/.dev.vars` | `pnpm -C app secrets:provider plaid`, entered at the prompt (echo off). Without them, bank `/start` returns `provider_not_configured` and the portal offers manual upload only. |
 | `TRUV_CLIENT_ID`, `TRUV_SECRET` | optional Worker secrets + `app/.dev.vars` | `pnpm -C app secrets:provider truv`, entered at the prompt. `TRUV_SECRET` is also the webhook signing key. Without them, payroll `/start` returns `provider_not_configured`. |
 | `PLAID_ENV`, `TRUV_TEMPLATE_ID`, `PLAID_REMOVE_AFTER_DAYS`, `BANK_PROVIDER` | `wrangler.jsonc` vars (not secrets) | `sandbox`, `""`, `30`, `plaid` (Phase 4, D-15) |
+| `DOCUSEAL_API_KEY` | optional Worker secret + `app/.dev.vars` | `pnpm -C app secrets:provider docuseal`, entered at the prompt. The API key from the DocuSeal Console in Test Mode (Phase 6, D-10). |
+| `DOCUSEAL_WEBHOOK_SECRET` | optional Worker secret + `app/.dev.vars` | same prompt. The HMAC secret configured on the DocuSeal Console webhook (Phase 6). |
+| `SMARTY_AUTH_ID`, `SMARTY_AUTH_TOKEN` | optional Worker secrets + `app/.dev.vars` | `pnpm -C app secrets:provider smarty`. A Smarty secret key pair with US Autocomplete Pro and US Street access (D-03). Without them the address step answers `provider_not_configured` and the client enters the address by hand, unverified (D-06). |
+| `DOCUSEAL_API_URL`, `DOCUSEAL_ENV` | `wrangler.jsonc` vars (not secrets) | `https://api.docuseal.com`, `test` (Phase 6, D-10) |
 
 `app/.dev.vars.example` lists every name above that belongs in `app/.dev.vars`, with empty values.
 

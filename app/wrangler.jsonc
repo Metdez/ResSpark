@@ -23,7 +23,10 @@
     "PLAID_ENV": "sandbox",
     "TRUV_TEMPLATE_ID": "",
     "PLAID_REMOVE_AFTER_DAYS": "30",
-    "BANK_PROVIDER": "plaid"
+    "BANK_PROVIDER": "plaid",
+    // Phase 6 (D-10). DOCUSEAL_* and SMARTY_* keys are optional secrets: `pnpm -C app secrets:provider docuseal|smarty`
+    "DOCUSEAL_API_URL": "https://api.docuseal.com",
+    "DOCUSEAL_ENV": "test"
   },
   // Deploy fails if any of these is not set on the Worker (D-07); values come from provision-secrets.mjs.
   // PLAID_* and TRUV_* stay out on purpose: without them the portal falls back to manual upload (D-15).

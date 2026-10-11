@@ -13,6 +13,11 @@ PLAID_CLIENT_ID=
 PLAID_SECRET=
 TRUV_CLIENT_ID=
 TRUV_SECRET=
+# Phase 6 vendor keys (optional): pnpm -C app secrets:provider docuseal|smarty fills them
+DOCUSEAL_API_KEY=
+DOCUSEAL_WEBHOOK_SECRET=
+SMARTY_AUTH_ID=
+SMARTY_AUTH_TOKEN=
 # Reserved for later phases:
 # RESEND_API_KEY=
 # RESEND_FROM=   a wrangler.jsonc var in production; set here only to override locally

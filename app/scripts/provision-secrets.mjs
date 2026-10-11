@@ -1,5 +1,5 @@
 // Provisions the Worker secrets for `resspark` (D-07, PLAT-03). Run: pnpm -C app secrets:provision
-// Vendor keys (D-15): pnpm -C app secrets:provider plaid|truv prompts for them with echo off.
+// Vendor keys (D-15, Phase 6 D-10): pnpm -C app secrets:provider plaid|truv|docuseal|smarty prompts for them with echo off.
 // NEVER console.log a variable holding a value from this script, including a prompted value.
 // Values travel only on wrangler's stdin and into the git-ignored app/.dev.vars; printed lines
 // are fixed strings naming the secret, never its value.
@@ -14,7 +14,12 @@ import { PROJECT_REF, runSupabase } from "./lib/supabase-cli.mjs";
 const APP_DIR = fileURLToPath(new URL("..", import.meta.url));
 const USER_ACTION =
   "USER ACTION REQUIRED: create a secret key in Supabase Dashboard → Settings → API Keys, then run: pnpm -C app secrets:provision   (or manually: pnpm -C app wrangler secret put SUPABASE_URL; pnpm -C app wrangler secret put SUPABASE_SECRET_KEY; pnpm -C app wrangler secret put CLIENT_LINK_HMAC_KEY; pnpm -C app wrangler secret put INTEGRATION_ENC_KEY; pnpm -C app wrangler secret put TOKEN_ENC_KEY_1)";
-const PROVIDERS = { plaid: ["PLAID_CLIENT_ID", "PLAID_SECRET"], truv: ["TRUV_CLIENT_ID", "TRUV_SECRET"] };
+const PROVIDERS = {
+  plaid: ["PLAID_CLIENT_ID", "PLAID_SECRET"],
+  truv: ["TRUV_CLIENT_ID", "TRUV_SECRET"],
+  docuseal: ["DOCUSEAL_API_KEY", "DOCUSEAL_WEBHOOK_SECRET"],
+  smarty: ["SMARTY_AUTH_ID", "SMARTY_AUTH_TOKEN"],
+};
 
 function requireEnv(name) {
   if (!process.env[name]) throw new Error(`Missing ${name}`);
@@ -54,12 +59,12 @@ async function readValues(names) {
   return values;
 }
 
-// --provider <plaid|truv>: vendor keys only; never regenerates, never prints, never uses argv.
+// --provider <name>: vendor keys only; never regenerates, never prints, never uses argv.
 const providerFlag = process.argv.indexOf("--provider");
 if (providerFlag >= 0) {
-  const names = PROVIDERS[process.argv[providerFlag + 1]];
+  const names = Object.hasOwn(PROVIDERS, process.argv[providerFlag + 1]) ? PROVIDERS[process.argv[providerFlag + 1]] : null;
   if (!names) {
-    console.error("usage: pnpm -C app secrets:provider <plaid|truv>");
+    console.error(`usage: pnpm -C app secrets:provider <${Object.keys(PROVIDERS).join("|")}>`);
     process.exit(1);
   }
   const values = await readValues(names);
