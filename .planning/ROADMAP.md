@@ -43,12 +43,12 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. Signing in and signing out each appear as an event row with actor, timestamp, and id, on the same event-writing path every later phase's actions must use (PLAT-04)
   5. A fresh clone ignores every `.env` file, tracks no `dist/` folder, uses one package manager and one lockfile on Node 22.12 or newer, and a failed request's log line contains no tokens, document bytes, or PII (PLAT-06, PLAT-08)
 
-**Plans:** 2/8 plans executed
+**Plans:** 3/8 plans executed
 
 Plans:
 - [x] 01-01-PLAN.md — Repo hygiene first: `.gitignore`, pnpm workspace, engines, 500-line gate, hygiene-check (PLAT-06)
 - [x] 01-02-PLAN.md — Fork shadcn-admin@e16c87f into `app/`, strip Clerk/axios/faker, `/admin/*` route tree, pinned deps, design-system pass
-- [ ] 01-03-PLAN.md — Hono Worker + first deploy to workers.dev, allowlisted logger, `logicsWriteGuard`, SANDBOX banner, spike (a) (PLAT-01, PLAT-05, PLAT-08)
+- [x] 01-03-PLAN.md — Hono Worker + first deploy to workers.dev, allowlisted logger, `logicsWriteGuard`, SANDBOX banner, spike (a) (PLAT-01, PLAT-05, PLAT-08)
 - [ ] 01-04-PLAN.md — Migration 0002 applied via Management API [BLOCKING], RLS/grants proof (strict 401), question reconciliation (PLAT-02, PLAT-04)
 - [ ] 01-05-PLAN.md — Worker secrets over stdin, `db/` module (`createAdminClient`, `logEvent`, `getStaffProfile`), two demo staff users, sign-up disabled (PLAT-03, PLAT-04, PLAT-07)
 - [ ] 01-06-PLAN.md — `jose` JWT verification, `/api/admin/session` events, SPA sign-in / guard / sign-out, authenticated smoke (PLAT-04, PLAT-07)
@@ -161,6 +161,7 @@ Plans:
 - [ ] 05-03-PLAN.md — Consumer expansion: normalization in the job, parts stored under `logics/`, sibling rows, cron sweeper + DLQ rule, D-08 firm settings and ActivityType listing
 - [ ] 05-04-PLAN.md — Staff UI: push card with multi-select, computed plan, ledger chips + Simulated badge, confirmation sheet, two-action `unknown` resolution dialog, fake-mode banner
 - [ ] 05-05-PLAN.md — Settings page push fields, `LOGICS_MODE=live` runbook (USER ACTION), smoke mode check, phase gate + fake-mode demo rehearsal
+
 **Scope notes**: Local ledger because Logics cannot list documents; serial, low-concurrency pushes; `FileCategoryID` and `ActivityType` taken from a config table; PDF work (`@cantoo/pdf-lib`, `unpdf`) runs in the Queue consumer; until Andrew confirms write scopes, push is exercised against a fake behind the allowlist.
 **UI hint**: yes
 **Research hint**: yes
@@ -225,7 +226,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation & Staff Sign-In | 2/8 | In Progress | - |
+| 1. Foundation & Staff Sign-In | 3/8 | In Progress | - |
 | 2. Find the Client & Send the Link | 0/8 | Planned | - |
 | 3. Uploads, Review & Live Status | 0/TBD | Not started | - |
 | 4. Connect Payroll & Bank | 0/TBD | Not started | - |

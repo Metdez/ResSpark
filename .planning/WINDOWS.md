@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 5
+open_count: 4
 waived_count: 0
-fixed_count: 0
+fixed_count: 1
 total_count: 5
-last_updated: 2026-10-11T03:04:21.992Z
+last_updated: 2026-10-11T04:04:28.236Z
 ---
 
 # Broken Windows Ledger
@@ -15,7 +15,7 @@ last_updated: 2026-10-11T03:04:21.992Z
 
 | id | phase | kind | file | line | description | status | reason | recorded_at | resolved_at |
 |----|-------|------|------|------|-------------|--------|--------|-------------|-------------|
-| 1 | 01 | stub | docs/app/README.md | 45 | Deployed URL placeholder '(filled by Plan 03)' until Plan 03 deploys the Worker | open |  | 2026-10-11T02:23:47.993Z |  |
+| 1 | 01 | stub | docs/app/README.md | 45 | Deployed URL placeholder '(filled by Plan 03)' until Plan 03 deploys the Worker | fixed |  | 2026-10-11T02:23:47.993Z | 2026-10-11T04:04:28.236Z |
 | 2 | 01 | deviation | .gitattributes |  | Rule 2: added *.sh text eol=lf so hygiene-check.sh runs under core.autocrlf=true | open |  | 2026-10-11T02:23:48.816Z |  |
 | 3 | 01 | stub | app/src/components/profile-dropdown.tsx | 26 | Header profile dropdown still shows the fork's placeholder avatar/name/email (satnaing); Plan 06 wires the signed-in staff user | open |  | 2026-10-11T03:04:20.204Z |  |
 | 4 | 01 | stub | app/src/features/auth/sign-in/components/user-auth-form.tsx | 56 | Sign-in form still uses the fork's mock toast.promise(sleep) auth and zustand auth-store; Plan 06 replaces with Supabase Auth | open |  | 2026-10-11T03:04:21.068Z |  |
@@ -30,10 +30,10 @@ last_updated: 2026-10-11T03:04:21.992Z
     "file": "docs/app/README.md",
     "line": 45,
     "description": "Deployed URL placeholder '(filled by Plan 03)' until Plan 03 deploys the Worker",
-    "status": "open",
+    "status": "fixed",
     "reason": "",
     "recorded_at": "2026-10-11T02:23:47.993Z",
-    "resolved_at": null,
+    "resolved_at": "2026-10-11T04:04:28.236Z",
     "milestone": null
   },
   {

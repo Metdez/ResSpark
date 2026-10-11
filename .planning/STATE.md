@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 01
 current_phase_name: Foundation & Staff Sign-In
 status: executing
-stopped_at: Completed 01-02-PLAN.md
-last_updated: "2026-10-11T03:08:40.687Z"
+stopped_at: Completed 01-03-PLAN.md
+last_updated: "2026-10-11T04:08:04.944Z"
 last_activity: 2026-10-10
 last_activity_desc: Phase 01 execution started
-state_head: 95e80b137cdea1677b7607d48b8a2bf810185199
+state_head: 1cb9505fda1bace7637cead9c12f40274a90658c
 progress:
   total_phases: 8
   completed_phases: 0
-  total_plans: 21
-  completed_plans: 2
+  total_plans: 35
+  completed_plans: 3
   percent: 0
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-10-10)
 ## Current Position
 
 Phase: 01 (Foundation & Staff Sign-In) — EXECUTING
-Plan: 3 of 8
+Plan: 4 of 8
 Status: Ready to execute
 Last activity: 2026-10-10 — Phase 01 execution started
 
@@ -58,6 +58,7 @@ Progress: [░░░░░░░░░░] 0%
 |------|----------|-------|-------|
 | Phase 01 P01 | 6 min | 2 tasks | 15 files |
 | Phase 01 P02 | 34 min | 2 tasks | 158 files |
+| Phase 01 P03 | 52min | 3 tasks | 43 files |
 
 ## Accumulated Context
 
@@ -78,6 +79,10 @@ Recent decisions affecting current work:
 - [Phase 01]: jsdom pinned to 29.0.1 (30.x requires Node ^24.15; machine has 24.14 with engine-strict)
 - [Phase 01]: react-top-loading-bar kept for navigation-progress; browser-mode tests, knip, and the font switcher dropped; @radix-ui/react-icons kept for data-table
 - [Phase 01]: Byte-identical fork files indexed once in docs/app/src/VENDORED.md; one-line edits in its near-vendored table; other edited files get their own companion doc
+- [Phase 01]: 01-03: Logics write allowlist is an exact trimmed-string match (no coercion/prefix); flag must be exactly 'true'
+- [Phase 01]: 01-03: actor_id (Supabase user UUID) and error_code (fixed enum) are not PII and may be logged
+- [Phase 01]: 01-03: api.ts imports @/lib/supabase lazily so the SPA boots without VITE_SUPABASE_* and public /api/config works
+- [Phase 01]: 01-03: SANDBOX banner shell offset via unlayered CSS on data-slot; vendored sidebar/header untouched
 
 ### Pending Todos
 
@@ -105,6 +110,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-10-11T03:08:40.587Z
-Stopped at: Completed 01-02-PLAN.md
+Last session: 2026-10-11T04:08:04.830Z
+Stopped at: Completed 01-03-PLAN.md
 Resume file: None
