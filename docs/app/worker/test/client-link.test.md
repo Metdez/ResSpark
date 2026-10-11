@@ -20,3 +20,8 @@ Route tests for `GET /c/:token`, run in the `worker-node` project through `app.r
 - Malformed, random 64 chars, tampered MAC, revoked and expired → each is 404 `text/html` with `no-store`, contains the invalid-link heading and "Ask your agent for a new link.", and contains neither the token nor the `request_id`.
 - All five bodies are byte-identical.
 - A wrong-length token never reaches `findClientLink`.
+
+## Rate limiting
+
+- With a `LINK_RATE_LIMITER` binding that refuses, the response is the 429 page with `no-store`, and `findClientLink` is not called.
+- Without the binding, the 21st request from one IP inside the window is 429 while another IP is still served. `_resetRateLimitForTests()` clears the in-memory window before each test.

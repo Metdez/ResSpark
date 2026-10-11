@@ -45,7 +45,69 @@ const SESSION_PATH = '/api/admin/session'
 const session = (init) => fetch(base + SESSION_PATH, init)
 const signedIn = JSON.stringify({ event: 'signed_in' })
 
-// Plan 07 appends `/c/` checks here.
+// --- Plan 07: client-link checks (/c/*) ---
+function expectPrivacyHeaders(res) {
+  const cacheControl = res.headers.get('cache-control') ?? ''
+  if (!cacheControl.includes('no-store')) throw new Error(`cache-control ${cacheControl}`)
+  if (res.headers.get('referrer-policy') !== 'no-referrer') throw new Error('referrer-policy missing')
+  if (res.headers.get('x-robots-tag') !== 'noindex') throw new Error('x-robots-tag missing')
+}
+const invalidLink = () => fetch(`${base}/c/not-a-valid-token`, { redirect: 'manual' })
+
+// --auth: seeds a probe link through the 0003 RPCs (same fixture case as requests-live.test.ts),
+// mints its token with CLIENT_LINK_HMAC_KEY, exchanges it on the deployed Worker, then deletes
+// the probe request (cascading the link). The token is never printed.
+async function linkExchange() {
+  if (!env.SUPABASE_URL || !env.SUPABASE_SECRET_KEY || !env.CLIENT_LINK_HMAC_KEY) {
+    throw new Error('missing SUPABASE_URL / SUPABASE_SECRET_KEY / CLIENT_LINK_HMAC_KEY in env')
+  }
+  const { createClient } = await import('@supabase/supabase-js')
+  const { createHmac } = await import('node:crypto')
+  const db = createClient(env.SUPABASE_URL, env.SUPABASE_SECRET_KEY, { auth: { persistSession: false } })
+  const firm = '00000000-0000-0000-0000-000000000001'
+  const rpc = async (fn, args) => {
+    const { data, error } = await db.rpc(fn, args)
+    if (error) throw new Error(`${fn} failed`)
+    return data
+  }
+  const caseId = await rpc('case_confirm_logics', {
+    p_firm_id: firm, p_logics_case_id: 999999001, p_first_name: 'Live', p_last_name: 'Probe',
+    p_email: 'live.probe@example.com', p_phone_e164: '+15550109999', p_snapshot: { source: 'smoke' },
+    p_actor_id: null, p_search_type: 'phone',
+  })
+  const requestId = await rpc('request_create', {
+    p_firm_id: firm, p_case_id: caseId, p_template_name: 'Documents only',
+    p_items: [{ kind: 'upload', label: 'Smoke probe', required: true, config: {} }],
+    p_created_by: null, p_agent_display_name: 'Smoke Probe',
+  })
+  try {
+    const [link] = await rpc('request_send', {
+      p_request_id: requestId, p_firm_id: firm, p_actor_id: null,
+      p_contact_email: 'live.probe@example.com', p_contact_phone_e164: '+15550109999',
+    })
+    const id = Buffer.from(link.link_id.replace(/-/g, ''), 'hex')
+    const version = Buffer.alloc(4)
+    version.writeUInt32BE(link.version)
+    const mac = createHmac('sha256', Buffer.from(env.CLIENT_LINK_HMAC_KEY, 'utf8'))
+      .update(Buffer.concat([id, version]))
+      .digest()
+    const token = Buffer.concat([id, mac]).toString('base64url')
+    const res = await fetch(`${base}/c/${token}`, { redirect: 'manual' })
+    if (res.status !== 302) throw new Error(`status ${res.status}, expected 302`)
+    if (res.headers.get('location') !== '/c/') throw new Error('location is not /c/')
+    const cookie = res.headers.get('set-cookie') ?? ''
+    for (const part of ['rs_client=', 'HttpOnly', 'Secure', 'SameSite=Lax', 'Max-Age=86400']) {
+      if (!cookie.includes(part)) throw new Error(`cookie lacks ${part}`)
+    }
+    if (cookie.includes(token)) throw new Error('cookie contains the token')
+    expectPrivacyHeaders(res)
+    const { data: row } = await db.from('client_links').select('opened_at').eq('id', link.link_id).single()
+    if (!row || row.opened_at !== null) throw new Error('opened_at was written')
+  } finally {
+    await db.from('requests').delete().eq('id', requestId)
+  }
+}
+
 const checks = [
   {
     name: '/admin',
@@ -77,6 +139,27 @@ const checks = [
     name: '/api 404 json',
     run: async () => expectJson(await fetch(`${base}/api/nope`), 404, isNotFoundEnvelope),
   },
+  {
+    name: '/c/ 404 html',
+    run: async () => {
+      const res = await invalidLink()
+      if (res.status !== 404) throw new Error(`status ${res.status}`)
+      const type = res.headers.get('content-type') ?? ''
+      if (!type.includes('text/html')) throw new Error(`content-type ${type}`)
+      if (!(await res.text()).includes("This link isn't active")) throw new Error('no invalid-link copy')
+    },
+  },
+  { name: '/c/ headers', run: async () => expectPrivacyHeaders(await invalidLink()) },
+  {
+    name: '/c/ spa',
+    run: async () => {
+      const res = await fetch(`${base}/c/`)
+      if (res.status !== 200) throw new Error(`status ${res.status}`)
+      if (!(await res.text()).includes('<div id="root"')) throw new Error('no <div id="root"')
+      expectPrivacyHeaders(res)
+    },
+  },
+  { name: 'auth /c/ exchange', auth: true, run: linkExchange },
   {
     name: 'auth signed_in',
     auth: true,

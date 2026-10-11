@@ -18,4 +18,4 @@ The Worker's only log sink (D-20, PLAT-08): one JSON line per request with exact
 
 ## Tests
 
-- `app/worker/src/log/logger.test.ts` spies on `console.log`, requests `/api/nope` and `/api/config` through `app`, and asserts: exactly one line, keys deep-equal `[...LOG_FIELDS]`, `status` 404 / `error_code` `not_found`, the line never contains `nope`, and `route` equals `/api/config` for the config request.
+- `app/worker/src/log/logger.test.ts` spies on `console.log`, requests `/api/nope` and `/api/config` through `app`, and asserts: exactly one line, keys deep-equal `[...LOG_FIELDS]`, `status` 404 / `error_code` `not_found`, the line never contains `nope`, and `route` equals `/api/config` for the config request. The PLAT-08 case (Plan 07) requests `/c/<64-char token>` with `cf-connecting-ip: 198.51.100.7` and `db/client-links` mocked to return no row: the response is 404, there is exactly one line, its `route` is `/c/:token`, its keys equal `[...LOG_FIELDS]`, and the line contains neither the token nor the ip.

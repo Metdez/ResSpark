@@ -14,12 +14,12 @@ Input config for the `resspark` Worker (D-06). `vite build` (via `@cloudflare/vi
 | `assets.run_worker_first` | `/api/*`, `/webhooks/*`, `/c/*` hit the Worker before assets; everything else (e.g. `/admin`) is served straight from assets. `directory` is deliberately omitted because the Vite plugin supplies the client build. |
 | `vars` | Demo-safety flags (D-19): `APP_ENV=sandbox`, `LOGICS_WRITE_ENABLED=false`, `LOGICS_TEST_CASE_IDS=""`. Plain strings; `cf-typegen` runs with `--strict-vars=false` so they type as `string`, not the literal `"false"`. |
 | `secrets.required` | `SUPABASE_URL`, `SUPABASE_SECRET_KEY`, `CLIENT_LINK_HMAC_KEY` (D-07, Plan 05). `wrangler deploy` refuses to deploy if any is not set on the Worker, and `cf-typegen` adds them to `Env` as `string`. Values are set by `app/scripts/provision-secrets.mjs`; locally they come from git-ignored `app/.dev.vars`. |
+| `ratelimits` | `LINK_RATE_LIMITER` (namespace `1001`, 20 requests per 60 s), the Workers Rate Limiting binding used by `worker/src/middleware/link-rate-limit.ts` to throttle `/c/:token` per client IP (D-18). Counters are per Cloudflare location. Deploy accepted it on 2026-10-11 (version `0547fa5f`); the middleware falls back to an in-memory window if the binding is ever absent. |
 | `triggers.crons` | One cron `*/15 * * * *` handled by `scheduled` (Phase 2 fills it). |
 | `queues` | Producer binding `JOBS` → `resspark-jobs`; consumer with batch size 1, 8 retries, concurrency 3, dead-letter `resspark-jobs-dlq`. Both queues were created with `wrangler queues create` on 2026-10-11. |
 | `observability.logs.invocation_logs` | `false`: the platform's own per-request log records the URL, which would store `/c/<token>` (RESEARCH Pitfall 1, PLAT-08). `console.log` output from `logger.ts` is still collected. |
 
 ## Notes
 
-- Not here yet, by design: `ratelimits` (Plan 07).
 - Deploy with `pnpm -C app run deploy`. Bare `pnpm deploy` is pnpm's workspace-deploy built-in and fails with `ERR_PNPM_NOTHING_TO_DEPLOY`.
 - `app/worker/tsconfig.json` is the matching TypeScript project (`types: ["../worker-configuration.d.ts", "node"]`, `lib: ["ES2022"]`, no DOM) and is referenced from `app/tsconfig.json` so `tsc -b` covers the Worker.
