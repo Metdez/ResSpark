@@ -11,6 +11,7 @@ export const PROVIDER_CAPABILITIES: Readonly<Record<ProviderId, BankCapabilities
   plaid: { transactions: true, statementPdfs: true, hostedLink: true },
   teller: { transactions: true, statementPdfs: false, hostedLink: false },
   truv: null,
+  docuseal: null,
 }
 
 export interface NormAccount {

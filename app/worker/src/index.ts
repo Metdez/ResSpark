@@ -20,6 +20,7 @@ import { adminSessionRoute } from './routes/admin-session'
 import { cAddressRoute } from './routes/c-address'
 import { cConnectionsRoute } from './routes/c-connections'
 import { cReturnRoute } from './routes/c-return'
+import { cSignatureRoute } from './routes/c-signature'
 import { cUploadsRoute } from './routes/c-uploads'
 import { clientLinkRoute } from './routes/client-link'
 import { clientPortalRoute } from './routes/client-portal'
@@ -74,6 +75,7 @@ app.route('/api/c', clientPortalRoute)
 app.route('/api/c', cUploadsRoute)
 app.route('/api/c', cAddressRoute)
 app.route('/api/c', cConnectionsRoute)
+app.route('/api/c', cSignatureRoute)
 app.route('/api/webhooks', webhooksRoute)
 
 app.notFound(async (c) => {

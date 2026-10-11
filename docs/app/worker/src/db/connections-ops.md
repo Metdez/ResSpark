@@ -50,7 +50,7 @@ SummaryParts   { accounts (with nested bank_statement_months), transactionCount,
 |--------|--------------|
 | `getConnectionSummary(env, conn, now?)` | Runs three queries in parallel: `bank_accounts` with nested `bank_statement_months`; an exact head-only count of `bank_transactions`; and the `documents` for the connection with `status = 'ready'`, ordered by upload time. Then calls `projectSummary`. Throws `connection_summary_failed`. |
 | `firmOwnsRequest(env, firmId, requestId)` | `true` only when the request belongs to the firm. |
-| `listRequestConnections(env, firmId, requestId)` | Connections where both `request_id` and `firm_id` match, ordered `created_at DESC, id DESC`, each mapped to a summary. |
+| `listRequestConnections(env, firmId, requestId)` | Connections where both `request_id` and `firm_id` match and `kind` is `bank` or `payroll` (signature rows belong to the e-sign card, Plan 06-07), ordered `created_at DESC, id DESC`, each mapped to a summary. |
 | `latestItemSummary(env, requestItemId)` | The newest connection for an item (`latestConnectionForItem`) as a summary, or `null`. Used by the client portal in later plans. |
 | `getFirmConnection(env, firmId, connectionId)` | The row, or `null` when it is missing or belongs to another firm. |
 | `windowStart(now, months)` | The first day, in UTC, of the month `months` before now, as `YYYY-MM-DD`. |

@@ -33,6 +33,7 @@ const notFound = (c: Ctx) => fail(c, 404, 'not_found', 'Not found')
 const badRequest = (c: Ctx) => fail(c, 400, 'bad_request', 'That request was not valid.')
 const isObject = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v)
 const isConnectKind = (k: string): k is ConnectKind => (CONNECT_KINDS as readonly string[]).includes(k)
+const isConsentKind = (k: unknown): k is ConsentKind => typeof k === 'string' && Object.hasOwn(CONSENT_TEXT, k)
 
 // Same as c-uploads: an earlier /api/c route may already have resolved the cookie.
 const session_: MiddlewareHandler<Env_> = (c, next) =>
@@ -91,7 +92,7 @@ export const cConnectionsRoute = new Hono<Env_>()
     const body: unknown = await c.req.json().catch(() => null)
     if (!isObject(body)) return badRequest(c)
     const { kind, text_version, user_agent_class } = body
-    if (kind !== 'bank_data' && kind !== 'payroll_data') return badRequest(c)
+    if (!isConsentKind(kind)) return badRequest(c)
     if (typeof text_version !== 'string' || text_version.length > 32) return badRequest(c)
     if (text_version !== CONSENT_TEXT[kind as ConsentKind].version)
       return fail(c, 409, 'consent_text_stale', 'The wording changed. Reload the page and try again.')

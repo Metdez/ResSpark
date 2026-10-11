@@ -2,8 +2,8 @@ import { createAdminClient } from './client'
 
 type DbEnv = Pick<Env, 'SUPABASE_URL' | 'SUPABASE_SECRET_KEY'>
 
-export type ProviderId = 'plaid' | 'truv' | 'teller'
-export type ConnectionKind = 'bank' | 'payroll'
+export type ProviderId = 'plaid' | 'truv' | 'teller' | 'docuseal'
+export type ConnectionKind = 'bank' | 'payroll' | 'signature'
 export type ConnectionStatus = 'pending' | 'connected' | 'syncing' | 'done' | 'error' | 'removed'
 
 export interface ConnectionRow {

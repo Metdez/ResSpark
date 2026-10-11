@@ -1,0 +1,13 @@
+[
+  {
+    "id": 5001,
+    "submission_id": 4001,
+    "uuid": "a1b2c3d4-0000-4000-8000-000000005001",
+    "email": "morgan.lee@example.com",
+    "slug": "fixtureSlug1",
+    "status": "awaiting",
+    "role": "Client",
+    "external_id": null,
+    "embed_src": "https://docuseal.com/s/fixtureSlug1"
+  }
+]

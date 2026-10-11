@@ -204,7 +204,7 @@ export function projectSummary(conn: ConnectionRow, parts: SummaryParts, now = n
   return {
     id: conn.id,
     request_item_id: conn.request_item_id,
-    kind: conn.kind,
+    kind: conn.kind as 'bank' | 'payroll', // callers only summarize bank/payroll rows
     provider: conn.provider,
     status: conn.status,
     error: code ? { code, ...(message ? { message } : {}) } : null,
@@ -281,6 +281,8 @@ export async function listRequestConnections(env: DbEnv, firmId: string, request
     .select('*')
     .eq('request_id', requestId)
     .eq('firm_id', firmId)
+    // Signature rows render in the e-sign card (Plan 07), never the bank/payroll panel.
+    .in('kind', ['bank', 'payroll'])
     .order('created_at', { ascending: false })
     .order('id', { ascending: false })
   if (error) throw new Error('connection_list_failed')

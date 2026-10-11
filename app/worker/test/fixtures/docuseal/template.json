@@ -1,0 +1,11 @@
+{
+  "id": 1001,
+  "name": "Engagement letter (demo)",
+  "fields": [
+    { "name": "Full name", "type": "text", "required": true },
+    { "name": "Case ID", "type": "text", "required": false },
+    { "name": "Signature", "type": "signature", "required": true },
+    { "name": "Date", "type": "date", "required": true }
+  ],
+  "submitters": [{ "name": "Client", "uuid": "a1b2c3d4-0000-4000-8000-000000000001" }]
+}

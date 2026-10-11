@@ -4,7 +4,7 @@ Data access for the `connections` and `connection_secrets` tables (migration 000
 
 ## Types
 
-- `ProviderId` (`plaid | truv | teller`), `ConnectionKind` (`bank | payroll`), `ConnectionStatus` (`pending | connected | syncing | done | error | removed`) mirror the CHECK constraints.
+- `ProviderId` (`plaid | truv | teller | docuseal`), `ConnectionKind` (`bank | payroll | signature`; Phase 6 e-sign rows are `docuseal`/`signature`), `ConnectionStatus` (`pending | connected | syncing | done | error | removed`) mirror the CHECK constraints.
 - `ConnectionRow` is the selected column set (`COLUMNS`); `return_nonce_used_at` and `updated_at` are not selected because no caller needs them yet.
 - `SetStatusResult` is the JSON returned by `connection_set_status`.
 - `SealedSecret` is the `connection_secrets` payload (`ciphertext`, `iv`, `key_version`).

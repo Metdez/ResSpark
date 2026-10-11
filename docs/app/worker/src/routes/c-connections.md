@@ -24,7 +24,7 @@ Client connection routes under `/api/c` (Plan 04-03). Identity comes only from t
 
 ### `POST /consents` (needs `X-Requested-With: ResSpark`)
 
-Guard order: header (403 `bad_origin`) → body is an object with `kind` in `bank_data|payroll_data` and a string `text_version` of at most 32 chars (400 `bad_request`) → version equals the current one (409 `consent_text_stale`) → `recordConsent`. When a row was created, logs `consent.<kind>` (actor `client`, `link:<link id>`, payload `{ kind, text_version }`). Answers 200 `{ consented: true }` either way, so a repeat is harmless. An optional `user_agent_class` (`phone|tablet|desktop`) is stored; anything else stores null.
+Guard order: header (403 `bad_origin`) → body is an object with `kind` any key of `CONSENT_TEXT` (`bank_data|payroll_data|esign`, checked by `isConsentKind`) and a string `text_version` of at most 32 chars (400 `bad_request`) → version equals the current one (409 `consent_text_stale`) → `recordConsent`. When a row was created, logs `consent.<kind>` (actor `client`, `link:<link id>`, payload `{ kind, text_version }`). Answers 200 `{ consented: true }` either way, so a repeat is harmless. An optional `user_agent_class` (`phone|tablet|desktop`) is stored; anything else stores null.
 
 ### `POST /connections/:kind/start` (header required)
 
