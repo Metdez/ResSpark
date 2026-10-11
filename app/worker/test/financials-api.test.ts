@@ -139,4 +139,24 @@ describe.skipIf(!live)('433-A financials API (live)', () => {
     expect(latest.body.run.id).toBe(run.id)
     expect(latest.body.run.created_by_name).toBe('Test agent')
   })
+
+  it('a missing fact returns information_needed with labels and writes no run', async () => {
+    const fx = await seed(baseRow({ age_spouse: null }))
+    const res = await call(`/api/admin/cases/${fx.caseId}/evaluations`, { method: 'POST' })
+    expect(res.status).toBe(200)
+    expect(res.body.run).toBeNull()
+    expect(res.body.outcome.kind).toBe('information_needed')
+    expect(res.body.outcome.missing).toEqual([{ column: 'age_spouse', label: 'Spouse age' }])
+    expect(JSON.stringify(res.body.outcome)).not.toMatch(/\d/)
+    expect(await runs(fx.caseId)).toHaveLength(0)
+    expect((await call(`/api/admin/cases/${fx.caseId}/evaluations/latest`)).body).toEqual({ run: null })
+  })
+
+  it('an unknown county returns standards_unavailable and writes no run', async () => {
+    const fx = await seed(baseRow({ household_size: 1, county_of_residence: 'Nowhere County' }))
+    const res = await call(`/api/admin/cases/${fx.caseId}/evaluations`, { method: 'POST' })
+    expect(res.status).toBe(200)
+    expect(res.body).toEqual({ run: null, outcome: { kind: 'standards_unavailable', message: 'Standards unavailable' } })
+    expect(await runs(fx.caseId)).toHaveLength(0)
+  })
 })
