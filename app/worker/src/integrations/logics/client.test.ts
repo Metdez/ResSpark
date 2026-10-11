@@ -71,6 +71,11 @@ describe('createLogicsClient', () => {
     await expect(client.caseInfo(1)).resolves.toBeNull()
   })
 
+  it('caseInfo treats a 404 as no case', async () => {
+    const { client } = setup(status(404))
+    await expect(client.caseInfo(1)).resolves.toBeNull()
+  })
+
   it('401 rejects unauthorized and is not retried', async () => {
     const { client, fetchStub } = setup(status(401), status(401))
     const err = await client.findByPhone('1211212121').catch((e: unknown) => e)
@@ -114,11 +119,12 @@ describe('createLogicsClient', () => {
   it('error messages never carry credentials, the search value, or the host', async () => {
     const { client } = setup(status(401), new TypeError('fetch failed https://x.logiqsapi.com'), new TypeError('x'))
     const errs = [
-      await client.findByPhone('1211212121').catch((e: Error) => e),
-      await client.findByPhone('1211212121').catch((e: Error) => e),
+      await client.findByPhone('1211212121').then(() => null, (e: Error) => e),
+      await client.findByPhone('1211212121').then(() => null, (e: Error) => e),
     ]
     for (const e of errs) {
-      for (const leak of ['K', 'S', '1211212121', 'logiqsapi']) expect(e.message).not.toContain(leak)
+      expect(e).toBeInstanceOf(LogicsError)
+      for (const leak of ['K', 'S', '1211212121', 'logiqsapi']) expect(e?.message).not.toContain(leak)
     }
   })
 

@@ -24,7 +24,7 @@ describe('detectLookupType', () => {
   })
 
   it('returns null for 11 digits without a leading 1, empty, and words', () => {
-    expect(detectLookupType('12345678901')).toBeNull()
+    expect(detectLookupType('21211212121')).toBeNull()
     expect(detectLookupType('')).toBeNull()
     expect(detectLookupType('   ')).toBeNull()
     expect(detectLookupType('Rivera')).toBeNull()
