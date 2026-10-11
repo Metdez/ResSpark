@@ -138,3 +138,7 @@ No blocking gaps. Every requirement has implementation evidence. Every key link 
 
 _Verified: 2026-10-11_
 _Verifier: Claude (gsd-verifier)_
+
+## Post-verification fix (orchestrator, 2026-10-11)
+
+The expired-link warning is fixed: `linkUrl` in `app/worker/src/routes/admin-requests.ts` now returns null when `expires_at` is in the past, so the request page shows no copyable URL and `Email link` reports `no_link` for an expired link. Test: `returns url null for an expired link` in `app/worker/test/admin-requests.test.ts` (51/51 pass across the two request route suites). The change landed inside commit `38492b4` (03-06) because the shared index was swept by a concurrent commit; the content is correct, only the commit message is unrelated. Not yet deployed; the next deploy ships it.
