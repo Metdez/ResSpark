@@ -38,19 +38,25 @@ function compose(input: LinkEmailInput) {
   }
 }
 
-export async function sendLinkEmail(
-  env: { RESEND_API_KEY?: string; RESEND_FROM?: string },
-  input: LinkEmailInput,
-  fetchImpl: typeof fetch = fetch
-): Promise<SendResult> {
+export interface EmailMessage {
+  to: string
+  subject: string
+  text: string
+  html: string
+}
+
+export type EmailEnv = { RESEND_API_KEY?: string; RESEND_FROM?: string }
+
+// One attempt, never retried. Shared by the link email and the account emails (account-emails.ts).
+export async function sendEmail(env: EmailEnv, message: EmailMessage, fetchImpl: typeof fetch = fetch): Promise<SendResult> {
   if (!env.RESEND_API_KEY) return { ok: false, reason: 'not_configured' }
-  const { subject, text, html } = compose(input)
+  const { to, subject, text, html } = message
   try {
     // JSON body: no header line is built from names or addresses, so no header injection path.
     const res = await fetchImpl(RESEND_URL, {
       method: 'POST',
       headers: { authorization: `Bearer ${env.RESEND_API_KEY}`, 'content-type': 'application/json' },
-      body: JSON.stringify({ from: env.RESEND_FROM || DEFAULT_FROM, to: [input.to], subject, html, text }),
+      body: JSON.stringify({ from: env.RESEND_FROM || DEFAULT_FROM, to: [to], subject, html, text }),
       signal: AbortSignal.timeout(8000),
     })
     if (!res.ok) return { ok: false, reason: 'send_failed' }
@@ -59,4 +65,8 @@ export async function sendLinkEmail(
   } catch {
     return { ok: false, reason: 'send_failed' }
   }
+}
+
+export function sendLinkEmail(env: EmailEnv, input: LinkEmailInput, fetchImpl: typeof fetch = fetch): Promise<SendResult> {
+  return sendEmail(env, { to: input.to, ...compose(input) }, fetchImpl)
 }

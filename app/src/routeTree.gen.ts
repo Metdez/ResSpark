@@ -14,13 +14,18 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as CIndexRouteImport } from './routes/c/index'
 import { Route as CReturnRouteImport } from './routes/c/return'
 import { Route as CTokenRouteImport } from './routes/c/$token'
+import { Route as AdminSignUpRouteImport } from './routes/admin/sign-up'
 import { Route as AdminSignInRouteImport } from './routes/admin/sign-in'
+import { Route as AdminResetPasswordRouteImport } from './routes/admin/reset-password'
+import { Route as AdminJoinRouteImport } from './routes/admin/join'
+import { Route as AdminForgotPasswordRouteImport } from './routes/admin/forgot-password'
 import { Route as AdminShellRouteRouteImport } from './routes/admin/_shell/route'
 import { Route as AdminShellIndexRouteImport } from './routes/admin/_shell/index'
 import { Route as CSignItemIdRouteImport } from './routes/c/sign.$itemId'
 import { Route as AdminShellLookupRouteImport } from './routes/admin/_shell/lookup'
 import { Route as AdminShellSettingsRouteRouteImport } from './routes/admin/_shell/settings/route'
 import { Route as AdminShellRequestsIndexRouteImport } from './routes/admin/_shell/requests/index'
+import { Route as AdminShellSettingsTeamRouteImport } from './routes/admin/_shell/settings/team'
 import { Route as AdminShellSettingsIntegrationsRouteImport } from './routes/admin/_shell/settings/integrations'
 import { Route as AdminShellSettingsAppearanceRouteImport } from './routes/admin/_shell/settings/appearance'
 import { Route as AdminShellRequestsNewRouteImport } from './routes/admin/_shell/requests/new'
@@ -52,9 +57,29 @@ const CTokenRoute = CTokenRouteImport.update({
   path: '/c/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminSignUpRoute = AdminSignUpRouteImport.update({
+  id: '/sign-up',
+  path: '/sign-up',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
 const AdminSignInRoute = AdminSignInRouteImport.update({
   id: '/sign-in',
   path: '/sign-in',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminResetPasswordRoute = AdminResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminJoinRoute = AdminJoinRouteImport.update({
+  id: '/join',
+  path: '/join',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminForgotPasswordRoute = AdminForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
   getParentRoute: () => AdminRouteRoute,
 } as any)
 const AdminShellRouteRoute = AdminShellRouteRouteImport.update({
@@ -85,6 +110,11 @@ const AdminShellRequestsIndexRoute = AdminShellRequestsIndexRouteImport.update({
   id: '/requests/',
   path: '/requests/',
   getParentRoute: () => AdminShellRouteRoute,
+} as any)
+const AdminShellSettingsTeamRoute = AdminShellSettingsTeamRouteImport.update({
+  id: '/team',
+  path: '/team',
+  getParentRoute: () => AdminShellSettingsRouteRoute,
 } as any)
 const AdminShellSettingsIntegrationsRoute =
   AdminShellSettingsIntegrationsRouteImport.update({
@@ -119,7 +149,11 @@ const AdminShellCasesCaseId433aRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminShellRouteRouteWithChildren
+  '/admin/forgot-password': typeof AdminForgotPasswordRoute
+  '/admin/join': typeof AdminJoinRoute
+  '/admin/reset-password': typeof AdminResetPasswordRoute
   '/admin/sign-in': typeof AdminSignInRoute
+  '/admin/sign-up': typeof AdminSignUpRoute
   '/c/$token': typeof CTokenRoute
   '/c/return': typeof CReturnRoute
   '/c/': typeof CIndexRoute
@@ -131,13 +165,18 @@ export interface FileRoutesByFullPath {
   '/admin/requests/new': typeof AdminShellRequestsNewRoute
   '/admin/settings/appearance': typeof AdminShellSettingsAppearanceRoute
   '/admin/settings/integrations': typeof AdminShellSettingsIntegrationsRoute
+  '/admin/settings/team': typeof AdminShellSettingsTeamRoute
   '/admin/requests/': typeof AdminShellRequestsIndexRoute
   '/admin/cases/$caseId/433a': typeof AdminShellCasesCaseId433aRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminShellIndexRoute
+  '/admin/forgot-password': typeof AdminForgotPasswordRoute
+  '/admin/join': typeof AdminJoinRoute
+  '/admin/reset-password': typeof AdminResetPasswordRoute
   '/admin/sign-in': typeof AdminSignInRoute
+  '/admin/sign-up': typeof AdminSignUpRoute
   '/c/$token': typeof CTokenRoute
   '/c/return': typeof CReturnRoute
   '/c': typeof CIndexRoute
@@ -148,6 +187,7 @@ export interface FileRoutesByTo {
   '/admin/requests/new': typeof AdminShellRequestsNewRoute
   '/admin/settings/appearance': typeof AdminShellSettingsAppearanceRoute
   '/admin/settings/integrations': typeof AdminShellSettingsIntegrationsRoute
+  '/admin/settings/team': typeof AdminShellSettingsTeamRoute
   '/admin/requests': typeof AdminShellRequestsIndexRoute
   '/admin/cases/$caseId/433a': typeof AdminShellCasesCaseId433aRoute
 }
@@ -156,7 +196,11 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteRouteWithChildren
   '/admin/_shell': typeof AdminShellRouteRouteWithChildren
+  '/admin/forgot-password': typeof AdminForgotPasswordRoute
+  '/admin/join': typeof AdminJoinRoute
+  '/admin/reset-password': typeof AdminResetPasswordRoute
   '/admin/sign-in': typeof AdminSignInRoute
+  '/admin/sign-up': typeof AdminSignUpRoute
   '/c/$token': typeof CTokenRoute
   '/c/return': typeof CReturnRoute
   '/c/': typeof CIndexRoute
@@ -168,6 +212,7 @@ export interface FileRoutesById {
   '/admin/_shell/requests/new': typeof AdminShellRequestsNewRoute
   '/admin/_shell/settings/appearance': typeof AdminShellSettingsAppearanceRoute
   '/admin/_shell/settings/integrations': typeof AdminShellSettingsIntegrationsRoute
+  '/admin/_shell/settings/team': typeof AdminShellSettingsTeamRoute
   '/admin/_shell/requests/': typeof AdminShellRequestsIndexRoute
   '/admin/_shell/cases/$caseId/433a': typeof AdminShellCasesCaseId433aRoute
 }
@@ -176,7 +221,11 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/admin'
+    | '/admin/forgot-password'
+    | '/admin/join'
+    | '/admin/reset-password'
     | '/admin/sign-in'
+    | '/admin/sign-up'
     | '/c/$token'
     | '/c/return'
     | '/c/'
@@ -188,13 +237,18 @@ export interface FileRouteTypes {
     | '/admin/requests/new'
     | '/admin/settings/appearance'
     | '/admin/settings/integrations'
+    | '/admin/settings/team'
     | '/admin/requests/'
     | '/admin/cases/$caseId/433a'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/admin'
+    | '/admin/forgot-password'
+    | '/admin/join'
+    | '/admin/reset-password'
     | '/admin/sign-in'
+    | '/admin/sign-up'
     | '/c/$token'
     | '/c/return'
     | '/c'
@@ -205,6 +259,7 @@ export interface FileRouteTypes {
     | '/admin/requests/new'
     | '/admin/settings/appearance'
     | '/admin/settings/integrations'
+    | '/admin/settings/team'
     | '/admin/requests'
     | '/admin/cases/$caseId/433a'
   id:
@@ -212,7 +267,11 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/admin/_shell'
+    | '/admin/forgot-password'
+    | '/admin/join'
+    | '/admin/reset-password'
     | '/admin/sign-in'
+    | '/admin/sign-up'
     | '/c/$token'
     | '/c/return'
     | '/c/'
@@ -224,6 +283,7 @@ export interface FileRouteTypes {
     | '/admin/_shell/requests/new'
     | '/admin/_shell/settings/appearance'
     | '/admin/_shell/settings/integrations'
+    | '/admin/_shell/settings/team'
     | '/admin/_shell/requests/'
     | '/admin/_shell/cases/$caseId/433a'
   fileRoutesById: FileRoutesById
@@ -274,11 +334,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/sign-up': {
+      id: '/admin/sign-up'
+      path: '/sign-up'
+      fullPath: '/admin/sign-up'
+      preLoaderRoute: typeof AdminSignUpRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
     '/admin/sign-in': {
       id: '/admin/sign-in'
       path: '/sign-in'
       fullPath: '/admin/sign-in'
       preLoaderRoute: typeof AdminSignInRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/reset-password': {
+      id: '/admin/reset-password'
+      path: '/reset-password'
+      fullPath: '/admin/reset-password'
+      preLoaderRoute: typeof AdminResetPasswordRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/join': {
+      id: '/admin/join'
+      path: '/join'
+      fullPath: '/admin/join'
+      preLoaderRoute: typeof AdminJoinRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/forgot-password': {
+      id: '/admin/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/admin/forgot-password'
+      preLoaderRoute: typeof AdminForgotPasswordRouteImport
       parentRoute: typeof AdminRouteRoute
     }
     '/admin/_shell': {
@@ -323,6 +411,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminShellRequestsIndexRouteImport
       parentRoute: typeof AdminShellRouteRoute
     }
+    '/admin/_shell/settings/team': {
+      id: '/admin/_shell/settings/team'
+      path: '/team'
+      fullPath: '/admin/settings/team'
+      preLoaderRoute: typeof AdminShellSettingsTeamRouteImport
+      parentRoute: typeof AdminShellSettingsRouteRoute
+    }
     '/admin/_shell/settings/integrations': {
       id: '/admin/_shell/settings/integrations'
       path: '/integrations'
@@ -364,12 +459,14 @@ declare module '@tanstack/react-router' {
 interface AdminShellSettingsRouteRouteChildren {
   AdminShellSettingsAppearanceRoute: typeof AdminShellSettingsAppearanceRoute
   AdminShellSettingsIntegrationsRoute: typeof AdminShellSettingsIntegrationsRoute
+  AdminShellSettingsTeamRoute: typeof AdminShellSettingsTeamRoute
 }
 
 const AdminShellSettingsRouteRouteChildren: AdminShellSettingsRouteRouteChildren =
   {
     AdminShellSettingsAppearanceRoute: AdminShellSettingsAppearanceRoute,
     AdminShellSettingsIntegrationsRoute: AdminShellSettingsIntegrationsRoute,
+    AdminShellSettingsTeamRoute: AdminShellSettingsTeamRoute,
   }
 
 const AdminShellSettingsRouteRouteWithChildren =
@@ -403,12 +500,20 @@ const AdminShellRouteRouteWithChildren = AdminShellRouteRoute._addFileChildren(
 
 interface AdminRouteRouteChildren {
   AdminShellRouteRoute: typeof AdminShellRouteRouteWithChildren
+  AdminForgotPasswordRoute: typeof AdminForgotPasswordRoute
+  AdminJoinRoute: typeof AdminJoinRoute
+  AdminResetPasswordRoute: typeof AdminResetPasswordRoute
   AdminSignInRoute: typeof AdminSignInRoute
+  AdminSignUpRoute: typeof AdminSignUpRoute
 }
 
 const AdminRouteRouteChildren: AdminRouteRouteChildren = {
   AdminShellRouteRoute: AdminShellRouteRouteWithChildren,
+  AdminForgotPasswordRoute: AdminForgotPasswordRoute,
+  AdminJoinRoute: AdminJoinRoute,
+  AdminResetPasswordRoute: AdminResetPasswordRoute,
   AdminSignInRoute: AdminSignInRoute,
+  AdminSignUpRoute: AdminSignUpRoute,
 }
 
 const AdminRouteRouteWithChildren = AdminRouteRoute._addFileChildren(

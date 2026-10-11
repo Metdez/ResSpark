@@ -36,7 +36,7 @@ const formSchema = z.object({
 
 const WRONG_CREDENTIALS = {
   title: 'Email or password is incorrect',
-  body: "Check both and try again. If you've forgotten your password, ask your admin to reset it.",
+  body: "Check both and try again. If you've forgotten your password, use “Forgot your password?” below.",
 }
 const NETWORK = {
   title: "Couldn't reach ResSpark",

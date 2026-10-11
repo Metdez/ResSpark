@@ -4,7 +4,7 @@ Node (≥22 `fetch`) script that proves a deployed ResSpark URL serves the SPA a
 
 | Lines | What it does |
 |-------|--------------|
-| 3-4 | Imports `connectFlow` from `smoke-connect.mjs` (Plan 04-07; see `smoke-connect.md`) and `esignFlow` from `smoke-esign.mjs` (Plan 06-08; see `smoke-esign.md`). |
+| 3-5 | Imports `accountChecks` from `smoke-accounts.mjs` (staff accounts; see `smoke-accounts.md`), `connectFlow` from `smoke-connect.mjs` (Plan 04-07; see `smoke-connect.md`) and `esignFlow` from `smoke-esign.mjs` (Plan 06-08; see `smoke-esign.md`). |
 | 6-11 | Parses argv: the first non-flag argument is the base URL; missing → usage line on stderr and exit 1. |
 | 12-16 | Strips a trailing slash; `--auth` enables checks marked `auth: true`; `--client-flow` also runs `clientFlow` at the end and implies `--auth`; `--connect-flow` and `--esign-flow` each imply `--client-flow`. |
 | 18 | `isObject` guard, same shape as the SPA's. |
@@ -36,3 +36,7 @@ Node (≥22 `fetch`) script that proves a deployed ResSpark URL serves the SPA a
 - Phase 4 (Plan 04-02): the plain run must print `ok webhooks truv 401`, `ok webhooks unknown 404`, and `ok admin connections 401`.
 - Phase 4 (Plan 04-07): `pnpm -C app run smoke:connect https://resspark.zh-a16.workers.dev` runs `--auth --connect-flow`. With no vendor keys it ends `ok connect-flow complete (keys: payroll no, bank no)`; with Sandbox keys both starts answer 200 and the admin list holds the two connections. See `smoke-connect.md` for each step.
 - Phase 6 (Plan 06-08): the plain run must also print `ok webhooks docuseal 401`. `pnpm -C app run smoke:esign https://resspark.zh-a16.workers.dev` runs `--auth --esign-flow`; with no Smarty or DocuSeal keys it ends `ok esign-flow complete (keys: smarty no, docuseal no)`. See `smoke-esign.md` for each step.
+
+## Staff-account checks
+
+The `checks` array ends with `...accountChecks({ base, expectJson, isObject })`: three no-write checks on `/api/admin/team` and `/api/auth/*` (see `smoke-accounts.md`).

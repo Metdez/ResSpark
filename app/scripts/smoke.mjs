@@ -1,5 +1,6 @@
 // Deployed full-stack check: node app/scripts/smoke.mjs <baseUrl> [--auth] [--client-flow] [--connect-flow] [--esign-flow]
 // Prints `ok <name>` or `FAIL <name>: <reason>` per check; exits 1 if any check fails.
+import { accountChecks } from './smoke-accounts.mjs'
 import { connectFlow } from './smoke-connect.mjs'
 import { esignFlow } from './smoke-esign.mjs'
 
@@ -366,6 +367,7 @@ const checks = [
       await expectJson(res, 401, (b) => isObject(b.error) && b.error.code === 'unauthorized')
     },
   },
+  ...accountChecks({ base, expectJson, isObject }),
 ]
 
 let failed = false

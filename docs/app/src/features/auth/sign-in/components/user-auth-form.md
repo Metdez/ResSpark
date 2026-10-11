@@ -6,7 +6,7 @@ The staff sign-in form (UI-SPEC S1, PLAT-07). Forked from shadcn-admin, then rew
 |-------|--------------|
 | 1-25 | React state, Zod 4, React Hook Form with the Zod resolver, `isAuthRetryableFetchError` (supabase-js's "the request never reached Supabase" error), the router's `useNavigate`, the `Loader2` spinner, `sonner` toasts, the `api()` boundary with `ApiError`/`isOk`, the generic staff error copy, `safeRedirect`, the Supabase browser client, and the shadcn `Alert`, `Button`, `Form`, `Input`, and `PasswordInput` parts. |
 | 27-35 | The schema. An empty email gives `Enter your email.`; any other bad email gives `That doesn't look like an email address.` (one `error` callback keyed on the input, so the empty case never shows the format message). An empty password gives `Enter your password.` There is no minimum length: the password policy belongs to Supabase, and a length hint would leak it. |
-| 37-44 | The two form-level error copies from the Copywriting Contract: wrong credentials and network failure. |
+| 37-44 | The two form-level error copies from the Copywriting Contract: wrong credentials and network failure. The wrong-credentials body points to the “Forgot your password?” link under the form. |
 | 46-48 | Props: the `redirectTo` search value passed by the page. |
 | 50-63 | `pending` (submit in flight), `formError` (which alert to show), and the form in `mode: 'onBlur'`. `handleSubmit` also validates on submit, so errors appear on blur and on submit. |
 | 65-74 | `signIn`: `supabase.auth.signInWithPassword`. supabase-js returns network failures as an `AuthRetryableFetchError` instead of throwing, so that type maps to the network alert; every other auth error (including `invalid_credentials`) maps to the wrong-credentials alert. A thrown error is treated as a network failure. Returns whether a session now exists. |
@@ -21,4 +21,4 @@ The staff sign-in form (UI-SPEC S1, PLAT-07). Forked from shadcn-admin, then rew
 
 ## Not here, on purpose
 
-No social sign-in, no "Forgot password", no "Sign up", no terms footer. Accounts are created by an admin (`app/scripts/create-staff.mjs`), and public sign-up is off.
+No social sign-in and no terms footer. The "Forgot your password?" and "Create an account" links live on the page (`sign-in/index.tsx`), not in this form. Accounts come from public sign-up (a new firm, `/admin/sign-up`), from an admin's invite (Settings → Team), or from `app/scripts/create-staff.mjs`. Supabase's own public sign-up endpoint stays off: the Worker creates every account with the service key.

@@ -38,3 +38,10 @@ The single Worker (D-01): a Hono app for `/api/*`, `/webhooks/*`, and `/c/*`, pl
 ## Client intake mount (Plan 07-08)
 
 `app.route('/api/c', cIntakeRoute)` is added after the e-sign start route. It serves `GET /api/c/intake`, `PUT /api/c/intake` and `POST /api/c/intake/done` (see `routes/c-intake.md`), behind the same `/api/c/*` privacy headers. Its paths are distinct from the other `/api/c` routers, so mount order among them does not matter.
+
+## Staff accounts
+
+- Two imports were added: `adminTeamRoute` (`routes/admin-team.ts`) and `authPublicRoute` (`routes/auth-public.ts`).
+- `app.route('/api/auth', authPublicRoute)` is mounted just before the session route. It serves the public `POST /sign-up`, `GET /invite`, `POST /accept-invite` and `POST /forgot-password`, behind their own JSON-only and rate-limit guard (see `routes/auth-public.md`). The `/api/*` secure headers cover it, and no `staffAuth` runs on it.
+- `app.route('/api/admin/team', adminTeamRoute)` is mounted right after the session route, so it is ahead of the lookup mount, which stays the last `/api/admin` route. It serves the Team API (`GET /`, `POST /invites`, `DELETE /invites/:id`, `POST /members/:userId/reset-link`) behind its own `staffAuth` (see `routes/admin-team.md`).
+

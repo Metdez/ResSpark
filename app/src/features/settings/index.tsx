@@ -1,5 +1,5 @@
 import { Outlet } from '@tanstack/react-router'
-import { Palette, Plug } from 'lucide-react'
+import { Palette, Plug, Users } from 'lucide-react'
 import { Separator } from '@/components/ui/separator'
 import { Header } from '@/components/layout/header'
 import { Main } from '@/components/layout/main'
@@ -19,6 +19,11 @@ const sidebarNavItems = [
     href: '/admin/settings/integrations',
     icon: <Plug size={18} />,
   },
+  {
+    title: 'Team',
+    href: '/admin/settings/team',
+    icon: <Users size={18} />,
+  },
 ]
 
 export function Settings() {
@@ -34,7 +39,7 @@ export function Settings() {
         <div className='space-y-0.5'>
           <h1 className='text-2xl font-semibold leading-tight'>Settings</h1>
           <p className='text-muted-foreground'>
-            Choose how the app looks and connect your firm's services.
+            Choose how the app looks, connect your firm's services, and manage your team.
           </p>
         </div>
         <Separator className='my-4 lg:my-6' />

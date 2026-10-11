@@ -20,7 +20,9 @@ import { adminRequestActionsRoute } from './routes/admin-request-actions'
 import { adminRequestsRoute } from './routes/admin-requests'
 import { adminReviewRoute } from './routes/admin-review'
 import { adminSessionRoute } from './routes/admin-session'
+import { adminTeamRoute } from './routes/admin-team'
 import { adminWorksheetRoute } from './routes/admin-worksheet'
+import { authPublicRoute } from './routes/auth-public'
 import { cAddressRoute } from './routes/c-address'
 import { cConnectionsRoute } from './routes/c-connections'
 import { cIntakeRoute } from './routes/c-intake'
@@ -63,7 +65,9 @@ app.onError((err, c) => {
 })
 
 app.route('/api/config', configRoute)
+app.route('/api/auth', authPublicRoute)
 app.route('/api/admin/session', adminSessionRoute)
+app.route('/api/admin/team', adminTeamRoute)
 app.route('/api/admin/integrations', adminIntegrationsRoute)
 app.route('/api/admin/requests', adminRequestsRoute)
 app.route('/api/admin/requests', adminRequestActionsRoute)

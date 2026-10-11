@@ -54,6 +54,7 @@ const TABLES = [
   'request_items',
   'request_templates',
   'requests',
+  'staff_invites',
   'staff_profiles',
   'standards_versions',
   'state_aliases',
