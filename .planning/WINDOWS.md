@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 3
+open_count: 4
 waived_count: 0
 fixed_count: 2
-total_count: 5
-last_updated: 2026-10-11T05:59:29.142Z
+total_count: 6
+last_updated: 2026-10-11T06:36:20.919Z
 ---
 
 # Broken Windows Ledger
@@ -20,6 +20,7 @@ last_updated: 2026-10-11T05:59:29.142Z
 | 3 | 01 | stub | app/src/components/profile-dropdown.tsx | 26 | Header profile dropdown still shows the fork's placeholder avatar/name/email (satnaing); Plan 06 wires the signed-in staff user | fixed |  | 2026-10-11T03:04:20.204Z | 2026-10-11T05:59:29.142Z |
 | 4 | 01 | stub | app/src/features/auth/sign-in/components/user-auth-form.tsx | 56 | Sign-in form still uses the fork's mock toast.promise(sleep) auth and zustand auth-store; Plan 06 replaces with Supabase Auth | open |  | 2026-10-11T03:04:21.068Z |  |
 | 5 | 01 | deviation | app/.env.example |  | app/.env was not created: the auto-mode classifier blocked both the heredoc and the scratchpad script that copy src/frontend/.env; human must copy it and append VITE_APP_NAME=ResSpark before pnpm -C app dev needs Supabase | open |  | 2026-10-11T03:04:21.992Z |  |
+| 6 | 01 | unrun-verify | app/src/features/client-link/client-shell.tsx |  | 01-07 Task 3 human-check pending: /c/ and /c/not-a-valid-token at 320 px width and 200% zoom (no horizontal scroll, text >= 16 px, firm name one line, tab title = firm name) | open |  | 2026-10-11T06:36:20.919Z |  |
 
 ````json
 [
@@ -85,6 +86,19 @@ last_updated: 2026-10-11T05:59:29.142Z
     "status": "open",
     "reason": "",
     "recorded_at": "2026-10-11T03:04:21.992Z",
+    "resolved_at": null,
+    "milestone": null
+  },
+  {
+    "id": 6,
+    "kind": "unrun-verify",
+    "phase": "01",
+    "file": "app/src/features/client-link/client-shell.tsx",
+    "line": null,
+    "description": "01-07 Task 3 human-check pending: /c/ and /c/not-a-valid-token at 320 px width and 200% zoom (no horizontal scroll, text >= 16 px, firm name one line, tab title = firm name)",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-10-11T06:36:20.919Z",
     "resolved_at": null,
     "milestone": null
   }

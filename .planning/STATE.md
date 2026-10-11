@@ -2,17 +2,17 @@
 gsd_state_version: "1.0"
 current_phase: 01
 current_phase_name: Foundation & Staff Sign-In
-status: executing
-stopped_at: Completed 01-06-PLAN.md
-last_updated: "2026-10-11T06:01:43.253Z"
+status: verifying
+stopped_at: Completed 01-07-PLAN.md
+last_updated: "2026-10-11T06:37:52.767Z"
 last_activity: 2026-10-10
 last_activity_desc: Phase 01 execution started
-state_head: f6df5bbc9f6d19a09f38ae593a802f7b47755799
+state_head: c981ccdde562721317912c71bc466c06b49c07de
 progress:
   total_phases: 8
   completed_phases: 0
   total_plans: 67
-  completed_plans: 10
+  completed_plans: 11
   percent: 0
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-10-10)
 
 Phase: 01 (Foundation & Staff Sign-In) — EXECUTING
 Plan: 8 of 8
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-10-10 — Phase 01 execution started
 
 Progress: [░░░░░░░░░░] 0%
@@ -64,6 +64,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01 P08 | 9min | 2 tasks | 6 files |
 | Phase 02 P01 | 10 min | 2 tasks | 7 files |
 | Phase 01 P06 | 30 min | 3 tasks | 48 files |
+| Phase 01 P07 | 30min | 3 tasks | 39 files |
 
 ## Accumulated Context
 
@@ -102,6 +103,9 @@ Recent decisions affecting current work:
 - [Phase 01]: GET /api/admin/session added so nav-user has display_name before Phase 2's /api/admin/me
 - [Phase 01]: staffAuth takes firm/role from staff_profiles and 403s when app_metadata.firm_id disagrees; jwtVerify pins iss, aud and ES256
 - [Phase 01]: Hygiene gate (h) matches sb_secret_ plus 16+ key chars; supabase-js ships the bare literal
+- [Phase 01]: 01-07: Rate Limiting binding LINK_RATE_LIMITER accepted on deploy (A-1 held); in-memory window is fallback only
+- [Phase 01]: 01-07: one root Toaster, top-center on /c and /c/*, top-right on admin
+- [Phase 01]: 01-07: rs_client cookie = signed JSON {link_id, exp}, key = SHA-256(CLIENT_LINK_HMAC_KEY + ':cookie'); link tokens use the key's UTF-8 bytes
 
 ### Pending Todos
 
@@ -130,6 +134,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-10-11T06:01:43.107Z
-Stopped at: Completed 01-06-PLAN.md
+Last session: 2026-10-11T06:37:52.616Z
+Stopped at: Completed 01-07-PLAN.md
 Resume file: None
