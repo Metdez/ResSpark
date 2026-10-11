@@ -14,7 +14,7 @@ Requirements for the first release. Each maps to a roadmap phase. The Oct 12 202
 - [ ] **PLAT-03**: The browser never holds a secret or writes to Postgres directly; every mutation goes through the Worker, and integration credentials exist only as Worker secrets
 - [ ] **PLAT-04**: Every staff and client action (lookup, send, open, connect, upload, approve, reject, push, sign) writes an event row with actor, timestamp, and case/request id
 - [ ] **PLAT-05**: Demo safety: a `LOGICS_WRITE_ENABLED` flag, a code-enforced test-CaseID allowlist, and a visible SANDBOX banner make writes to the real Logics tenant impossible when the flag is off
-- [ ] **PLAT-06**: Repo hygiene: `.gitignore` ignores all `.env` files, `src/frontend/dist/` is untracked, Node engines is `>=22.12`, and one package manager with one lockfile is used
+- [x] **PLAT-06**: Repo hygiene: `.gitignore` ignores all `.env` files, `src/frontend/dist/` is untracked, Node engines is `>=22.12`, and one package manager with one lockfile is used
 - [ ] **PLAT-07**: Staff can sign in with Supabase Auth and stay signed in across refresh; unauthenticated visitors cannot load any `/admin/*` route or read any data
 - [ ] **PLAT-08**: Logs and error reports never contain client tokens, document bytes, or PII (allowlisted logger fields)
 
@@ -169,7 +169,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PLAT-03 | Phase 1 | Pending |
 | PLAT-04 | Phase 1 | Pending |
 | PLAT-05 | Phase 1 | Pending |
-| PLAT-06 | Phase 1 | Pending |
+| PLAT-06 | Phase 1 | Complete |
 | PLAT-07 | Phase 1 | Pending |
 | PLAT-08 | Phase 1 | Pending |
 | LOOK-01 | Phase 2 | Pending |

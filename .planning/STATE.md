@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 01
 current_phase_name: Foundation & Staff Sign-In
 status: executing
-stopped_at: Completed 01-01-PLAN.md
-last_updated: "2026-10-11T02:23:44.803Z"
+stopped_at: Completed 01-02-PLAN.md
+last_updated: "2026-10-11T03:08:40.687Z"
 last_activity: 2026-10-10
 last_activity_desc: Phase 01 execution started
-state_head: 4351047fc115ee90a0646a5e7e30df2669075ea7
+state_head: 95e80b137cdea1677b7607d48b8a2bf810185199
 progress:
   total_phases: 8
   completed_phases: 0
-  total_plans: 8
-  completed_plans: 1
+  total_plans: 21
+  completed_plans: 2
   percent: 0
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-10-10)
 ## Current Position
 
 Phase: 01 (Foundation & Staff Sign-In) — EXECUTING
-Plan: 2 of 8
+Plan: 3 of 8
 Status: Ready to execute
 Last activity: 2026-10-10 — Phase 01 execution started
 
@@ -57,6 +57,7 @@ Progress: [░░░░░░░░░░] 0%
 | Plan | Duration | Tasks | Files |
 |------|----------|-------|-------|
 | Phase 01 P01 | 6 min | 2 tasks | 15 files |
+| Phase 01 P02 | 34 min | 2 tasks | 158 files |
 
 ## Accumulated Context
 
@@ -73,6 +74,10 @@ Recent decisions affecting current work:
 - [Phase 01]: Workspace lockfile lives at the repo root (pnpm-lock.yaml); the one-lockfile gate asserts none exists under app/
 - [Phase 01]: Added .gitattributes (*.sh text eol=lf) so hygiene-check.sh survives core.autocrlf=true checkouts
 - [Phase 01]: check-file-sizes.mjs excludes only routeTree.gen.ts, worker-configuration.d.ts, and vendored src/components/ui/**; the 500-line limit is not configurable
+- [Phase 01]: Fork versions pinned from shadcn-admin's lockfile at e16c87f (TanStack Router 1.168.22/plugin 1.167.22/devtools 1.166.13, Query 5.99.0, Table 8.21.3, TS 6.0.3) rather than registry latest
+- [Phase 01]: jsdom pinned to 29.0.1 (30.x requires Node ^24.15; machine has 24.14 with engine-strict)
+- [Phase 01]: react-top-loading-bar kept for navigation-progress; browser-mode tests, knip, and the font switcher dropped; @radix-ui/react-icons kept for data-table
+- [Phase 01]: Byte-identical fork files indexed once in docs/app/src/VENDORED.md; one-line edits in its near-vendored table; other edited files get their own companion doc
 
 ### Pending Todos
 
@@ -88,6 +93,7 @@ None yet.
 - [Phase 6]: Which forms may be e-signed needs ValorTax counsel input; official 433-A is not signed in the portal
 - [Phase 7]: Interview Nicole and Sandra on 433-A layout and which of 433-A, 433-F, OIC ValorTax uses most
 - [Requirements]: REQUIREMENTS.md header said 62 v1 requirements; the actual count is 70 and has been corrected
+- app/.env not created in Plan 01-02 (auto-mode classifier blocked the copy); human must copy src/frontend/.env to app/.env and append VITE_APP_NAME=ResSpark before Plan 06 needs Supabase in the SPA
 
 ## Deferred Items
 
@@ -99,6 +105,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-10-11T02:23:44.749Z
-Stopped at: Completed 01-01-PLAN.md
+Last session: 2026-10-11T03:08:40.587Z
+Stopped at: Completed 01-02-PLAN.md
 Resume file: None

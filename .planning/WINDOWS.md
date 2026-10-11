@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 2
+open_count: 5
 waived_count: 0
 fixed_count: 0
-total_count: 2
-last_updated: 2026-10-11T02:23:48.816Z
+total_count: 5
+last_updated: 2026-10-11T03:04:21.992Z
 ---
 
 # Broken Windows Ledger
@@ -17,6 +17,9 @@ last_updated: 2026-10-11T02:23:48.816Z
 |----|-------|------|------|------|-------------|--------|--------|-------------|-------------|
 | 1 | 01 | stub | docs/app/README.md | 45 | Deployed URL placeholder '(filled by Plan 03)' until Plan 03 deploys the Worker | open |  | 2026-10-11T02:23:47.993Z |  |
 | 2 | 01 | deviation | .gitattributes |  | Rule 2: added *.sh text eol=lf so hygiene-check.sh runs under core.autocrlf=true | open |  | 2026-10-11T02:23:48.816Z |  |
+| 3 | 01 | stub | app/src/components/profile-dropdown.tsx | 26 | Header profile dropdown still shows the fork's placeholder avatar/name/email (satnaing); Plan 06 wires the signed-in staff user | open |  | 2026-10-11T03:04:20.204Z |  |
+| 4 | 01 | stub | app/src/features/auth/sign-in/components/user-auth-form.tsx | 56 | Sign-in form still uses the fork's mock toast.promise(sleep) auth and zustand auth-store; Plan 06 replaces with Supabase Auth | open |  | 2026-10-11T03:04:21.068Z |  |
+| 5 | 01 | deviation | app/.env.example |  | app/.env was not created: the auto-mode classifier blocked both the heredoc and the scratchpad script that copy src/frontend/.env; human must copy it and append VITE_APP_NAME=ResSpark before pnpm -C app dev needs Supabase | open |  | 2026-10-11T03:04:21.992Z |  |
 
 ````json
 [
@@ -43,6 +46,45 @@ last_updated: 2026-10-11T02:23:48.816Z
     "status": "open",
     "reason": "",
     "recorded_at": "2026-10-11T02:23:48.816Z",
+    "resolved_at": null,
+    "milestone": null
+  },
+  {
+    "id": 3,
+    "kind": "stub",
+    "phase": "01",
+    "file": "app/src/components/profile-dropdown.tsx",
+    "line": 26,
+    "description": "Header profile dropdown still shows the fork's placeholder avatar/name/email (satnaing); Plan 06 wires the signed-in staff user",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-10-11T03:04:20.204Z",
+    "resolved_at": null,
+    "milestone": null
+  },
+  {
+    "id": 4,
+    "kind": "stub",
+    "phase": "01",
+    "file": "app/src/features/auth/sign-in/components/user-auth-form.tsx",
+    "line": 56,
+    "description": "Sign-in form still uses the fork's mock toast.promise(sleep) auth and zustand auth-store; Plan 06 replaces with Supabase Auth",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-10-11T03:04:21.068Z",
+    "resolved_at": null,
+    "milestone": null
+  },
+  {
+    "id": 5,
+    "kind": "deviation",
+    "phase": "01",
+    "file": "app/.env.example",
+    "line": null,
+    "description": "app/.env was not created: the auto-mode classifier blocked both the heredoc and the scratchpad script that copy src/frontend/.env; human must copy it and append VITE_APP_NAME=ResSpark before pnpm -C app dev needs Supabase",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-10-11T03:04:21.992Z",
     "resolved_at": null,
     "milestone": null
   }
