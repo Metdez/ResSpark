@@ -64,7 +64,7 @@ Requirements for the first release. Each maps to a roadmap phase. The Oct 12 202
 - [ ] **BANK-03**: Each connected account shows statement status by month (available, not supported by this bank, uploaded manually) and offers manual statement upload as a first-class fallback
 - [ ] **BANK-04**: Bank data is retrieved through a `BankProvider` interface with declared capabilities so a second provider can be enabled by configuration; Plaid is the first implementation
 - [ ] **BANK-05**: Client sees and accepts a consent screen stating what will be pulled and why (tax paperwork preparation) before Plaid opens, and the consent is logged
-- [ ] **BANK-06**: Plaid Items are removed after a configurable window (default 30 days) so per-Item billing stops
+- [x] **BANK-06**: Plaid Items are removed after a configurable window (default 30 days) so per-Item billing stops
 
 ### Payroll Connection
 
@@ -201,7 +201,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | BANK-03 | Phase 4 | Pending |
 | BANK-04 | Phase 4 | Pending |
 | BANK-05 | Phase 4 | Pending |
-| BANK-06 | Phase 4 | Pending |
+| BANK-06 | Phase 4 | Complete |
 | PAY-01 | Phase 4 | Pending |
 | PAY-02 | Phase 4 | Pending |
 | PAY-03 | Phase 4 | Pending |
