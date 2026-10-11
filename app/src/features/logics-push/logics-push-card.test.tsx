@@ -193,4 +193,18 @@ describe('LogicsPushCard', () => {
     expect(row('small').textContent).toContain('Compress it outside ResSpark and re-upload to the item')
     expect(button('Re-send')).toBeUndefined()
   })
+
+  it('opens the sheet with the selection', async () => {
+    await render(ITEMS, ledger('fake', [push({ document_id: 'big', state: 'unknown', logics_document_id: null })]))
+    await click(box('Select small.pdf'))
+    await click(button('Push to Logics (simulated)'))
+    const sheet = document.body.querySelector('[role="dialog"]') as HTMLElement
+    expect(sheet.textContent).toContain('Uploaded via ResSpark by Dana Agent — small.pdf')
+  })
+
+  it('opens the resolution dialog from an unknown chip', async () => {
+    await render(ITEMS, ledger('fake', [push({ document_id: 'big', state: 'unknown', logics_document_id: null })]))
+    await click(button('Needs your decision'))
+    expect(document.body.textContent).toContain("Logics didn't confirm this file")
+  })
 })

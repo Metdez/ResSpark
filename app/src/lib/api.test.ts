@@ -20,6 +20,7 @@ const config = {
   app_env: 'sandbox',
   logics_write_enabled: false,
   app_name: 'ResSpark',
+  logics_mode: 'fake',
 }
 
 describe('api', () => {

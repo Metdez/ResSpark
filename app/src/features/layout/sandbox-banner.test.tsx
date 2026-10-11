@@ -45,17 +45,45 @@ describe('SandboxBanner', () => {
     vi.unstubAllGlobals()
   })
 
-  it('shows SANDBOX and the fixed copy when app_env is sandbox, with no close control', async () => {
+  it('says Logics writes are simulated in fake mode, with no close control', async () => {
     const el = await render(
       json({
         app_env: 'sandbox',
         logics_write_enabled: false,
         app_name: 'ResSpark',
+        logics_mode: 'fake',
       })
     )
     expect(el.textContent).toContain('SANDBOX')
-    expect(el.textContent).toContain(COPY)
+    expect(el.textContent).toContain('Logics writes simulated')
     expect(el.querySelector('button')).toBeNull()
+  })
+
+  it('names the allowlist in live mode', async () => {
+    const el = await render(
+      json({
+        app_env: 'sandbox',
+        logics_write_enabled: true,
+        app_name: 'ResSpark',
+        logics_mode: 'live',
+      })
+    )
+    expect(el.textContent).toContain('SANDBOX')
+    expect(el.textContent).toContain(
+      'Test environment — Logics writes go to allowlisted test cases only'
+    )
+  })
+
+  it('keeps the fail-safe copy when logics_mode is not fake or live', async () => {
+    const el = await render(
+      json({
+        app_env: 'sandbox',
+        logics_write_enabled: false,
+        app_name: 'ResSpark',
+        logics_mode: 'other',
+      })
+    )
+    expect(el.textContent).toContain(COPY)
   })
 
   it('shows while /api/config is still pending (app_env undefined)', async () => {
@@ -74,6 +102,7 @@ describe('SandboxBanner', () => {
         app_env: 'production',
         logics_write_enabled: false,
         app_name: 'ResSpark',
+        logics_mode: 'fake',
       })
     )
     expect(el.textContent).toBe('')

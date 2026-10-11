@@ -17,13 +17,15 @@ export interface AppConfig {
   app_env: string
   logics_write_enabled: boolean
   app_name: string
+  logics_mode: 'fake' | 'live'
 }
 
 export const isConfig = (v: unknown): v is AppConfig =>
   isObject(v) &&
   typeof v.app_env === 'string' &&
   typeof v.logics_write_enabled === 'boolean' &&
-  typeof v.app_name === 'string'
+  typeof v.app_name === 'string' &&
+  (v.logics_mode === 'fake' || v.logics_mode === 'live')
 
 export const isOk = (v: unknown): v is { ok: true } =>
   isObject(v) && v.ok === true

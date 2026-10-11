@@ -6,15 +6,15 @@ The SPA's only door to the Worker. Every call goes through `api()`, which attach
 |-------|--------------|
 | 1-11 | `ApiError` carries `status`, the machine `code` from the Worker's error envelope, the human `message`, and an optional `body`: the whole parsed non-2xx JSON when it had an envelope (Plan 02-05), otherwise `undefined`. |
 | 13-14 | `isObject`: a plain non-null, non-array object. The base for every guard. |
-| 16-20 | `AppConfig`: the shape of `GET /api/config`. |
-| 22-26 | `isConfig`: guard for `AppConfig` (`app_env` string, `logics_write_enabled` boolean, `app_name` string). |
-| 28-29 | `isOk`: guard for `{ ok: true }` acknowledgement bodies. |
-| 31-41 | `accessToken()`: loads `@/lib/supabase` lazily and returns the current session's `access_token`. Any failure, including the module's missing-env throw, means "no token". |
-| 43-47 | `api<T>(path, init, guard)` signature. The guard decides the return type, so callers never cast. |
-| 48-56 | Calls `fetch` with `content-type: application/json`, adds `authorization: Bearer <token>` only when a session exists, and lets caller headers override. |
-| 57 | Parses JSON, and treats an unparseable body as `undefined` instead of throwing. |
-| 58-68 | Non-2xx with the envelope `{ error: { code, message } }` throws `ApiError(status, code, message, body)`. Without the envelope it throws `ApiError(status, 'http_error', 'Request failed')`. |
-| 69-71 | A 2xx body that fails the guard throws `ApiError(500, 'invalid_response', 'Invalid response')`. Otherwise it returns the typed body. |
+| 16-21 | `AppConfig`: the shape of `GET /api/config`, including `logics_mode` (`'fake' \| 'live'`, Plan 05-01) that the SANDBOX banner and push UI read. |
+| 23-28 | `isConfig`: guard for `AppConfig` (`app_env` string, `logics_write_enabled` boolean, `app_name` string, `logics_mode` exactly `'fake'` or `'live'`; any other value fails the guard, so the banner falls back to its fail-safe text). |
+| 30-31 | `isOk`: guard for `{ ok: true }` acknowledgement bodies. |
+| 33-43 | `accessToken()`: loads `@/lib/supabase` lazily and returns the current session's `access_token`. Any failure, including the module's missing-env throw, means "no token". |
+| 45-49 | `api<T>(path, init, guard)` signature. The guard decides the return type, so callers never cast. |
+| 50-58 | Calls `fetch` with `content-type: application/json`, adds `authorization: Bearer <token>` only when a session exists, and lets caller headers override. |
+| 59 | Parses JSON, and treats an unparseable body as `undefined` instead of throwing. |
+| 60-70 | Non-2xx with the envelope `{ error: { code, message } }` throws `ApiError(status, code, message, body)`. Without the envelope it throws `ApiError(status, 'http_error', 'Request failed')`. |
+| 71-73 | A 2xx body that fails the guard throws `ApiError(500, 'invalid_response', 'Invalid response')`. Otherwise it returns the typed body. |
 
 ## Notes
 

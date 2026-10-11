@@ -11,6 +11,8 @@ import { PushStatusBadge, StatusBadge } from '@/components/status-badge'
 import { useReview } from '@/features/review/use-review'
 import type { LedgerPush } from './api'
 import { planLabel, pushPlan, sizeLabel, type PushableDoc } from './plan'
+import { PushSheet } from './push-sheet'
+import { ResolveUnknownDialog } from './resolve-unknown-dialog'
 import { latestPushesByDocument, useLedger } from './use-logics-push'
 
 const Heading = () => <h2 className='text-xl leading-tight font-semibold'>Push to Logics</h2>
@@ -29,10 +31,8 @@ export function LogicsPushCard({ requestId, caseId }: { requestId: string; caseI
   const agent = useSession().data?.display_name ?? '…'
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [again, setAgain] = useState<Set<string>>(new Set())
-  const [, setPushing] = useState<PushableDoc[] | null>(null)
-  const [, setResolving] = useState<LedgerPush | null>(null)
-  void caseId
-  void agent
+  const [pushing, setPushing] = useState<PushableDoc[] | null>(null)
+  const [resolving, setResolving] = useState<LedgerPush | null>(null)
 
   if (!review.data) {
     return (
@@ -135,6 +135,30 @@ export function LogicsPushCard({ requestId, caseId }: { requestId: string; caseI
           </Button>
         </div>
       </CardContent>
+      {pushing && (
+        <PushSheet
+          open
+          onOpenChange={(open) => !open && setPushing(null)}
+          requestId={requestId}
+          caseId={caseId}
+          agentName={agent}
+          mode={live ? 'live' : 'fake'}
+          selected={pushing}
+          onDone={() => {
+            setPushing(null)
+            setSelected(new Set())
+            setAgain(new Set())
+          }}
+        />
+      )}
+      <ResolveUnknownDialog
+        key={resolving?.id}
+        push={resolving}
+        onOpenChange={(open) => !open && setResolving(null)}
+        requestId={requestId}
+        caseId={caseId}
+        allowMarkSent={resolving?.state === 'unknown'}
+      />
     </Card>
   )
 }
