@@ -64,6 +64,9 @@ const esign = (
 ): Reply => ({ status: 200, body: { configured, env: 'test', mapping } })
 
 const onCreated = vi.fn()
+// The first render pays the lazy supabase import and the module graph; under a full parallel run
+// that alone can pass waitFor's 2 s default, so allow 10 s (the describe allows 20 s per test).
+const SETTLE_MS = 10_000
 const base = (): Record<string, Reply> => ({
   'GET /api/admin/cases/c1': { status: 200, body: CASE },
   'GET /api/admin/requests/templates': { status: 200, body: TEMPLATES },
@@ -74,7 +77,7 @@ async function render(extra: Record<string, Reply> = {}) {
     <RequestBuilder caseId='c1' onCreated={onCreated} />,
     { ...base(), ...extra }
   )
-  await waitFor(() => !out.el.querySelector('[data-slot="skeleton"]'))
+  await waitFor(() => !out.el.querySelector('[data-slot="skeleton"]'), SETTLE_MS)
   return out
 }
 
@@ -85,12 +88,12 @@ const checkbox = (el: HTMLElement, i: number) =>
   rows(el)[i].querySelector('[role="checkbox"]')!
 const NOT_SET_UP = 'E-sign not set up. An admin maps templates in Settings → Integrations.'
 async function openFormMenu(el: HTMLElement) {
-  await waitFor(() => !button('Add a form to sign', el)!.disabled)
+  await waitFor(() => !button('Add a form to sign', el)!.disabled, SETTLE_MS)
   await keyDown(button('Add a form to sign', el)!, 'Enter')
   return [...document.querySelectorAll('[role="menuitem"]')]
 }
 
-describe('RequestBuilder', () => {
+describe('RequestBuilder', { timeout: 20_000 }, () => {
   afterEach(cleanup)
 
   it('loads the case and defaults to the standard packet with every item on', async () => {
@@ -231,7 +234,7 @@ describe('RequestBuilder', () => {
     ['nothing mapped', esign(true, { engagement_letter: null, form_2848: null, form_8821: null })],
   ])('disables Add a form to sign when %s', async (_, reply) => {
     const { el } = await render({ [`GET ${ESIGN}`]: reply })
-    await waitFor(() => el.textContent!.includes(NOT_SET_UP))
+    await waitFor(() => el.textContent!.includes(NOT_SET_UP), SETTLE_MS)
     expect(button('Add a form to sign', el)!.disabled).toBe(true)
   })
 
@@ -240,7 +243,7 @@ describe('RequestBuilder', () => {
       [`GET ${ESIGN}`]: { status: 500, body: { error: { code: 'internal', message: 'x' } } },
       'POST /api/admin/requests': { status: 201, body: { request_id: 'r9' } },
     })
-    await waitFor(() => el.textContent!.includes(NOT_SET_UP))
+    await waitFor(() => el.textContent!.includes(NOT_SET_UP), SETTLE_MS)
     expect(button('Add a form to sign', el)!.disabled).toBe(true)
     await click(button('Create request', el)!)
     expect(postedBody(fetchMock, '/api/admin/requests')).toBeDefined()

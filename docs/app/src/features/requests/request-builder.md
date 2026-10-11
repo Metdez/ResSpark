@@ -30,7 +30,7 @@
 
 ## Tests
 
-`request-builder.test.tsx` (`web` project, `test-utils/query-render.tsx` harness):
+`request-builder.test.tsx` (`web` project, `test-utils/query-render.tsx` harness). Every `waitFor` passes `SETTLE_MS` (10 s) and the `describe` allows 20 s per test: the first render pays the lazy `@/lib/supabase` import and module graph, which under a full parallel run could pass `waitFor`'s 2 s default (`waitFor timed out`). Alone each test takes under 0.5 s.
 
 - loads `New request for Jordan Rivera`, the select showing `Standard resolution packet`, and five checked rows in template order;
 - unchecking payroll and renaming `Government ID` to `Driver's license` posts four items in order with `config` intact, and `onCreated('r9')` fires on the 201;
