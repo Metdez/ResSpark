@@ -4,20 +4,20 @@
 
 | Part | What it does |
 |------|--------------|
-| `KEY` | The query key `['integrations', 'logics']`. |
+| `KEY` | `LOGICS_KEY` from the api module, `['integrations', 'logics']`. |
 | `testCopy(result)` | Success: `Connected — Logics accepted the credentials on {Oct 10, 2026}.` Status 401/403: `Logics rejected the credentials` / `Check the API key and secret token and save again.` Anything else (no status, or another HTTP status): `Couldn't reach Logics` / `Check the base URL and try again.` |
 | `StatusLines` | `Key ending in ••••{hint} · Updated {date}` when configured, else `No credentials saved`; then the muted `Last test: passed {date}`, `failed {date}`, or `never`. |
 | `isAdmin` | `useSession().data?.role === 'admin'`. The Worker's `requireAdmin` is the real gate; this only shapes the UI. |
 | Status query | `useQuery(KEY, getLogicsStatus)` with `meta: { errorShown: true }`, so the app-wide handler adds no toast (a 401 still signs out). Pending: three `Skeleton` bars. Error: a destructive `Alert` with the generic staff copy. |
 | Form state | `apiKey`, `secret`, `baseUrl`, never prefilled from the server. |
-| `test` mutation | `testLogicsConnection()`. On success it writes `last_test_at`/`last_test_ok` into the cached status. Errors (403, `no_credentials`, 5xx) go to the app's default handler, which shows `You don't have access to this.` for a 403. The `(_: void)` parameter pins the variables to `void` so `mutate()` takes no argument. |
-| `save` mutation | `saveLogicsCredentials(...)`. On success the PUT answer (the Worker's last write) replaces the cached status, all three inputs clear, the old test result is reset, and `toast.success('Credentials saved')`. `invalid_base_url` is rendered under the base URL field (`unlessHandled`); anything else reaches the app handler. Two admins saving at once: whichever write the Worker made last is what the status shows after the next fetch. |
+| `test` mutation | `testLogicsConnection()`. On success it writes `last_test_at`/`last_test_ok` into the cached status and, when `ok`, invalidates the query so newly listed activity types appear. Errors (403, `no_credentials`, 5xx) go to the app's default handler, which shows `You don't have access to this.` for a 403. The `(_: void)` parameter pins the variables to `void` so `mutate()` takes no argument. |
+| `save` mutation | `saveLogicsCredentials(...)`. On success the PUT answer (the Worker's last write) is merged over the cached status (so the GET-only `settings` and `activity_types` survive), all three inputs clear, the old test result is reset, and `toast.success('Credentials saved')`. `invalid_base_url` is rendered under the base URL field (`unlessHandled`); anything else reaches the app handler. Two admins saving at once: whichever write the Worker made last is what the status shows after the next fetch. |
 | Fixture notice | When `mode === 'fake'`: an `Alert` with `FlaskConical`, `Using built-in test cases`, and the sentence that saved credentials are tested but not used for lookups until the mode is live. |
 | Test result | One inline `Alert` (default variant on success, destructive on failure); never also a toast. |
 | Form | `API key` and `Secret token` as `PasswordInput` (show/hide toggle, `autoComplete="off"`); `Base URL (optional)` as a URL `Input` whose helper `Leave blank for the ValorTax default.` turns into the error `Enter an https:// address.` (with `aria-invalid`) after a refused save; typing again clears the error. |
 | Buttons (admin) | Right-aligned on wide screens, stacked below 640 px, 16 px apart: `Test connection` (outline, `Testing…`, disabled until configured) and `Save credentials` (primary submit, `Saving…`, disabled until both secrets are non-blank). |
 | Staff view | Inputs disabled, no buttons, and the muted line `Only a firm admin can change these credentials.` |
-| Layout | Settings `ContentSection` titled `Integrations` around a `Card` with title `IRS Logics` and description `Used to find cases by case ID, phone, or email.` |
+| Layout | Settings `ContentSection` titled `Integrations` around a 24 px grid: the `Card` with title `IRS Logics` and description `Used to find cases by case ID, phone, or email.`, then `PushSettingsCard` (see `push-settings-card.md`) once the GET returned `settings`. That card is keyed by the serialized settings so a refetch remounts it with the saved values; it receives `activity_types`, the last test's `activity_types_error`, and `isAdmin`. |
 
 ## Notes
 

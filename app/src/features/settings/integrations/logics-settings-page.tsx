@@ -21,14 +21,14 @@ import { PasswordInput } from '@/components/password-input'
 import { formatDate, unlessHandled } from '@/features/requests/requests-api'
 import { ContentSection } from '../components/content-section'
 import {
+  LOGICS_KEY as KEY,
   getLogicsStatus,
   saveLogicsCredentials,
   testLogicsConnection,
   type IntegrationStatus,
   type TestResult,
 } from './logics-settings-api'
-
-const KEY = ['integrations', 'logics']
+import { PushSettingsCard } from './push-settings-card'
 
 // D-03: 401/403 means Logics answered and refused; no status means it was never reached.
 function testCopy(r: TestResult) {
@@ -84,18 +84,21 @@ export function LogicsSettingsPage() {
 
   const test = useMutation({
     mutationFn: (_: void) => testLogicsConnection(),
-    onSuccess: (r) =>
+    onSuccess: (r) => {
       qc.setQueryData<IntegrationStatus>(
         KEY,
         (old) =>
           old && { ...old, last_test_at: r.tested_at, last_test_ok: r.ok }
-      ),
+      )
+      // A passing test may have listed new activity types (D-08).
+      if (r.ok) void qc.invalidateQueries({ queryKey: KEY })
+    },
   })
   const save = useMutation({
     mutationFn: saveLogicsCredentials,
     // The PUT answers with the Worker's last write, so it replaces the cached status (D-01).
     onSuccess: (s) => {
-      qc.setQueryData(KEY, s)
+      qc.setQueryData<IntegrationStatus>(KEY, (old) => ({ ...old, ...s }))
       setApiKey('')
       setSecret('')
       setBaseUrl('')
@@ -236,15 +239,27 @@ export function LogicsSettingsPage() {
       title='Integrations'
       desc='Connect the services your firm already uses.'
     >
-      <Card>
-        <CardHeader>
-          <CardTitle>IRS Logics</CardTitle>
-          <CardDescription>
-            Used to find cases by case ID, phone, or email.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className='grid gap-4'>{body}</CardContent>
-      </Card>
+      <div className='grid gap-6'>
+        <Card>
+          <CardHeader>
+            <CardTitle>IRS Logics</CardTitle>
+            <CardDescription>
+              Used to find cases by case ID, phone, or email.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className='grid gap-4'>{body}</CardContent>
+        </Card>
+        {status.data?.settings && (
+          <PushSettingsCard
+            // Remount on a refetch so the form starts from the saved values.
+            key={JSON.stringify(status.data.settings)}
+            settings={status.data.settings}
+            activityTypes={status.data.activity_types ?? []}
+            activityTypesError={test.data?.activity_types_error}
+            isAdmin={isAdmin}
+          />
+        )}
+      </div>
     </ContentSection>
   )
 }
