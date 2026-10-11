@@ -4,7 +4,17 @@
 
 ## With a sealed secret
 
-The connection already has an access token. `openToken` decrypts it (proving the vault end to end) and the function returns the current status unchanged. Plan 04-04 Task 2 adds the transactions sync and statements here.
+The connection already has an access token. `openToken` decrypts it and `syncConnected` runs:
+
+| Hint | Work |
+|------|------|
+| `ITEM` / `ERROR` with a code in `PERMANENT_ITEM_ERRORS` (for example `ITEM_LOGIN_REQUIRED`) | Status `error` with `{ code, message }`, no vendor call, no silent retry. The client step and admin card show "reconnect" from `error_code`. |
+| `ITEM` / `PENDING_DISCONNECT` | Logs `connection.pending_disconnect`, then the full run. |
+| `TRANSACTIONS` / `SYNC_UPDATES_AVAILABLE` | Sync only. |
+| `STATEMENTS` / `STATEMENTS_REFRESH_COMPLETE` | Statements only. |
+| none (cron, client, staff) | Sync and statements. |
+
+Sync: `syncTransactions` from `sync_cursor`, `upsertAccounts`, `upsertTransactions(added + modified)`, `deleteTransactions(removed)`, then `sync_cursor` and `data.transactions_update_status` / `data.last_sync_at` are stored (the cursor is saved only after the loop ended with `has_more` false). Statements: `syncStatements` (see `bank-statements.md`), with a refresh request only on staff Refresh when none was requested yet. Status: `done` when history is `HISTORICAL_UPDATE_COMPLETE` and no cell is `pending`, otherwise `syncing` (a first sync with nothing yet is `syncing`, never `done`). A sync-only run on a connection that is not `done` stays `syncing`, because statements were not checked. A permanent, non-transient `ProviderError` from Plaid also ends in `error` with its code; transient errors propagate so the queue retries. `connection_set_status` only moves forward by rank, so a `done` connection is not moved back.
 
 ## Without a secret (completion)
 

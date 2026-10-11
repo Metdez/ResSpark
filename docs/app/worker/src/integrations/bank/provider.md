@@ -9,7 +9,7 @@ The bank contract (D-11, BANK-04). Types only: Plan 04 implements it for Plaid; 
 - `BankProvider`: `id`, `capabilities`, and seven operations:
   - `createLinkSession(env, { connectionId, requestId, firmName, webhookUrl, returnUrl, statementsStart, statementsEnd })` → `{ linkRef, url, expiresAt }`;
   - `completeSession(env, { linkRef, publicTokens? })` → one `{ accessToken, externalId, institutionName }` per connected institution;
-  - `syncTransactions(env, accessToken, cursor)` → added / modified / removed transactions, the next cursor, the update status and accounts;
+  - `syncTransactions(env, accessToken, cursor)` → added / modified / removed transactions, the next cursor, the update status (mapped `status` and Plaid's raw `statusRaw`) and accounts;
   - `listStatements(env, accessToken, { requestRefresh? })` → whether statements are supported and ready, with per-account statements by year and month;
   - `downloadStatement(env, accessToken, statementId)` → PDF bytes and an optional SHA-256;
   - `removeConnection(env, accessToken)` (BANK-06 retention).

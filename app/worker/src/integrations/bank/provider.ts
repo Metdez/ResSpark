@@ -67,6 +67,7 @@ export interface BankProvider {
     removed: string[]
     cursor: string
     status: SyncUpdateStatus
+    statusRaw: string
     accounts: NormAccount[]
   }>
   listStatements(

@@ -1,5 +1,10 @@
 # app/worker/src/integrations/bank/plaid/statements.ts
 
-`listStatements` and `downloadStatement` for Plaid Statements.
+Plaid Statements: list, download and refresh (D-10, BANK-02, BANK-03).
 
-Current state: placeholders that throw `NonRetryableError('not_implemented')`, marked with a `shortcut:` comment. Plan 04-04 Task 2 fills them (`/statements/list`, `/statements/download` with the `Plaid-Content-Hash` check, `/statements/refresh`, `PRODUCTS_NOT_SUPPORTED` and `PRODUCT_NOT_READY` mapping). They exist now so `plaidProvider` type-checks. The bank reconcile does not call them yet.
+| Part | What it does |
+|------|--------------|
+| `ListResponse` | The `/statements/list` fields read: per account `account_id`, `account_mask`, `account_name`, `account_official_name`, `account_type`, `account_subtype`, and `statements[]` with `statement_id`, `year`, `month`. |
+| `refreshStatements(env, accessToken, { start, end })` | POSTs `/statements/refresh` with `start_date` and `end_date`. Plaid answers later with a `STATEMENTS_REFRESH_COMPLETE` webhook. |
+| `listStatements(env, accessToken, opts?)` | With `opts.requestRefresh`, refreshes first, then POSTs `/statements/list`. Returns `{ supported: true, ready: true, accounts }` with each account normalized and its statements as `{ id, year, month }`. `PRODUCTS_NOT_SUPPORTED` returns `{ supported: false, ready: true, accounts: [] }` (the bank has no statements). `PRODUCT_NOT_READY` returns `{ supported: true, ready: false, accounts: [] }` (try again later). Other errors propagate. |
+| `downloadStatement(env, accessToken, statementId)` | POSTs `/statements/download` through `plaidRaw` and returns `{ bytes, sha256 }`, where `sha256` is the `Plaid-Content-Hash` header or `null`. The caller verifies the hash. |
