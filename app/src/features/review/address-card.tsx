@@ -10,6 +10,10 @@ const chip = (a: CaseAddressView): { tone: Tone; label: string } =>
       ? { tone: 'success', label: 'USPS verified' }
       : { tone: 'warning', label: 'Unverified' }
 
+// County-equivalents already carry their own word ("Richmond City", "Orleans Parish"); "City and Borough" ends in Borough.
+const countyLabel = (name: string | null) =>
+  /\b(County|Parish|Borough|City|Census Area|Municipality|Municipio)$/.test(name ?? '') ? name : `${name} County`
+
 // D-07: the confirmed address for staff. County is text only; there is no county select (ADDR-01).
 export function AddressCard({ address: a }: { address: CaseAddressView | null }) {
   if (!a) return <p className='text-sm text-muted-foreground'>The client hasn't confirmed an address yet.</p>
@@ -25,7 +29,7 @@ export function AddressCard({ address: a }: { address: CaseAddressView | null })
       <p>{cityLine}</p>
       {a.source === 'smarty' && a.county_fips && (
         <p>
-          {a.county_name} County ({a.county_fips})
+          {countyLabel(a.county_name)} ({a.county_fips})
         </p>
       )}
       {a.rdi && <p>{a.rdi}</p>}

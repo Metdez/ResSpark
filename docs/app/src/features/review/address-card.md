@@ -11,7 +11,7 @@ The staff address card shown inside the `address` item of the review panel (D-07
 - `null` → one muted line, `The client hasn't confirmed an address yet.`
 - Line one: `line1`, `line2` if any, and the status chip (`StatusBadge`).
 - Line two: `city, STATE ZIP`, where ZIP is `zip5-zip4` when ZIP+4 exists, else `zip5`.
-- County line, only for Smarty addresses with a FIPS: `{county_name} County ({county_fips})`. Plain text.
+- County line, only for Smarty addresses with a FIPS: `{county} ({county_fips})`. Plain text. `countyLabel` appends ` County` unless the name already ends with a county-equivalent word (`County`, `Parish`, `Borough`, `City`, `Census Area`, `Municipality`, `Municipio`; `City and Borough` is covered by `Borough`), so `Los Angeles` reads `Los Angeles County` but `Richmond City`, `Orleans Parish`, and `Anchorage Municipality` stay as-is.
 - RDI line (`Residential` / `Commercial`) when present.
 - `Unit missing or not recognized` (muted) for an unverified Smarty address with DPV `D` or `S`.
 - Footer: `Source: Smarty` or `Source: entered by client`, then `Confirmed {ago(confirmed_at)}` with the ISO time in the `title` attribute.
@@ -26,4 +26,4 @@ The staff address card shown inside the `address` item of the review panel (D-07
 
 ## Tests (`address-card.test.tsx`)
 
-Verified Smarty card text and the `title` time; the null copy; no select/combobox/listbox; the manual chip and source with no county line; the unverified DPV `D` chip and unit line.
+Verified Smarty card text and the `title` time; the county-equivalent labels (`Los Angeles`, `Richmond City`, `Orleans Parish`, `Anchorage Municipality`); the null copy; no select/combobox/listbox; the manual chip and source with no county line; the unverified DPV `D` chip and unit line.

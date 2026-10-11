@@ -35,6 +35,18 @@ describe('AddressCard', () => {
     expect(el.querySelector('[title="2026-10-11T08:00:00Z"]')).not.toBeNull()
   })
 
+  it.each([
+    ['Los Angeles', 'Los Angeles County'],
+    ['Richmond City', 'Richmond City'],
+    ['Orleans Parish', 'Orleans Parish'],
+    ['Anchorage Municipality', 'Anchorage Municipality'],
+    ['Juneau City and Borough', 'Juneau City and Borough'],
+  ])('county %s is labelled %s', async (county_name, label) => {
+    const t = await render({ ...VERIFIED, county_name })
+    expect(t).toContain(`${label} (06085)`)
+    expect(t).not.toContain(`${label} County`)
+  })
+
   it('null shows the not-yet copy', async () => {
     expect(await render(null)).toBe("The client hasn't confirmed an address yet.")
   })
