@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 01
 current_phase_name: Foundation & Staff Sign-In
 status: verifying
-stopped_at: Completed 01-07-PLAN.md
-last_updated: "2026-10-11T06:37:52.767Z"
+stopped_at: Completed 02-03-PLAN.md
+last_updated: "2026-10-11T07:16:36.842Z"
 last_activity: 2026-10-10
 last_activity_desc: Phase 01 execution started
-state_head: c981ccdde562721317912c71bc466c06b49c07de
+state_head: d3cce8b302798cc33d96a9c7bd4e7b7b8e837d13
 progress:
   total_phases: 8
   completed_phases: 0
   total_plans: 67
-  completed_plans: 11
+  completed_plans: 13
   percent: 0
 ---
 
@@ -65,6 +65,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 02 P01 | 10 min | 2 tasks | 7 files |
 | Phase 01 P06 | 30 min | 3 tasks | 48 files |
 | Phase 01 P07 | 30min | 3 tasks | 39 files |
+| Phase 02 P03 | 29 min | 3 tasks | 29 files |
 
 ## Accumulated Context
 
@@ -106,6 +107,9 @@ Recent decisions affecting current work:
 - [Phase 01]: 01-07: Rate Limiting binding LINK_RATE_LIMITER accepted on deploy (A-1 held); in-memory window is fallback only
 - [Phase 01]: 01-07: one root Toaster, top-center on /c and /c/*, top-right on admin
 - [Phase 01]: 01-07: rs_client cookie = signed JSON {link_id, exp}, key = SHA-256(CLIENT_LINK_HMAC_KEY + ':cookie'); link tokens use the key's UTF-8 bytes
+- [Phase 02]: 02-03: lookup sub-app (use('*', staffAuth)) is mounted last among /api/admin routes so siblings never re-verify the token
+- [Phase 02]: 02-03: LOGICS_MODE/RESEND_FROM/INTEGRATION_ENC_KEY declared in Task 1 so tsc stays green; LogicsEnv is now Pick<Env, ...>
+- [Phase 02]: 02-03: assumption-delta for the staff-selected Logics case identity is no-change (explicit confirm step by design)
 
 ### Pending Todos
 
@@ -134,6 +138,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-10-11T06:37:52.616Z
-Stopped at: Completed 01-07-PLAN.md
+Last session: 2026-10-11T07:16:36.031Z
+Stopped at: Completed 02-03-PLAN.md
 Resume file: None
