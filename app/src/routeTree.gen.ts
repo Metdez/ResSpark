@@ -16,6 +16,7 @@ import { Route as CTokenRouteImport } from './routes/c/$token'
 import { Route as AdminSignInRouteImport } from './routes/admin/sign-in'
 import { Route as AdminShellRouteRouteImport } from './routes/admin/_shell/route'
 import { Route as AdminShellIndexRouteImport } from './routes/admin/_shell/index'
+import { Route as CSignItemIdRouteImport } from './routes/c/sign.$itemId'
 import { Route as AdminShellLookupRouteImport } from './routes/admin/_shell/lookup'
 import { Route as AdminShellSettingsRouteRouteImport } from './routes/admin/_shell/settings/route'
 import { Route as AdminShellRequestsIndexRouteImport } from './routes/admin/_shell/requests/index'
@@ -57,6 +58,11 @@ const AdminShellIndexRoute = AdminShellIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AdminShellRouteRoute,
+} as any)
+const CSignItemIdRoute = CSignItemIdRouteImport.update({
+  id: '/c/sign/$itemId',
+  path: '/c/sign/$itemId',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AdminShellLookupRoute = AdminShellLookupRouteImport.update({
   id: '/lookup',
@@ -105,6 +111,7 @@ export interface FileRoutesByFullPath {
   '/c/': typeof CIndexRoute
   '/admin/settings': typeof AdminShellSettingsRouteRouteWithChildren
   '/admin/lookup': typeof AdminShellLookupRoute
+  '/c/sign/$itemId': typeof CSignItemIdRoute
   '/admin/': typeof AdminShellIndexRoute
   '/admin/requests/$requestId': typeof AdminShellRequestsRequestIdRoute
   '/admin/requests/new': typeof AdminShellRequestsNewRoute
@@ -120,6 +127,7 @@ export interface FileRoutesByTo {
   '/c': typeof CIndexRoute
   '/admin/settings': typeof AdminShellSettingsRouteRouteWithChildren
   '/admin/lookup': typeof AdminShellLookupRoute
+  '/c/sign/$itemId': typeof CSignItemIdRoute
   '/admin/requests/$requestId': typeof AdminShellRequestsRequestIdRoute
   '/admin/requests/new': typeof AdminShellRequestsNewRoute
   '/admin/settings/appearance': typeof AdminShellSettingsAppearanceRoute
@@ -136,6 +144,7 @@ export interface FileRoutesById {
   '/c/': typeof CIndexRoute
   '/admin/_shell/settings': typeof AdminShellSettingsRouteRouteWithChildren
   '/admin/_shell/lookup': typeof AdminShellLookupRoute
+  '/c/sign/$itemId': typeof CSignItemIdRoute
   '/admin/_shell/': typeof AdminShellIndexRoute
   '/admin/_shell/requests/$requestId': typeof AdminShellRequestsRequestIdRoute
   '/admin/_shell/requests/new': typeof AdminShellRequestsNewRoute
@@ -153,6 +162,7 @@ export interface FileRouteTypes {
     | '/c/'
     | '/admin/settings'
     | '/admin/lookup'
+    | '/c/sign/$itemId'
     | '/admin/'
     | '/admin/requests/$requestId'
     | '/admin/requests/new'
@@ -168,6 +178,7 @@ export interface FileRouteTypes {
     | '/c'
     | '/admin/settings'
     | '/admin/lookup'
+    | '/c/sign/$itemId'
     | '/admin/requests/$requestId'
     | '/admin/requests/new'
     | '/admin/settings/appearance'
@@ -183,6 +194,7 @@ export interface FileRouteTypes {
     | '/c/'
     | '/admin/_shell/settings'
     | '/admin/_shell/lookup'
+    | '/c/sign/$itemId'
     | '/admin/_shell/'
     | '/admin/_shell/requests/$requestId'
     | '/admin/_shell/requests/new'
@@ -196,6 +208,7 @@ export interface RootRouteChildren {
   CTokenRoute: typeof CTokenRoute
   CReturnRoute: typeof CReturnRoute
   CIndexRoute: typeof CIndexRoute
+  CSignItemIdRoute: typeof CSignItemIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -248,6 +261,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/'
       preLoaderRoute: typeof AdminShellIndexRouteImport
       parentRoute: typeof AdminShellRouteRoute
+    }
+    '/c/sign/$itemId': {
+      id: '/c/sign/$itemId'
+      path: '/c/sign/$itemId'
+      fullPath: '/c/sign/$itemId'
+      preLoaderRoute: typeof CSignItemIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/admin/_shell/lookup': {
       id: '/admin/_shell/lookup'
@@ -358,6 +378,7 @@ const rootRouteChildren: RootRouteChildren = {
   CTokenRoute: CTokenRoute,
   CReturnRoute: CReturnRoute,
   CIndexRoute: CIndexRoute,
+  CSignItemIdRoute: CSignItemIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -32,3 +32,7 @@ Path segments go through `encodeURIComponent`. `reconcileConnection` swallows ev
 ## Tests
 
 See `connection-api.test.md`.
+
+## `esign` consent (Plan 06-06)
+
+`recordConsent(kind)` now takes any `ConsentKind` (`bank_data`, `payroll_data`, `esign`), so the signing page sends `{ kind: 'esign', text_version: 'esign-v1' }` through the same call. The version still comes from `CONSENT_TEXT[kind].version`.

@@ -9,6 +9,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { PortalStep } from './portal-api'
 import { StepList } from './step-list'
 
+const navigate = vi.hoisted(() => vi.fn())
+vi.mock('@tanstack/react-router', () => ({ useNavigate: () => navigate }))
+
 vi.mock('@/features/uploads/upload-sheet', () => ({
   UploadSheet: ({ item }: { item: { label: string } }) => (
     <div data-testid='upload-sheet'>{item.label}</div>
@@ -155,5 +158,63 @@ describe('StepList close callback', () => {
     expect(onCloseStep).not.toHaveBeenCalled()
     await click(button('Close', document.querySelector('[role="dialog"]')!)!)
     expect(onCloseStep).toHaveBeenCalledOnce()
+  })
+})
+
+describe('StepList signature step', () => {
+  const sig = (status: PortalStep['status']): PortalStep => ({
+    id: 's9',
+    position: 9,
+    kind: 'signature',
+    label: 'Sign your forms',
+    required: true,
+    status,
+  })
+
+  it('a pending signature shows Sign, which opens the signing route', async () => {
+    const onView = vi.fn()
+    await renderWithQuery(<StepList firmName='ValorTax' steps={[sig('pending')]} onView={onView} />, {})
+    const btn = document.querySelector('button[aria-label="Sign Sign your forms"]')!
+    expect(btn.textContent).toBe('Sign')
+    expect(btn.className).toContain('h-11')
+    await click(btn)
+    expect(navigate).toHaveBeenCalledWith({ to: '/c/sign/$itemId', params: { itemId: 's9' }, replace: false })
+    expect(onView).toHaveBeenCalledWith(sig('pending'))
+    expect(text()).not.toContain('Coming next')
+  })
+
+  it.each(['submitted', 'approved'] as const)('a %s signature shows View', async (status) => {
+    await renderWithQuery(<StepList firmName='ValorTax' steps={[sig(status)]} />, {})
+    expect(viewOf('Sign your forms').textContent).toBe('View')
+  })
+
+  it('autoOpenId on a signature replaces the history entry with the signing route', async () => {
+    const onAutoOpened = vi.fn()
+    await renderWithQuery(
+      <StepList firmName='ValorTax' steps={[sig('pending')]} autoOpenId='s9' onAutoOpened={onAutoOpened} />,
+      {}
+    )
+    expect(navigate).toHaveBeenCalledOnce()
+    expect(navigate).toHaveBeenCalledWith({ to: '/c/sign/$itemId', params: { itemId: 's9' }, replace: true })
+    expect(onAutoOpened).not.toHaveBeenCalled()
+  })
+
+  it('autoOpenId on an upload opens its sheet once and calls onAutoOpened', async () => {
+    const onAutoOpened = vi.fn()
+    const onView = vi.fn()
+    await renderWithQuery(
+      <StepList firmName='ValorTax' steps={STEPS} autoOpenId='s2' onAutoOpened={onAutoOpened} onView={onView} />,
+      {}
+    )
+    await waitFor(() => document.querySelector('[data-testid="upload-sheet"]') !== null)
+    expect(onAutoOpened).toHaveBeenCalledOnce()
+    expect(onView).toHaveBeenCalledOnce()
+  })
+
+  it('an autoOpenId that matches no step opens nothing', async () => {
+    const onAutoOpened = vi.fn()
+    await renderWithQuery(<StepList firmName='ValorTax' steps={STEPS} autoOpenId='nope' onAutoOpened={onAutoOpened} />, {})
+    expect(onAutoOpened).not.toHaveBeenCalled()
+    expect(document.querySelector('[role="dialog"]')).toBeNull()
   })
 })

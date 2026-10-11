@@ -12,7 +12,13 @@ import type { PortalState, PortalStep } from './portal-api'
 import { PortalPage } from './portal-page'
 
 const toastError = vi.hoisted(() => vi.fn())
-vi.mock('sonner', () => ({ toast: { error: toastError } }))
+const toastSuccess = vi.hoisted(() => vi.fn())
+vi.mock('sonner', () => ({ toast: { error: toastError, success: toastSuccess } }))
+const router = vi.hoisted(() => ({ navigate: vi.fn(), search: {} as { step?: string; signed?: string } }))
+vi.mock('@tanstack/react-router', () => ({
+  useNavigate: () => router.navigate,
+  useSearch: () => router.search,
+}))
 
 const step = (
   position: number,
@@ -71,6 +77,7 @@ beforeEach(() => {
 afterEach(() => {
   cleanup()
   toastError.mockClear()
+  router.search = {}
   document.title = ''
 })
 
@@ -211,7 +218,7 @@ describe('PortalPage', () => {
     )
   })
 
-  it('renders 44 px rows with description, client chip and a 44 px View, never below 16 px', async () => {
+  it('renders 44 px rows with description, client chip and a 44 px View (Sign for a signature), never below 16 px', async () => {
     const { el } = await render(okState({ opened_at: OPENED }))
     await waitFor(() => rows().length === 5)
     for (const r of rows()) {
@@ -220,7 +227,7 @@ describe('PortalPage', () => {
         'text-base'
       )
       const view = r.querySelector('button')!
-      expect(view.textContent).toBe('View')
+      expect(view.textContent).toBe(r.textContent?.includes('Sign your forms') ? 'Sign' : 'View')
       expect(view.className).toContain('h-11')
     }
     expect(
@@ -322,5 +329,38 @@ describe('PortalPage', () => {
     expect(fetchMock.mock.calls.some(([p]) => p === '/api/c/heartbeat')).toBe(
       false
     )
+  })
+
+  it('back from signing shows Signed. Your agent has it. once and clears signed', async () => {
+    router.search = { signed: 's5' }
+    await render(okState({ opened_at: OPENED }))
+    await waitFor(() => rows().length === 5)
+    expect(toastSuccess).toHaveBeenCalledOnce()
+    expect(toastSuccess).toHaveBeenCalledWith('Signed. Your agent has it.')
+    expect(router.navigate).toHaveBeenCalledWith({ to: '/c', search: { step: undefined }, replace: true })
+  })
+
+  it('a deep-linked signature opens right after Start, not before', async () => {
+    router.search = { step: 's5' }
+    await render({ ...okState(), 'POST /api/c/start': { status: 200, body: { opened_at: OPENED } } })
+    await waitFor(() => !!button('Start'))
+    expect(router.navigate).not.toHaveBeenCalled()
+    await click(button('Start')!)
+    await waitFor(() => router.navigate.mock.calls.length > 0)
+    expect(router.navigate).toHaveBeenCalledWith({ to: '/c/sign/$itemId', params: { itemId: 's5' }, replace: true })
+  })
+
+  it('a deep-linked upload opens its sheet for a returning client and clears step', async () => {
+    router.search = { step: 's4' }
+    await render({
+      ...okState({ opened_at: OPENED }),
+      'GET /api/c/items/s4/documents': {
+        status: 200,
+        body: { item: { id: 's4', label: 'Upload your ID', status: 'submitted', rejection_note: null }, documents: [] },
+      },
+    })
+    await waitFor(() => router.navigate.mock.calls.length > 0)
+    expect(router.navigate).toHaveBeenCalledWith({ to: '/c', search: { signed: undefined }, replace: true })
+    await waitFor(() => !!document.querySelector('[role="dialog"]'))
   })
 })

@@ -14,3 +14,8 @@ The text and its version come from `@/lib/consent-text`, the same module the Wor
 ## Tests
 
 See `consent-sheet.test.md`.
+
+## Points and the pinned footer (Plan 06-06)
+
+- When `CONSENT_TEXT[kind].points` exists (only `esign`, the five 15 U.S.C. 7001(c)(1) disclosures) they render as a bulleted list (`list-disc`, 16 px) between the body and the detail.
+- `SheetContent` is capped at `max-h-[90dvh]` with no gap; the header (title and text) is `min-h-0 overflow-y-auto`, and the footer has a top border. The text scrolls while `I agree` and `Not now` stay pinned, so `I agree` is tappable without scrolling on a 390×844 phone.

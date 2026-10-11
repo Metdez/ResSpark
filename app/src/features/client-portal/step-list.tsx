@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
+import { useNavigate } from '@tanstack/react-router'
 import { Inbox } from 'lucide-react'
 import { itemStatusBadge } from '@/lib/status'
 import { Button } from '@/components/ui/button'
@@ -11,6 +12,7 @@ import { ComingNextSheet } from './coming-next-sheet'
 import { BankStep } from './connect/bank-step'
 import { PayrollStep } from './connect/payroll-step'
 import type { PortalStep } from './portal-api'
+import { SIGN_COPY } from './sign/sign-copy'
 import { STEP_DESCRIPTIONS } from './step-copy'
 
 interface StepListProps {
@@ -19,6 +21,8 @@ interface StepListProps {
   onView?: (step: PortalStep) => void
   onCloseStep?: () => void
   onUploadError?: (code: UploadErrorCode) => void
+  autoOpenId?: string
+  onAutoOpened?: () => void
 }
 
 // D-11: one column of 44 px rows in position order; View opens the step (upload) or Coming next.
@@ -28,9 +32,37 @@ export function StepList({
   onView = () => {},
   onCloseStep = () => {},
   onUploadError,
+  autoOpenId,
+  onAutoOpened,
 }: StepListProps) {
   const [viewing, setViewing] = useState<PortalStep | null>(null)
   const qc = useQueryClient()
+  const navigate = useNavigate()
+  // D-14: signing is its own full-bleed route; every other step opens a sheet over the list.
+  const open = (step: PortalStep) => {
+    onView(step)
+    if (step.kind === 'signature')
+      void navigate({ to: '/c/sign/$itemId', params: { itemId: step.id }, replace: false })
+    else setViewing(step)
+  }
+  // D-17 deep link: open the linked step once, as a tap would. The sheet opens during render
+  // (no cascading effect render); the callbacks and navigation run after commit. A signature
+  // replaces the history entry so Back cannot loop into it; a sheet asks the parent to clear `step`.
+  const autoStep = steps.find((s) => s.id === autoOpenId)
+  const [autoShown, setAutoShown] = useState<string>()
+  if (autoStep && autoShown !== autoStep.id) {
+    setAutoShown(autoStep.id)
+    if (autoStep.kind !== 'signature') setViewing(autoStep)
+  }
+  const autoAnnounced = useRef<string>(undefined)
+  useEffect(() => {
+    if (!autoStep || autoAnnounced.current === autoStep.id) return
+    autoAnnounced.current = autoStep.id
+    onView(autoStep)
+    if (autoStep.kind === 'signature')
+      void navigate({ to: '/c/sign/$itemId', params: { itemId: autoStep.id }, replace: true })
+    else onAutoOpened?.()
+  })
   const close = () => {
     setViewing(null)
     onCloseStep()
@@ -54,6 +86,9 @@ export function StepList({
       <ul>
         {ordered.map((step) => {
           const badge = itemStatusBadge(step.status, 'client')
+          const sign =
+            step.kind === 'signature' && step.status !== 'submitted' && step.status !== 'approved'
+          const action = sign ? SIGN_COPY.signButton : 'View'
           return (
             <li
               key={step.id}
@@ -76,13 +111,10 @@ export function StepList({
                 <Button
                   size='xl'
                   variant='outline'
-                  aria-label={`View ${step.label}`}
-                  onClick={() => {
-                    setViewing(step)
-                    onView(step)
-                  }}
+                  aria-label={`${action} ${step.label}`}
+                  onClick={() => open(step)}
                 >
-                  View
+                  {action}
                 </Button>
               </div>
             </li>

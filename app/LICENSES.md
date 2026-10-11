@@ -71,6 +71,10 @@ SOFTWARE.
 - `tus-js-client` 4.3.1 (MIT), <https://github.com/tus/tus-js-client>. Resumable uploads from the
   client upload step to Supabase Storage (Phase 3, UPL-01). Loaded with a dynamic `import()`.
   Both verified with `pnpm view <pkg>@<ver> version license` on 2026-10-11.
+- `@docuseal/react` 1.0.75 (MIT), <https://github.com/docusealco/docuseal-react>. DocuSeal's embedded
+  signing form for the client's signing page (Phase 6, SIGN-04). Loaded with a dynamic `import()` only
+  on `/c/sign/$itemId`, so it stays out of the `/c/*` entry chunk. It loads DocuSeal's `form.js` from
+  `cdn.docuseal.com` at runtime; that script is not redistributed here. Verified with `pnpm view` on 2026-10-11.
 
 ## Visual references (no code copied)
 

@@ -34,3 +34,14 @@ Tests: the Coming next cases now use an `intake` step ("Answer a few questions")
 ## Closing a step (Plan 04-05 Task 3)
 
 `onCloseStep` (optional, a no-op by default) is called whenever a step's sheet closes. Every sheet's close goes through one `close()` helper: it clears `viewing` and calls `onCloseStep()`, so `PortalPage`'s heartbeat `last_step` returns to `list`. The connect sheets read the step's `rejection_note` themselves (see `connect/payroll-step.md`). Test: closing the Coming next sheet calls `onCloseStep` once.
+
+## Signature step and deep link (Plan 06-06)
+
+- **Sign button:** for `kind === 'signature'` the row button reads `Sign` (`SIGN_COPY.signButton`) with `aria-label` "Sign {label}", unless the status is `submitted` or `approved`, where it reads `View`. Either way a tap calls `onView(step)` and navigates to `/c/sign/$itemId` (`useNavigate`, `replace: false`); signing is its own full-bleed route, not a sheet, so `signature` never reaches `ComingNextSheet` any more. Every other kind still opens its sheet through the shared `open(step)` helper.
+- **`autoOpenId` / `onAutoOpened` (optional):** when `autoOpenId` matches a step, that step opens once, as a tap would (D-17 copied signing link).
+  - The sheet opens during render (`autoShown` state is set while rendering, React's "adjust state when a prop changes" pattern) instead of inside an effect, which the `react-hooks/set-state-in-effect` lint rule forbids.
+  - After commit an effect (guarded by the `autoAnnounced` ref so it runs once per id) calls `onView(step)`, then either navigates to the signing route with `replace: true` (so the browser Back button cannot land on `/c/?step=` and reopen it in a loop) or calls `onAutoOpened()` so the parent clears `step` from the URL.
+  - An id that matches no step does nothing.
+- The file now imports `useNavigate` from `@tanstack/react-router`; tests mock it.
+
+Tests (`step-list.test.tsx`, router mocked): a pending signature shows a 44 px `Sign` that navigates to `/c/sign/$itemId` with `replace: false` and calls `onView`; `submitted` and `approved` show `View`; `autoOpenId` on a signature navigates once with `replace: true` and does not call `onAutoOpened`; `autoOpenId` on an upload opens its sheet and calls `onAutoOpened` and `onView` once each; an unknown id opens nothing.

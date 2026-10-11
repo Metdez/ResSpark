@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useNavigate, useSearch } from '@tanstack/react-router'
 import { Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -8,6 +9,7 @@ import { ClientShell } from '@/features/client-link/client-shell'
 import { InvalidLinkPage } from '@/features/client-link/invalid-link-page'
 import type { UploadErrorCode } from '@/features/uploads/copy'
 import { getState, PortalError, start, type PortalState } from './portal-api'
+import { SIGN_COPY } from './sign/sign-copy'
 import { StepList } from './step-list'
 import { useHeartbeat } from './use-heartbeat'
 
@@ -36,6 +38,9 @@ export function PortalPage() {
     },
   })
 
+  const navigate = useNavigate()
+  // D-17: `step` (deep link) and `signed` (back from signing) are UUIDs checked by validateSearch.
+  const search = useSearch({ from: '/c/' })
   const [viewed, setViewed] = useState<string>()
   const [uploadError, setUploadError] = useState<UploadErrorCode>()
   const lost = noSession(state.error) || noSession(begin.error)
@@ -50,6 +55,12 @@ export function PortalPage() {
         ? 'start_failed'
         : uploadError,
   })
+
+  useEffect(() => {
+    if (!search.signed) return
+    toast.success(SIGN_COPY.signed)
+    void navigate({ to: '/c', search: { step: search.step }, replace: true })
+  }, [search.signed, search.step, navigate])
 
   if (lost) return <InvalidLinkPage />
 
@@ -112,6 +123,10 @@ export function PortalPage() {
             onView={(s) => setViewed(s.kind)}
             onCloseStep={() => setViewed(undefined)}
             onUploadError={setUploadError}
+            autoOpenId={search.step}
+            onAutoOpened={() =>
+              void navigate({ to: '/c', search: { signed: search.signed }, replace: true })
+            }
           />
         </>
       )}

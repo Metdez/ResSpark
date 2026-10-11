@@ -42,4 +42,19 @@ describe('ConsentSheet', () => {
     await click(button('I agree', dialog())!)
     expect(onAgree).toHaveBeenCalledOnce()
   })
+
+  it('esign lists the five points, replaces {firm}, and pins the footer below the scrolling text', async () => {
+    await renderWithQuery(
+      <ConsentSheet kind='esign' firmName='ValorTax' open busy={false} onAgree={() => {}} onClose={() => {}} />,
+      {}
+    )
+    const items = [...dialog().querySelectorAll('li')].map((li) => li.textContent)
+    expect(items).toEqual(CONSENT_TEXT.esign.points)
+    expect(dialog().textContent).toContain('ValorTax keeps a record')
+    expect(dialog().textContent).not.toContain('{firm}')
+    const header = dialog().querySelector('[data-slot="sheet-header"]')!
+    expect(header.className).toContain('overflow-y-auto')
+    expect(header.contains(button('I agree', dialog())!)).toBe(false)
+    expect(dialog().className).toContain('max-h-[90dvh]')
+  })
 })

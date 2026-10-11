@@ -34,3 +34,10 @@ In Phase 2 "progress saved per step" means the server-side `request_items.status
 ## Connect steps (Plan 04-05)
 
 The payroll and bank sheets open from `StepList`; `last_step` is the step kind (`payroll_connect` / `bank_connect`) while one is open and `list` again after it closes. The sheets read a rejected step's `rejection_note` from the item's document list; nothing in this page changes for that.
+
+## Signing deep link and the "Signed" message (Plan 06-06)
+
+- `useSearch({ from: '/c/' })` reads the two UUID-only search params validated in `routes/c/index.tsx`: `step` (a copied signing link, D-17) and `signed` (set by the signing page after completion).
+- `step` is passed to `StepList` as `autoOpenId` only once the step list renders, which is right after `Start` succeeds for a new client and immediately for a returning one. So a copied link costs `Start` plus `I agree` = 2 taps. `onAutoOpened` clears `step` with `navigate({ to: '/c', search: { signed }, replace: true })`; a signature step clears it itself by replacing the history entry with the signing route.
+- `signed`: an effect shows `toast.success('Signed. Your agent has it.')` (the root Toaster is top-center on `/c/*`) and clears `signed` with a `replace` navigation, so a reload does not show it again.
+- Tests (router and `sonner` mocked): `signed` toasts once and clears; a deep-linked signature does not navigate before `Start` and navigates to `/c/sign/$itemId` with `replace: true` right after it; a deep-linked upload opens its sheet for a returning client and clears `step`. The row-size test now expects `Sign` on the signature row.

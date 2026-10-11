@@ -1,4 +1,4 @@
-import { CONSENT_TEXT } from '@/lib/consent-text'
+import { CONSENT_TEXT, type ConsentKind } from '@/lib/consent-text'
 import { portalFetch } from '../portal-api'
 
 export type MonthStatus = 'pending' | 'available' | 'not_supported' | 'manual' | 'missing'
@@ -61,7 +61,7 @@ const post = (body?: unknown) =>
 export const getItemConnection = (itemId: string) =>
   portalFetch(`/api/c/items/${encodeURIComponent(itemId)}/connection`, {}, isItemConnection)
 
-export async function recordConsent(kind: 'bank_data' | 'payroll_data'): Promise<void> {
+export async function recordConsent(kind: ConsentKind): Promise<void> {
   await portalFetch('/api/c/consents', post({ kind, text_version: CONSENT_TEXT[kind].version }), isAny)
 }
 

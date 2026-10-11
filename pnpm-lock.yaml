@@ -13,6 +13,9 @@ importers:
       '@cantoo/pdf-lib':
         specifier: 2.11.1
         version: 2.11.1(html-entities@2.6.0)
+      '@docuseal/react':
+        specifier: 1.0.75
+        version: 1.0.75
       '@hookform/resolvers':
         specifier: 5.2.2
         version: 5.2.2(react-hook-form@7.72.1(react@19.2.5))
@@ -431,6 +434,9 @@ packages:
 
   '@date-fns/tz@1.5.0':
     resolution: {integrity: sha512-lwYN/vDPeNRULcepoE/LO2Pgx+7/RV+S9ARfbc9lr2DtGkOD7pAiruHvbR1RX3Qyf6ja47EWJDMsNK5vK08DJg==}
+
+  '@docuseal/react@1.0.75':
+    resolution: {integrity: sha512-G19dvlLzquP42VHCQ3O8zOXld2WZGK6CdMz0aALQgPIkwC+HxWP2npr0GDS2jJYAUT5EGkSRTrss7jijujFHuQ==}
 
   '@emnapi/core@1.9.2':
     resolution: {integrity: sha512-UC+ZhH3XtczQYfOlu3lNEkdW/p4dsJ1r/bP7H8+rhao3TTTMO1ATq/4DdIi23XuGoFY+Cz0JmCbdVl0hz9jZcA==}
@@ -3523,6 +3529,8 @@ snapshots:
   '@csstools/css-tokenizer@4.0.2': {}
 
   '@date-fns/tz@1.5.0': {}
+
+  '@docuseal/react@1.0.75': {}
 
   '@emnapi/core@1.9.2':
     dependencies:
