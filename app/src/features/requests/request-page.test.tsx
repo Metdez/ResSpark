@@ -79,6 +79,7 @@ async function render(detail: Reply) {
   replies = {
     'GET /api/admin/requests/r1': detail,
     'GET /api/admin/requests/r1/review': 'pending',
+    'GET /api/admin/cases/c1/events': 'pending',
     ...replies,
   }
   fetchMock = vi.fn((path: string, init: RequestInit) => {
@@ -322,6 +323,9 @@ describe('RequestPage', () => {
     const el = await render({ status: 200, body: SENT })
     expect(fetchMock).toHaveBeenCalledWith('/api/admin/requests/r1/review', expect.anything())
     expect(el.textContent).toContain('Review')
+    // Plan 03-05: the case timeline sits below the panel
+    expect(fetchMock).toHaveBeenCalledWith('/api/admin/cases/c1/events', expect.anything())
+    expect(el.textContent).toContain('Timeline')
     expect(el.querySelector('[data-item-row]')).toBeNull()
   })
 

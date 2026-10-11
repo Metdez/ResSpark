@@ -12,6 +12,8 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { StatusBadge } from '@/components/status-badge'
 import { RequestContactForm } from './request-contact-form'
 import { ReviewPanel } from '@/features/review/review-panel'
+import { MirrorCard } from '@/features/review/mirror-card'
+import { Timeline } from '@/features/timeline/timeline'
 import { LogicsPushCard } from '@/features/logics-push/logics-push-card'
 import { RequestLinkActions } from './request-link-actions'
 import {
@@ -173,8 +175,10 @@ export function RequestPage({ requestId }: { requestId: string }) {
           <ItemsCard items={d.items} />
         ) : (
           <>
+            <MirrorCard requestId={d.id} />
             <ReviewPanel requestId={d.id} caseId={d.case.case_id} />
             <LogicsPushCard requestId={d.id} caseId={d.case.case_id} />
+            <Timeline caseId={d.case.case_id} />
           </>
         )}
       </div>

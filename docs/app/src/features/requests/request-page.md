@@ -20,6 +20,7 @@
 | `ItemsCard` | Heading `Items`, one row per item sorted by `position`: label, muted `Required`/`Optional`, and the staff item badge. |
 | Review panel (Plan 03-03) | While the request is a `draft`, `ItemsCard` lists the items. Once it is sent (any other status), `<ReviewPanel requestId caseId />` replaces it: the same items, plus each item's files, Preview/Download, Approve and Reject. Showing both would list every item twice. The panel has its own 5 s polled query (`['review', id]`); the detail query is not polled, and the panel's decisions invalidate `['request', id]` so the header badge follows. See `docs/app/src/features/review/review-panel.md`. |
 | Push card (Plan 05-04) | Mounted directly below `<ReviewPanel>` in the same non-draft branch (a fragment holds both): `<LogicsPushCard requestId caseId />` lists approved, ready files and pushes them to Logics. Nothing else on the page changes. See `docs/app/src/features/logics-push/logics-push-card.md`. |
+| Client view and timeline (Plan 03-05) | In the same non-draft branch, `<MirrorCard requestId />` sits above the review panel (which step the client is on, last seen, last error, `Client may be stuck`; it reads the panel's `['review', id]` query, so no extra fetch) and `<Timeline caseId />` sits last, below the push card (the case's events newest first, 5 s poll on the first page, `Load older` 50 at a time). A draft shows neither: there is no client activity to mirror yet. See `docs/app/src/features/review/mirror-card.md` and `docs/app/src/features/timeline/timeline.md`. |
 
 ## Notes
 
@@ -40,7 +41,7 @@
 - 400 `contact_invalid` shows the server's email error under the field (`aria-invalid`, `aria-describedby`);
 - 409 `logics_not_configured` shows its alert;
 - a sent request shows the link card and no form;
-- a sent request mounts the review panel (it fetches `/api/admin/requests/r1/review`, stubbed as pending) and no `ItemsCard` rows;
+- a sent request mounts the review panel (it fetches `/api/admin/requests/r1/review`, stubbed as pending), the timeline (it fetches `/api/admin/cases/c1/events`, also stubbed as pending, and shows the `Timeline` heading), and no `ItemsCard` rows;
 - the link actions (`Email link`, `Revoke link`) sit inside the `Client link` card, and `Email link` is an outline button (Copy link stays the only primary);
 - a revoked request shows `Revoked`, `This link was revoked.`, and no URL, `Copy link`, or `Revoke link`;
 - loading shows three skeletons and no input.
