@@ -7,7 +7,7 @@ The bank contract (D-11, BANK-04). Types only: Plan 04 implements it for Plaid; 
 - `NormAccount`, `NormTransaction`: provider-neutral shapes that map one-to-one onto `bank_accounts` and `bank_transactions` columns (migration 0005).
 - `SyncUpdateStatus`: `not_ready | initial | historical`, from Plaid's `transactions_update_status`.
 - `BankProvider`: `id`, `capabilities`, and seven operations:
-  - `createLinkSession(env, { connectionId, firmName, webhookUrl, returnUrl, statementsStart, statementsEnd })` → `{ linkRef, url, expiresAt }`;
+  - `createLinkSession(env, { connectionId, requestId, firmName, webhookUrl, returnUrl, statementsStart, statementsEnd })` → `{ linkRef, url, expiresAt }`;
   - `completeSession(env, { linkRef, publicTokens? })` → one `{ accessToken, externalId, institutionName }` per connected institution;
   - `syncTransactions(env, accessToken, cursor)` → added / modified / removed transactions, the next cursor, the update status and accounts;
   - `listStatements(env, accessToken, { requestRefresh? })` → whether statements are supported and ready, with per-account statements by year and month;

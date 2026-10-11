@@ -8,6 +8,7 @@ import {
 } from '../db/connections'
 import type { WebhookEventRow } from '../db/webhook-events'
 import { NonRetryableError } from '../integrations/provider-error'
+import { reconcileBank } from './bank-reconcile'
 import { reconcilePayroll } from './payroll-reconcile'
 
 export interface ReconcileOpts {
@@ -27,8 +28,7 @@ export async function reconcileConnection(
   if (conn.status === 'removed') return { status: 'removed', applied: false }
   try {
     if (conn.kind === 'payroll') return await reconcilePayroll(env, conn, opts)
-    // Plan 04 replaces this branch with the Plaid reconcile (functionality gap, not architecture).
-    throw new NonRetryableError('bank_not_available')
+    return await reconcileBank(env, conn, opts)
   } finally {
     await updateConnection(env, conn.id, { last_polled_at: new Date().toISOString() })
   }

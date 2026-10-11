@@ -1,0 +1,6 @@
+{
+  "link_token": "link-sandbox-fixture-1",
+  "hosted_link_url": "https://secure.plaid.com/hl/fixture",
+  "expiration": "2099-01-01T00:30:00Z",
+  "request_id": "req_fixture_create"
+}

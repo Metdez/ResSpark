@@ -1,0 +1,18 @@
+{
+  "link_token": "link-sandbox-fixture-1",
+  "link_sessions": [
+    {
+      "link_session_id": "ls_fixture_1",
+      "results": {
+        "item_add_results": [
+          {
+            "public_token": "public-sandbox-fixture-1",
+            "institution": { "institution_id": "ins_109508", "name": "First Platypus Bank" },
+            "accounts": [{ "id": "acc_1", "name": "Plaid Checking", "mask": "0000", "type": "depository", "subtype": "checking" }]
+          }
+        ]
+      }
+    }
+  ],
+  "request_id": "req_fixture_get"
+}

@@ -8,6 +8,7 @@ import { hasConsent, recordConsent } from '../db/consents'
 import { findSessionItem, sessionRequest, type ItemRow } from '../db/documents'
 import { logEvent } from '../db/events'
 import { PROVIDER_CAPABILITIES } from '../integrations/bank/provider'
+import { startBank } from '../integrations/bank/start'
 import { providerConfigured } from '../integrations/configured'
 import { ProviderError } from '../integrations/provider-error'
 import { startPayroll } from '../integrations/truv/start'
@@ -131,13 +132,21 @@ export const cConnectionsRoute = new Hono<Env_>()
       return fail(c, 409, 'consent_required', 'Please agree to the data use first.')
     const providerId = providerFor(c.env, item.kind as ConnectKind)
     if (!providerConfigured(c.env, providerId)) return fail(c, 503, 'provider_not_configured', 'Provider not configured')
-    // Plan 04 replaces this branch with startBank.
-    if (kind === 'bank') return fail(c, 503, 'provider_not_available', 'Bank connection is not available yet.')
 
     const req = await sessionRequest(c.env, client.requestId, client.firmId)
     const caseRow = req ? await getCase(c.env, client.firmId, req.case_id) : null
     if (!caseRow) return notFound(c)
     try {
+      if (kind === 'bank') {
+        const bank = await startBank(c.env, { client, item, caseRow, origin: new URL(c.req.url).origin })
+        return c.json({
+          connection_id: bank.connection_id,
+          kind: 'bank',
+          provider: providerId,
+          capabilities: bank.capabilities,
+          hosted_link_url: bank.hosted_link_url,
+        })
+      }
       const started = await startPayroll(c.env, { client, item, caseRow })
       return c.json({
         connection_id: started.connection_id,

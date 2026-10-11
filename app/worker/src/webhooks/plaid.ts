@@ -1,13 +1,10 @@
 import { timingSafeEqual } from 'node:crypto'
 import { decodeProtectedHeader, importJWK, jwtVerify, type JWK } from 'jose'
+import { plaidFetch } from '../integrations/bank/plaid/client'
 import type { WebhookAdapter } from './types'
 
 // plaid.com/docs/api/webhooks/webhook-verification: Plaid-Verification is an ES256 JWT whose kid
 // resolves through /webhook_verification_key/get; claims iat (<= 5 min old) and request_body_sha256.
-const PLAID_HOST: Record<string, string> = {
-  sandbox: 'https://sandbox.plaid.com',
-  production: 'https://production.plaid.com',
-}
 
 // Module scope on purpose: isolates may recycle it, which only costs one more key fetch.
 const keys = new Map<string, JsonWebKey>()
@@ -23,17 +20,9 @@ export function _clearPlaidKeysForTests(): void {
   keys.clear()
 }
 
-// shortcut: a local key fetch; Plan 04 swaps it for plaidFetch from integrations/bank/plaid/client.ts.
 async function plaidKeyFetch(env: Env, kid: string): Promise<JsonWebKey | null> {
-  const host = PLAID_HOST[env.PLAID_ENV ?? 'sandbox'] ?? PLAID_HOST.sandbox
   try {
-    const res = await fetch(`${host}/webhook_verification_key/get`, {
-      method: 'POST',
-      headers: { 'PLAID-CLIENT-ID': env.PLAID_CLIENT_ID!, 'PLAID-SECRET': env.PLAID_SECRET!, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ key_id: kid }),
-    })
-    if (!res.ok) return null
-    const key = ((await res.json()) as { key?: JsonWebKey & { expired_at?: unknown } } | null)?.key
+    const { key } = await plaidFetch<{ key?: JsonWebKey & { expired_at?: unknown } }>(env, '/webhook_verification_key/get', { key_id: kid })
     return key && !key.expired_at ? key : null
   } catch {
     return null

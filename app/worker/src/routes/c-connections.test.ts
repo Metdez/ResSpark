@@ -6,6 +6,7 @@ import { latestItemSummary } from '../db/connections-ops'
 import { hasConsent, recordConsent } from '../db/consents'
 import { findSessionItem, sessionRequest, type ItemRow } from '../db/documents'
 import { app } from '../index'
+import { startBank } from '../integrations/bank/start'
 import { ProviderError } from '../integrations/provider-error'
 import { startPayroll } from '../integrations/truv/start'
 import { _resetRateLimitForTests } from '../middleware/link-rate-limit'
@@ -19,6 +20,7 @@ vi.mock('../db/consents')
 vi.mock('../db/documents')
 vi.mock('../db/events')
 vi.mock('../integrations/truv/start')
+vi.mock('../integrations/bank/start')
 vi.mock('../middleware/client-session', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../middleware/client-session')>()),
   clientSession: createMiddleware(async (c, next) => {
@@ -105,11 +107,14 @@ describe('POST /api/c/consents', () => {
 })
 
 describe('POST /api/c/connections/:kind/start', () => {
-  it('bank with consent and Plaid configured is 503 provider_not_available (until Plan 04)', async () => {
+  it('bank with consent and Plaid configured returns the hosted link url', async () => {
     vi.mocked(findSessionItem).mockResolvedValue(item({ kind: 'bank_connect' }))
+    const capabilities = { transactions: true, statementPdfs: true, hostedLink: true }
+    vi.mocked(startBank).mockResolvedValue({ connection_id: CONN, hosted_link_url: 'https://secure.plaid.com/hl/x', capabilities, reused_row: false })
     const res = await call('POST', '/api/c/connections/bank/start', { item_id: ITEM }, { env: env({ PLAID_CLIENT_ID: 'p', PLAID_SECRET: 'q' }) })
-    expect(res.status).toBe(503)
-    expect((await code(res)).code).toBe('provider_not_available')
+    expect(res.status).toBe(200)
+    expect(await res.json()).toEqual({ connection_id: CONN, kind: 'bank', provider: 'plaid', capabilities, hosted_link_url: 'https://secure.plaid.com/hl/x' })
+    expect(vi.mocked(startBank).mock.calls[0][1]).toMatchObject({ origin: 'http://localhost' })
   })
   it('payroll start on a bank item is 409 item_kind_mismatch', async () => {
     vi.mocked(findSessionItem).mockResolvedValue(item({ kind: 'bank_connect' }))

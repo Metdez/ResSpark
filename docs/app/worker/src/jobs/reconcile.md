@@ -10,7 +10,7 @@ The single reconcile function (D-04) behind the webhook consumer, the cron (Plan
 
 1. Loads the connection; missing → `NonRetryableError('connection_not_found')`.
 2. `removed` is terminal: returns `{ status: 'removed', applied: false }` without calling the vendor.
-3. `payroll` → `reconcilePayroll`. `bank` → `NonRetryableError('bank_not_available')`; Plan 04 replaces this branch with the Plaid reconcile (a functionality gap, not an architecture change).
+3. `payroll` → `reconcilePayroll`. `bank` → `reconcileBank` (Plan 04-04, `jobs/bank-reconcile.ts`): session completion, public-token exchange into the vault, and (Task 2) the sync and statements.
 4. Always (in `finally`) stamps `last_polled_at`, so the cron's "least recently polled first" ordering advances even when the vendor call fails.
 
 Every path that changes status ends in `setConnectionStatus` (the RPC); nothing here writes `connections.status`.

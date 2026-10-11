@@ -19,6 +19,7 @@ import { adminReviewRoute } from './routes/admin-review'
 import { adminSessionRoute } from './routes/admin-session'
 import { cAddressRoute } from './routes/c-address'
 import { cConnectionsRoute } from './routes/c-connections'
+import { cReturnRoute } from './routes/c-return'
 import { cUploadsRoute } from './routes/c-uploads'
 import { clientLinkRoute } from './routes/client-link'
 import { clientPortalRoute } from './routes/client-portal'
@@ -66,6 +67,8 @@ app.route('/api/admin', adminLogicsPushRoute)
 app.route('/api/admin', adminConnectionsRoute)
 // Last of the /api/admin mounts: its '*' staffAuth would otherwise run again on sibling admin routes.
 app.route('/api/admin', adminLookupRoute)
+// /c/return must win over /c/:token: Hono matches in registration order.
+app.route('/c', cReturnRoute)
 app.route('/c', clientLinkRoute)
 app.route('/api/c', clientPortalRoute)
 app.route('/api/c', cUploadsRoute)

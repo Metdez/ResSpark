@@ -37,8 +37,9 @@ Guard order: header (403 `bad_origin`) → body is an object with `kind` in `ban
 | 5 | item `approved` | 409 `item_approved` |
 | 6 | no consent for the current version | 409 `consent_required` |
 | 7 | provider secrets missing | 503 `provider_not_configured` ("Provider not configured") |
-| 8 | `kind === 'bank'` | 503 `provider_not_available` (Plan 04 replaces this branch with `startBank`) |
-| 9 | `startPayroll` throws `ProviderError` | 502 `provider_error`, message = vendor code |
+| 8 | request or case missing | 404 |
+| 9 | `kind === 'bank'` | `startBank(env, { client, item, caseRow, origin })` (Plan 04-04, `integrations/bank/start.ts`; `origin` is `new URL(c.req.url).origin`) → 200 `{ connection_id, kind: 'bank', provider, capabilities, hosted_link_url }` |
+| 10 | `startPayroll` or `startBank` throws `ProviderError` | 502 `provider_error`, message = vendor code |
 | - | success | 200 `{ connection_id, kind: 'payroll', provider: 'truv', capabilities: null, bridge_token }` |
 
 The consent gate runs before any vendor call in the same request (T-04-13). The case row comes from `sessionRequest` (the Phase 3 helper that reads `requests.case_id` for the session) and `getCase`.

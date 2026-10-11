@@ -45,6 +45,7 @@ export interface BankProvider {
     env: Env,
     p: {
       connectionId: string
+      requestId: string
       firmName: string
       webhookUrl: string
       returnUrl: string

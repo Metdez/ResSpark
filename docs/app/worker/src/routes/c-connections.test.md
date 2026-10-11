@@ -9,7 +9,7 @@ Unit tests for the client connection routes (no network). `db/cases`, `db/connec
 | item view on another request's item | 404 |
 | consent without `X-Requested-With` | 403 `bad_origin`, `no-store` |
 | consent with `kind: 'nope'` | 400, nothing recorded |
-| bank start with consent and Plaid configured | 503 `provider_not_available` (Plan 04 flips this) |
+| bank start with consent and Plaid configured | 200 `{ connection_id, kind: 'bank', provider: 'plaid', capabilities, hosted_link_url }` from the mocked `startBank`, called with `origin: 'http://localhost'` (Plan 04-04) |
 | payroll start on a bank item | 409 `item_kind_mismatch` |
 | payroll start on an approved item | 409 `item_approved`, `startPayroll` not called |
 | `startPayroll` rejects `ProviderError(..., 'invalid_phone')` | 502 `provider_error`, message `invalid_phone` |
