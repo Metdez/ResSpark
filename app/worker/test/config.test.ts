@@ -24,6 +24,7 @@ describe('worker routing', () => {
     expect(await res.json()).toEqual({
       app_env: 'sandbox',
       logics_write_enabled: false,
+      logics_mode: 'fake',
       app_name: 'ResSpark',
     })
   })

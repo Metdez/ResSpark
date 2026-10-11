@@ -5,6 +5,7 @@ export const configRoute = new Hono<{ Bindings: Env }>().get('/', (c) =>
   c.json({
     app_env: c.env.APP_ENV,
     logics_write_enabled: c.env.LOGICS_WRITE_ENABLED === 'true',
+    logics_mode: c.env.LOGICS_MODE === 'live' ? 'live' : 'fake',
     app_name: 'ResSpark',
   })
 )

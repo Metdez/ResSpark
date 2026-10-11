@@ -1,6 +1,7 @@
 import { listNonTerminalConnections, recordConnectionEvent, updateConnection } from '../db/connections'
 import { getWebhookEvent, markWebhookEvent } from '../db/webhook-events'
 import { NonRetryableError, ProviderError } from '../integrations/provider-error'
+import { handleLogicsPushPart, type LogicsPushJob } from './logics-push'
 import { connectionIdForWebhook, reconcileConnection } from './reconcile'
 
 export { NonRetryableError } from '../integrations/provider-error'
@@ -10,6 +11,7 @@ export type Job =
   | { type: 'webhook'; provider: 'plaid' | 'truv'; ref: string }
   | { type: 'reconcile'; ref: string }
   | { type: 'remove_item'; ref: string }
+  | LogicsPushJob
 
 const DLQ = 'resspark-jobs-dlq'
 const UNMATCHED_LIMIT = 20
@@ -68,7 +70,8 @@ export async function queue(batch: MessageBatch<Job>, env: Env): Promise<void> {
     for (const m of batch.messages) {
       try {
         if (m.body.type === 'webhook') await markWebhookEvent(env, m.body.ref, 'dead', 'dead_lettered')
-        else await recordConnectionEvent(env, m.body.ref, 'job.dead_lettered', { type: m.body.type })
+        // a dead-lettered push row is still queued; the Phase 5 sweeper re-enqueues it
+        else if (m.body.type !== 'logics_push') await recordConnectionEvent(env, m.body.ref, 'job.dead_lettered', { type: m.body.type })
       } catch {
         log('error', String(m.body?.type), m.attempts, 'dlq_record_failed')
       }
@@ -78,6 +81,16 @@ export async function queue(batch: MessageBatch<Job>, env: Env): Promise<void> {
   }
   for (const m of batch.messages) {
     const job = m.body
+    // Ack-after-dispatch (D-03): this handler owns ack/retry. The generic retry below must never
+    // see a push, or a redelivery could POST the same document to Logics twice.
+    if (job.type === 'logics_push') {
+      try {
+        await handleLogicsPushPart(m as Message<LogicsPushJob>, env)
+      } catch (e) {
+        log('error', job.type, m.attempts, codeOf(e))
+      }
+      continue
+    }
     try {
       await runJob(env, job)
       m.ack()
