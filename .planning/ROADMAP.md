@@ -88,7 +88,15 @@ Plans:
   4. Staff can see which step the client is on and the last error the client hit, so they can say on the phone "are you on this step?" (STAT-03)
   5. The case view shows a timeline of who did what and when (lookup, send, open, upload, approve, reject), and provider webhook events join the same timeline once the providers arrive in Phase 4 (STAT-04)
 
-**Plans**: TBD
+**Plans:** 5 plans
+
+Plans:
+- [ ] 03-01-PLAN.md — [BLOCKING] Migration 0004 (documents columns, `case-documents` bucket, `request_status()`, review RPCs, dashboard view) + signed-upload mint/complete routes with magic-byte check, proven live (UPL-01, UPL-02, UPL-04)
+- [ ] 03-02-PLAN.md — Client upload step: accept rules, Canvas resize + lazy HEIC + SHA-256, TUS-or-PUT transport per spike (c), mobile sheet with progress/rejected states wired into the step list (UPL-01, UPL-02, UPL-03)
+- [ ] 03-03-PLAN.md — Staff review: `/review`, signed preview/download URLs, approve/reject RPC routes, `/cases/:id/events`, `StatusBadge`/`pollInterval`/`ago`, review panel + reject dialog on the request page with 5 s poll (UPL-03, UPL-04, STAT-02)
+- [ ] 03-04-PLAN.md — Dashboard: `GET /api/admin/requests?status=&q=` over `request_dashboard_v` + TanStack Table with chips, search, sorting, overdue badges, visibility-aware polling (STAT-01, STAT-02)
+- [ ] 03-05-PLAN.md — Client mirror card with 10-minute stuck hint and the case timeline with labels, actor badges, and `Load older` paging (STAT-03, STAT-04)
+
 **Scope notes**: Worker-minted signed TUS uploads direct to Supabase Storage (bytes never touch the Worker), client-side image compression, magic-byte checks, HEIC handling; polling rather than Realtime for the demo.
 **UI hint**: yes
 
