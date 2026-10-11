@@ -188,6 +188,21 @@ describe('POST /logics-pushes/:pushId/resolve', () => {
     expect(send).toHaveBeenCalledWith({ type: 'logics_push', provider: 'logics', ref: 'NEW' })
   })
 
+  it('D-08: resend is 403 when the firm turned Logics writes off; nothing resolved or enqueued', async () => {
+    vi.mocked(getIntegration).mockResolvedValue({ settings: { write_enabled: false } } as unknown as FirmIntegrationRow)
+    const res = await resolve({ action: 'resend' })
+    expect(res.status).toBe(403)
+    expect(await errorOf(res)).toEqual({ code: 'logics_write_blocked', message: 'Logics writes are turned off for this firm in Settings' })
+    expect(resolvePush).not.toHaveBeenCalled()
+    expect(send).not.toHaveBeenCalled()
+  })
+
+  it('mark_sent still works with the firm switch off (it writes nothing to Logics)', async () => {
+    vi.mocked(getIntegration).mockResolvedValue({ settings: { write_enabled: false } } as unknown as FirmIntegrationRow)
+    vi.mocked(resolvePush).mockResolvedValue({ state: 'sent', new_push_id: null })
+    expect((await resolve({ action: 'mark_sent', logics_document_id: 128346 })).status).toBe(200)
+  })
+
   it('409 not_resolvable from the ledger', async () => {
     vi.mocked(resolvePush).mockRejectedValue(new Error('not_resolvable'))
     const res = await resolve({ action: 'mark_sent', logics_document_id: 128346 })

@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { getIntegration, type FirmIntegrationRow } from '../db/integrations'
 import { claimPush, getPushForJob, transitionPush, type PushJob, type PushRow } from '../db/logics-pushes'
+import { liveClientFromRow } from '../integrations/logics/config'
 import { createFakeLogicsClient } from '../integrations/logics/fixtures'
 import type { FakeWriteOptions } from '../integrations/logics/write-types'
 import { handleLogicsPushPart, type LogicsPushJob } from './logics-push'
@@ -10,7 +12,7 @@ vi.mock('../db/logics-pushes', () => ({ claimPush: vi.fn(), getPushForJob: vi.fn
 vi.mock('./logics-push-normalize', () => ({ ensureNormalized: vi.fn() }))
 vi.mock('./logics-push-finalize', () => ({ finalizeBatchIfDone: vi.fn() }))
 vi.mock('../integrations/logics/config', () => ({ liveClientFromRow: vi.fn() }))
-vi.mock('../db/integrations', () => ({ getIntegration: vi.fn() }))
+vi.mock('../db/integrations', async (orig) => ({ ...(await orig<typeof import('../db/integrations')>()), getIntegration: vi.fn() }))
 
 const ENV = { LOGICS_MODE: 'fake', LOGICS_WRITE_ENABLED: 'true', LOGICS_TEST_CASE_IDS: '900001' } as unknown as Env
 const row = { id: 'P1', batch_id: 'B1', state: 'sending' } as PushRow
@@ -44,6 +46,7 @@ beforeEach(() => {
   vi.mocked(getPushForJob).mockResolvedValue(job)
   vi.mocked(ensureNormalized).mockResolvedValue({ ok: true, part })
   vi.mocked(transitionPush).mockResolvedValue(true)
+  vi.mocked(getIntegration).mockResolvedValue({ settings: { write_enabled: true } } as unknown as FirmIntegrationRow)
 })
 afterEach(() => vi.clearAllMocks())
 
@@ -79,6 +82,37 @@ describe('handleLogicsPushPart: pre-dispatch failures after the claim', () => {
     await run({ ...ENV, LOGICS_WRITE_ENABLED: 'false', LOGICS_TEST_CASE_IDS: '' })
     expect(ensureNormalized).toHaveBeenCalled()
     expect(lastTransition()).not.toMatchObject({ errorCode: 'logics_write_blocked' })
+  })
+
+  it('D-08: the firm switch turned off after queueing fails the row in fake mode; the client is never called', async () => {
+    vi.mocked(getIntegration).mockResolvedValue({ settings: { write_enabled: false } } as unknown as FirmIntegrationRow)
+    const send = vi.fn()
+    const msg = await run(ENV, { clientFactory: () => ({ ...createFakeLogicsClient(), createCaseDocument: send }) })
+    expect(lastTransition()).toMatchObject({
+      from: 'sending',
+      to: 'failed',
+      errorCode: 'logics_write_blocked',
+      errorDetail: 'Logics writes are turned off for this firm in Settings',
+    })
+    expect(send).not.toHaveBeenCalled()
+    expect(ensureNormalized).not.toHaveBeenCalled()
+    expect(msg.ack).toHaveBeenCalledTimes(1)
+    expect(msg.retry).not.toHaveBeenCalled()
+  })
+
+  it('D-08: live mode with the env guard passing but the firm switch off never builds a live client', async () => {
+    vi.mocked(getPushForJob).mockResolvedValue({ ...job, mode: 'live' })
+    vi.mocked(getIntegration).mockResolvedValue({
+      api_key_ciphertext: 'k',
+      secret_ciphertext: 's',
+      last_test_ok: true,
+      settings: { write_enabled: false },
+    } as unknown as FirmIntegrationRow)
+    const msg = await run({ ...ENV, LOGICS_MODE: 'live' })
+    expect(lastTransition()).toMatchObject({ to: 'failed', errorCode: 'logics_write_blocked' })
+    expect(liveClientFromRow).not.toHaveBeenCalled()
+    expect(ensureNormalized).not.toHaveBeenCalled()
+    expect(msg.ack).toHaveBeenCalledTimes(1)
   })
 
   it('a mode switch since queueing marks the row failed mode_changed and acks', async () => {

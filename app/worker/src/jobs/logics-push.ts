@@ -1,4 +1,4 @@
-import { getIntegration } from '../db/integrations'
+import { getIntegration, readSettings } from '../db/integrations'
 import { claimPush, getPushForJob, transitionPush, type PushJob, type PushRow } from '../db/logics-pushes'
 import type { LogicsClient } from '../integrations/logics/client'
 import { liveClientFromRow } from '../integrations/logics/config'
@@ -44,11 +44,19 @@ async function prepare(env: Env, job: PushJob, opts: PushOptions): Promise<Ready
   if (mode !== job.mode) {
     return { code: 'mode_changed', detail: `Queued in ${job.mode} mode, now ${mode}`, noteClient: refusedNote('mode_changed') }
   }
+  const row = await getIntegration(env, job.firm_id, 'logics')
+  // D-08 firm toggle, both modes: it can be turned off after the batch was queued (or before a re-send).
+  if (!readSettings(row).write_enabled) {
+    return {
+      code: 'logics_write_blocked',
+      detail: 'Logics writes are turned off for this firm in Settings',
+      noteClient: refusedNote('logics_write_blocked'),
+    }
+  }
   let client: LogicsClient
   if (mode === 'fake') {
     client = opts.clientFactory?.() ?? createFakeLogicsClient()
   } else {
-    const row = await getIntegration(env, job.firm_id, 'logics')
     const usable = row && row.api_key_ciphertext && row.secret_ciphertext && row.last_test_ok === true
     const live = usable ? await liveClientFromRow(env, row).catch(() => null) : null
     if (!live) {

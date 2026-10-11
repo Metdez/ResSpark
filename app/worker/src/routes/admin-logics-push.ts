@@ -132,6 +132,10 @@ export const adminLogicsPushRoute = new Hono<AdminApp>()
     if (!UUID.test(pushId) || (action !== 'mark_sent' && action !== 'resend')) return refuse(c, 400, 'bad_request')
     const docId = logics_document_id ?? null
     if (docId !== null && !(Number.isInteger(docId) && (docId as number) > 0)) return refuse(c, 400, 'bad_request')
+    // D-08: a re-send is a new write, so the firm toggle applies (the consumer re-checks it too).
+    if (action === 'resend' && !readSettings(await getIntegration(c.env, c.var.staff.firmId, 'logics')).write_enabled) {
+      return refuse(c, 403, 'logics_write_blocked', 'Logics writes are turned off for this firm in Settings')
+    }
     let result: Awaited<ReturnType<typeof resolvePush>>
     try {
       result = await resolvePush(c.env, {

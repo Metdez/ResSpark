@@ -1,12 +1,14 @@
 # `app/worker/src/jobs/logics-push.test.ts`
 
-Unit ack/retry matrix for `handleLogicsPushPart` (D-03, PUSH-04). Mocked: `../db/logics-pushes` (`claimPush`, `getPushForJob`, `transitionPush`), `./logics-push-normalize` (`ensureNormalized`), `./logics-push-finalize`, `../integrations/logics/config`, `../db/integrations`. The real write guard runs (live-mode cases only; one case proves fake mode skips it). The client is a real `createFakeLogicsClient({ outcome, delayMs: 0 })` injected through `opts.clientFactory`. Messages are `{ body, ack: vi.fn(), retry: vi.fn(), attempts: 1 }`; env is fake mode, writes on, allowlist `900001`.
+Unit ack/retry matrix for `handleLogicsPushPart` (D-03, PUSH-04). Mocked: `../db/logics-pushes` (`claimPush`, `getPushForJob`, `transitionPush`), `./logics-push-normalize` (`ensureNormalized`), `./logics-push-finalize`, `../integrations/logics/config`, `getIntegration` from `../db/integrations` (the real `readSettings` runs; the default row is `{ settings: { write_enabled: true } }`). The real write guard runs (live-mode cases only; one case proves fake mode skips it). The client is a real `createFakeLogicsClient({ outcome, delayMs: 0 })` injected through `opts.clientFactory`. Messages are `{ body, ack: vi.fn(), retry: vi.fn(), attempts: 1 }`; env is fake mode, writes on, allowlist `900001`.
 
 | Case | Expected |
 |------|----------|
 | claim refused, row `queued` | `retry({ delaySeconds: 30 })`, no ack, no transition |
 | claim refused, row `sent` | ack once, no retry |
 | allowlist `'1'` | failed `logics_write_blocked`, ack once, normalizer not called |
+| firm `write_enabled: false`, fake mode | failed `logics_write_blocked` with the Settings message, client and normalizer never called, ack once |
+| live mode, guard passes, firm `write_enabled: false` | failed `logics_write_blocked`, `liveClientFromRow` and normalizer never called, ack once |
 | env `live`, row `fake` | failed `mode_changed`, ack once |
 | normalizer `pdf_page_too_large` (manual) | failed with `needsManual: true` and the copy, ack once, client never called, finalizer ran |
 | normalizer `storage_read_failed` | failed, `needsManual: false`, ack once, finalizer ran |
