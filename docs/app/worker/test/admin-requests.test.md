@@ -1,6 +1,6 @@
 # `app/worker/test/admin-requests.test.ts`
 
-Route tests for templates, draft creation, the list, one request, and send. They run in the `worker-node` Vitest project through `app.request()`. The DB modules (`db/staff`, `db/events`, `db/integrations`, `db/cases`, `db/requests`) are mocked, and Logics runs in `LOGICS_MODE=fake` against the fixture cases. Staff tokens, env, and row builders come from `requests-fixtures.ts`.
+Route tests for templates, draft creation, the list, one request, and send. They run in the `worker-node` Vitest project through `app.request()`. The DB modules (`db/staff`, `db/events`, `db/integrations`, `db/cases`, `db/requests`, and `listDashboardRequests` from `db/dashboard`) are mocked, and Logics runs in `LOGICS_MODE=fake` against the fixture cases. Staff tokens, env, and row builders come from `requests-fixtures.ts`.
 
 ## Setup
 
@@ -17,7 +17,17 @@ Route tests for templates, draft creation, the list, one request, and send. They
 - A non-UUID `case_id` returns 400, and an unknown `template_id` returns 404.
 - An RPC `case_not_found` returns 404 with that code.
 - The same body posted twice calls `createRequest` twice (no dedupe).
-- `GET /` returns the mocked list for the staff firm.
+
+## List (`GET /`, Phase 3 Plan 04)
+
+`db/dashboard` is mocked with its real `DASHBOARD_STATUSES` and `sanitizeQuery`, and only `listDashboardRequests` is replaced. That way the route's validation runs for real.
+
+- With no params the route returns 200, and each row carries the Phase 2 keys (`id`, `status`, `client_name`, `sent_at`, `expires_at`, `created_at`). The reader is called with `(FIRM, { status: undefined, q: undefined })`.
+- `?status=complete` is passed through as is.
+- `?status=bogus` and `?status=draft` return 400 `bad_request`, and the reader is not called.
+- `?q=  Ann (Smith), ann@x.com ` reaches the reader as `Ann Smith ann@x.com`.
+- `?q=` reaches the reader as `undefined`.
+- The template and one-request cases in the other blocks still pass, so `/templates` and `/:id` are not shadowed by the list handler.
 
 ## One request
 

@@ -17,7 +17,7 @@ The in-file `relativeTime` helper (an `Intl.RelativeTimeFormat` with a year-to-s
 
 ## Notes
 
-- The Worker returns at most 200 requests (`listRequests` in `worker/src/db/requests.ts`); paging is not needed for the demo.
+- The Worker returns at most 200 requests (`listDashboardRequests` in `worker/src/db/dashboard.ts`, since Phase 3 Plan 04), drafts excluded, newest activity first; paging is not needed for the demo.
 - `meta.errorShown` tells the app-wide handler in `main.tsx` that this page shows its own error, so a failed load gets no extra toast. A 401 still signs out (Plan 02-08).
 
 ## Tests

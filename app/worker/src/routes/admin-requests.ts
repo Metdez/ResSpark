@@ -1,7 +1,8 @@
 import { Hono, type Context } from 'hono'
 import { HTTPException } from 'hono/http-exception'
 import { hmacKey, mintLinkToken, uuidToBytes } from '../auth/client-link'
-import { createRequest, getRequest, getTemplates, listRequests, type TemplateItem } from '../db/requests'
+import { DASHBOARD_STATUSES, type DashboardStatus, listDashboardRequests, sanitizeQuery } from '../db/dashboard'
+import { createRequest, getRequest, getTemplates, type TemplateItem } from '../db/requests'
 import { RPC_TOKENS } from '../db/rpc-error'
 import { staffAuth, type StaffCtx } from '../middleware/staff-auth'
 
@@ -102,7 +103,14 @@ export const adminRequestsRoute = new Hono<AdminApp>()
       throw rpcToHttp(e)
     }
   })
-  .get('/', async (c) => c.json({ requests: await listRequests(c.env, c.var.staff.firmId) }))
+  // D-07: the dashboard and the Phase 2 requests page share this list; rows keep every Phase 2 key.
+  .get('/', async (c) => {
+    const { status: rawStatus, q: rawQ } = c.req.query()
+    if (rawStatus !== undefined && !(DASHBOARD_STATUSES as readonly string[]).includes(rawStatus)) throw badRequest()
+    const status = rawStatus as DashboardStatus | undefined
+    const q = sanitizeQuery(rawQ) || undefined
+    return c.json({ requests: await listDashboardRequests(c.env, c.var.staff.firmId, { status, q }) })
+  })
   .get('/:id', async (c) => {
     const found = await getRequest(c.env, c.var.staff.firmId, requestIdParam(c))
     if (!found) throw notFound()

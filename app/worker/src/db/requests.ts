@@ -60,15 +60,6 @@ export interface RequestBundle {
   firm_name: string
 }
 
-export interface RequestListRow {
-  id: string
-  status: string
-  client_name: string
-  sent_at: string | null
-  expires_at: string | null
-  created_at: string
-}
-
 export interface IssuedLink {
   link_id: string
   version: number
@@ -120,41 +111,6 @@ export async function createRequest(
   })
   if (error) throw fail(error, 'request_create_failed')
   return data as string
-}
-
-type ListRaw = {
-  id: string
-  status: string
-  sent_at: string | null
-  created_at: string
-  cases: OneOrMany<{ first_name: string | null; last_name: string | null }>
-  client_links: OneOrMany<{ expires_at: string }>
-}
-
-type OneOrMany<T> = T | T[] | null
-// PostgREST embeds a to-one relation as an object, but untyped clients may see an array.
-const one = <T>(v: OneOrMany<T>): T | null => (Array.isArray(v) ? (v[0] ?? null) : v)
-
-export async function listRequests(env: DbEnv, firmId: string): Promise<RequestListRow[]> {
-  const { data, error } = await createAdminClient(env)
-    .from('requests')
-    .select('id, status, sent_at, created_at, cases!inner(first_name, last_name), client_links(expires_at)')
-    .eq('firm_id', firmId)
-    .order('created_at', { ascending: false })
-    .limit(200)
-  if (error) throw new Error('requests_lookup_failed')
-  return (data as unknown as ListRaw[]).map((r) => {
-    const kase = one(r.cases)
-    const link = one(r.client_links)
-    return {
-      id: r.id,
-      status: r.status,
-      client_name: [kase?.first_name, kase?.last_name].filter(Boolean).join(' ') || 'Unknown client',
-      sent_at: r.sent_at,
-      expires_at: link?.expires_at ?? null,
-      created_at: r.created_at,
-    }
-  })
 }
 
 // Firm-scoped first (Pattern 2): another firm's request id reads as null.
