@@ -1,4 +1,4 @@
-import { LayoutDashboard, Palette, Search, Send } from 'lucide-react'
+import { LayoutDashboard, Palette, Plug, Search, Send } from 'lucide-react'
 import { type SidebarData } from '../types'
 
 export const sidebarData: SidebarData = {
@@ -30,6 +30,11 @@ export const sidebarData: SidebarData = {
           title: 'Appearance',
           url: '/admin/settings/appearance',
           icon: Palette,
+        },
+        {
+          title: 'Integrations',
+          url: '/admin/settings/integrations',
+          icon: Plug,
         },
       ],
     },

@@ -1,4 +1,3 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   button,
   cleanup,
@@ -10,6 +9,7 @@ import {
   waitFor,
   type Reply,
 } from '@/test-utils/query-render'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { LogicsSettingsPage } from './logics-settings-page'
 
 vi.mock('@/lib/supabase', () => ({
@@ -166,7 +166,9 @@ describe('LogicsSettingsPage', () => {
       testReply({ ok: false, status: 401, tested_at: '2026-10-10T16:00:00Z' })
     )
     await click(button('Test connection')!)
-    await waitFor(() => el.textContent!.includes('Logics rejected the credentials'))
+    await waitFor(() =>
+      el.textContent!.includes('Logics rejected the credentials')
+    )
     expect(el.textContent).toContain(
       'Check the API key and secret token and save again.'
     )
