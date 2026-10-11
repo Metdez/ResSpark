@@ -14,11 +14,15 @@
   "vars": {
     "APP_ENV": "sandbox",
     "LOGICS_WRITE_ENABLED": "false",
-    "LOGICS_TEST_CASE_IDS": ""
+    "LOGICS_TEST_CASE_IDS": "",
+    // "fake" serves fixture cases (C1); "live" after Settings → Integrations → Test connection succeeds
+    "LOGICS_MODE": "fake",
+    // Resend delivers only to the account owner until a domain is verified (D-09)
+    "RESEND_FROM": "onboarding@resend.dev"
   },
   // Deploy fails if any of these is not set on the Worker (D-07); values come from provision-secrets.mjs
   "secrets": {
-    "required": ["SUPABASE_URL", "SUPABASE_SECRET_KEY", "CLIENT_LINK_HMAC_KEY"]
+    "required": ["SUPABASE_URL", "SUPABASE_SECRET_KEY", "CLIENT_LINK_HMAC_KEY", "INTEGRATION_ENC_KEY"]
   },
   // Per-ip throttle on /c/:token guessing (D-18); link-rate-limit.ts falls back to memory without it
   "ratelimits": [

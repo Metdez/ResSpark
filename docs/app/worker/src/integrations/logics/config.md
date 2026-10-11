@@ -6,12 +6,12 @@ Picks which Logics client a request uses (fixtures or live) and guards the admin
 |-------|--------------|
 | 1-3 | Imports decryption, the live client and its error type, and the fixture client. |
 | 5 | `DEFAULT_LOGICS_BASE_URL`: the ValorTax V4 public API root, with a trailing slash so relative endpoint paths resolve under it. |
-| 7-13 | `LogicsEnv`: the three env values this module reads. The `shortcut:` comment explains why it is a local type: `LOGICS_MODE` and `INTEGRATION_ENC_KEY` are not in `worker-configuration.d.ts` until Plan 03 declares them and regenerates types. The real `Env` will satisfy it unchanged. |
-| 15-20 | `IntegrationRow`: the `firm_integrations` columns used here. `null` ciphertext means "not entered"; `last_test_ok` `null` means "never tested". |
-| 22 | `LogicsMode`: `fake` or `live`, returned so the UI can show which one answered. |
-| 24-40 | `validateLogicsBaseUrl`: parses with `new URL` (failure → `invalid_base_url`). Requires `https:`. Rejects IP-literal hosts (anything containing `:` or `[`, or made only of digits and dots; WHATWG parsing already turns `0x7f.1` and `2130706433` into dotted form) and rejects URLs with a query or fragment. In `production` the host must be `logiqsapi.com` or end with `.logiqsapi.com`, so `logiqsapi.com.evil.example` fails. Returns the normalized `href` with exactly one trailing `/`. |
-| 42-60 | `liveClientFromRow`: both ciphertexts are required (`not_configured` otherwise). It re-validates the stored base URL against the current `APP_ENV`, decrypts both values (a rotated key or corrupted row becomes `not_configured`), and builds the live client. "Test connection" calls it directly, before `last_test_ok` exists. |
-| 62-73 | `resolveLogicsClient`: `LOGICS_MODE === 'fake'` always returns the fixture client, even when tested credentials exist, so a demo can never read the real tenant (C1). Otherwise it needs a row with both ciphertexts and `last_test_ok === true`, else `not_configured`, and returns the live client with `mode: 'live'`. |
+| 7 | `LogicsEnv`: `Pick<Env, 'LOGICS_MODE' \| 'INTEGRATION_ENC_KEY' \| 'APP_ENV'>`, the three env values this module reads. Plan 03 declared them in `wrangler.jsonc` and regenerated `worker-configuration.d.ts`, replacing the earlier local interface. |
+| 9-14 | `IntegrationRow`: the `firm_integrations` columns used here. `null` ciphertext means "not entered"; `last_test_ok` `null` means "never tested". |
+| 16 | `LogicsMode`: `fake` or `live`, returned so the UI can show which one answered. |
+| 18-34 | `validateLogicsBaseUrl`: parses with `new URL` (failure → `invalid_base_url`). Requires `https:`. Rejects IP-literal hosts (anything containing `:` or `[`, or made only of digits and dots; WHATWG parsing already turns `0x7f.1` and `2130706433` into dotted form) and rejects URLs with a query or fragment. In `production` the host must be `logiqsapi.com` or end with `.logiqsapi.com`, so `logiqsapi.com.evil.example` fails. Returns the normalized `href` with exactly one trailing `/`. |
+| 36-54 | `liveClientFromRow`: both ciphertexts are required (`not_configured` otherwise). It re-validates the stored base URL against the current `APP_ENV`, decrypts both values (a rotated key or corrupted row becomes `not_configured`), and builds the live client. "Test connection" calls it directly, before `last_test_ok` exists. |
+| 56-67 | `resolveLogicsClient`: `LOGICS_MODE === 'fake'` always returns the fixture client, even when tested credentials exist, so a demo can never read the real tenant (C1). Otherwise it needs a row with both ciphertexts and `last_test_ok === true`, else `not_configured`, and returns the live client with `mode: 'live'`. |
 
 ## Precedence
 

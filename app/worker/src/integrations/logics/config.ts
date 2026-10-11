@@ -4,13 +4,7 @@ import { createFakeLogicsClient } from './fixtures'
 
 export const DEFAULT_LOGICS_BASE_URL = 'https://valortax.logiqsapi.com/publicapi/V4/'
 
-// shortcut: LOGICS_MODE and INTEGRATION_ENC_KEY are not in worker-configuration.d.ts yet; switch to
-// Pick<Env, ...> once Plan 03 declares them in wrangler.jsonc and reruns `pnpm cf-typegen`
-export interface LogicsEnv {
-  LOGICS_MODE?: string
-  INTEGRATION_ENC_KEY: string
-  APP_ENV: string
-}
+export type LogicsEnv = Pick<Env, 'LOGICS_MODE' | 'INTEGRATION_ENC_KEY' | 'APP_ENV'>
 
 export interface IntegrationRow {
   base_url: string

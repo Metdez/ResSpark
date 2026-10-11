@@ -1,3 +1,4 @@
+// The bare RAISE EXCEPTION tokens of migration 0003's RPCs; the Worker maps them to error codes.
 export const RPC_TOKENS = [
   'no_items',
   'case_not_found',
@@ -8,6 +9,10 @@ export const RPC_TOKENS = [
   'link_inactive',
 ] as const
 
-export function rpcErrorToken(_error: { message?: string } | null | undefined): (typeof RPC_TOKENS)[number] | null {
-  return null // RED stub
+export type RpcToken = (typeof RPC_TOKENS)[number]
+
+// supabase-js surfaces a plpgsql RAISE as error.message, possibly behind a SQLSTATE prefix.
+export function rpcErrorToken(error: { message?: string } | null | undefined): RpcToken | null {
+  const words = (error?.message ?? '').split(/\W+/)
+  return RPC_TOKENS.find((t) => words.includes(t)) ?? null
 }
