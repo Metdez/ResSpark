@@ -4,7 +4,7 @@ The Cloudflare Queues consumer for `resspark-jobs` and its dead-letter queue `re
 
 ## Exports
 
-- `Job`: the message union. Messages carry ids only (`ref`), never payloads or secrets (128 KB limit, Phase 1 D-20): `webhook` (`ref` = `webhook_events.id`), `reconcile` (`ref` = connection id), `remove_item` (`ref` = connection id, Plan 04-04), and `LogicsPushJob` (`{ type: 'logics_push', provider: 'logics', ref }`, `ref` = `logics_pushes.id`, Phase 5).
+- `Job`: the message union. Messages carry ids only (`ref`), never payloads or secrets (128 KB limit, Phase 1 D-20): `webhook` (`ref` = `webhook_events.id`; `provider` is `plaid`, `truv` or `docuseal`), `reconcile` (`ref` = connection id), `remove_item` (`ref` = connection id, Plan 04-04), and `LogicsPushJob` (`{ type: 'logics_push', provider: 'logics', ref }`, `ref` = `logics_pushes.id`, Phase 5).
 - `NonRetryableError`: re-exported from `integrations/provider-error.ts`.
 - `retryDelaySeconds(attempts)`: `min(60 * 2^attempts, 86_400)`; 120 s at attempt 1, 240 s at attempt 2, capped at the 24-hour Queues maximum.
 - `queue(batch, env)`: the consumer. Never throws.

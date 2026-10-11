@@ -10,6 +10,7 @@ import type { WebhookEventRow } from '../db/webhook-events'
 import { NonRetryableError } from '../integrations/provider-error'
 import { reconcileBank } from './bank-reconcile'
 import { reconcilePayroll } from './payroll-reconcile'
+import { reconcileSignature } from './signature-reconcile'
 
 export interface ReconcileOpts {
   source: 'webhook' | 'cron' | 'client' | 'staff'
@@ -28,6 +29,7 @@ export async function reconcileConnection(
   if (conn.status === 'removed') return { status: 'removed', applied: false }
   try {
     if (conn.kind === 'payroll') return await reconcilePayroll(env, conn, opts)
+    if (conn.kind === 'signature') return await reconcileSignature(env, conn, opts)
     return await reconcileBank(env, conn, opts)
   } finally {
     await updateConnection(env, conn.id, { last_polled_at: new Date().toISOString() })
@@ -56,6 +58,12 @@ export async function connectionIdForWebhook(env: Env, event: WebhookEventRow): 
     const itemId = str(p.item_id)
     const byItem = itemId ? await findConnectionByExternalId(env, 'plaid', itemId) : null
     return byItem?.id ?? null
+  }
+  if (event.provider === 'docuseal') {
+    // data.id is the submitter; the connection's external_id is the submission (RESEARCH contradiction 5)
+    const sub = (p.data as { submission_id?: unknown } | undefined)?.submission_id
+    if (!Number.isInteger(sub)) return null
+    return (await findConnectionByExternalId(env, 'docuseal', String(sub)))?.id ?? null
   }
   return null
 }

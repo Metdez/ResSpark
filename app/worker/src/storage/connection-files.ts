@@ -18,7 +18,7 @@ export function providerObjectPath(p: {
   firm_id: string
   case_id: string
   request_item_id: string
-  kind: 'bank' | 'payroll'
+  kind: 'bank' | 'payroll' | 'signature'
   group: string
   name: string
 }): string {
@@ -36,7 +36,7 @@ export async function storeProviderFile(
   env: DbEnv,
   p: {
     conn: ConnectionRow
-    kind: 'bank' | 'payroll'
+    kind: 'bank' | 'payroll' | 'signature'
     group: string
     name: string
     mime: string

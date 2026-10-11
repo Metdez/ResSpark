@@ -1,10 +1,10 @@
 # `app/worker/src/storage/connection-files.ts`
 
-Stores provider-fetched files (Truv now, Plaid statements in Plan 04-04) in the private `case-documents` bucket with a `documents` row (D-06).
+Stores provider-fetched files (Truv, Plaid statements, and DocuSeal signed PDFs since Plan 06-04) in the private `case-documents` bucket with a `documents` row (D-06).
 
 ## Path layout
 
-`providerObjectPath(p)` gives `firm/{firm}/case/{case}/item/{item}/{bank|payroll}/{safeName(group)}/{safeName(name)}`.
+`providerObjectPath(p)` gives `firm/{firm}/case/{case}/item/{item}/{bank|payroll|signature}/{safeName(group)}/{safeName(name)}`. For `signature` the group is the DocuSeal submission id (`.../signature/4001/audit-log.pdf`); only the `kind` union was widened for it.
 
 - Ids come from the connection row; `group` and `name` go through `safeName`, which removes path separators, so `..` cannot traverse.
 - Client uploads use `.../item/{item}/{document_id}/{name}` (Phase 3), so a provider file and a manual upload on the same item never share a path.

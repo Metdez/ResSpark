@@ -34,17 +34,17 @@ export async function listStuckWebhookEvents(
   env: DbEnv,
   olderThanMinutes = 2,
   limit = 50
-): Promise<Array<{ id: string; provider: 'plaid' | 'truv' }>> {
+): Promise<Array<{ id: string; provider: 'plaid' | 'truv' | 'docuseal' }>> {
   const { data, error } = await createAdminClient(env)
     .from('webhook_events')
     .select('id, provider')
     .eq('status', 'queued')
-    .in('provider', ['plaid', 'truv'])
+    .in('provider', ['plaid', 'truv', 'docuseal'])
     .lt('received_at', ago(olderThanMinutes * MINUTE))
     .order('received_at', { ascending: true })
     .limit(limit)
   if (error) throw new Error('webhook_list_failed')
-  return (data ?? []) as Array<{ id: string; provider: 'plaid' | 'truv' }>
+  return (data ?? []) as Array<{ id: string; provider: 'plaid' | 'truv' | 'docuseal' }>
 }
 
 // Pending bank connections older than `hours` that never got an access token: the Hosted Link

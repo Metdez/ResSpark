@@ -9,7 +9,7 @@ export { NonRetryableError } from '../integrations/provider-error'
 
 // Queue messages carry ids only (128 KB limit, no secrets); everything else is re-read.
 export type Job =
-  | { type: 'webhook'; provider: 'plaid' | 'truv'; ref: string }
+  | { type: 'webhook'; provider: 'plaid' | 'truv' | 'docuseal'; ref: string }
   | { type: 'reconcile'; ref: string }
   | { type: 'remove_item'; ref: string }
   | LogicsPushJob

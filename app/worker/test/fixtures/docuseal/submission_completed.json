@@ -1,0 +1,19 @@
+{
+  "id": 4001,
+  "slug": "fixtureSubmission1",
+  "status": "completed",
+  "audit_log_url": "https://docuseal.com/file/audit-fixture.pdf",
+  "combined_document_url": null,
+  "completed_at": "2026-10-11T12:00:00Z",
+  "documents": [{ "name": "Engagement letter (demo)", "url": "https://docuseal.com/file/signed-fixture.pdf" }],
+  "submitters": [
+    {
+      "id": 5001,
+      "slug": "fixtureSlug1",
+      "status": "completed",
+      "role": "Client",
+      "external_id": null,
+      "documents": [{ "name": "Engagement letter (demo)", "url": "https://docuseal.com/file/signed-fixture.pdf" }]
+    }
+  ]
+}

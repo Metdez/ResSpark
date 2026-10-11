@@ -166,6 +166,7 @@ describe.skipIf(!live)('connections tracer (live; needs SUPABASE_URL, SUPABASE_S
         .select('payload, actor_id')
         .eq('firm_id', TEST_FIRM_ID)
         .eq('action', 'webhook.rejected')
+        .eq('actor_id', 'truv') // other suites (esign-complete) reject DocuSeal bodies in parallel
         .gte('created_at', startedAt)
     ).data!
     expect(events).toHaveLength(1)

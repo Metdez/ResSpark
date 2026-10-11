@@ -5,7 +5,7 @@ export interface VerifiedWebhook {
 }
 
 export interface WebhookAdapter {
-  id: 'plaid' | 'truv'
+  id: 'plaid' | 'truv' | 'docuseal'
   configured(env: Env): boolean
   // null = unverifiable; must be computed over the exact raw bytes received.
   verify(raw: string, headers: Headers, env: Env): Promise<VerifiedWebhook | null>
