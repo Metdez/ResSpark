@@ -8,3 +8,7 @@ Live-test fixture for Phase 6 (address and signature items).
 - `cookie()`: mints a link token with `CLIENT_LINK_HMAC_KEY` and exchanges it through `GET /c/:token`, exactly like `uploads.test.ts`, and returns the `rs_client=…` pair.
 - `cleanup()`: deletes the request's connections, then calls `cleanupRequest` (documents and storage objects, then the request, which cascades items, link, sessions, and consents). Events stay (append-only, test firm only). The case's address columns keep whatever the last run wrote; every confirm overwrites all of them.
 - `must()`: throws with the step name when a seed write fails.
+
+## Intake kind (Plan 07-08)
+
+`kinds` also accepts `'intake'`; that item is labelled `Answer a few questions`. Labels come from one `{ address, signature, intake }` lookup. `app/worker/test/intake-live.test.ts` uses it.

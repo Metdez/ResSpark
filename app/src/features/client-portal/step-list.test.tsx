@@ -30,7 +30,8 @@ const STEPS: PortalStep[] = [
   {
     id: 's1',
     position: 1,
-    kind: 'intake',
+    // every real kind has a sheet now; an unknown kind still falls back to Coming next
+    kind: 'later' as PortalStep['kind'],
     label: 'Answer a few questions',
     required: true,
     status: 'pending',
@@ -112,6 +113,20 @@ describe('StepList address step', () => {
     await click(viewOf('Confirm your address'))
     await waitFor(() => document.querySelector('[data-testid="address-sheet"]') !== null)
     expect(document.querySelector('[role="dialog"]')!.textContent).toBe('Confirm your address')
+    expect(text()).not.toContain('Coming next')
+  })
+})
+
+describe('StepList intake step', () => {
+  it('View on an intake step opens the one-question sheet with Yes and No', async () => {
+    const step: PortalStep = { id: 's6', position: 6, kind: 'intake', label: 'Your questions', required: true, status: 'pending' }
+    await renderWithQuery(<StepList firmName='ValorTax' steps={[step]} />, {
+      'GET /api/c/intake': { status: 200, body: { item: { id: 's6', status: 'pending' }, answers: {}, prefill: {} } },
+    })
+    await click(viewOf('Your questions'))
+    await waitFor(() => text().includes('Are you married?'))
+    expect(button('Yes')).toBeDefined()
+    expect(button('No')).toBeDefined()
     expect(text()).not.toContain('Coming next')
   })
 })

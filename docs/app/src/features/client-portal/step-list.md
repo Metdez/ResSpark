@@ -45,3 +45,9 @@ Tests: the Coming next cases now use an `intake` step ("Answer a few questions")
 - The file now imports `useNavigate` from `@tanstack/react-router`; tests mock it.
 
 Tests (`step-list.test.tsx`, router mocked): a pending signature shows a 44 px `Sign` that navigates to `/c/sign/$itemId` with `replace: false` and calls `onView`; `submitted` and `approved` show `View`; `autoOpenId` on a signature navigates once with `replace: true` and does not call `onAutoOpened`; `autoOpenId` on an upload opens its sheet and calls `onAutoOpened` and `onView` once each; an unknown id opens nothing.
+
+## Intake step (Plan 07-08)
+
+`viewing.kind === 'intake'` renders `<IntakeStep step={viewing} open onClose={close} />` from `./intake/intake-step` (one question per screen, see `intake/intake-step.md`). Every real kind now has its own sheet or route, so `ComingNextSheet` is only the fallback for a kind this list does not know yet.
+
+Tests: the Coming next cases now use a step whose kind is cast from `'later'` (still labelled "Answer a few questions"). A new case opens a real `intake` step, answered by a `GET /api/c/intake` reply, and checks the first prompt `Are you married?` with `Yes` and `No` buttons and no Coming next text.

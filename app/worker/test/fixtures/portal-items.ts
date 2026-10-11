@@ -3,12 +3,12 @@ import { createAdminClient } from '../../src/db/client'
 import { app } from '../../src/index'
 import { cleanupRequest, TEST_FIRM_ID } from './request'
 
-// Phase 6 live fixture: an opened request on the "Morgan Lee" test case with address and/or
-// signature items and a live client link. Cases are never deleted (events.case_id has no
+// Phase 6 live fixture: an opened request on the "Morgan Lee" test case with address, signature
+// and/or intake items and a live client link. Cases are never deleted (events.case_id has no
 // ON DELETE), so the case id is fixed and upserted; cleanup() removes the request and its rows.
 export const PORTAL_CASE_ID = '00000000-0000-0000-0000-0000000000e6'
 
-type PortalKind = 'address' | 'signature'
+type PortalKind = 'address' | 'signature' | 'intake'
 
 export interface PortalFixture {
   firmId: string
@@ -67,7 +67,7 @@ export async function seedPortalItems(
     request_id: request.id,
     position: i + 1,
     kind,
-    label: kind === 'address' ? 'Confirm your address' : 'Sign your form',
+    label: { address: 'Confirm your address', signature: 'Sign your form', intake: 'Answer a few questions' }[kind],
     required: true,
     status: 'pending',
     ...(kind === 'signature' ? { config: { template: opts.signatureTemplate ?? 'engagement_letter' } } : {}),

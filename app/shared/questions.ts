@@ -94,3 +94,86 @@ export function validateAnswer(questionId: string, value: unknown): void {
     )
   }
 }
+
+// --- Client intake (07 D-13): UI metadata and the portal's question rules. ---
+export type QuestionControlKind = 'yes_no' | 'stepper' | 'number' | 'choice'
+
+export interface QuestionUi {
+  readonly section: string
+  readonly control: QuestionControlKind
+  readonly options?: ReadonlyArray<{ readonly value: string; readonly label: string }>
+  readonly minimum?: number
+  readonly maximum?: number
+  readonly helpText?: string
+}
+
+const yesNo = (section: string): QuestionUi => ({ section, control: 'yes_no' })
+const count = (minimum: number): QuestionUi => ({ section: 'Household', control: 'stepper', minimum, maximum: 50 })
+const age: QuestionUi = { section: 'Household', control: 'number', minimum: 0, maximum: 120 }
+
+// Sections and pay-frequency labels from the frozen src/frontend/src/questions.ts. Only the 23
+// client questions have an entry: state and county come from the address step, and the three
+// transcript facts are staff-only.
+export const QUESTION_UI: Readonly<Record<string, QuestionUi>> = {
+  filing_status_married: yesNo('Household'),
+  filing_joint_offer: yesNo('Household'),
+  household_size: count(1),
+  dependents_count: count(0),
+  age_taxpayer: age,
+  age_spouse: age,
+  owns_home: yesNo('Housing'),
+  rents_home: yesNo('Housing'),
+  is_wage_earner: yesNo('Employment'),
+  is_self_employed: yesNo('Employment'),
+  pay_frequency: {
+    section: 'Employment',
+    control: 'choice',
+    options: [
+      { value: 'weekly', label: 'Weekly' },
+      { value: 'biweekly', label: 'Every two weeks' },
+      { value: 'semimonthly', label: 'Twice a month' },
+      { value: 'monthly', label: 'Monthly' },
+    ],
+  },
+  vehicle_count: { ...count(0), section: 'Assets' },
+  has_real_property: yesNo('Assets'),
+  has_retirement_accounts: yesNo('Assets'),
+  has_life_insurance_cash_value: yesNo('Assets'),
+  has_investment_accounts: yesNo('Assets'),
+  all_returns_filed: yesNo('Compliance'),
+  in_open_bankruptcy: yesNo('Compliance'),
+  filed_bankruptcy_past_7yrs: yesNo('Compliance'),
+  in_litigation: yesNo('Compliance'),
+  prior_ia_or_oic_default: yesNo('Compliance'),
+  filed_and_paid_timely_last_5_years: yesNo('Compliance'),
+  installment_agreement_last_5_years: yesNo('Compliance'),
+}
+
+const isClientQuestion = (id: string) => Object.prototype.hasOwnProperty.call(QUESTION_UI, id)
+
+export const CLIENT_QUESTION_IDS: readonly string[] = QUESTIONS.map((q) => q.id).filter(isClientQuestion)
+
+// Only these may be prefilled, and only from A-reliability Truv or Logics proposals.
+export const PREFILL_COLUMNS: readonly string[] = ['is_wage_earner', 'pay_frequency', 'filing_status_married', 'age_taxpayer']
+
+// INITIAL_QUESTION_IDS first, then the rest in QUESTIONS order. Besides Python's rules, the portal
+// skips pay_frequency for a non-wage-earner; staff mark that line "Not applicable".
+export function clientQuestionOrder(answers: Readonly<Record<string, unknown>>): string[] {
+  const initial = INITIAL_QUESTION_IDS.filter(isClientQuestion)
+  return [...initial, ...CLIENT_QUESTION_IDS.filter((id) => !initial.includes(id))].filter(
+    (id) => isApplicable(id, answers) && !(id === 'pay_frequency' && answers.is_wage_earner === false)
+  )
+}
+
+export function validateClientAnswer(questionId: string, value: unknown): 'unknown_question' | 'bad_value' | null {
+  if (!isClientQuestion(questionId)) return 'unknown_question'
+  try {
+    validateAnswer(questionId, value)
+  } catch {
+    return 'bad_value'
+  }
+  const ui = QUESTION_UI[questionId]
+  if (typeof value === 'number' && (value < (ui.minimum ?? -Infinity) || value > (ui.maximum ?? Infinity))) return 'bad_value'
+  if (ui.options && !ui.options.some((o) => o.value === value)) return 'bad_value'
+  return null
+}

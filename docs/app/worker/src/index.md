@@ -34,3 +34,7 @@ The single Worker (D-01): a Hono app for `/api/*`, `/webhooks/*`, and `/c/*`, pl
 - `app/worker/test/client-portal.test.ts` covers `/api/c/*`, including the privacy headers on its error responses; `app/worker/test/client-link.test.ts` covers the same headers on `/c/*`.
 - `app/worker/test/auth.test.ts` covers the session route's 401/403/400 paths and the logged `error_code`.
 - `app/worker/test/config.test.ts` (Task 2) drives `app.request()` with a mock `Env` for `/api/config`, the 404 envelope, and the `/c/` fallback headers.
+
+## Client intake mount (Plan 07-08)
+
+`app.route('/api/c', cIntakeRoute)` is added after the e-sign start route. It serves `GET /api/c/intake`, `PUT /api/c/intake` and `POST /api/c/intake/done` (see `routes/c-intake.md`), behind the same `/api/c/*` privacy headers. Its paths are distinct from the other `/api/c` routers, so mount order among them does not matter.

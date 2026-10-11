@@ -22,6 +22,7 @@ import { adminSessionRoute } from './routes/admin-session'
 import { adminWorksheetRoute } from './routes/admin-worksheet'
 import { cAddressRoute } from './routes/c-address'
 import { cConnectionsRoute } from './routes/c-connections'
+import { cIntakeRoute } from './routes/c-intake'
 import { cReturnRoute } from './routes/c-return'
 import { cSignatureRoute } from './routes/c-signature'
 import { cUploadsRoute } from './routes/c-uploads'
@@ -82,6 +83,7 @@ app.route('/api/c', cUploadsRoute)
 app.route('/api/c', cAddressRoute)
 app.route('/api/c', cConnectionsRoute)
 app.route('/api/c', cSignatureRoute)
+app.route('/api/c', cIntakeRoute)
 app.route('/api/webhooks', webhooksRoute)
 
 app.notFound(async (c) => {

@@ -11,6 +11,7 @@ import { AddressSheet } from './address/address-sheet'
 import { ComingNextSheet } from './coming-next-sheet'
 import { BankStep } from './connect/bank-step'
 import { PayrollStep } from './connect/payroll-step'
+import { IntakeStep } from './intake/intake-step'
 import type { PortalStep } from './portal-api'
 import { SIGN_COPY } from './sign/sign-copy'
 import { STEP_DESCRIPTIONS } from './step-copy'
@@ -142,6 +143,8 @@ export function StepList({
         <PayrollStep step={viewing} firmName={firmName} open onClose={close} />
       ) : viewing?.kind === 'bank_connect' ? (
         <BankStep step={viewing} firmName={firmName} open onClose={close} />
+      ) : viewing?.kind === 'intake' ? (
+        <IntakeStep step={viewing} open onClose={close} />
       ) : (
         <ComingNextSheet step={viewing} onClose={close} />
       )}
