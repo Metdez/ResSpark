@@ -60,6 +60,12 @@ SOFTWARE.
 - Repo plumbing: `.git/`, `.github/`, `.vscode/`, `pnpm-lock.yaml`, `netlify.toml`, `cz.yaml`,
   `CHANGELOG.md`, `README.md`, `LICENSE` (text reproduced above)
 
+## Runtime dependencies with attribution notes
+
+- `@cantoo/pdf-lib` 2.11.1 (MIT), <https://github.com/cantoo-scribe/pdf-lib>, a maintained fork of
+  Hopding/pdf-lib. Used by `worker/src/pdf/` to split PDFs and wrap JPEG/PNG images before they
+  are pushed to Logics (Phase 5, PUSH-02). Its license ships in `node_modules/@cantoo/pdf-lib/LICENSE.md`.
+
 ## Visual references (no code copied)
 
 ERPNext (GPL-3.0), DocuSeal (AGPL-3.0), Gather (AGPL-3.0), and Bigcapital (AGPL-3.0) inform layout
