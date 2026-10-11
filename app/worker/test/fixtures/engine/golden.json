@@ -1,0 +1,2101 @@
+{
+  "python": "3.11",
+  "generated_by": "src/tools/export_golden_fixtures.py",
+  "questions": [
+    {
+      "id": "filing_status_married",
+      "prompt": "Are you married?",
+      "type": "bool"
+    },
+    {
+      "id": "filing_joint_offer",
+      "prompt": "Are you filing jointly with your spouse?",
+      "type": "bool"
+    },
+    {
+      "id": "state_of_residence",
+      "prompt": "What state do you live in?",
+      "type": "str"
+    },
+    {
+      "id": "county_of_residence",
+      "prompt": "What county do you live in?",
+      "type": "str"
+    },
+    {
+      "id": "household_size",
+      "prompt": "How many people live in your household (incl. you)?",
+      "type": "int"
+    },
+    {
+      "id": "dependents_count",
+      "prompt": "How many dependents do you claim on your tax return?",
+      "type": "int"
+    },
+    {
+      "id": "age_taxpayer",
+      "prompt": "What is your age?",
+      "type": "int"
+    },
+    {
+      "id": "age_spouse",
+      "prompt": "What is your spouse's age (if married)?",
+      "type": "int"
+    },
+    {
+      "id": "owns_home",
+      "prompt": "Do you own your home?",
+      "type": "bool"
+    },
+    {
+      "id": "rents_home",
+      "prompt": "Do you rent your home?",
+      "type": "bool"
+    },
+    {
+      "id": "is_wage_earner",
+      "prompt": "Do you receive a W-2 paycheck from an employer?",
+      "type": "bool"
+    },
+    {
+      "id": "is_self_employed",
+      "prompt": "Are you self-employed (Schedule C/E/F)?",
+      "type": "bool"
+    },
+    {
+      "id": "pay_frequency",
+      "prompt": "How often are you paid? (weekly/biweekly/semimonthly/monthly)",
+      "type": "str"
+    },
+    {
+      "id": "vehicle_count",
+      "prompt": "How many vehicles do you own or lease?",
+      "type": "int"
+    },
+    {
+      "id": "has_real_property",
+      "prompt": "Do you own any real estate (home, rental, land)?",
+      "type": "bool"
+    },
+    {
+      "id": "has_retirement_accounts",
+      "prompt": "Do you have a 401(k), IRA, or other retirement account?",
+      "type": "bool"
+    },
+    {
+      "id": "has_life_insurance_cash_value",
+      "prompt": "Do you have life insurance with cash value?",
+      "type": "bool"
+    },
+    {
+      "id": "has_investment_accounts",
+      "prompt": "Do you own stocks, bonds, or other investments?",
+      "type": "bool"
+    },
+    {
+      "id": "all_returns_filed",
+      "prompt": "Have you filed all required tax returns?",
+      "type": "bool"
+    },
+    {
+      "id": "in_open_bankruptcy",
+      "prompt": "Are you currently in an open bankruptcy proceeding?",
+      "type": "bool"
+    },
+    {
+      "id": "filed_bankruptcy_past_7yrs",
+      "prompt": "Have you filed bankruptcy in the past 7 years?",
+      "type": "bool"
+    },
+    {
+      "id": "in_litigation",
+      "prompt": "Are you currently a party to a lawsuit?",
+      "type": "bool"
+    },
+    {
+      "id": "prior_ia_or_oic_default",
+      "prompt": "Have you defaulted on a prior IRS payment plan or offer?",
+      "type": "bool"
+    },
+    {
+      "id": "filed_and_paid_timely_last_5_years",
+      "prompt": "For the last 5 tax years, did you file and pay the tax shown on time?",
+      "type": "bool"
+    },
+    {
+      "id": "installment_agreement_last_5_years",
+      "prompt": "Have you had an income-tax installment agreement in the last 5 tax years?",
+      "type": "bool"
+    },
+    {
+      "id": "total_tax_owed",
+      "prompt": "Total amount owed to the IRS (all years, incl. penalties/interest)?",
+      "type": "float"
+    },
+    {
+      "id": "tax_only_balance",
+      "prompt": "Income tax owed before penalties and interest?",
+      "type": "float"
+    },
+    {
+      "id": "csed_months_remaining",
+      "prompt": "Months remaining until the IRS collection statute expires (from transcript)?",
+      "type": "int"
+    }
+  ],
+  "initial_question_ids": [
+    "filing_status_married",
+    "filing_joint_offer",
+    "state_of_residence",
+    "county_of_residence",
+    "household_size",
+    "age_taxpayer",
+    "age_spouse",
+    "owns_home",
+    "rents_home",
+    "is_wage_earner",
+    "is_self_employed",
+    "vehicle_count",
+    "has_real_property",
+    "has_retirement_accounts",
+    "has_life_insurance_cash_value",
+    "has_investment_accounts",
+    "all_returns_filed",
+    "in_open_bankruptcy"
+  ],
+  "required_financial_columns": [
+    "actual_child_dependent_care",
+    "actual_court_ordered_payments",
+    "actual_current_taxes",
+    "actual_delinquent_state_local_tax",
+    "actual_health_insurance_premiums",
+    "actual_housing_utilities",
+    "actual_life_insurance_premiums",
+    "actual_public_transportation",
+    "actual_secured_debts_other",
+    "actual_vehicle_loan_lease",
+    "actual_vehicle_operating",
+    "age_spouse",
+    "age_taxpayer",
+    "alimony_received",
+    "all_returns_filed",
+    "cash_and_bank_balances",
+    "child_support_received",
+    "county_of_residence",
+    "csed_months_remaining",
+    "dependents_count",
+    "distributions_income",
+    "filed_and_paid_timely_last_5_years",
+    "filed_bankruptcy_past_7yrs",
+    "filing_joint_offer",
+    "filing_status_married",
+    "gross_wages_spouse",
+    "gross_wages_taxpayer",
+    "household_size",
+    "in_litigation",
+    "in_open_bankruptcy",
+    "installment_agreement_last_5_years",
+    "interest_dividends_royalties",
+    "investment_accounts_net",
+    "is_self_employed",
+    "is_wage_earner",
+    "life_insurance_cash_value",
+    "life_insurance_loan_balance",
+    "net_business_income",
+    "net_rental_income",
+    "other_income",
+    "other_valuable_assets_loan",
+    "other_valuable_assets_value",
+    "owns_home",
+    "pension_income",
+    "prior_ia_or_oic_default",
+    "real_property_loan_balance",
+    "real_property_market_value",
+    "rents_home",
+    "retirement_accounts_loan_balance",
+    "retirement_accounts_market_value",
+    "social_security_income",
+    "state_of_residence",
+    "total_tax_owed",
+    "vehicle_count",
+    "vehicle_loan_balance_total",
+    "vehicle_loan_balances",
+    "vehicle_market_value_total",
+    "vehicle_market_values"
+  ],
+  "paths": {
+    "BLOCKED — Compliance gate failed": [
+      "blocked",
+      "Compliance block"
+    ],
+    "Currently Not Collectible (CNC / Status 53)": [
+      "cnc",
+      "Currently not collectible"
+    ],
+    "MANUAL REVIEW — negative income, meaningful equity present": [
+      "manual_equity",
+      "Manual review"
+    ],
+    "Simple Payment Plan": [
+      "simple_plan",
+      "Simple payment plan"
+    ],
+    "Non-Simple Installment Agreement": [
+      "non_simple_installment",
+      "Non-simple installment agreement"
+    ],
+    "MANUAL REVIEW — payment resolution needs review": [
+      "manual_payment",
+      "Manual review"
+    ]
+  },
+  "next": "A tax professional must review this result before anything is filed.",
+  "validations": [],
+  "standards": {},
+  "cases": [
+    {
+      "name": "test_document_requests_are_selected_from_canonical_case_data",
+      "row": {
+        "is_wage_earner": true,
+        "owns_home": true,
+        "vehicle_count": 1,
+        "has_retirement_accounts": true
+      },
+      "expected": {
+        "status": "information_needed",
+        "missing_question_ids": [
+          "age_taxpayer",
+          "all_returns_filed",
+          "county_of_residence",
+          "csed_months_remaining",
+          "dependents_count",
+          "filed_and_paid_timely_last_5_years",
+          "filed_bankruptcy_past_7yrs",
+          "filing_status_married",
+          "has_investment_accounts",
+          "has_life_insurance_cash_value",
+          "has_real_property",
+          "household_size",
+          "in_litigation",
+          "in_open_bankruptcy",
+          "installment_agreement_last_5_years",
+          "is_self_employed",
+          "pay_frequency",
+          "prior_ia_or_oic_default",
+          "state_of_residence",
+          "total_tax_owed"
+        ],
+        "missing_financial_fields": [
+          "actual_child_dependent_care",
+          "actual_court_ordered_payments",
+          "actual_current_taxes",
+          "actual_delinquent_state_local_tax",
+          "actual_health_insurance_premiums",
+          "actual_housing_utilities",
+          "actual_life_insurance_premiums",
+          "actual_public_transportation",
+          "actual_secured_debts_other",
+          "actual_vehicle_loan_lease",
+          "actual_vehicle_operating",
+          "age_spouse",
+          "age_taxpayer",
+          "alimony_received",
+          "all_returns_filed",
+          "cash_and_bank_balances",
+          "child_support_received",
+          "county_of_residence",
+          "csed_months_remaining",
+          "dependents_count",
+          "distributions_income",
+          "filed_and_paid_timely_last_5_years",
+          "filed_bankruptcy_past_7yrs",
+          "filing_joint_offer",
+          "filing_status_married",
+          "gross_wages_spouse",
+          "gross_wages_taxpayer",
+          "household_size",
+          "in_litigation",
+          "in_open_bankruptcy",
+          "installment_agreement_last_5_years",
+          "interest_dividends_royalties",
+          "investment_accounts_net",
+          "is_self_employed",
+          "life_insurance_cash_value",
+          "life_insurance_loan_balance",
+          "net_business_income",
+          "net_rental_income",
+          "other_income",
+          "other_valuable_assets_loan",
+          "other_valuable_assets_value",
+          "pension_income",
+          "prior_ia_or_oic_default",
+          "real_property_loan_balance",
+          "real_property_market_value",
+          "rents_home",
+          "retirement_accounts_loan_balance",
+          "retirement_accounts_market_value",
+          "social_security_income",
+          "state_of_residence",
+          "total_tax_owed",
+          "vehicle_loan_balance_total",
+          "vehicle_loan_balances",
+          "vehicle_market_value_total",
+          "vehicle_market_values"
+        ],
+        "review_flags": [],
+        "document_requests": [
+          {
+            "code": "irs_transcripts",
+            "title": "IRS account transcript",
+            "reason": "Upload an IRS account transcript or balance notice. Include a wage and income transcript here if you have it.",
+            "required": true
+          },
+          {
+            "code": "bank_statements",
+            "title": "Recent personal bank statements",
+            "reason": "Upload statements for each of the most recent three months.",
+            "required": true
+          },
+          {
+            "code": "pay_stubs",
+            "title": "Recent pay stubs and W-2",
+            "reason": "Upload your recent pay stubs and latest W-2.",
+            "required": true
+          },
+          {
+            "code": "real_property",
+            "title": "Real-property records",
+            "reason": "Upload a mortgage or HELOC statement if applicable, plus a property valuation or tax assessment.",
+            "required": true
+          },
+          {
+            "code": "housing_utilities",
+            "title": "Recent utility statement",
+            "reason": "Optionally upload a recent utility statement for your residence.",
+            "required": false
+          },
+          {
+            "code": "vehicle",
+            "title": "Vehicle records",
+            "reason": "Upload registration and a current valuation for each vehicle. Include a loan or lease statement only when one exists.",
+            "required": true
+          },
+          {
+            "code": "retirement",
+            "title": "Retirement-account records",
+            "reason": "Upload recent retirement-account and retirement-loan statements.",
+            "required": true
+          }
+        ],
+        "allowable_breakdown": null,
+        "nre_lines": null,
+        "determination": null
+      },
+      "standards_calls": []
+    },
+    {
+      "name": "test_document_requests_are_selected_from_canonical_case_data_renter",
+      "row": {
+        "owns_home": false,
+        "rents_home": true
+      },
+      "expected": {
+        "status": "information_needed",
+        "missing_question_ids": [
+          "age_taxpayer",
+          "all_returns_filed",
+          "county_of_residence",
+          "csed_months_remaining",
+          "dependents_count",
+          "filed_and_paid_timely_last_5_years",
+          "filed_bankruptcy_past_7yrs",
+          "filing_status_married",
+          "has_investment_accounts",
+          "has_life_insurance_cash_value",
+          "has_real_property",
+          "has_retirement_accounts",
+          "household_size",
+          "in_litigation",
+          "in_open_bankruptcy",
+          "installment_agreement_last_5_years",
+          "is_self_employed",
+          "is_wage_earner",
+          "pay_frequency",
+          "prior_ia_or_oic_default",
+          "state_of_residence",
+          "total_tax_owed",
+          "vehicle_count"
+        ],
+        "missing_financial_fields": [
+          "actual_child_dependent_care",
+          "actual_court_ordered_payments",
+          "actual_current_taxes",
+          "actual_delinquent_state_local_tax",
+          "actual_health_insurance_premiums",
+          "actual_housing_utilities",
+          "actual_life_insurance_premiums",
+          "actual_public_transportation",
+          "actual_secured_debts_other",
+          "actual_vehicle_loan_lease",
+          "actual_vehicle_operating",
+          "age_spouse",
+          "age_taxpayer",
+          "alimony_received",
+          "all_returns_filed",
+          "cash_and_bank_balances",
+          "child_support_received",
+          "county_of_residence",
+          "csed_months_remaining",
+          "dependents_count",
+          "distributions_income",
+          "filed_and_paid_timely_last_5_years",
+          "filed_bankruptcy_past_7yrs",
+          "filing_joint_offer",
+          "filing_status_married",
+          "gross_wages_spouse",
+          "gross_wages_taxpayer",
+          "household_size",
+          "in_litigation",
+          "in_open_bankruptcy",
+          "installment_agreement_last_5_years",
+          "interest_dividends_royalties",
+          "investment_accounts_net",
+          "is_self_employed",
+          "is_wage_earner",
+          "life_insurance_cash_value",
+          "life_insurance_loan_balance",
+          "net_business_income",
+          "net_rental_income",
+          "other_income",
+          "other_valuable_assets_loan",
+          "other_valuable_assets_value",
+          "pension_income",
+          "prior_ia_or_oic_default",
+          "real_property_loan_balance",
+          "real_property_market_value",
+          "retirement_accounts_loan_balance",
+          "retirement_accounts_market_value",
+          "social_security_income",
+          "state_of_residence",
+          "total_tax_owed",
+          "vehicle_count",
+          "vehicle_loan_balance_total",
+          "vehicle_loan_balances",
+          "vehicle_market_value_total",
+          "vehicle_market_values"
+        ],
+        "review_flags": [],
+        "document_requests": [
+          {
+            "code": "irs_transcripts",
+            "title": "IRS account transcript",
+            "reason": "Upload an IRS account transcript or balance notice. Include a wage and income transcript here if you have it.",
+            "required": true
+          },
+          {
+            "code": "bank_statements",
+            "title": "Recent personal bank statements",
+            "reason": "Upload statements for each of the most recent three months.",
+            "required": true
+          },
+          {
+            "code": "lease",
+            "title": "Lease agreement",
+            "reason": "Upload your current residential lease agreement.",
+            "required": true
+          },
+          {
+            "code": "housing_utilities",
+            "title": "Recent utility statement",
+            "reason": "Optionally upload a recent utility statement for your residence.",
+            "required": false
+          }
+        ],
+        "allowable_breakdown": null,
+        "nre_lines": null,
+        "determination": null
+      },
+      "standards_calls": []
+    },
+    {
+      "name": "test_null_database_column_blocks_v2",
+      "row": {
+        "filing_status_married": false,
+        "filing_joint_offer": false,
+        "state_of_residence": "",
+        "county_of_residence": "",
+        "household_size": 1,
+        "dependents_count": 0,
+        "age_taxpayer": 0,
+        "age_spouse": 0,
+        "owns_home": false,
+        "rents_home": false,
+        "is_wage_earner": true,
+        "is_self_employed": false,
+        "vehicle_count": 0,
+        "gross_wages_taxpayer": 0.0,
+        "gross_wages_spouse": 0.0,
+        "social_security_income": 0.0,
+        "pension_income": 0.0,
+        "other_income": 0.0,
+        "interest_dividends_royalties": 0.0,
+        "distributions_income": 0.0,
+        "net_rental_income": 0.0,
+        "net_business_income": 0.0,
+        "child_support_received": 0.0,
+        "alimony_received": 0.0,
+        "actual_housing_utilities": 0.0,
+        "actual_vehicle_loan_lease": 0.0,
+        "actual_vehicle_operating": 0.0,
+        "actual_public_transportation": 0.0,
+        "actual_health_insurance_premiums": 0.0,
+        "actual_court_ordered_payments": 0.0,
+        "actual_child_dependent_care": 0.0,
+        "actual_life_insurance_premiums": 0.0,
+        "actual_current_taxes": 0.0,
+        "actual_delinquent_state_local_tax": 0.0,
+        "actual_secured_debts_other": 0.0,
+        "cash_and_bank_balances": 0.0,
+        "investment_accounts_net": 0.0,
+        "retirement_accounts_market_value": 0.0,
+        "retirement_accounts_loan_balance": 0.0,
+        "life_insurance_cash_value": 0.0,
+        "life_insurance_loan_balance": 0.0,
+        "real_property_market_value": 0.0,
+        "real_property_loan_balance": 0.0,
+        "vehicle_market_value_total": 0.0,
+        "vehicle_loan_balance_total": 0.0,
+        "vehicle_market_values": [],
+        "vehicle_loan_balances": [],
+        "other_valuable_assets_value": 0.0,
+        "other_valuable_assets_loan": 0.0,
+        "all_returns_filed": true,
+        "in_open_bankruptcy": false,
+        "filed_bankruptcy_past_7yrs": false,
+        "in_litigation": false,
+        "prior_ia_or_oic_default": false,
+        "filed_and_paid_timely_last_5_years": false,
+        "installment_agreement_last_5_years": false,
+        "total_tax_owed": null,
+        "tax_only_balance": 0.0,
+        "csed_months_remaining": 120,
+        "oic_payment_months": null,
+        "ai_flags": [],
+        "pay_frequency": "biweekly",
+        "has_real_property": false,
+        "has_retirement_accounts": false,
+        "has_life_insurance_cash_value": false,
+        "has_investment_accounts": false
+      },
+      "expected": {
+        "status": "information_needed",
+        "missing_question_ids": [
+          "total_tax_owed"
+        ],
+        "missing_financial_fields": [
+          "total_tax_owed"
+        ],
+        "review_flags": [],
+        "document_requests": [
+          {
+            "code": "irs_transcripts",
+            "title": "IRS account transcript",
+            "reason": "Upload an IRS account transcript or balance notice. Include a wage and income transcript here if you have it.",
+            "required": true
+          },
+          {
+            "code": "bank_statements",
+            "title": "Recent personal bank statements",
+            "reason": "Upload statements for each of the most recent three months.",
+            "required": true
+          },
+          {
+            "code": "pay_stubs",
+            "title": "Recent pay stubs and W-2",
+            "reason": "Upload your recent pay stubs and latest W-2.",
+            "required": true
+          }
+        ],
+        "allowable_breakdown": null,
+        "nre_lines": null,
+        "determination": null
+      },
+      "standards_calls": []
+    },
+    {
+      "name": "test_explicit_zero_is_accepted_as_known_data",
+      "row": {
+        "filing_status_married": false,
+        "filing_joint_offer": false,
+        "state_of_residence": "",
+        "county_of_residence": "",
+        "household_size": 1,
+        "dependents_count": 0,
+        "age_taxpayer": 0,
+        "age_spouse": 0,
+        "owns_home": false,
+        "rents_home": false,
+        "is_wage_earner": true,
+        "is_self_employed": false,
+        "vehicle_count": 0,
+        "gross_wages_taxpayer": 0.0,
+        "gross_wages_spouse": 0.0,
+        "social_security_income": 0.0,
+        "pension_income": 0.0,
+        "other_income": 0.0,
+        "interest_dividends_royalties": 0.0,
+        "distributions_income": 0.0,
+        "net_rental_income": 0.0,
+        "net_business_income": 0.0,
+        "child_support_received": 0.0,
+        "alimony_received": 0.0,
+        "actual_housing_utilities": 0.0,
+        "actual_vehicle_loan_lease": 0.0,
+        "actual_vehicle_operating": 0.0,
+        "actual_public_transportation": 0.0,
+        "actual_health_insurance_premiums": 0.0,
+        "actual_court_ordered_payments": 0.0,
+        "actual_child_dependent_care": 0.0,
+        "actual_life_insurance_premiums": 0.0,
+        "actual_current_taxes": 0.0,
+        "actual_delinquent_state_local_tax": 0.0,
+        "actual_secured_debts_other": 0.0,
+        "cash_and_bank_balances": 0.0,
+        "investment_accounts_net": 0.0,
+        "retirement_accounts_market_value": 0.0,
+        "retirement_accounts_loan_balance": 0.0,
+        "life_insurance_cash_value": 0.0,
+        "life_insurance_loan_balance": 0.0,
+        "real_property_market_value": 0.0,
+        "real_property_loan_balance": 0.0,
+        "vehicle_market_value_total": 0.0,
+        "vehicle_loan_balance_total": 0.0,
+        "vehicle_market_values": [],
+        "vehicle_loan_balances": [],
+        "other_valuable_assets_value": 0.0,
+        "other_valuable_assets_loan": 0.0,
+        "all_returns_filed": true,
+        "in_open_bankruptcy": false,
+        "filed_bankruptcy_past_7yrs": false,
+        "in_litigation": false,
+        "prior_ia_or_oic_default": false,
+        "filed_and_paid_timely_last_5_years": false,
+        "installment_agreement_last_5_years": false,
+        "total_tax_owed": 0.0,
+        "tax_only_balance": 0.0,
+        "csed_months_remaining": 120,
+        "oic_payment_months": null,
+        "ai_flags": [],
+        "pay_frequency": "biweekly",
+        "has_real_property": false,
+        "has_retirement_accounts": false,
+        "has_life_insurance_cash_value": false,
+        "has_investment_accounts": false
+      },
+      "expected": {
+        "status": "ready",
+        "missing_question_ids": [],
+        "missing_financial_fields": [],
+        "review_flags": [],
+        "document_requests": [
+          {
+            "code": "irs_transcripts",
+            "title": "IRS account transcript",
+            "reason": "Upload an IRS account transcript or balance notice. Include a wage and income transcript here if you have it.",
+            "required": true
+          },
+          {
+            "code": "bank_statements",
+            "title": "Recent personal bank statements",
+            "reason": "Upload statements for each of the most recent three months.",
+            "required": true
+          },
+          {
+            "code": "pay_stubs",
+            "title": "Recent pay stubs and W-2",
+            "reason": "Upload your recent pay stubs and latest W-2.",
+            "required": true
+          }
+        ],
+        "allowable_breakdown": null,
+        "nre_lines": null,
+        "determination": {
+          "path": "Currently Not Collectible (CNC / Status 53)",
+          "reason": "Allowable expenses consume all income and there is no meaningful equity to liquidate.",
+          "monthly_income": 0.0,
+          "monthly_expenses": 957.0,
+          "net_disposable_income": 0,
+          "net_realizable_equity": 0.0,
+          "suggested_offer_or_payment": 0.0,
+          "needs_manual_review": false,
+          "review_notes": []
+        }
+      },
+      "standards_calls": [
+        {
+          "method": "national_amount",
+          "args": [
+            1
+          ],
+          "value": 867.0
+        },
+        {
+          "method": "housing_amount",
+          "args": [
+            "",
+            "",
+            1
+          ],
+          "value": 3000.0
+        },
+        {
+          "method": "transportation_ownership_amount",
+          "args": [
+            0
+          ],
+          "value": 0.0
+        },
+        {
+          "method": "transportation_operating_amount",
+          "args": [
+            "",
+            0
+          ],
+          "value": 0.0
+        },
+        {
+          "method": "health_care_amount",
+          "args": [
+            30
+          ],
+          "value": 90.0
+        },
+        {
+          "method": "health_care_amount",
+          "args": [
+            65
+          ],
+          "value": 163.0
+        }
+      ]
+    },
+    {
+      "name": "test_unused_tax_only_balance_does_not_block_screening",
+      "row": {
+        "filing_status_married": false,
+        "filing_joint_offer": false,
+        "state_of_residence": "",
+        "county_of_residence": "",
+        "household_size": 1,
+        "dependents_count": 0,
+        "age_taxpayer": 0,
+        "age_spouse": 0,
+        "owns_home": false,
+        "rents_home": false,
+        "is_wage_earner": true,
+        "is_self_employed": false,
+        "vehicle_count": 0,
+        "gross_wages_taxpayer": 0.0,
+        "gross_wages_spouse": 0.0,
+        "social_security_income": 0.0,
+        "pension_income": 0.0,
+        "other_income": 0.0,
+        "interest_dividends_royalties": 0.0,
+        "distributions_income": 0.0,
+        "net_rental_income": 0.0,
+        "net_business_income": 0.0,
+        "child_support_received": 0.0,
+        "alimony_received": 0.0,
+        "actual_housing_utilities": 0.0,
+        "actual_vehicle_loan_lease": 0.0,
+        "actual_vehicle_operating": 0.0,
+        "actual_public_transportation": 0.0,
+        "actual_health_insurance_premiums": 0.0,
+        "actual_court_ordered_payments": 0.0,
+        "actual_child_dependent_care": 0.0,
+        "actual_life_insurance_premiums": 0.0,
+        "actual_current_taxes": 0.0,
+        "actual_delinquent_state_local_tax": 0.0,
+        "actual_secured_debts_other": 0.0,
+        "cash_and_bank_balances": 0.0,
+        "investment_accounts_net": 0.0,
+        "retirement_accounts_market_value": 0.0,
+        "retirement_accounts_loan_balance": 0.0,
+        "life_insurance_cash_value": 0.0,
+        "life_insurance_loan_balance": 0.0,
+        "real_property_market_value": 0.0,
+        "real_property_loan_balance": 0.0,
+        "vehicle_market_value_total": 0.0,
+        "vehicle_loan_balance_total": 0.0,
+        "vehicle_market_values": [],
+        "vehicle_loan_balances": [],
+        "other_valuable_assets_value": 0.0,
+        "other_valuable_assets_loan": 0.0,
+        "all_returns_filed": true,
+        "in_open_bankruptcy": false,
+        "filed_bankruptcy_past_7yrs": false,
+        "in_litigation": false,
+        "prior_ia_or_oic_default": false,
+        "filed_and_paid_timely_last_5_years": false,
+        "installment_agreement_last_5_years": false,
+        "total_tax_owed": 0.0,
+        "tax_only_balance": null,
+        "csed_months_remaining": 120,
+        "oic_payment_months": null,
+        "ai_flags": [],
+        "pay_frequency": "biweekly",
+        "has_real_property": false,
+        "has_retirement_accounts": false,
+        "has_life_insurance_cash_value": false,
+        "has_investment_accounts": false
+      },
+      "expected": {
+        "status": "ready",
+        "missing_question_ids": [],
+        "missing_financial_fields": [],
+        "review_flags": [],
+        "document_requests": [
+          {
+            "code": "irs_transcripts",
+            "title": "IRS account transcript",
+            "reason": "Upload an IRS account transcript or balance notice. Include a wage and income transcript here if you have it.",
+            "required": true
+          },
+          {
+            "code": "bank_statements",
+            "title": "Recent personal bank statements",
+            "reason": "Upload statements for each of the most recent three months.",
+            "required": true
+          },
+          {
+            "code": "pay_stubs",
+            "title": "Recent pay stubs and W-2",
+            "reason": "Upload your recent pay stubs and latest W-2.",
+            "required": true
+          }
+        ],
+        "allowable_breakdown": null,
+        "nre_lines": null,
+        "determination": {
+          "path": "Currently Not Collectible (CNC / Status 53)",
+          "reason": "Allowable expenses consume all income and there is no meaningful equity to liquidate.",
+          "monthly_income": 0.0,
+          "monthly_expenses": 957.0,
+          "net_disposable_income": 0,
+          "net_realizable_equity": 0.0,
+          "suggested_offer_or_payment": 0.0,
+          "needs_manual_review": false,
+          "review_notes": []
+        }
+      },
+      "standards_calls": [
+        {
+          "method": "national_amount",
+          "args": [
+            1
+          ],
+          "value": 867.0
+        },
+        {
+          "method": "housing_amount",
+          "args": [
+            "",
+            "",
+            1
+          ],
+          "value": 3000.0
+        },
+        {
+          "method": "transportation_ownership_amount",
+          "args": [
+            0
+          ],
+          "value": 0.0
+        },
+        {
+          "method": "transportation_operating_amount",
+          "args": [
+            "",
+            0
+          ],
+          "value": 0.0
+        },
+        {
+          "method": "health_care_amount",
+          "args": [
+            30
+          ],
+          "value": 90.0
+        },
+        {
+          "method": "health_care_amount",
+          "args": [
+            65
+          ],
+          "value": 163.0
+        }
+      ]
+    },
+    {
+      "name": "test_complete_database_row_reaches_v2_determination",
+      "row": {
+        "filing_status_married": false,
+        "filing_joint_offer": false,
+        "state_of_residence": "FL",
+        "county_of_residence": "Miami-Dade County",
+        "household_size": 2,
+        "dependents_count": 0,
+        "age_taxpayer": 52,
+        "age_spouse": 0,
+        "owns_home": true,
+        "rents_home": false,
+        "is_wage_earner": true,
+        "is_self_employed": false,
+        "vehicle_count": 1,
+        "gross_wages_taxpayer": 6800.0,
+        "gross_wages_spouse": 0.0,
+        "social_security_income": 0.0,
+        "pension_income": 0.0,
+        "other_income": 0.0,
+        "interest_dividends_royalties": 0.0,
+        "distributions_income": 0.0,
+        "net_rental_income": 0.0,
+        "net_business_income": 0.0,
+        "child_support_received": 0.0,
+        "alimony_received": 0.0,
+        "actual_housing_utilities": 2200.0,
+        "actual_vehicle_loan_lease": 0.0,
+        "actual_vehicle_operating": 350.0,
+        "actual_public_transportation": 0.0,
+        "actual_health_insurance_premiums": 260.0,
+        "actual_court_ordered_payments": 0.0,
+        "actual_child_dependent_care": 0.0,
+        "actual_life_insurance_premiums": 0.0,
+        "actual_current_taxes": 980.0,
+        "actual_delinquent_state_local_tax": 0.0,
+        "actual_secured_debts_other": 0.0,
+        "cash_and_bank_balances": 4000.0,
+        "investment_accounts_net": 0.0,
+        "retirement_accounts_market_value": 0.0,
+        "retirement_accounts_loan_balance": 0.0,
+        "life_insurance_cash_value": 0.0,
+        "life_insurance_loan_balance": 0.0,
+        "real_property_market_value": 200000.0,
+        "real_property_loan_balance": 198000.0,
+        "vehicle_market_value_total": 0.0,
+        "vehicle_loan_balance_total": 0.0,
+        "vehicle_market_values": [
+          15000.0
+        ],
+        "vehicle_loan_balances": [
+          12000.0
+        ],
+        "other_valuable_assets_value": 0.0,
+        "other_valuable_assets_loan": 0.0,
+        "all_returns_filed": true,
+        "in_open_bankruptcy": false,
+        "filed_bankruptcy_past_7yrs": false,
+        "in_litigation": false,
+        "prior_ia_or_oic_default": false,
+        "filed_and_paid_timely_last_5_years": false,
+        "installment_agreement_last_5_years": false,
+        "total_tax_owed": 28000.0,
+        "tax_only_balance": 28000.0,
+        "csed_months_remaining": 90,
+        "oic_payment_months": null,
+        "ai_flags": [],
+        "pay_frequency": "biweekly",
+        "has_real_property": true,
+        "has_retirement_accounts": false,
+        "has_life_insurance_cash_value": false,
+        "has_investment_accounts": false
+      },
+      "expected": {
+        "status": "ready",
+        "missing_question_ids": [],
+        "missing_financial_fields": [],
+        "review_flags": [],
+        "document_requests": [
+          {
+            "code": "irs_transcripts",
+            "title": "IRS account transcript",
+            "reason": "Upload an IRS account transcript or balance notice. Include a wage and income transcript here if you have it.",
+            "required": true
+          },
+          {
+            "code": "bank_statements",
+            "title": "Recent personal bank statements",
+            "reason": "Upload statements for each of the most recent three months.",
+            "required": true
+          },
+          {
+            "code": "pay_stubs",
+            "title": "Recent pay stubs and W-2",
+            "reason": "Upload your recent pay stubs and latest W-2.",
+            "required": true
+          },
+          {
+            "code": "real_property",
+            "title": "Real-property records",
+            "reason": "Upload a mortgage or HELOC statement if applicable, plus a property valuation or tax assessment.",
+            "required": true
+          },
+          {
+            "code": "housing_utilities",
+            "title": "Recent utility statement",
+            "reason": "Optionally upload a recent utility statement for your residence.",
+            "required": false
+          },
+          {
+            "code": "vehicle",
+            "title": "Vehicle records",
+            "reason": "Upload registration and a current valuation for each vehicle. Include a loan or lease statement only when one exists.",
+            "required": true
+          }
+        ],
+        "allowable_breakdown": null,
+        "nre_lines": null,
+        "determination": {
+          "path": "Simple Payment Plan",
+          "reason": "Full balance is $50,000 or less and the proposed payment pays it by the CSED.",
+          "monthly_income": 6800.0,
+          "monthly_expenses": 5528.0,
+          "net_disposable_income": 1272.0,
+          "net_realizable_equity": 3000.0,
+          "suggested_offer_or_payment": 311.12,
+          "needs_manual_review": false,
+          "review_notes": []
+        }
+      },
+      "standards_calls": [
+        {
+          "method": "transportation_area",
+          "args": [
+            "FL",
+            "Miami-Dade County"
+          ],
+          "value": "Miami"
+        },
+        {
+          "method": "national_amount",
+          "args": [
+            2
+          ],
+          "value": 1558.0
+        },
+        {
+          "method": "housing_amount",
+          "args": [
+            "FL",
+            "Miami-Dade County",
+            2
+          ],
+          "value": 3000.0
+        },
+        {
+          "method": "transportation_ownership_amount",
+          "args": [
+            1
+          ],
+          "value": 703.0
+        },
+        {
+          "method": "transportation_operating_amount",
+          "args": [
+            "Miami",
+            1
+          ],
+          "value": 423.0
+        },
+        {
+          "method": "health_care_amount",
+          "args": [
+            30
+          ],
+          "value": 90.0
+        },
+        {
+          "method": "health_care_amount",
+          "args": [
+            65
+          ],
+          "value": 163.0
+        }
+      ]
+    },
+    {
+      "name": "test_compliance_block_is_preserved",
+      "row": {
+        "filing_status_married": false,
+        "filing_joint_offer": false,
+        "state_of_residence": "FL",
+        "county_of_residence": "Miami-Dade County",
+        "household_size": 1,
+        "dependents_count": 0,
+        "age_taxpayer": 0,
+        "age_spouse": 0,
+        "owns_home": false,
+        "rents_home": false,
+        "is_wage_earner": true,
+        "is_self_employed": false,
+        "vehicle_count": 0,
+        "gross_wages_taxpayer": 0.0,
+        "gross_wages_spouse": 0.0,
+        "social_security_income": 0.0,
+        "pension_income": 0.0,
+        "other_income": 0.0,
+        "interest_dividends_royalties": 0.0,
+        "distributions_income": 0.0,
+        "net_rental_income": 0.0,
+        "net_business_income": 0.0,
+        "child_support_received": 0.0,
+        "alimony_received": 0.0,
+        "actual_housing_utilities": 0.0,
+        "actual_vehicle_loan_lease": 0.0,
+        "actual_vehicle_operating": 0.0,
+        "actual_public_transportation": 0.0,
+        "actual_health_insurance_premiums": 0.0,
+        "actual_court_ordered_payments": 0.0,
+        "actual_child_dependent_care": 0.0,
+        "actual_life_insurance_premiums": 0.0,
+        "actual_current_taxes": 0.0,
+        "actual_delinquent_state_local_tax": 0.0,
+        "actual_secured_debts_other": 0.0,
+        "cash_and_bank_balances": 0.0,
+        "investment_accounts_net": 0.0,
+        "retirement_accounts_market_value": 0.0,
+        "retirement_accounts_loan_balance": 0.0,
+        "life_insurance_cash_value": 0.0,
+        "life_insurance_loan_balance": 0.0,
+        "real_property_market_value": 0.0,
+        "real_property_loan_balance": 0.0,
+        "vehicle_market_value_total": 0.0,
+        "vehicle_loan_balance_total": 0.0,
+        "vehicle_market_values": [],
+        "vehicle_loan_balances": [],
+        "other_valuable_assets_value": 0.0,
+        "other_valuable_assets_loan": 0.0,
+        "all_returns_filed": false,
+        "in_open_bankruptcy": false,
+        "filed_bankruptcy_past_7yrs": false,
+        "in_litigation": false,
+        "prior_ia_or_oic_default": false,
+        "filed_and_paid_timely_last_5_years": false,
+        "installment_agreement_last_5_years": false,
+        "total_tax_owed": 60000.0,
+        "tax_only_balance": 60000.0,
+        "csed_months_remaining": 96,
+        "oic_payment_months": null,
+        "ai_flags": [],
+        "pay_frequency": "biweekly",
+        "has_real_property": false,
+        "has_retirement_accounts": false,
+        "has_life_insurance_cash_value": false,
+        "has_investment_accounts": false
+      },
+      "expected": {
+        "status": "blocked",
+        "missing_question_ids": [],
+        "missing_financial_fields": [],
+        "review_flags": [
+          "Not all required tax returns are filed."
+        ],
+        "document_requests": [
+          {
+            "code": "irs_transcripts",
+            "title": "IRS account transcript",
+            "reason": "Upload an IRS account transcript or balance notice. Include a wage and income transcript here if you have it.",
+            "required": true
+          },
+          {
+            "code": "bank_statements",
+            "title": "Recent personal bank statements",
+            "reason": "Upload statements for each of the most recent three months.",
+            "required": true
+          },
+          {
+            "code": "pay_stubs",
+            "title": "Recent pay stubs and W-2",
+            "reason": "Upload your recent pay stubs and latest W-2.",
+            "required": true
+          }
+        ],
+        "allowable_breakdown": null,
+        "nre_lines": null,
+        "determination": {
+          "path": "BLOCKED — Compliance gate failed",
+          "reason": "Not all required tax returns are filed.",
+          "monthly_income": 0.0,
+          "monthly_expenses": 957.0,
+          "net_disposable_income": -957.0,
+          "net_realizable_equity": 0.0,
+          "suggested_offer_or_payment": 0.0,
+          "needs_manual_review": true,
+          "review_notes": [
+            "Not all required tax returns are filed."
+          ]
+        }
+      },
+      "standards_calls": [
+        {
+          "method": "national_amount",
+          "args": [
+            1
+          ],
+          "value": 867.0
+        },
+        {
+          "method": "housing_amount",
+          "args": [
+            "FL",
+            "Miami-Dade County",
+            1
+          ],
+          "value": 3000.0
+        },
+        {
+          "method": "transportation_ownership_amount",
+          "args": [
+            0
+          ],
+          "value": 0.0
+        },
+        {
+          "method": "transportation_operating_amount",
+          "args": [
+            "",
+            0
+          ],
+          "value": 0.0
+        },
+        {
+          "method": "health_care_amount",
+          "args": [
+            30
+          ],
+          "value": 90.0
+        },
+        {
+          "method": "health_care_amount",
+          "args": [
+            65
+          ],
+          "value": 163.0
+        }
+      ]
+    },
+    {
+      "name": "test_cnc_path_is_preserved",
+      "row": {
+        "filing_status_married": false,
+        "filing_joint_offer": false,
+        "state_of_residence": "FL",
+        "county_of_residence": "Miami-Dade County",
+        "household_size": 1,
+        "dependents_count": 0,
+        "age_taxpayer": 0,
+        "age_spouse": 0,
+        "owns_home": false,
+        "rents_home": false,
+        "is_wage_earner": true,
+        "is_self_employed": false,
+        "vehicle_count": 0,
+        "gross_wages_taxpayer": 0.0,
+        "gross_wages_spouse": 0.0,
+        "social_security_income": 0.0,
+        "pension_income": 0.0,
+        "other_income": 0.0,
+        "interest_dividends_royalties": 0.0,
+        "distributions_income": 0.0,
+        "net_rental_income": 0.0,
+        "net_business_income": 0.0,
+        "child_support_received": 0.0,
+        "alimony_received": 0.0,
+        "actual_housing_utilities": 0.0,
+        "actual_vehicle_loan_lease": 0.0,
+        "actual_vehicle_operating": 0.0,
+        "actual_public_transportation": 0.0,
+        "actual_health_insurance_premiums": 0.0,
+        "actual_court_ordered_payments": 0.0,
+        "actual_child_dependent_care": 0.0,
+        "actual_life_insurance_premiums": 0.0,
+        "actual_current_taxes": 0.0,
+        "actual_delinquent_state_local_tax": 0.0,
+        "actual_secured_debts_other": 0.0,
+        "cash_and_bank_balances": 0.0,
+        "investment_accounts_net": 0.0,
+        "retirement_accounts_market_value": 0.0,
+        "retirement_accounts_loan_balance": 0.0,
+        "life_insurance_cash_value": 0.0,
+        "life_insurance_loan_balance": 0.0,
+        "real_property_market_value": 0.0,
+        "real_property_loan_balance": 0.0,
+        "vehicle_market_value_total": 0.0,
+        "vehicle_loan_balance_total": 0.0,
+        "vehicle_market_values": [],
+        "vehicle_loan_balances": [],
+        "other_valuable_assets_value": 0.0,
+        "other_valuable_assets_loan": 0.0,
+        "all_returns_filed": true,
+        "in_open_bankruptcy": false,
+        "filed_bankruptcy_past_7yrs": false,
+        "in_litigation": false,
+        "prior_ia_or_oic_default": false,
+        "filed_and_paid_timely_last_5_years": false,
+        "installment_agreement_last_5_years": false,
+        "total_tax_owed": 60000.0,
+        "tax_only_balance": 60000.0,
+        "csed_months_remaining": 96,
+        "oic_payment_months": null,
+        "ai_flags": [],
+        "pay_frequency": "biweekly",
+        "has_real_property": false,
+        "has_retirement_accounts": false,
+        "has_life_insurance_cash_value": false,
+        "has_investment_accounts": false
+      },
+      "expected": {
+        "status": "ready",
+        "missing_question_ids": [],
+        "missing_financial_fields": [],
+        "review_flags": [],
+        "document_requests": [
+          {
+            "code": "irs_transcripts",
+            "title": "IRS account transcript",
+            "reason": "Upload an IRS account transcript or balance notice. Include a wage and income transcript here if you have it.",
+            "required": true
+          },
+          {
+            "code": "bank_statements",
+            "title": "Recent personal bank statements",
+            "reason": "Upload statements for each of the most recent three months.",
+            "required": true
+          },
+          {
+            "code": "pay_stubs",
+            "title": "Recent pay stubs and W-2",
+            "reason": "Upload your recent pay stubs and latest W-2.",
+            "required": true
+          }
+        ],
+        "allowable_breakdown": null,
+        "nre_lines": null,
+        "determination": {
+          "path": "Currently Not Collectible (CNC / Status 53)",
+          "reason": "Allowable expenses consume all income and there is no meaningful equity to liquidate.",
+          "monthly_income": 0.0,
+          "monthly_expenses": 957.0,
+          "net_disposable_income": 0,
+          "net_realizable_equity": 0.0,
+          "suggested_offer_or_payment": 0.0,
+          "needs_manual_review": false,
+          "review_notes": []
+        }
+      },
+      "standards_calls": [
+        {
+          "method": "national_amount",
+          "args": [
+            1
+          ],
+          "value": 867.0
+        },
+        {
+          "method": "housing_amount",
+          "args": [
+            "FL",
+            "Miami-Dade County",
+            1
+          ],
+          "value": 3000.0
+        },
+        {
+          "method": "transportation_ownership_amount",
+          "args": [
+            0
+          ],
+          "value": 0.0
+        },
+        {
+          "method": "transportation_operating_amount",
+          "args": [
+            "",
+            0
+          ],
+          "value": 0.0
+        },
+        {
+          "method": "health_care_amount",
+          "args": [
+            30
+          ],
+          "value": 90.0
+        },
+        {
+          "method": "health_care_amount",
+          "args": [
+            65
+          ],
+          "value": 163.0
+        }
+      ]
+    },
+    {
+      "name": "test_full_payment_failure_requires_manual_review_until_oic_calculator_exists",
+      "row": {
+        "filing_status_married": false,
+        "filing_joint_offer": false,
+        "state_of_residence": "FL",
+        "county_of_residence": "Miami-Dade County",
+        "household_size": 1,
+        "dependents_count": 0,
+        "age_taxpayer": 0,
+        "age_spouse": 0,
+        "owns_home": false,
+        "rents_home": true,
+        "is_wage_earner": true,
+        "is_self_employed": false,
+        "vehicle_count": 0,
+        "gross_wages_taxpayer": 5000.0,
+        "gross_wages_spouse": 0.0,
+        "social_security_income": 0.0,
+        "pension_income": 0.0,
+        "other_income": 0.0,
+        "interest_dividends_royalties": 0.0,
+        "distributions_income": 0.0,
+        "net_rental_income": 0.0,
+        "net_business_income": 0.0,
+        "child_support_received": 0.0,
+        "alimony_received": 0.0,
+        "actual_housing_utilities": 1000.0,
+        "actual_vehicle_loan_lease": 0.0,
+        "actual_vehicle_operating": 0.0,
+        "actual_public_transportation": 0.0,
+        "actual_health_insurance_premiums": 0.0,
+        "actual_court_ordered_payments": 0.0,
+        "actual_child_dependent_care": 0.0,
+        "actual_life_insurance_premiums": 0.0,
+        "actual_current_taxes": 0.0,
+        "actual_delinquent_state_local_tax": 0.0,
+        "actual_secured_debts_other": 0.0,
+        "cash_and_bank_balances": 0.0,
+        "investment_accounts_net": 0.0,
+        "retirement_accounts_market_value": 0.0,
+        "retirement_accounts_loan_balance": 0.0,
+        "life_insurance_cash_value": 0.0,
+        "life_insurance_loan_balance": 0.0,
+        "real_property_market_value": 0.0,
+        "real_property_loan_balance": 0.0,
+        "vehicle_market_value_total": 0.0,
+        "vehicle_loan_balance_total": 0.0,
+        "vehicle_market_values": [],
+        "vehicle_loan_balances": [],
+        "other_valuable_assets_value": 0.0,
+        "other_valuable_assets_loan": 0.0,
+        "all_returns_filed": true,
+        "in_open_bankruptcy": false,
+        "filed_bankruptcy_past_7yrs": false,
+        "in_litigation": false,
+        "prior_ia_or_oic_default": false,
+        "filed_and_paid_timely_last_5_years": false,
+        "installment_agreement_last_5_years": false,
+        "total_tax_owed": 100000.0,
+        "tax_only_balance": 100000.0,
+        "csed_months_remaining": 12,
+        "oic_payment_months": null,
+        "ai_flags": [],
+        "pay_frequency": "monthly",
+        "has_real_property": false,
+        "has_retirement_accounts": false,
+        "has_life_insurance_cash_value": false,
+        "has_investment_accounts": false
+      },
+      "expected": {
+        "status": "ready_for_review",
+        "missing_question_ids": [],
+        "missing_financial_fields": [],
+        "review_flags": [],
+        "document_requests": [
+          {
+            "code": "irs_transcripts",
+            "title": "IRS account transcript",
+            "reason": "Upload an IRS account transcript or balance notice. Include a wage and income transcript here if you have it.",
+            "required": true
+          },
+          {
+            "code": "bank_statements",
+            "title": "Recent personal bank statements",
+            "reason": "Upload statements for each of the most recent three months.",
+            "required": true
+          },
+          {
+            "code": "pay_stubs",
+            "title": "Recent pay stubs and W-2",
+            "reason": "Upload your recent pay stubs and latest W-2.",
+            "required": true
+          },
+          {
+            "code": "lease",
+            "title": "Lease agreement",
+            "reason": "Upload your current residential lease agreement.",
+            "required": true
+          },
+          {
+            "code": "housing_utilities",
+            "title": "Recent utility statement",
+            "reason": "Optionally upload a recent utility statement for your residence.",
+            "required": false
+          }
+        ],
+        "allowable_breakdown": null,
+        "nre_lines": null,
+        "determination": {
+          "path": "MANUAL REVIEW — payment resolution needs review",
+          "reason": "The available data does not support an automatic payment-resolution selection.",
+          "monthly_income": 5000.0,
+          "monthly_expenses": 1957.0,
+          "net_disposable_income": 3043.0,
+          "net_realizable_equity": 0.0,
+          "suggested_offer_or_payment": 0.0,
+          "needs_manual_review": true,
+          "review_notes": []
+        }
+      },
+      "standards_calls": [
+        {
+          "method": "national_amount",
+          "args": [
+            1
+          ],
+          "value": 867.0
+        },
+        {
+          "method": "housing_amount",
+          "args": [
+            "FL",
+            "Miami-Dade County",
+            1
+          ],
+          "value": 3000.0
+        },
+        {
+          "method": "transportation_ownership_amount",
+          "args": [
+            0
+          ],
+          "value": 0.0
+        },
+        {
+          "method": "transportation_operating_amount",
+          "args": [
+            "",
+            0
+          ],
+          "value": 0.0
+        },
+        {
+          "method": "health_care_amount",
+          "args": [
+            30
+          ],
+          "value": 90.0
+        },
+        {
+          "method": "health_care_amount",
+          "args": [
+            65
+          ],
+          "value": 163.0
+        }
+      ]
+    },
+    {
+      "name": "test_partial_payment_case_requires_manual_review_until_oic_calculator_exists",
+      "row": {
+        "filing_status_married": false,
+        "filing_joint_offer": false,
+        "state_of_residence": "FL",
+        "county_of_residence": "Miami-Dade County",
+        "household_size": 1,
+        "dependents_count": 0,
+        "age_taxpayer": 0,
+        "age_spouse": 0,
+        "owns_home": false,
+        "rents_home": true,
+        "is_wage_earner": true,
+        "is_self_employed": false,
+        "vehicle_count": 0,
+        "gross_wages_taxpayer": 4000.0,
+        "gross_wages_spouse": 0.0,
+        "social_security_income": 0.0,
+        "pension_income": 0.0,
+        "other_income": 0.0,
+        "interest_dividends_royalties": 0.0,
+        "distributions_income": 0.0,
+        "net_rental_income": 0.0,
+        "net_business_income": 0.0,
+        "child_support_received": 0.0,
+        "alimony_received": 0.0,
+        "actual_housing_utilities": 1000.0,
+        "actual_vehicle_loan_lease": 0.0,
+        "actual_vehicle_operating": 0.0,
+        "actual_public_transportation": 0.0,
+        "actual_health_insurance_premiums": 0.0,
+        "actual_court_ordered_payments": 0.0,
+        "actual_child_dependent_care": 0.0,
+        "actual_life_insurance_premiums": 0.0,
+        "actual_current_taxes": 0.0,
+        "actual_delinquent_state_local_tax": 0.0,
+        "actual_secured_debts_other": 0.0,
+        "cash_and_bank_balances": 5000.0,
+        "investment_accounts_net": 0.0,
+        "retirement_accounts_market_value": 0.0,
+        "retirement_accounts_loan_balance": 0.0,
+        "life_insurance_cash_value": 0.0,
+        "life_insurance_loan_balance": 0.0,
+        "real_property_market_value": 0.0,
+        "real_property_loan_balance": 0.0,
+        "vehicle_market_value_total": 0.0,
+        "vehicle_loan_balance_total": 0.0,
+        "vehicle_market_values": [],
+        "vehicle_loan_balances": [],
+        "other_valuable_assets_value": 0.0,
+        "other_valuable_assets_loan": 0.0,
+        "all_returns_filed": true,
+        "in_open_bankruptcy": false,
+        "filed_bankruptcy_past_7yrs": false,
+        "in_litigation": false,
+        "prior_ia_or_oic_default": false,
+        "filed_and_paid_timely_last_5_years": false,
+        "installment_agreement_last_5_years": false,
+        "total_tax_owed": 15000.0,
+        "tax_only_balance": 15000.0,
+        "csed_months_remaining": 6,
+        "oic_payment_months": null,
+        "ai_flags": [],
+        "pay_frequency": "monthly",
+        "has_real_property": false,
+        "has_retirement_accounts": false,
+        "has_life_insurance_cash_value": false,
+        "has_investment_accounts": false
+      },
+      "expected": {
+        "status": "ready_for_review",
+        "missing_question_ids": [],
+        "missing_financial_fields": [],
+        "review_flags": [],
+        "document_requests": [
+          {
+            "code": "irs_transcripts",
+            "title": "IRS account transcript",
+            "reason": "Upload an IRS account transcript or balance notice. Include a wage and income transcript here if you have it.",
+            "required": true
+          },
+          {
+            "code": "bank_statements",
+            "title": "Recent personal bank statements",
+            "reason": "Upload statements for each of the most recent three months.",
+            "required": true
+          },
+          {
+            "code": "pay_stubs",
+            "title": "Recent pay stubs and W-2",
+            "reason": "Upload your recent pay stubs and latest W-2.",
+            "required": true
+          },
+          {
+            "code": "lease",
+            "title": "Lease agreement",
+            "reason": "Upload your current residential lease agreement.",
+            "required": true
+          },
+          {
+            "code": "housing_utilities",
+            "title": "Recent utility statement",
+            "reason": "Optionally upload a recent utility statement for your residence.",
+            "required": false
+          }
+        ],
+        "allowable_breakdown": null,
+        "nre_lines": null,
+        "determination": {
+          "path": "MANUAL REVIEW — payment resolution needs review",
+          "reason": "The available data does not support an automatic payment-resolution selection.",
+          "monthly_income": 4000.0,
+          "monthly_expenses": 1957.0,
+          "net_disposable_income": 2043.0,
+          "net_realizable_equity": 4000.0,
+          "suggested_offer_or_payment": 0.0,
+          "needs_manual_review": true,
+          "review_notes": []
+        }
+      },
+      "standards_calls": [
+        {
+          "method": "national_amount",
+          "args": [
+            1
+          ],
+          "value": 867.0
+        },
+        {
+          "method": "housing_amount",
+          "args": [
+            "FL",
+            "Miami-Dade County",
+            1
+          ],
+          "value": 3000.0
+        },
+        {
+          "method": "transportation_ownership_amount",
+          "args": [
+            0
+          ],
+          "value": 0.0
+        },
+        {
+          "method": "transportation_operating_amount",
+          "args": [
+            "",
+            0
+          ],
+          "value": 0.0
+        },
+        {
+          "method": "health_care_amount",
+          "args": [
+            30
+          ],
+          "value": 90.0
+        },
+        {
+          "method": "health_care_amount",
+          "args": [
+            65
+          ],
+          "value": 163.0
+        }
+      ]
+    },
+    {
+      "name": "test_a_complete_row_uses_the_determination",
+      "row": {
+        "filing_status_married": false,
+        "filing_joint_offer": false,
+        "state_of_residence": "",
+        "county_of_residence": "",
+        "household_size": 1,
+        "dependents_count": 0,
+        "age_taxpayer": 0,
+        "age_spouse": 0,
+        "owns_home": false,
+        "rents_home": false,
+        "is_wage_earner": true,
+        "is_self_employed": false,
+        "vehicle_count": 0,
+        "gross_wages_taxpayer": 0.0,
+        "gross_wages_spouse": 0.0,
+        "social_security_income": 0.0,
+        "pension_income": 0.0,
+        "other_income": 0.0,
+        "interest_dividends_royalties": 0.0,
+        "distributions_income": 0.0,
+        "net_rental_income": 0.0,
+        "net_business_income": 0.0,
+        "child_support_received": 0.0,
+        "alimony_received": 0.0,
+        "actual_housing_utilities": 0.0,
+        "actual_vehicle_loan_lease": 0.0,
+        "actual_vehicle_operating": 0.0,
+        "actual_public_transportation": 0.0,
+        "actual_health_insurance_premiums": 0.0,
+        "actual_court_ordered_payments": 0.0,
+        "actual_child_dependent_care": 0.0,
+        "actual_life_insurance_premiums": 0.0,
+        "actual_current_taxes": 0.0,
+        "actual_delinquent_state_local_tax": 0.0,
+        "actual_secured_debts_other": 0.0,
+        "cash_and_bank_balances": 0.0,
+        "investment_accounts_net": 0.0,
+        "retirement_accounts_market_value": 0.0,
+        "retirement_accounts_loan_balance": 0.0,
+        "life_insurance_cash_value": 0.0,
+        "life_insurance_loan_balance": 0.0,
+        "real_property_market_value": 0.0,
+        "real_property_loan_balance": 0.0,
+        "vehicle_market_value_total": 0.0,
+        "vehicle_loan_balance_total": 0.0,
+        "vehicle_market_values": [],
+        "vehicle_loan_balances": [],
+        "other_valuable_assets_value": 0.0,
+        "other_valuable_assets_loan": 0.0,
+        "all_returns_filed": true,
+        "in_open_bankruptcy": false,
+        "filed_bankruptcy_past_7yrs": false,
+        "in_litigation": false,
+        "prior_ia_or_oic_default": false,
+        "filed_and_paid_timely_last_5_years": false,
+        "installment_agreement_last_5_years": false,
+        "total_tax_owed": 0.0,
+        "tax_only_balance": 0.0,
+        "csed_months_remaining": 120,
+        "oic_payment_months": null,
+        "ai_flags": [],
+        "pay_frequency": "biweekly",
+        "has_real_property": false,
+        "has_retirement_accounts": false,
+        "has_life_insurance_cash_value": false,
+        "has_investment_accounts": false
+      },
+      "expected": {
+        "status": "ready",
+        "missing_question_ids": [],
+        "missing_financial_fields": [],
+        "review_flags": [],
+        "document_requests": [
+          {
+            "code": "irs_transcripts",
+            "title": "IRS account transcript",
+            "reason": "Upload an IRS account transcript or balance notice. Include a wage and income transcript here if you have it.",
+            "required": true
+          },
+          {
+            "code": "bank_statements",
+            "title": "Recent personal bank statements",
+            "reason": "Upload statements for each of the most recent three months.",
+            "required": true
+          },
+          {
+            "code": "pay_stubs",
+            "title": "Recent pay stubs and W-2",
+            "reason": "Upload your recent pay stubs and latest W-2.",
+            "required": true
+          }
+        ],
+        "allowable_breakdown": null,
+        "nre_lines": null,
+        "determination": {
+          "path": "Currently Not Collectible (CNC / Status 53)",
+          "reason": "Allowable expenses consume all income and there is no meaningful equity to liquidate.",
+          "monthly_income": 0.0,
+          "monthly_expenses": 957.0,
+          "net_disposable_income": 0,
+          "net_realizable_equity": 0.0,
+          "suggested_offer_or_payment": 0.0,
+          "needs_manual_review": false,
+          "review_notes": []
+        }
+      },
+      "standards_calls": [
+        {
+          "method": "national_amount",
+          "args": [
+            1
+          ],
+          "value": 867.0
+        },
+        {
+          "method": "housing_amount",
+          "args": [
+            "",
+            "",
+            1
+          ],
+          "value": 3000.0
+        },
+        {
+          "method": "transportation_ownership_amount",
+          "args": [
+            0
+          ],
+          "value": 0.0
+        },
+        {
+          "method": "transportation_operating_amount",
+          "args": [
+            "",
+            0
+          ],
+          "value": 0.0
+        },
+        {
+          "method": "health_care_amount",
+          "args": [
+            30
+          ],
+          "value": 90.0
+        },
+        {
+          "method": "health_care_amount",
+          "args": [
+            65
+          ],
+          "value": 163.0
+        }
+      ]
+    },
+    {
+      "name": "test_a_complete_row_without_standards_does_not_invent_a_path",
+      "row": {
+        "filing_status_married": false,
+        "filing_joint_offer": false,
+        "state_of_residence": "",
+        "county_of_residence": "",
+        "household_size": 1,
+        "dependents_count": 0,
+        "age_taxpayer": 0,
+        "age_spouse": 0,
+        "owns_home": false,
+        "rents_home": false,
+        "is_wage_earner": true,
+        "is_self_employed": false,
+        "vehicle_count": 0,
+        "gross_wages_taxpayer": 0.0,
+        "gross_wages_spouse": 0.0,
+        "social_security_income": 0.0,
+        "pension_income": 0.0,
+        "other_income": 0.0,
+        "interest_dividends_royalties": 0.0,
+        "distributions_income": 0.0,
+        "net_rental_income": 0.0,
+        "net_business_income": 0.0,
+        "child_support_received": 0.0,
+        "alimony_received": 0.0,
+        "actual_housing_utilities": 0.0,
+        "actual_vehicle_loan_lease": 0.0,
+        "actual_vehicle_operating": 0.0,
+        "actual_public_transportation": 0.0,
+        "actual_health_insurance_premiums": 0.0,
+        "actual_court_ordered_payments": 0.0,
+        "actual_child_dependent_care": 0.0,
+        "actual_life_insurance_premiums": 0.0,
+        "actual_current_taxes": 0.0,
+        "actual_delinquent_state_local_tax": 0.0,
+        "actual_secured_debts_other": 0.0,
+        "cash_and_bank_balances": 0.0,
+        "investment_accounts_net": 0.0,
+        "retirement_accounts_market_value": 0.0,
+        "retirement_accounts_loan_balance": 0.0,
+        "life_insurance_cash_value": 0.0,
+        "life_insurance_loan_balance": 0.0,
+        "real_property_market_value": 0.0,
+        "real_property_loan_balance": 0.0,
+        "vehicle_market_value_total": 0.0,
+        "vehicle_loan_balance_total": 0.0,
+        "vehicle_market_values": [],
+        "vehicle_loan_balances": [],
+        "other_valuable_assets_value": 0.0,
+        "other_valuable_assets_loan": 0.0,
+        "all_returns_filed": false,
+        "in_open_bankruptcy": false,
+        "filed_bankruptcy_past_7yrs": false,
+        "in_litigation": false,
+        "prior_ia_or_oic_default": false,
+        "filed_and_paid_timely_last_5_years": false,
+        "installment_agreement_last_5_years": false,
+        "total_tax_owed": 0.0,
+        "tax_only_balance": 0.0,
+        "csed_months_remaining": 120,
+        "oic_payment_months": null,
+        "ai_flags": [],
+        "pay_frequency": "biweekly",
+        "has_real_property": false,
+        "has_retirement_accounts": false,
+        "has_life_insurance_cash_value": false,
+        "has_investment_accounts": false
+      },
+      "expected": {
+        "status": "blocked",
+        "missing_question_ids": [],
+        "missing_financial_fields": [],
+        "review_flags": [
+          "Not all required tax returns are filed."
+        ],
+        "document_requests": [
+          {
+            "code": "irs_transcripts",
+            "title": "IRS account transcript",
+            "reason": "Upload an IRS account transcript or balance notice. Include a wage and income transcript here if you have it.",
+            "required": true
+          },
+          {
+            "code": "bank_statements",
+            "title": "Recent personal bank statements",
+            "reason": "Upload statements for each of the most recent three months.",
+            "required": true
+          },
+          {
+            "code": "pay_stubs",
+            "title": "Recent pay stubs and W-2",
+            "reason": "Upload your recent pay stubs and latest W-2.",
+            "required": true
+          }
+        ],
+        "allowable_breakdown": null,
+        "nre_lines": null,
+        "determination": {
+          "path": "BLOCKED — Compliance gate failed",
+          "reason": "Not all required tax returns are filed.",
+          "monthly_income": 0.0,
+          "monthly_expenses": 957.0,
+          "net_disposable_income": -957.0,
+          "net_realizable_equity": 0.0,
+          "suggested_offer_or_payment": 0.0,
+          "needs_manual_review": true,
+          "review_notes": [
+            "Not all required tax returns are filed."
+          ]
+        }
+      },
+      "standards_calls": [
+        {
+          "method": "national_amount",
+          "args": [
+            1
+          ],
+          "value": 867.0
+        },
+        {
+          "method": "housing_amount",
+          "args": [
+            "",
+            "",
+            1
+          ],
+          "value": 3000.0
+        },
+        {
+          "method": "transportation_ownership_amount",
+          "args": [
+            0
+          ],
+          "value": 0.0
+        },
+        {
+          "method": "transportation_operating_amount",
+          "args": [
+            "",
+            0
+          ],
+          "value": 0.0
+        },
+        {
+          "method": "health_care_amount",
+          "args": [
+            30
+          ],
+          "value": 90.0
+        },
+        {
+          "method": "health_care_amount",
+          "args": [
+            65
+          ],
+          "value": 163.0
+        }
+      ]
+    }
+  ]
+}
