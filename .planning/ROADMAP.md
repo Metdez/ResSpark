@@ -179,13 +179,13 @@ Plans:
   4. Staff get a copyable signing link (not just an email) and an ESIGN consent record is captured before the client signs (SIGN-03)
   5. On completion the signed PDF and the audit-trail PDF are stored in the case immediately with a content hash, the item shows as signed, and the signed PDF can be pushed to Logics like any other document (SIGN-02)
 
-**Plans:** 3/8 plans executed
+**Plans:** 4/8 plans executed
 
 Plans:
 - [x] 06-01-PLAN.md — Tracer: migration 0007 (13 `cases` address columns, widened `connections`/`consents` CHECKs, `case_confirm_address`), Smarty proxy client, suggest + confirm routes with manual fallback, DocuSeal/Smarty vars and stdin secret provisioning, proven live with Smarty stubbed
 - [x] 06-02-PLAN.md — Tracer: template keys + ESIGN consent text (`esign-v1`), DocuSeal client, lazy submission (row before URL, reuse, retry), consent-gated `signature/start`, proven live with DocuSeal stubbed
 - [x] 06-03-PLAN.md — Client address sheet (debounced suggestions, units, one-time unit prompt, manual form) + staff address card (county, FIPS, RDI, verified chip) in the review panel
-- [ ] 06-04-PLAN.md — Tracer: DocuSeal HMAC webhook, `reconcileSignature`, signed PDF + audit PDF ingest with sha256, live reconcile matrix and fake-mode Logics push of the signed PDF
+- [x] 06-04-PLAN.md — Tracer: DocuSeal HMAC webhook, `reconcileSignature`, signed PDF + audit PDF ingest with sha256, live reconcile matrix and fake-mode Logics push of the signed PDF
 - [ ] 06-05-PLAN.md — Admin e-sign template mapping card (one-signer check, admin-only) + request builder "Add a form to sign" + `bad_template` gate
 - [ ] 06-06-PLAN.md — Full-bleed signing route with lazy `@docuseal/react`, consent sheet, deep link `?step=`, DocuSeal CSP hosts, Playwright 3-tap/2-tap proof at 390×844
 - [ ] 06-07-PLAN.md — Staff signature card: status chip, Test badge, copy/email signing link, Refresh, IRS 2848/8821 note, e-sign timeline labels
@@ -272,6 +272,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 3. Uploads, Review & Live Status | 7/7 | In Progress | - |
 | 4. Connect Payroll & Bank | 5/7 | In Progress | - |
 | 5. Push to Logics | 5/5 | In Progress | - |
-| 6. Address & E-Sign | 3/8 | In Progress | - |
+| 6. Address & E-Sign | 4/8 | In Progress | - |
 | 7. 433-A Pre-Population | 3/12 | In Progress | - |
 | 8. Reminders, Teller & Production Readiness | 0/12 | Not started | - |
