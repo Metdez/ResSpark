@@ -85,3 +85,11 @@
     height: 0;
   }
 }
+
+/* UI-SPEC accessibility floor: honour the OS reduced-motion preference */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

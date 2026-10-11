@@ -11,19 +11,17 @@ this table and gets its own `docs/app/<mirrored path>.md`.
 Regenerate the table with the classification used in Plan 01-02: walk `app/` (skipping `node_modules`,
 `dist`, `scripts`), compare each file byte-for-byte with the clone at the commit above.
 
-## Byte-identical (117 files)
+## Byte-identical (102 files)
 
 | Path (under `app/`) | Origin commit |
 |------|---------------|
 | `.prettierignore` | `e16c87f` |
 | `.prettierrc` | `e16c87f` |
 | `components.json` | `e16c87f` |
-| `index.html` | `e16c87f` |
 | `public/images/favicon.png` | `e16c87f` |
 | `public/images/favicon.svg` | `e16c87f` |
 | `public/images/favicon_light.png` | `e16c87f` |
 | `public/images/favicon_light.svg` | `e16c87f` |
-| `public/images/shadcn-admin.png` | `e16c87f` |
 | `src/assets/brand-icons/icon-discord.tsx` | `e16c87f` |
 | `src/assets/brand-icons/icon-docker.tsx` | `e16c87f` |
 | `src/assets/brand-icons/icon-facebook.tsx` | `e16c87f` |
@@ -52,7 +50,6 @@ Regenerate the table with the classification used in Plan 01-02: walk `app/` (sk
 | `src/assets/custom/icon-theme-light.tsx` | `e16c87f` |
 | `src/assets/custom/icon-theme-system.tsx` | `e16c87f` |
 | `src/assets/logo.tsx` | `e16c87f` |
-| `src/components/command-menu.tsx` | `e16c87f` |
 | `src/components/confirm-dialog.tsx` | `e16c87f` |
 | `src/components/data-table/bulk-actions.tsx` | `e16c87f` |
 | `src/components/data-table/column-header.tsx` | `e16c87f` |
@@ -66,14 +63,11 @@ Regenerate the table with the classification used in Plan 01-02: walk `app/` (sk
 | `src/components/layout/header.tsx` | `e16c87f` |
 | `src/components/layout/main.tsx` | `e16c87f` |
 | `src/components/layout/nav-group.tsx` | `e16c87f` |
-| `src/components/layout/top-nav.tsx` | `e16c87f` |
 | `src/components/long-text.tsx` | `e16c87f` |
 | `src/components/navigation-progress.tsx` | `e16c87f` |
 | `src/components/password-input.tsx` | `e16c87f` |
-| `src/components/search.tsx` | `e16c87f` |
 | `src/components/select-dropdown.tsx` | `e16c87f` |
 | `src/components/skip-to-main.tsx` | `e16c87f` |
-| `src/components/theme-switch.tsx` | `e16c87f` |
 | `src/components/ui/alert-dialog.tsx` | `e16c87f` |
 | `src/components/ui/alert.tsx` | `e16c87f` |
 | `src/components/ui/avatar.tsx` | `e16c87f` |
@@ -104,17 +98,10 @@ Regenerate the table with the classification used in Plan 01-02: walk `app/` (sk
 | `src/components/ui/tabs.tsx` | `e16c87f` |
 | `src/components/ui/textarea.tsx` | `e16c87f` |
 | `src/components/ui/tooltip.tsx` | `e16c87f` |
-| `src/config/fonts.ts` | `e16c87f` |
 | `src/context/direction-provider.tsx` | `e16c87f` |
-| `src/context/font-provider.tsx` | `e16c87f` |
 | `src/context/layout-provider.tsx` | `e16c87f` |
 | `src/context/search-provider.tsx` | `e16c87f` |
-| `src/context/theme-provider.tsx` | `e16c87f` |
-| `src/features/auth/auth-layout.tsx` | `e16c87f` |
-| `src/features/errors/maintenance-error.tsx` | `e16c87f` |
-| `src/features/settings/appearance/appearance-form.tsx` | `e16c87f` |
 | `src/features/settings/appearance/index.tsx` | `e16c87f` |
-| `src/features/settings/components/content-section.tsx` | `e16c87f` |
 | `src/features/settings/components/sidebar-nav.tsx` | `e16c87f` |
 | `src/hooks/use-dialog-state.tsx` | `e16c87f` |
 | `src/hooks/use-mobile.tsx` | `e16c87f` |
@@ -126,8 +113,6 @@ Regenerate the table with the classification used in Plan 01-02: walk `app/` (sk
 | `src/routes/__root.tsx` | `e16c87f` |
 | `src/stores/auth-store.test.ts` | `e16c87f` |
 | `src/stores/auth-store.ts` | `e16c87f` |
-| `src/styles/index.css` | `e16c87f` |
-| `src/styles/theme.css` | `e16c87f` |
 | `src/tanstack-table.d.ts` | `e16c87f` |
 | `src/test-utils/cookies.ts` | `e16c87f` |
 | `tsconfig.app.json` | `e16c87f` |
@@ -138,11 +123,19 @@ Regenerate the table with the classification used in Plan 01-02: walk `app/` (sk
 | Path (under `app/`) | The only change |
 |------|-----------------|
 | `src/components/sign-out-dialog.tsx` | redirect target `/sign-in` -> `/admin/sign-in` |
-| `src/features/errors/forbidden.tsx` | `navigate({ to: '/' })` -> `/admin` |
-| `src/features/errors/general-error.tsx` | `navigate({ to: '/' })` -> `/admin` |
-| `src/features/errors/not-found-error.tsx` | `navigate({ to: '/' })` -> `/admin` |
-| `src/features/errors/unauthorized-error.tsx` | `navigate({ to: '/' })` -> `/admin` |
+| `src/features/errors/forbidden.tsx` | `navigate({ to: '/' })` -> `/admin`; typography sweep (UI-SPEC: two weights): `font-bold` -> `font-semibold`, `font-medium` removed |
+| `src/features/errors/general-error.tsx` | `navigate({ to: '/' })` -> `/admin`; typography sweep (UI-SPEC: two weights): `font-bold` -> `font-semibold`, `font-medium` removed |
+| `src/features/errors/maintenance-error.tsx` | typography sweep (UI-SPEC: two weights): `font-bold` -> `font-semibold`, `font-medium` removed |
+| `src/features/errors/not-found-error.tsx` | `navigate({ to: '/' })` -> `/admin`; typography sweep (UI-SPEC: two weights): `font-bold` -> `font-semibold`, `font-medium` removed |
+| `src/features/errors/unauthorized-error.tsx` | `navigate({ to: '/' })` -> `/admin`; typography sweep (UI-SPEC: two weights): `font-bold` -> `font-semibold`, `font-medium` removed |
 | `src/features/auth/sign-in/components/user-auth-form.tsx` | removed the `Forgot password?` `Link` (route no longer exists) and its import; default landing `/` -> `/admin`. Plan 06 rewrites this file against Supabase Auth. |
+| `src/features/auth/auth-layout.tsx` | title text `Shadcn Admin` -> `import.meta.env.VITE_APP_NAME ?? 'ResSpark'` with the Heading classes `text-xl font-semibold leading-tight` |
+| `src/features/settings/components/content-section.tsx` | section title classes `text-lg font-medium` -> Heading `text-xl font-semibold leading-tight` |
+| `src/components/layout/top-nav.tsx` | typography sweep (UI-SPEC: two weights): `font-bold` -> `font-semibold`, `font-medium` removed (unused in Phase 1) |
+| `src/components/search.tsx` | typography sweep (UI-SPEC: two weights): `font-bold` -> `font-semibold`, `font-medium` removed on the `kbd` hint |
+| `src/components/theme-switch.tsx` | removed the **System** menu item (UI-SPEC A-4: light/dark only) |
+| `src/components/command-menu.tsx` | removed the **System** theme command and the `Laptop` icon import |
+| `index.html` | removed the Google Fonts `preconnect`/stylesheet links (A-3), the shadcn Open Graph/Twitter tags, and retitled to `ResSpark` with `robots: noindex`; favicons unchanged |
 | `src/vite-env.d.ts` | added `interface ImportMetaEnv { readonly VITE_APP_NAME?: string }` so `import.meta.env.VITE_APP_NAME` is typed |
 | `tsconfig.node.json` | `include` gained `vitest.config.ts` |
 | `src/lib/utils.test.ts` | added a `cn` test (see `docs/app/src/lib/utils.md`) |
