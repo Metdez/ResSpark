@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { verifyStaffJwt } from '../auth/staff-jwt'
-import { listCaseEvents, type EventRow } from '../db/review'
+import { beforeFilter, listCaseEvents, type EventRow } from '../db/review'
 import { getStaffProfile } from '../db/staff'
 import { app } from '../index'
 
@@ -51,7 +51,7 @@ describe('GET /cases/:id/events', () => {
   it('sets next_before to the last row when a full page came back', async () => {
     vi.mocked(listCaseEvents).mockResolvedValue(ROWS.slice(0, 2))
     const res = await get('?limit=2')
-    expect(((await res.json()) as { next_before: string }).next_before).toBe('2026-10-11T02:00:00Z')
+    expect(((await res.json()) as { next_before: string }).next_before).toBe('2026-10-11T02:00:00Z|2')
     expect(listCaseEvents).toHaveBeenCalledWith(ENV, 'F1', C1, null, 2)
   })
 
@@ -67,10 +67,29 @@ describe('GET /cases/:id/events', () => {
     expect(listCaseEvents).not.toHaveBeenCalled()
   })
 
-  it('passes a valid before through as ISO', async () => {
-    await get('?before=2026-10-10T00:00:00Z')
-    expect(listCaseEvents).toHaveBeenCalledWith(ENV, 'F1', C1, '2026-10-10T00:00:00.000Z', 50)
+  it('round-trips the cursor with microseconds and the id, untouched', async () => {
+    const edge = event(7, '2026-10-11T15:02:58.123456+00:00')
+    vi.mocked(listCaseEvents).mockResolvedValue([event(8, '2026-10-11T15:03:00.000001+00:00'), edge])
+    const { next_before } = (await (await get('?limit=2')).json()) as { next_before: string }
+    expect(next_before).toBe('2026-10-11T15:02:58.123456+00:00|7')
+    await get(`?before=${encodeURIComponent(next_before)}`)
+    expect(listCaseEvents).toHaveBeenLastCalledWith(ENV, 'F1', C1, { ts: '2026-10-11T15:02:58.123456+00:00', id: 7 }, 50)
   })
+
+  it('asks for rows sharing the edge timestamp with a lower id (tie at the page edge)', () => {
+    expect(beforeFilter({ ts: '2026-10-11T15:02:58.123456+00:00', id: 7 })).toBe(
+      'created_at.lt."2026-10-11T15:02:58.123456+00:00",and(created_at.eq."2026-10-11T15:02:58.123456+00:00",id.lt.7)'
+    )
+  })
+
+  it.each(['2026-10-10T00:00:00Z', '2026-10-10T00:00:00Z|x', '2026-10-10T00:00:00Z|1|2', 'x|1', '2026-10-10T00:00:00Z",id.gt.0|1'])(
+    'refuses the malformed cursor %s with 400',
+    async (before) => {
+      const res = await get(`?before=${encodeURIComponent(before)}`)
+      expect(res.status).toBe(400)
+      expect(listCaseEvents).not.toHaveBeenCalled()
+    }
+  )
 
   it('answers 404 for a case of another firm', async () => {
     vi.mocked(listCaseEvents).mockResolvedValue(null)

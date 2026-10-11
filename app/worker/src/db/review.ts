@@ -183,13 +183,20 @@ export async function rejectItem(
   return data
 }
 
+export interface EventCursor {
+  ts: string
+  id: number
+}
+
+// Rows strictly older than the cursor in (created_at desc, id desc) order; ts is the raw Postgres string, so microseconds survive.
+export const beforeFilter = ({ ts, id }: EventCursor) => `created_at.lt."${ts}",and(created_at.eq."${ts}",id.lt.${id})`
+
 // null when the case is not this firm's, so the route answers 404 rather than an empty page.
-// shortcut: the cursor is created_at only, so events sharing one timestamp across a page edge are skipped; add an id tiebreak if that shows up.
 export async function listCaseEvents(
   env: DbEnv,
   firmId: string,
   caseId: string,
-  before: string | null,
+  before: EventCursor | null,
   limit: number
 ): Promise<EventRow[] | null> {
   const db = createAdminClient(env)
@@ -201,7 +208,7 @@ export async function listCaseEvents(
     .select('id, actor_type, actor_id, action, payload, created_at, request_id')
     .eq('firm_id', firmId)
     .eq('case_id', caseId)
-  if (before) q = q.lt('created_at', before)
+  if (before) q = q.or(beforeFilter(before))
   const { data, error } = await q
     .order('created_at', { ascending: false })
     .order('id', { ascending: false })

@@ -23,7 +23,7 @@ Firm-scoped reads and decision calls behind the staff review routes (Plan 03-03;
 | `findFirmDocument(env, firmId, documentId)` | `documents` inner-joined through `request_items` to `requests`, filtered on `requests.firm_id` | `documents` has no `firm_id` column; the two `!inner` joins make the firm filter drop a foreign document entirely. Returns the full `DocumentRow` plus `firm_id` and `request_id` (the route needs both for the `document.viewed` event). |
 | `approveItem(env, firmId, itemId, actorId)` | `rpc('item_approve', { p_item_id, p_firm_id, p_actor_id })` | The RPC (migration 0004) re-checks the firm, locks `requests` then the item, writes `item.approved`, and recomputes the request status in the same transaction. It is idempotent on an already approved item (`already: true`, no second event). |
 | `rejectItem(env, firmId, itemId, note, actorId)` | `rpc('item_reject', { p_item_id, p_firm_id, p_note, p_actor_id })` | Sets the item and all of its `ready` documents to `rejected` with the same note, writes `item.rejected` with the note in the payload, and recomputes the request status. |
-| `listCaseEvents(env, firmId, caseId, before, limit)` | First `cases` where `id` and `firm_id` match; then `events` where `firm_id` and `case_id` match, `created_at < before` when given, ordered `created_at DESC, id DESC`, `limit(limit)` | Returns `null` when the case is not the firm's, so the route can answer 404 instead of an empty page. |
+| `listCaseEvents(env, firmId, caseId, before, limit)` | First `cases` where `id` and `firm_id` match; then `events` where `firm_id` and `case_id` match, rows strictly before the cursor when given (`or(beforeFilter(before))`), ordered `created_at DESC, id DESC`, `limit(limit)` | Returns `null` when the case is not the firm's, so the route can answer 404 instead of an empty page. |
 
 ## RPC error mapping
 
@@ -38,6 +38,6 @@ Firm-scoped reads and decision calls behind the staff review routes (Plan 03-03;
 
 `item_not_found` is renamed to `not_found` so a foreign item reads exactly like every other missing id.
 
-## Shortcut
+## Events cursor
 
-The events cursor is `created_at` only. Several events written in one transaction share a timestamp (`CURRENT_TIMESTAMP` is the transaction start), so if a page boundary falls between two of them, the next page (`created_at < next_before`) skips the rest. With 50 events per page this is rare; the `shortcut:` comment names the fix (a `(created_at, id)` tiebreak).
+`EventCursor` is `{ ts, id }`: the last row's raw Postgres `created_at` string and its `id`. `beforeFilter(cursor)` builds the PostgREST `or()` filter `created_at.lt."ts",and(created_at.eq."ts",id.lt.id)`, which matches the `created_at DESC, id DESC` order exactly. Several events written in one transaction share a timestamp (`CURRENT_TIMESTAMP` is the transaction start), so the id tiebreak is what keeps a page edge inside such a group from skipping rows. `ts` is quoted because it contains `.`, `:` and `+`; the route only lets a strict timestamp shape through, so no filter syntax can reach the string. The raw string keeps microseconds (a `Date` round-trip would truncate to milliseconds and skip rows in the same millisecond).
