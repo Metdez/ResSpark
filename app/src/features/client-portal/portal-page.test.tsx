@@ -228,7 +228,7 @@ describe('PortalPage', () => {
       'Not started',
       'In progress',
       'Done',
-      'In progress',
+      'With your agent',
       'Needs attention',
     ])
     expect(rows()[0].textContent).toContain(

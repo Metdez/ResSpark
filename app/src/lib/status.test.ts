@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { TONE_CLASSES, itemStatusBadge, requestStatusBadge } from './status'
+import {
+  OVERDUE_BADGE,
+  TONE_CLASSES,
+  documentStatusBadge,
+  itemStatusBadge,
+  requestStatusBadge,
+} from './status'
 
 describe('requestStatusBadge', () => {
   it.each([
@@ -30,11 +36,15 @@ describe('itemStatusBadge', () => {
     ['approved', 'staff', 'success', 'Approved'],
     ['rejected', 'staff', 'destructive', 'Rejected'],
     ['pending', 'client', 'neutral', 'Not started'],
-    ['submitted', 'client', 'info', 'In progress'],
+    ['submitted', 'client', 'warning', 'With your agent'],
     ['approved', 'client', 'success', 'Done'],
     ['rejected', 'client', 'destructive', 'Needs attention'],
   ] as const)('%s for %s → %s %s', (status, audience, tone, label) => {
     expect(itemStatusBadge(status, audience)).toEqual({ tone, label })
+  })
+
+  it('tells a client who uploaded that the item is with their agent', () => {
+    expect(itemStatusBadge('submitted', 'client').label).toBe('With your agent')
   })
 
   it('falls back to neutral with the raw string for an unknown status', () => {
@@ -42,6 +52,24 @@ describe('itemStatusBadge', () => {
       tone: 'neutral',
       label: 'lost',
     })
+  })
+})
+
+describe('documentStatusBadge', () => {
+  it.each([
+    ['uploading', 'neutral', 'Uploading'],
+    ['ready', 'success', 'Ready'],
+    ['rejected', 'destructive', 'Rejected'],
+    ['deleted', 'muted', 'Deleted'],
+    ['weird', 'neutral', 'weird'],
+  ])('%s → %s %s', (status, tone, label) => {
+    expect(documentStatusBadge(status)).toEqual({ tone, label })
+  })
+})
+
+describe('OVERDUE_BADGE', () => {
+  it('is a destructive Overdue badge', () => {
+    expect(OVERDUE_BADGE).toEqual({ tone: 'destructive', label: 'Overdue' })
   })
 })
 
