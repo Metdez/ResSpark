@@ -3,9 +3,10 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { tanstackRouter } from '@tanstack/router-plugin/vite'
+import { cloudflare } from '@cloudflare/vite-plugin'
 
 // https://vite.dev/config/
-// Plan 03 appends cloudflare() last so the Worker is served and built alongside the SPA
+// cloudflare() stays last so the Worker (wrangler.jsonc) is served and built alongside the SPA
 export default defineConfig({
   plugins: [
     tanstackRouter({
@@ -14,6 +15,7 @@ export default defineConfig({
     }),
     react(),
     tailwindcss(),
+    cloudflare(),
   ],
   resolve: {
     alias: {

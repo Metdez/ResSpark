@@ -42,4 +42,6 @@ Names only. Values live in the places listed and nowhere else.
 
 ## Deployed URL
 
-(filled by Plan 03)
+https://resspark.zh-a16.workers.dev — Worker `resspark` on the free `*.workers.dev` subdomain (D-06). One `pnpm -C app run deploy` ships the SPA and the API together; `node app/scripts/smoke.mjs https://resspark.zh-a16.workers.dev` proves `/admin`, `/api/config`, and the Worker 404 JSON for `/api/*` and `/webhooks/*`.
+
+Note: `pnpm deploy` (without `run`) is pnpm's own workspace-deploy command and fails with `ERR_PNPM_NOTHING_TO_DEPLOY`; always use `pnpm -C app run deploy`.

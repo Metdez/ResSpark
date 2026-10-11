@@ -1,0 +1,56 @@
+import { Hono } from 'hono'
+import { HTTPException } from 'hono/http-exception'
+import { requestId, type RequestIdVariables } from 'hono/request-id'
+import { secureHeaders } from 'hono/secure-headers'
+import { logger } from './log/logger'
+import { configRoute } from './routes/config'
+
+// Plan 06 moves StaffCtx to middleware/staff-auth.ts and re-exports it; keep the shape.
+export type StaffCtx = { userId: string; firmId: string; role: 'staff' | 'admin' }
+
+export const app = new Hono<{
+  Bindings: Env
+  Variables: RequestIdVariables & { staff?: StaffCtx; errorCode?: string }
+}>()
+
+app.use('*', requestId())
+app.use('*', logger())
+app.use('/api/*', secureHeaders())
+app.use('/c/*', secureHeaders(), async (c, next) => {
+  await next()
+  // set after next(): a raw asset Response returned by a handler drops headers prepared before it
+  c.res.headers.set('Cache-Control', 'no-store')
+  c.res.headers.set('X-Robots-Tag', 'noindex')
+})
+
+// Envelope { error: { code, message } } with fixed strings only; err.message of unknown errors
+// is never serialized (T-01-10).
+app.onError((err, c) => {
+  if (err instanceof HTTPException) {
+    const code = err.message || 'error'
+    c.set('errorCode', code)
+    return c.json({ error: { code, message: code } }, err.status)
+  }
+  c.set('errorCode', 'internal')
+  return c.json({ error: { code: 'internal', message: 'Something went wrong' } }, 500)
+})
+
+app.route('/api/config', configRoute)
+
+app.notFound(async (c) => {
+  // path read for routing only, never logged
+  const path = c.req.path
+  if (path.startsWith('/api/') || path.startsWith('/webhooks/')) {
+    c.set('errorCode', 'not_found')
+    return c.json({ error: { code: 'not_found', message: 'Not found' } }, 404)
+  }
+  // SPA fallback for /c/ and friends; cloned so middleware can set headers on it
+  const res = await c.env.ASSETS.fetch(c.req.raw)
+  return new Response(res.body, res)
+})
+
+export default {
+  fetch: app.fetch,
+  queue: async (_batch: MessageBatch, _env: Env) => {}, // Phase 4 fills the consumer
+  scheduled: async (_c: ScheduledController, _env: Env) => {}, // Phase 2 fills the cron
+} satisfies ExportedHandler<Env>
