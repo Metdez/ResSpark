@@ -76,7 +76,11 @@ const tick = () =>
   })
 
 async function render(detail: Reply) {
-  replies = { 'GET /api/admin/requests/r1': detail, ...replies }
+  replies = {
+    'GET /api/admin/requests/r1': detail,
+    'GET /api/admin/requests/r1/review': 'pending',
+    ...replies,
+  }
   fetchMock = vi.fn((path: string, init: RequestInit) => {
     const r = replies[`${init.method ?? 'GET'} ${path}`]
     if (!r) throw new Error('unexpected ' + path)
@@ -312,6 +316,13 @@ describe('RequestPage', () => {
     )
     expect(el.textContent).not.toContain('Send the link')
     expect(button('Send link')).toBeUndefined()
+  })
+
+  it('shows the review panel instead of the items card once sent', async () => {
+    const el = await render({ status: 200, body: SENT })
+    expect(fetchMock).toHaveBeenCalledWith('/api/admin/requests/r1/review', expect.anything())
+    expect(el.textContent).toContain('Review')
+    expect(el.querySelector('[data-item-row]')).toBeNull()
   })
 
   it('mounts the link actions inside the Client link card', async () => {

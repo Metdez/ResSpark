@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { StatusBadge } from '@/components/status-badge'
 import { RequestContactForm } from './request-contact-form'
+import { ReviewPanel } from '@/features/review/review-panel'
 import { RequestLinkActions } from './request-link-actions'
 import {
   formatDate,
@@ -166,7 +167,12 @@ export function RequestPage({ requestId }: { requestId: string }) {
           </Card>
         )}
 
-        <ItemsCard items={d.items} />
+        {/* Once sent, the review panel lists the same items with their files and decisions (Plan 03-03). */}
+        {d.status === 'draft' ? (
+          <ItemsCard items={d.items} />
+        ) : (
+          <ReviewPanel requestId={d.id} caseId={d.case.case_id} />
+        )}
       </div>
     </>
   )

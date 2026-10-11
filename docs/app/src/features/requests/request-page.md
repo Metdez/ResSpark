@@ -1,6 +1,6 @@
 # `app/src/features/requests/request-page.tsx`
 
-`RequestPage({ requestId })`: the staff view of one request (REQ-02, REQ-03, D-08, D-09). A draft shows the send form; a sent request shows the copyable client link; every request shows its items with status badges. The component has no router dependency; the route file supplies `requestId` and the page chrome.
+`RequestPage({ requestId })`: the staff view of one request (REQ-02, REQ-03, D-08, D-09, and since Plan 03-03 UPL-03/UPL-04). A draft shows the send form and its items; a sent request shows the copyable client link and the review panel. The component has no router dependency; the route file supplies `requestId` and the page chrome.
 
 | Part | What it does |
 |------|--------------|
@@ -18,6 +18,7 @@
 | Client link card | Rendered when there is a link or the request is revoked. Heading `Client link`, then `LinkRow`, or the muted line `This link was revoked.` in its place. Below, once the request is past `draft`, `RequestLinkActions` (email, regenerate, revoke, SMS consent) with `onChanged` refetching the detail query. |
 | `LinkRow` | A read-only input holding the URL (focus selects all), the primary `Copy link` button, and `Expires {Oct 24, 2026}` with the ISO timestamp in `title`. Copy writes to the clipboard, toasts `Link copied`, and fire-and-forgets `markCopied` (`POST /copied`, D-09). A clipboard failure toasts `Couldn't copy the link` / `Select the link and copy it yourself.` instead. |
 | `ItemsCard` | Heading `Items`, one row per item sorted by `position`: label, muted `Required`/`Optional`, and the staff item badge. |
+| Review panel (Plan 03-03) | While the request is a `draft`, `ItemsCard` lists the items. Once it is sent (any other status), `<ReviewPanel requestId caseId />` replaces it: the same items, plus each item's files, Preview/Download, Approve and Reject. Showing both would list every item twice. The panel has its own 5 s polled query (`['review', id]`); the detail query is not polled, and the panel's decisions invalidate `['request', id]` so the header badge follows. See `docs/app/src/features/review/review-panel.md`. |
 
 ## Notes
 
@@ -38,6 +39,7 @@
 - 400 `contact_invalid` shows the server's email error under the field (`aria-invalid`, `aria-describedby`);
 - 409 `logics_not_configured` shows its alert;
 - a sent request shows the link card and no form;
+- a sent request mounts the review panel (it fetches `/api/admin/requests/r1/review`, stubbed as pending) and no `ItemsCard` rows;
 - the link actions (`Email link`, `Revoke link`) sit inside the `Client link` card, and `Email link` is an outline button (Copy link stays the only primary);
 - a revoked request shows `Revoked`, `This link was revoked.`, and no URL, `Copy link`, or `Revoke link`;
 - loading shows three skeletons and no input.
