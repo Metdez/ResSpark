@@ -8,7 +8,11 @@ const NONCE = /^[A-Za-z0-9_-]{16,32}$/
 // connection status is never read or written here. Mounted before GET /c/:token.
 export const cReturnRoute = new Hono<{ Bindings: Env }>().get('/return', async (c) => {
   const nonce = c.req.query('nonce')
-  if (nonce === undefined) return c.env.ASSETS.fetch(c.req.raw)
+  if (nonce === undefined) {
+    // cloned like the index.ts SPA fallback: ASSETS headers are immutable and clientCsp sets headers
+    const res = await c.env.ASSETS.fetch(c.req.raw)
+    return new Response(res.body, res)
+  }
   if (NONCE.test(nonce)) {
     const id = await consumeReturnNonce(c.env, nonce)
     if (id) {

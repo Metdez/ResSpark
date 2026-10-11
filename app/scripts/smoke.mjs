@@ -1,13 +1,16 @@
-// Deployed full-stack check: node app/scripts/smoke.mjs <baseUrl> [--auth] [--client-flow]
+// Deployed full-stack check: node app/scripts/smoke.mjs <baseUrl> [--auth] [--client-flow] [--connect-flow]
 // Prints `ok <name>` or `FAIL <name>: <reason>` per check; exits 1 if any check fails.
+import { connectFlow } from './smoke-connect.mjs'
+
 const args = process.argv.slice(2)
 const baseUrl = args.find((a) => !a.startsWith('--'))
 if (!baseUrl) {
-  console.error('usage: node app/scripts/smoke.mjs <baseUrl> [--auth] [--client-flow]')
+  console.error('usage: node app/scripts/smoke.mjs <baseUrl> [--auth] [--client-flow] [--connect-flow]')
   process.exit(1)
 }
 const base = baseUrl.replace(/\/$/, '')
-const withClientFlow = args.includes('--client-flow')
+const withConnectFlow = args.includes('--connect-flow')
+const withClientFlow = args.includes('--client-flow') || withConnectFlow
 const withAuth = args.includes('--auth') || withClientFlow
 
 const isObject = (v) => typeof v === 'object' && v !== null && !Array.isArray(v)
@@ -423,7 +426,7 @@ async function clientFlow() {
     if (unopened.status !== 200) throw new Error(`status ${unopened.status}`)
     const text = await unopened.text()
     const state = JSON.parse(text)
-    if (state.steps.length !== 5 || state.opened_at !== null || state.firm_name !== 'ValorTax') {
+    if (state.steps.length !== template.items.length || state.opened_at !== null || state.firm_name !== 'ValorTax') {
       throw new Error(`steps ${state.steps.length}, opened_at ${state.opened_at}, firm ${state.firm_name}`)
     }
     if (/morgan\.lee|010-0003|5550100003/.test(text)) throw new Error('state contains contact details')
@@ -443,6 +446,10 @@ async function clientFlow() {
     const detail = await admin('GET', `/requests/${requestId}`)
     if (detail.status !== 'opened' || !detail.link?.opened_at) throw new Error(`status ${detail.status}`)
     ok('revoke')
+    // Plan 04-07: --connect-flow runs here, before revoke, on the same request and cookie.
+    const connectMode = withConnectFlow
+      ? await connectFlow({ base, client, staffHeaders: headers, steps: opened.steps, requestId })
+      : null
     await admin('POST', `/requests/${requestId}/revoke`)
     ok('revoke 401')
     const revoked = await client('/state')
@@ -453,8 +460,10 @@ async function clientFlow() {
     if (!(await dead.text()).includes("This link isn't active")) throw new Error('no invalid-link copy')
     ok('complete')
     console.log(`ok client-flow complete request ${requestId}`)
+    if (connectMode) console.log(`ok connect-flow complete (${connectMode})`)
     return true
   } catch (error) {
+    if (error?.reported) return false
     console.log(`FAIL client-flow ${step}: ${error instanceof Error ? error.message : String(error)}`)
     return false
   } finally {

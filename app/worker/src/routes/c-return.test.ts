@@ -42,6 +42,18 @@ describe('GET /c/return', () => {
     expect(fetchAsset).toHaveBeenCalledTimes(1)
     expect(await res.text()).toContain('spa')
   })
+  it('serves the SPA with the client CSP when the asset response headers are immutable', async () => {
+    const asset = new Response('<html>spa</html>', { headers: { 'content-type': 'text/html' } })
+    for (const m of ['set', 'append', 'delete'] as const)
+      vi.spyOn(asset.headers, m).mockImplementation(() => {
+        throw new TypeError('immutable')
+      })
+    fetchAsset.mockResolvedValueOnce(asset)
+    // a non-local host, since clientCsp skips localhost
+    const res = await app.request('https://resspark.test/c/return', {}, { ...env, SUPABASE_URL: 'https://p.supabase.co' })
+    expect(res.status).toBe(200)
+    expect(res.headers.get('content-security-policy')).toContain('cdn.truv.com')
+  })
   it('never writes connection status', async () => {
     vi.mocked(consumeReturnNonce).mockResolvedValue('C1')
     await get(`/c/return?nonce=${NONCE}`)

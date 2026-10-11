@@ -4,7 +4,7 @@
 
 | Request | Response |
 |---------|----------|
-| no `nonce` query param | The SPA (`c.env.ASSETS.fetch(c.req.raw)`); the client page polls the connection. |
+| no `nonce` query param | The SPA (`c.env.ASSETS.fetch(c.req.raw)`), returned as a copy (`new Response(res.body, res)`), the same as the `index.ts` SPA fallback. The client page polls the connection. ASSETS responses have immutable headers, and `clientCsp` and the privacy middleware set headers after `next()`. Returning the asset response itself made the deployed route answer 500. |
 | `nonce` that matches `^[A-Za-z0-9_-]{16,32}$` and is unused | `consumeReturnNonce` marks it used, one `{ type: 'reconcile', ref }` job is sent, `connection.returned` is logged under the client actor, then 302 to `/c/return`. |
 | `nonce` unknown, already used, or badly shaped | 302 to `/c/return`, no job, no event. A badly shaped nonce never reaches the database. |
 
