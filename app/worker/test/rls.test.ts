@@ -16,13 +16,21 @@ const key =
   process.env.VITE_SUPABASE_PUBLISHABLE_KEY
 
 const BASELINE_TABLE_COUNT = 15
-// 15 baseline tables (src/schemas/database_schema.sql) + 5 from 0002 + 5 from 0003 + the 0004 view, sorted.
+// 15 baseline tables (src/schemas/database_schema.sql) + 5 from 0002 + 5 from 0003 + the 0004 view
+// + 7 from 0005 (connections, connection_secrets, bank_accounts, bank_statement_months,
+// bank_transactions, webhook_events, consents), sorted.
 const TABLES = [
   'app_migrations',
+  'bank_accounts',
+  'bank_statement_months',
+  'bank_transactions',
   'case_financial_data',
   'cases',
   'client_links',
   'client_sessions',
+  'connection_secrets',
+  'connections',
+  'consents',
   'county_suffixes',
   'determination_runs',
   'document_extractions',
@@ -44,6 +52,7 @@ const TABLES = [
   'state_region_standards',
   'transportation_operating_standards',
   'transportation_ownership_standards',
+  'webhook_events',
 ]
 
 describe.skipIf(!url || !key)('anon is denied on every public table', () => {
@@ -85,6 +94,15 @@ describe.skipIf(!url || !key)('anon is denied on every public table', () => {
         p_action: null,
         p_payload: null,
       }),
+    })
+    expect([401, 404]).toContain(res.status)
+  })
+
+  it('rpc connection_set_status is not callable by anon', async () => {
+    const res = await fetch(`${url}/rest/v1/rpc/connection_set_status`, {
+      method: 'POST',
+      headers: { apikey: key!, 'content-type': 'application/json' },
+      body: JSON.stringify({ p_connection_id: null, p_new_status: null }),
     })
     expect([401, 404]).toContain(res.status)
   })

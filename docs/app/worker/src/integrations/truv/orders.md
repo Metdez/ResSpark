@@ -28,3 +28,7 @@ Truv order types, the reconcile read, and the deterministic order → connection
 
   Completion is checked before expiry so an order whose employers all finished stays `done`.
 - `summarizeEmployers(order, previous)`: one summary per order employer, keyed by `employer_id`; fields from the previous summary (`fetched_at`, counts, a known `link_id`/`company_name`) survive; new employers are added.
+
+## Tests
+
+`orders.test.ts`: the `mapOrderStatus` table (all completed, completed + pending, all pending, error only, error + completed, completed + skipped, unknown `full_parse`, all skipped, no employers), `is_expired` with outstanding work (`order_expired`) and with every employer completed (`done`), every `mapEmployerStatus` value including `skipped`, `summarizeEmployers` keeping `fetched_at`/`pay_stubs` and adding a new employer, and the `isTruvOrder` guard.
