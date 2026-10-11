@@ -71,7 +71,7 @@ Plans:
   4. A client opens the link on a phone with no account, password, or app and sees the firm name, the agent's name, and a simple step list (connect bank, connect payroll, confirm address, upload documents, sign) with done and not-done state; the request counts as "opened" only after the client taps Start, closing and reopening the link resumes where they left off, and an expired or revoked link says "ask your agent for a new link" (PORT-01, PORT-02, PORT-03, PORT-04, PORT-06)
   5. Portal pages are mobile-first with 44 px targets and readable contrast, send no-referrer, no-store, and noindex headers, load no analytics or session replay, and repeated token guessing is rate-limited per IP (PORT-05, PORT-06)
 
-**Plans:** 6/8 plans executed
+**Plans:** 7/8 plans executed
 
 Plans:
 - [x] 02-01-PLAN.md — [BLOCKING] Migration `0003_requests` (firm_integrations, templates, requests, items, client_sessions, cases columns, six RPCs, RLS) applied + live RPC lifecycle proof (LOOK-04, LOOK-05, REQ-01, REQ-03, PORT-02, PORT-04)
@@ -79,7 +79,7 @@ Plans:
 - [x] 02-03-PLAN.md — Worker admin routes: lookup + confirm (CaseInfo re-fetch → `case_confirm_logics`), Logics credentials GET/PUT/test; `INTEGRATION_ENC_KEY`, `LOGICS_MODE=fake`, `RESEND_FROM`; deploy + smoke (LOOK-01, LOOK-02, LOOK-04, LOOK-05)
 - [x] 02-04-PLAN.md — Worker request routes: templates, create, send (contact gate + Logics re-fetch + `request_send` + minted URL), regenerate/revoke, Resend email, consent, link-copied (REQ-01..05, LOOK-04)
 - [x] 02-05-PLAN.md — SPA staff flow: request page (send + copy link), builder, Find a client with confirm cards; status badge palette; sidebar entry (LOOK-01..03, REQ-01..03)
-- [ ] 02-06-PLAN.md — SPA link actions (email/regenerate/revoke/consent), requests list, Settings → Integrations (Logics credentials + Test connection), nav + dashboard CTA (REQ-03..05, LOOK-05)
+- [x] 02-06-PLAN.md — SPA link actions (email/regenerate/revoke/consent), requests list, Settings → Integrations (Logics credentials + Test connection), nav + dashboard CTA (REQ-03..05, LOOK-05)
 - [x] 02-07-PLAN.md — Worker client portal: `clientSession` cookie middleware, `/api/c/state|start|heartbeat`, CSRF header, per-link rate limit, privacy headers (PORT-01..06)
 - [ ] 02-08-PLAN.md — SPA client portal: intro + Start, step list with chips and Coming next sheets, heartbeat, invalid-link fallback; `smoke --client-flow` deployed proof; demo script (PORT-01..06)
 
@@ -268,7 +268,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation & Staff Sign-In | 8/8 | In Progress | - |
-| 2. Find the Client & Send the Link | 6/8 | In Progress | - |
+| 2. Find the Client & Send the Link | 7/8 | In Progress | - |
 | 3. Uploads, Review & Live Status | 0/TBD | Not started | - |
 | 4. Connect Payroll & Bank | 0/TBD | Not started | - |
 | 5. Push to Logics | 1/5 | In Progress | - |

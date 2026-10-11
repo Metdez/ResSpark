@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 2
 current_phase_name: Find the Client & Send the Link
 status: executing
-stopped_at: Completed 02-07-PLAN.md
-last_updated: "2026-10-11T08:17:45.391Z"
+stopped_at: Completed 02-06-PLAN.md
+last_updated: "2026-10-11T08:26:58.828Z"
 last_activity: 2026-10-11
 last_activity_desc: Phase 2 execution started
-state_head: f5404ba6a39b5a6c66cd53d32e94825eb988f142
+state_head: 1237a56a8cbbaeca216c2b890a99e7ebba13cdd8
 progress:
   total_phases: 8
   completed_phases: 0
   total_plans: 67
-  completed_plans: 16
+  completed_plans: 17
   percent: 0
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-10-10)
 ## Current Position
 
 Phase: 2 (Find the Client & Send the Link) — EXECUTING
-Plan: 7 of 8
+Plan: 8 of 8
 Status: Ready to execute
 Last activity: 2026-10-11 — Phase 2 execution started
 
@@ -69,6 +69,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 02 P04 | 30 min | 3 tasks | 24 files |
 | Phase 02 P05 | 29 min | 3 tasks | 38 files |
 | Phase 02 P07 | 20 min | 2 tasks | 14 files |
+| Phase 02 P06 | 27 min | 3 tasks | 27 files |
 
 ## Accumulated Context
 
@@ -121,6 +122,10 @@ Recent decisions affecting current work:
 - [Phase 02]: 02-07: One 401 no_session body for every client-session failure; identity comes only from the signed rs_client cookie and the link row is re-read on every call
 - [Phase 02]: 02-07: Heartbeat limit is an in-memory per-isolate window (hb:<link>, 10 per 60 s) marked shortcut:, upgrade to a Rate Limiting binding keyed by link
 - [Phase 02]: 02-07: PortalState allow-list is firm_name, agent_display_name, status, opened_at, expires_at, steps[id, position, kind, label, required, status]
+- [Phase 02]: Link actions reuse the house ConfirmDialog; revoke confirm is destructive via its destructive prop
+- [Phase 02]: Request page prefers the stored link once it exists so regenerate/revoke refetches show current state
+- [Phase 02]: Saving Logics credentials replaces the cached status with the PUT answer instead of refetching
+- [Phase 02]: Populated requests list follows dense-table rules with count-aware caption; filters/sorting/polling stay Phase 3 (assumption for Phase 3 to confirm)
 
 ### Pending Todos
 
@@ -149,6 +154,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-10-11T08:17:45.182Z
-Stopped at: Completed 02-07-PLAN.md
+Last session: 2026-10-11T08:26:29.065Z
+Stopped at: Completed 02-06-PLAN.md
 Resume file: None

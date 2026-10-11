@@ -24,15 +24,15 @@ Requirements for the first release. Each maps to a roadmap phase. The Oct 12 202
 - [x] **LOOK-02**: Staff must confirm a case card ("Is this the right person?") before a request can be created; multiple matches are shown as a list to choose from
 - [x] **LOOK-03**: Phone numbers are normalized before lookup so formats like `(121)121-2121`, `121-121-2121`, and `1211212121` all match
 - [x] **LOOK-04**: Logics case data (name, contact, address, status) is cached on the local case record and re-fetched at send time so a stale match cannot be sent to
-- [ ] **LOOK-05**: A firm admin can paste the firm's Logics API key and secret token into a Settings page; they are stored encrypted server-side, never shown again in full, and a "Test connection" button confirms they work before any lookup is allowed
+- [x] **LOOK-05**: A firm admin can paste the firm's Logics API key and secret token into a Settings page; they are stored encrypted server-side, never shown again in full, and a "Test connection" button confirms they work before any lookup is allowed
 
 ### Request Builder & Link
 
 - [x] **REQ-01**: Staff can create a request from a seeded template (for example "Standard resolution packet": bank, payroll, address, ID, signature) and add or remove items before sending
 - [x] **REQ-02**: Email and phone are validated before send: non-empty, syntactically valid, and typo domains such as `gmailcom` or `gmial.com` are flagged with a "did you mean" suggestion
-- [ ] **REQ-03**: After send, staff see a copyable client link; the link is HMAC-signed and unguessable, expires (default 14 days), and can be revoked or regenerated without changing the request
-- [ ] **REQ-04**: Staff can send the link by email from the app and see the delivery result; sending by text is a copy-to-clipboard action the agent completes from their own phone
-- [ ] **REQ-05**: Staff can record "client agreed to be texted" on the request and the consent is written to the event log
+- [x] **REQ-03**: After send, staff see a copyable client link; the link is HMAC-signed and unguessable, expires (default 14 days), and can be revoked or regenerated without changing the request
+- [x] **REQ-04**: Staff can send the link by email from the app and see the delivery result; sending by text is a copy-to-clipboard action the agent completes from their own phone
+- [x] **REQ-05**: Staff can record "client agreed to be texted" on the request and the consent is written to the event log
 
 ### Client Portal
 
@@ -176,12 +176,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | LOOK-02 | Phase 2 | Complete |
 | LOOK-03 | Phase 2 | Complete |
 | LOOK-04 | Phase 2 | Complete |
-| LOOK-05 | Phase 2 | Pending |
+| LOOK-05 | Phase 2 | Complete |
 | REQ-01 | Phase 2 | Complete |
 | REQ-02 | Phase 2 | Complete |
-| REQ-03 | Phase 2 | Pending |
-| REQ-04 | Phase 2 | Pending |
-| REQ-05 | Phase 2 | Pending |
+| REQ-03 | Phase 2 | Complete |
+| REQ-04 | Phase 2 | Complete |
+| REQ-05 | Phase 2 | Complete |
 | PORT-01 | Phase 2 | Pending |
 | PORT-02 | Phase 2 | Pending |
 | PORT-03 | Phase 2 | Pending |
