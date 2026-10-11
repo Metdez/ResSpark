@@ -16,6 +16,10 @@
     "LOGICS_WRITE_ENABLED": "false",
     "LOGICS_TEST_CASE_IDS": ""
   },
+  // Deploy fails if any of these is not set on the Worker (D-07); values come from provision-secrets.mjs
+  "secrets": {
+    "required": ["SUPABASE_URL", "SUPABASE_SECRET_KEY", "CLIENT_LINK_HMAC_KEY"]
+  },
   "triggers": {
     "crons": ["*/15 * * * *"]
   },
