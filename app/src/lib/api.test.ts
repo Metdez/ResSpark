@@ -85,4 +85,41 @@ describe('api', () => {
       code: 'invalid_response',
     })
   })
+
+  it('keeps the parsed envelope body on ApiError.body so callers can read extras', async () => {
+    session(null)
+    const body = {
+      error: { code: 'contact_flagged', message: 'x' },
+      email_suggestion: 'a@gmail.com',
+      differs: ['email'],
+    }
+    vi.stubGlobal('fetch', response(false, 409, body))
+
+    const error = await api('/api/x', {}, isConfig).catch((e: unknown) => e)
+    expect(error).toBeInstanceOf(ApiError)
+    expect(error).toMatchObject({ status: 409, code: 'contact_flagged' })
+    expect((error as ApiError).body).toEqual(body)
+  })
+
+  it('leaves body undefined when a non-2xx has no envelope', async () => {
+    session(null)
+    vi.stubGlobal('fetch', response(false, 502, { nope: true }))
+
+    const error = (await api('/api/x', {}, isConfig).catch(
+      (e: unknown) => e
+    )) as ApiError
+    expect(error.code).toBe('http_error')
+    expect(error.body).toBeUndefined()
+  })
+
+  it('leaves body undefined on a guard failure', async () => {
+    session(null)
+    vi.stubGlobal('fetch', response(true, 200, { app_env: 1 }))
+
+    const error = (await api('/api/x', {}, isConfig).catch(
+      (e: unknown) => e
+    )) as ApiError
+    expect(error.code).toBe('invalid_response')
+    expect(error.body).toBeUndefined()
+  })
 })
