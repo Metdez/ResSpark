@@ -20,6 +20,7 @@ Every sentence the client sees in the upload step, in one place. The voice follo
 | `rejectedPrefix` | Your agent asked for a new copy: | Prefix of the alert on a rejected item; the note follows. |
 | `retry` | Try again | Row button after a retryable error. |
 | `remove` | Remove | Row button after a final error. |
+| `close` | Close | Footer button that closes the sheet without finishing. |
 
 ## `errorCopy(code)`
 
