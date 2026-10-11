@@ -15,7 +15,7 @@ The `test:rls` script loads `src/frontend/.env` through `dotenv-cli` (it provide
 | 1-3 | Imports: `node:fs` and `node:url` to read the baseline schema, plus Vitest. |
 | 5-11 | Why the assertion is a strict 401. RLS with zero policies still answers `200 []` when a table grant exists, so the RESEARCH draft's `200 []` tolerance would let an empty table such as `client_links` pass while grants leak. With grants revoked (F-5, F-6, migration 0002), Postgres raises `42501` and PostgREST maps that to 401 for `anon`. |
 | 13-16 | The URL and key come from `SUPABASE_URL` / `SUPABASE_PUBLISHABLE_KEY`, falling back to the `VITE_` names. |
-| 18-46 | `BASELINE_TABLE_COUNT = 15` and `TABLES`: the 15 baseline tables, the 5 from migration 0002, and the 5 from migration 0003 (`client_sessions`, `firm_integrations`, `request_items`, `request_templates`, `requests`), hard-coded and sorted: 25 names. Each table gets its own `it`, so a failure names the table and the output order is stable. |
+| 18-46 | `BASELINE_TABLE_COUNT = 15` and `TABLES`: the 15 baseline tables, the 5 from migration 0002, the 5 from migration 0003 (`client_sessions`, `firm_integrations`, `request_items`, `request_templates`, `requests`), and the migration 0004 view `request_dashboard_v` (Plan 03-01), hard-coded and sorted: 26 names. The view is probed like a table: `REVOKE ALL` from `anon` makes PostgREST answer 401 `42501` for it too. Each table gets its own `it`, so a failure names the table and the output order is stable. |
 | 48 | `describe.skipIf(!url || !key)`: with no env, the suite is skipped rather than failed. |
 | 49-60 | `beforeAll` counts `^CREATE TABLE ` lines in `src/schemas/database_schema.sql` and fails the suite if there are not 15. A baseline table added there must also be added to `TABLES`. |
 | 62-72 | For each table: `GET /rest/v1/<table>?select=*&limit=1` with the `apikey` header and no `Authorization`. It expects status 401 and body `code` `42501`. The key is always sent, because a request without it gets a different 401 from key validation that would prove nothing about grants. |
@@ -24,7 +24,7 @@ The `test:rls` script loads `src/frontend/.env` through `dotenv-cli` (it provide
 
 ## Result (2026-10-11, live project `zvkphuikjpwoauqdimcf`)
 
-`Test Files 1 passed (1)`, `Tests 27 passed (27)`, 0 skipped (25 tables + 2 RPC probes, after migration 0003).
+`Test Files 1 passed (1)`, `Tests 28 passed (28)`, 0 skipped (25 tables + 1 view + 2 RPC probes, after migration 0004).
 
 ## Maintenance
 

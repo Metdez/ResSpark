@@ -10,6 +10,7 @@ import { adminLookupRoute } from './routes/admin-lookup'
 import { adminRequestActionsRoute } from './routes/admin-request-actions'
 import { adminRequestsRoute } from './routes/admin-requests'
 import { adminSessionRoute } from './routes/admin-session'
+import { cUploadsRoute } from './routes/c-uploads'
 import { clientLinkRoute } from './routes/client-link'
 import { clientPortalRoute } from './routes/client-portal'
 import { configRoute } from './routes/config'
@@ -52,6 +53,7 @@ app.route('/api/admin/requests', adminRequestActionsRoute)
 app.route('/api/admin', adminLookupRoute)
 app.route('/c', clientLinkRoute)
 app.route('/api/c', clientPortalRoute)
+app.route('/api/c', cUploadsRoute)
 
 app.notFound(async (c) => {
   // path read for routing only, never logged

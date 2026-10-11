@@ -16,7 +16,7 @@ const key =
   process.env.VITE_SUPABASE_PUBLISHABLE_KEY
 
 const BASELINE_TABLE_COUNT = 15
-// 15 baseline tables (src/schemas/database_schema.sql) + 5 from 0002 + 5 from 0003, sorted.
+// 15 baseline tables (src/schemas/database_schema.sql) + 5 from 0002 + 5 from 0003 + the 0004 view, sorted.
 const TABLES = [
   'app_migrations',
   'case_financial_data',
@@ -35,6 +35,7 @@ const TABLES = [
   'msa_county_standards',
   'national_standards',
   'question_definitions',
+  'request_dashboard_v',
   'request_items',
   'request_templates',
   'requests',
