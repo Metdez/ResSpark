@@ -1,4 +1,6 @@
+import { Link } from '@tanstack/react-router'
 import { Inbox } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Header } from '@/components/layout/header'
 import { Main } from '@/components/layout/main'
@@ -27,6 +29,9 @@ export function Dashboard() {
               Requests you send to clients will show up here with their status,
               who they're waiting on, and how long they've been open.
             </p>
+            <Button asChild className='mt-4'>
+              <Link to='/admin/lookup'>Find a client</Link>
+            </Button>
           </CardContent>
         </Card>
       </Main>

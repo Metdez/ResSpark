@@ -4,13 +4,13 @@ import {
   createRootRoute,
   createRouter,
 } from '@tanstack/react-router'
-import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   cleanup,
   renderWithQuery,
   waitFor,
   type Reply,
 } from '@/test-utils/query-render'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { RequestsListPage, relativeTime } from './requests-list-page'
 
 vi.mock('@/lib/supabase', () => ({
@@ -83,7 +83,12 @@ describe('RequestsListPage', () => {
   })
 
   it('renders a dash when a time is missing', async () => {
-    const draft = { ...TWO[0], status: 'draft', sent_at: null, expires_at: null }
+    const draft = {
+      ...TWO[0],
+      status: 'draft',
+      sent_at: null,
+      expires_at: null,
+    }
     const { el } = await render({ status: 200, body: { requests: [draft] } })
     await waitFor(loaded(el))
     const cells = el.querySelectorAll('tbody tr td')
@@ -107,7 +112,9 @@ describe('RequestsListPage', () => {
   it('shows three skeleton rows while loading', async () => {
     const { el } = await render('pending')
     expect(el.querySelectorAll('tbody tr')).toHaveLength(3)
-    expect(el.querySelectorAll('[data-slot="skeleton"]').length).toBeGreaterThanOrEqual(3)
+    expect(
+      el.querySelectorAll('[data-slot="skeleton"]').length
+    ).toBeGreaterThanOrEqual(3)
   })
 
   it('relativeTime picks the nearest unit', () => {

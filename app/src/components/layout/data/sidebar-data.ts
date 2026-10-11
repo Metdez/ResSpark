@@ -1,4 +1,4 @@
-import { LayoutDashboard, Palette, Search } from 'lucide-react'
+import { LayoutDashboard, Palette, Search, Send } from 'lucide-react'
 import { type SidebarData } from '../types'
 
 export const sidebarData: SidebarData = {
@@ -15,6 +15,11 @@ export const sidebarData: SidebarData = {
           title: 'Find a client',
           url: '/admin/lookup',
           icon: Search,
+        },
+        {
+          title: 'Requests',
+          url: '/admin/requests',
+          icon: Send,
         },
       ],
     },
