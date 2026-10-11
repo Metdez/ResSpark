@@ -218,8 +218,36 @@ export type EvidenceView =
       truncated: boolean
       cross_check: { label: string; monthly: number } | null
     })
+  | (EvidenceBase & {
+      kind: 'balances'
+      accounts: Array<{ id: string; account: string; type: string | null; subtype: string | null; balance_current: number | null; balance_as_of: string | null }>
+      total: number
+    })
+  | (EvidenceBase & {
+      kind: 'payroll'
+      window: { start: string; end: string }
+      stubs: Array<{ employer: string | null; pay_date: string; gross: number | null; frequency: string | null; document_url: string | null }>
+      formula: Array<{ employer: string | null; sum: number; stubs: number; periods_per_year: number; monthly: number }>
+      method: string
+      value: unknown
+      cross_check: { label: string; monthly: number } | null
+    })
+  | (EvidenceBase & { kind: 'intake'; prompt: string; answer: unknown; answered_at: string })
+  | (EvidenceBase & { kind: 'logics'; field: string; value: unknown; fetched_at: string })
+  | (EvidenceBase & {
+      kind: 'address'
+      address: { line1: string | null; line2: string | null; city: string | null; state_code: string | null; zip5: string | null }
+      county: string | null
+      fips: string | null
+      source: string | null
+    })
+  | (EvidenceBase & { kind: 'staff'; by_name: string | null; at: string | null; note: string | null; value: unknown })
+  | (EvidenceBase & { kind: 'document'; documents: Array<{ id: string; name: string; url: string | null }> })
   | { kind: 'none'; column: string; label: string }
 
+const numOrNull = (v: unknown) => v === null || num(v)
+// Only https links reach an href (T-07-42: the Worker sends short-lived signed URLs).
+const urlOrNull = (v: unknown) => v === null || (str(v) && v.startsWith('https://'))
 const isTxn = (v: unknown) => isObject(v) && str(v.id) && str(v.date) && num(v.amount) && str(v.account)
 const isCrossCheck = (v: unknown) => v === null || (isObject(v) && str(v.label) && num(v.monthly))
 
@@ -238,6 +266,27 @@ export const isEvidenceView = (v: unknown): v is EvidenceView => {
       typeof v.truncated === 'boolean' &&
       isCrossCheck(v.cross_check)
     )
+  if (v.kind === 'balances')
+    return (
+      Array.isArray(v.accounts) &&
+      v.accounts.every((a) => isObject(a) && str(a.id) && str(a.account) && numOrNull(a.balance_current) && strOrNull(a.balance_as_of)) &&
+      num(v.total)
+    )
+  if (v.kind === 'payroll')
+    return (
+      isObject(v.window) &&
+      Array.isArray(v.stubs) &&
+      v.stubs.every((s) => isObject(s) && str(s.pay_date) && strOrNull(s.employer) && numOrNull(s.gross) && strOrNull(s.frequency) && urlOrNull(s.document_url)) &&
+      Array.isArray(v.formula) &&
+      v.formula.every((f) => isObject(f) && num(f.sum) && num(f.stubs) && num(f.periods_per_year) && num(f.monthly)) &&
+      str(v.method) &&
+      isCrossCheck(v.cross_check)
+    )
+  if (v.kind === 'intake') return str(v.prompt) && str(v.answered_at)
+  if (v.kind === 'logics') return str(v.field) && str(v.fetched_at)
+  if (v.kind === 'address') return isObject(v.address) && strOrNull(v.county) && strOrNull(v.fips) && strOrNull(v.source)
+  if (v.kind === 'staff') return strOrNull(v.by_name) && strOrNull(v.at) && strOrNull(v.note)
+  if (v.kind === 'document') return Array.isArray(v.documents) && v.documents.every((d) => isObject(d) && str(d.id) && str(d.name) && urlOrNull(d.url))
   return false
 }
 

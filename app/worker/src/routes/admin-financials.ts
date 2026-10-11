@@ -134,13 +134,19 @@ export const adminFinancialsRoute = new Hono<AdminApp>()
     }
   })
   .get('/cases/:id/financials/:column/evidence', async (c) => {
-    const { firmId } = c.var.staff
+    const { staff } = c.var
     const caseId = caseIdParam(c)
     const column = c.req.param('column')
     if (!lineFor(column)) throw new HTTPException(400, { message: 'bad_column' })
     const proposalId = c.req.query('proposal_id') ?? null
     if (proposalId !== null && !UUID.test(proposalId)) throw badRequest()
-    const view = await buildEvidence(c.env, { firmId, caseId, column, proposalId })
+    const view = await buildEvidence(c.env, {
+      firmId: staff.firmId,
+      caseId,
+      column,
+      proposalId,
+      actor: { id: staff.userId, name: staff.displayName },
+    })
     if (!view) throw notFound()
     return c.json(view)
   })

@@ -146,7 +146,13 @@ export function FinancialsPage({ caseId }: { caseId: string }) {
           <RecommendationRail caseId={caseId} />
         </aside>
       </div>
-      <EvidenceSheet caseId={caseId} target={evidence} onClose={() => setEvidence(null)} returnFocus={opener} />
+      <EvidenceSheet
+        caseId={caseId}
+        target={evidence}
+        onClose={() => setEvidence(null)}
+        returnFocus={opener}
+        kind={view.sections.flatMap((x) => x.lines).find((l) => l.column === evidence?.column)?.kind}
+      />
     </>
   )
 }
