@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 2
 current_phase_name: Find the Client & Send the Link
 status: executing
-stopped_at: Completed 02-05-PLAN.md
-last_updated: "2026-10-11T07:53:12.302Z"
+stopped_at: Completed 02-07-PLAN.md
+last_updated: "2026-10-11T08:17:45.391Z"
 last_activity: 2026-10-11
 last_activity_desc: Phase 2 execution started
-state_head: 5c3b7ddeabc7324fdfc97f2cea6112445a5eeaf3
+state_head: f5404ba6a39b5a6c66cd53d32e94825eb988f142
 progress:
   total_phases: 8
   completed_phases: 0
   total_plans: 67
-  completed_plans: 15
+  completed_plans: 16
   percent: 0
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-10-10)
 ## Current Position
 
 Phase: 2 (Find the Client & Send the Link) — EXECUTING
-Plan: 6 of 8
+Plan: 7 of 8
 Status: Ready to execute
 Last activity: 2026-10-11 — Phase 2 execution started
 
@@ -68,6 +68,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 02 P03 | 29 min | 3 tasks | 29 files |
 | Phase 02 P04 | 30 min | 3 tasks | 24 files |
 | Phase 02 P05 | 29 min | 3 tasks | 38 files |
+| Phase 02 P07 | 20 min | 2 tasks | 14 files |
 
 ## Accumulated Context
 
@@ -116,6 +117,10 @@ Recent decisions affecting current work:
 - [Phase 02]: requests.contact_email/contact_phone_e164 hold the validated checkContact output; the email action reads no body and sends only to contact_email
 - [Phase 02]: staffAuth is idempotent (skips when c.var.staff is set) so sub-apps sharing /api/admin/requests verify the token once
 - [Phase 02]: 02-05: Feature components are router-free with navigation callbacks; ApiError.body (additive) carries refusal extras through the single api() boundary; unlessHandled forwards unhandled mutation errors to the app default handler
+- [Phase 02]: 02-07: CSRF guard for the client portal is X-Requested-With: ResSpark on every POST /api/c/* (403 bad_origin), on top of the SameSite=Lax cookie
+- [Phase 02]: 02-07: One 401 no_session body for every client-session failure; identity comes only from the signed rs_client cookie and the link row is re-read on every call
+- [Phase 02]: 02-07: Heartbeat limit is an in-memory per-isolate window (hb:<link>, 10 per 60 s) marked shortcut:, upgrade to a Rate Limiting binding keyed by link
+- [Phase 02]: 02-07: PortalState allow-list is firm_name, agent_display_name, status, opened_at, expires_at, steps[id, position, kind, label, required, status]
 
 ### Pending Todos
 
@@ -144,6 +149,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-10-11T07:53:11.991Z
-Stopped at: Completed 02-05-PLAN.md
+Last session: 2026-10-11T08:17:45.182Z
+Stopped at: Completed 02-07-PLAN.md
 Resume file: None
