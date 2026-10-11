@@ -4,7 +4,7 @@ The Cloudflare Queues consumer for `resspark-jobs` and its dead-letter queue `re
 
 ## Exports
 
-- `Job`: the message union. Messages carry ids only (`ref`), never payloads or secrets (128 KB limit, Phase 1 D-20): `webhook` (`ref` = `webhook_events.id`), `reconcile` (`ref` = connection id), `remove_item` (Plan 04).
+- `Job`: the message union. Messages carry ids only (`ref`), never payloads or secrets (128 KB limit, Phase 1 D-20): `webhook` (`ref` = `webhook_events.id`), `reconcile` (`ref` = connection id), `remove_item` (Plan 04), and `LogicsPushJob` (`{ type: 'logics_push', provider: 'logics', ref }`, `ref` = `logics_pushes.id`, Phase 5).
 - `NonRetryableError`: re-exported from `integrations/provider-error.ts`.
 - `retryDelaySeconds(attempts)`: `min(60 * 2^attempts, 86_400)`; 120 s at attempt 1, 240 s at attempt 2, capped at the 24-hour Queues maximum.
 - `queue(batch, env)`: the consumer. Never throws.
@@ -23,7 +23,9 @@ The Cloudflare Queues consumer for `resspark-jobs` and its dead-letter queue `re
 ## `queue(batch, env)`
 
 - DLQ batch (`batch.queue === 'resspark-jobs-dlq'`): a `webhook` message marks its ledger row `dead` with `dead_lettered`; any other job writes `job.dead_lettered` on its connection. Every message is acked; a failed record is logged as `dlq_record_failed`.
-- Main queue, per message: `runJob`, then `ack()`. On a transient `ProviderError` (network, 429, 5xx): `retry({ delaySeconds: retryDelaySeconds(attempts) })`; after `max_retries` the platform moves the message to the DLQ. On anything else: log, mark the ledger row `dead` with the code (webhook) or write `job.failed` on the connection (other jobs), then `ack()`, so a poison message never loops.
+- A DLQ `logics_push` message is acked with no record: its ledger row is still `queued` and the Phase 5 sweeper re-enqueues it.
+- Main queue, `logics_push` messages: handed whole to `handleLogicsPushPart(m, env)` (`jobs/logics-push.ts`) and skipped by the generic wrapper below. That handler owns `ack` and `retry` (ack-after-dispatch, Phase 5 D-03), so the generic transient retry can never redeliver a document POST. A throw from the handler (a database error) is only logged (`error_code` via `codeOf`) and never turned into a retry: a message the handler did not ack or retry is implicitly acked when `queue()` returns, and a row it left `sending` is moved to `unknown` (`consumer_lost`) by the sweeper.
+- Main queue, every other message: `runJob`, then `ack()`. On a transient `ProviderError` (network, 429, 5xx): `retry({ delaySeconds: retryDelaySeconds(attempts) })`; after `max_retries` the platform moves the message to the DLQ. On anything else: log, mark the ledger row `dead` with the code (webhook) or write `job.failed` on the connection (other jobs), then `ack()`, so a poison message never loops.
 
 ## Tests
 

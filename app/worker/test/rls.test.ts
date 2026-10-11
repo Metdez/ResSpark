@@ -18,7 +18,7 @@ const key =
 const BASELINE_TABLE_COUNT = 15
 // 15 baseline tables (src/schemas/database_schema.sql) + 5 from 0002 + 5 from 0003 + the 0004 view
 // + 7 from 0005 (connections, connection_secrets, bank_accounts, bank_statement_months,
-// bank_transactions, webhook_events, consents), sorted.
+// bank_transactions, webhook_events, consents) + 2 from 0006 (logics_push_batches, logics_pushes), sorted.
 const TABLES = [
   'app_migrations',
   'bank_accounts',
@@ -40,6 +40,8 @@ const TABLES = [
   'firms',
   'health_care_standards',
   'housing_utilities_standards',
+  'logics_push_batches',
+  'logics_pushes',
   'msa_county_standards',
   'national_standards',
   'question_definitions',
