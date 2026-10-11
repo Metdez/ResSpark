@@ -24,3 +24,7 @@ Success: 200 `{ connection_id, embed_src }` or 200 `{ connection_id, signed: tru
 Configured and mapped run **before** consent: an unconfigured firm never asks the client to agree to something that cannot happen. Consent runs before any DocuSeal call (T-06-08).
 
 The case comes from `getRequest` (Phase 2 request bundle, which also gives `contact_email`) and the confirmed address from `getCaseAddress` (Plan 06-01); an unconfirmed address is not prefilled.
+
+## Tests
+
+Unit tests: see [`c-signature.test.md`](c-signature.test.md). The live path is proven by `app/worker/test/esign-start.test.ts`. The unit tests pin that `hasConsent` is never called while the provider is unconfigured or the template is unmapped, which is why those two gates sit before consent.

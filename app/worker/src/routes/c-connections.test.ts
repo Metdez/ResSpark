@@ -107,6 +107,20 @@ describe('POST /api/c/consents', () => {
     expect(res.status).toBe(400)
     expect(recordConsent).not.toHaveBeenCalled()
   })
+  it('esign with the current version is 200', async () => {
+    const res = await call('POST', '/api/c/consents', { kind: 'esign', text_version: 'esign-v1' })
+    expect(res.status).toBe(200)
+    expect(vi.mocked(recordConsent).mock.calls[0][1]).toMatchObject({ kind: 'esign', text_version: 'esign-v1' })
+  })
+  it('esign with an old version is 409 consent_text_stale', async () => {
+    const res = await call('POST', '/api/c/consents', { kind: 'esign', text_version: 'old' })
+    expect(res.status).toBe(409)
+    expect((await code(res)).code).toBe('consent_text_stale')
+  })
+  it('an item kind is not a consent kind (400)', async () => {
+    const res = await call('POST', '/api/c/consents', { kind: 'signature', text_version: 'esign-v1' })
+    expect(res.status).toBe(400)
+  })
 })
 
 describe('POST /api/c/connections/:kind/start', () => {

@@ -30,3 +30,7 @@ Lazy DocuSeal submission for one signature item (D-12, RESEARCH Pattern 2). Same
 6. `connection.started` event with `{ provider, template_key }` only.
 
 `embed_src` exists only in the return value: never in a table, event, or log (T-06-07).
+
+## Tests
+
+Unit tests: see [`start.test.md`](start.test.md).

@@ -33,3 +33,7 @@ The `body` states the signature counts the same as on paper; `detail` says the f
 
 - `app/worker/src/routes/c-connections.ts` (`POST /api/c/consents`, the consent gate on start, `consented` in the item view).
 - The client connect step (Plan 04-05).
+
+## Tests
+
+Unit tests: see [`consent-text.test.md`](consent-text.test.md).

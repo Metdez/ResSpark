@@ -9,6 +9,9 @@ Unit tests for the client connection routes (no network). `db/cases`, `db/connec
 | item view on another request's item | 404 |
 | consent without `X-Requested-With` | 403 `bad_origin`, `no-store` |
 | consent with `kind: 'nope'` | 400, nothing recorded |
+| consent `esign` / `esign-v1` (Plan 06-02) | 200, `recordConsent` called with `kind: 'esign'` |
+| consent `esign` with version `old` | 409 `consent_text_stale` |
+| consent with the item kind `signature` | 400 |
 | bank start with consent and Plaid configured | 200 `{ connection_id, kind: 'bank', provider: 'plaid', capabilities, hosted_link_url }` from the mocked `startBank`, called with `origin: 'http://localhost'` (Plan 04-04) |
 | payroll start on a bank item | 409 `item_kind_mismatch` |
 | payroll start on an approved item | 409 `item_approved`, `startPayroll` not called |

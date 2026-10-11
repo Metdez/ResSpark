@@ -21,3 +21,7 @@ Plain-`fetch` DocuSeal REST client (D-08). No SDK and no provider interface. Req
 ## Guards
 
 A submitter needs numeric `id` and `submission_id`, string `slug` and `status`, and an `embed_src` starting with `https://`. The embed URL goes to the client's browser, so a non-https URL is rejected as `bad_response`.
+
+## Tests
+
+Unit tests: see [`docuseal.test.md`](docuseal.test.md).
