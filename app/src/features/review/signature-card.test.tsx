@@ -3,9 +3,12 @@ import { createRoot, type Root } from 'react-dom/client'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { ApiError } from '@/lib/api'
+import { GENERIC_ERROR } from '@/lib/handle-server-error'
 import * as requests from '@/features/requests/requests-api'
 import type { RequestDetail } from '@/features/requests/requests-api'
 import type { ReviewItem, SignatureView } from './api'
+import * as connections from './connections/api'
 import { SignatureCard } from './signature-card'
 
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }))
@@ -13,6 +16,11 @@ vi.mock('@/features/requests/requests-api', async (orig) => ({
   ...(await orig<typeof import('@/features/requests/requests-api')>()),
   getRequest: vi.fn(),
   markCopied: vi.fn(),
+  emailLink: vi.fn(),
+}))
+vi.mock('./connections/api', async (orig) => ({
+  ...(await orig<typeof import('./connections/api')>()),
+  refreshConnection: vi.fn(),
 }))
 
 const ITEM: ReviewItem = {
@@ -123,5 +131,73 @@ describe('SignatureCard', () => {
   it('never renders a DocuSeal URL in text or attributes', async () => {
     await render(view())
     expect(container.innerHTML).not.toContain('docuseal.com')
+  })
+})
+
+describe('SignatureCard actions and notes', () => {
+  it('refreshes through the Phase 4 route, shows Refreshing… while pending, then invalidates the review', async () => {
+    let settle: (v: never) => void = () => {}
+    vi.mocked(connections.refreshConnection).mockReturnValue(new Promise((r) => (settle = r)))
+    const client = await render(view({}, { status: 'pending', stage: 'waiting' }))
+    const invalidate = vi.spyOn(client, 'invalidateQueries')
+    await click(button('Refresh')!)
+    await tick()
+    expect(connections.refreshConnection).toHaveBeenCalledWith('k1')
+    expect(button('Refreshing…')!.disabled).toBe(true)
+    await act(async () => settle({ connection: {} } as never))
+    await tick()
+    expect(invalidate.mock.calls.map((c) => c[0]?.queryKey)).toContainEqual(['review', 'r1'])
+  })
+
+  it('toasts the generic error with the muted code on 502 provider_unavailable', async () => {
+    vi.mocked(connections.refreshConnection).mockRejectedValue(new ApiError(502, 'provider_unavailable', 'provider_unavailable'))
+    await render(view())
+    await click(button('Refresh')!)
+    await tick()
+    expect(toast.error).toHaveBeenCalledWith(GENERIC_ERROR, expect.objectContaining({ description: expect.anything() }))
+  })
+
+  it('emails the signing link with the item step and shows the sent copy', async () => {
+    vi.mocked(requests.emailLink).mockResolvedValue({ ok: true, id: 'em_1' })
+    await render(view())
+    await click(button('Email signing link')!)
+    await tick()
+    expect(requests.emailLink).toHaveBeenCalledWith('r1', ITEM.id)
+    expect(container.textContent).toContain('Email sent to morgan.lee@example.com')
+  })
+
+  it('shows the Phase 2 copy-it-yourself message when email is not configured', async () => {
+    vi.mocked(requests.emailLink).mockResolvedValue({ ok: false, reason: 'not_configured' })
+    await render(view())
+    await click(button('Email signing link')!)
+    await tick()
+    expect(container.textContent).toContain('Email not configured — copy the link and send it yourself')
+  })
+
+  it('reads E-sign not set up and hides Refresh when not configured', async () => {
+    await render(view({ configured: false }))
+    expect(container.textContent).toContain('E-sign not set up')
+    expect(button('Refresh')).toBeUndefined()
+  })
+
+  const IRS =
+    "E-signed copies must be submitted online at IRS.gov/Submit2848 or IRS.gov/Submit8821, and you must authenticate the client's identity for a remote signature."
+  const PART_II = 'The representative signs Part II outside the portal.'
+
+  it('shows the IRS online note on a Form 8821 card', async () => {
+    await render(view({ template_key: 'form_8821' }))
+    expect(container.textContent).toContain(IRS)
+    expect(container.textContent).not.toContain(PART_II)
+  })
+
+  it('adds the Part II line on a Form 2848 card', async () => {
+    await render(view({ template_key: 'form_2848' }))
+    expect(container.textContent).toContain(IRS)
+    expect(container.textContent).toContain(PART_II)
+  })
+
+  it('shows no IRS note on an engagement letter', async () => {
+    await render(view())
+    expect(container.textContent).not.toContain('IRS.gov')
   })
 })

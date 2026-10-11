@@ -5,7 +5,7 @@
 | Part | What it does |
 |------|--------------|
 | `CONFLICTS`, `isConflict(e)` | The Worker's 409 codes for a link that changed under the user (`request_not_active` from regenerate, `request_revoked` from revoke). |
-| `emailCopy(result, to)` | Turns the email route's always-200 answer into one truthful line: `Email sent to {contact_email}`, `Email not configured — copy the link and send it yourself` (`not_configured`), or `Email failed — copy the link and send it yourself` (`send_failed`, and `no_link`). |
+| `emailCopy(result, to)` | Imported from `requests-api.ts` (moved there in Plan 06-07 so the signature card reuses it). Turns the email route's always-200 answer into one truthful line: `Email sent to {contact_email}`, `Email not configured — copy the link and send it yourself` (`not_configured`), or `Email failed — copy the link and send it yourself` (`send_failed`, and `no_link`). |
 | Props | `request`: the `RequestDetail` from the page's query. `onChanged()`: called after a regenerate or revoke (success or 409) so the page refetches and shows the new URL, expiry, or revoked state. |
 | `dialog` state | Which confirm dialog is open (`regenerate`, `revoke`, or none). |
 | `linkChange` | Shared mutation options for regenerate and revoke. `onError` is `unlessHandled(qc, isConflict)`: 409s render here, anything else reaches the app handler (401 sign-out, 403, generic toast). `onSettled` closes the dialog and calls `onChanged` on success or a 409. |

@@ -41,7 +41,7 @@ Reads no body. It writes one `request.link_copied` event per call, with the staf
 
 ## `POST /:id/email`
 
-Reads no body. The recipient is always the request's stored, validated `contact_email`, so a body such as `{ to: "attacker@example.com" }` changes nothing (T-02-20). When the request has no link, a revoked link, or no stored email, the route returns `{ ok: false, reason: "no_link" }` and sends nothing. Otherwise it re-derives the URL with `linkUrl` and calls `sendLinkEmail` with the firm name, the agent display name stored on the request, the URL, and the link expiry. It logs `request.email_sent` with `{ to, resend_id }` or `request.email_failed` with `{ to, reason }`, then returns the result with 200 in every case: `{ ok: true, id }`, `not_configured` (no `RESEND_API_KEY`), or `send_failed`. The SPA decides the copy, for example "Email not configured, copy the link and send it yourself". The URL never enters the event payload.
+Reads only an optional `step` from the JSON body. The recipient is always the request's stored, validated `contact_email`, so a body such as `{ to: "attacker@example.com" }` changes nothing (T-02-20). When the request has no link, a revoked link, or no stored email, the route returns `{ ok: false, reason: "no_link" }` and sends nothing. Otherwise it re-derives the URL with `linkUrl` and calls `sendLinkEmail` with the firm name, the agent display name stored on the request, the URL, and the link expiry. It logs `request.email_sent` with `{ to, resend_id }` or `request.email_failed` with `{ to, reason }`, then returns the result with 200 in every case: `{ ok: true, id }`, `not_configured` (no `RESEND_API_KEY`), or `send_failed`. The SPA decides the copy, for example "Email not configured, copy the link and send it yourself". The URL never enters the event payload.
 
 ## Security
 
@@ -52,3 +52,14 @@ Reads no body. The recipient is always the request's stored, validated `contact_
 ## Tests
 
 `app/worker/test/admin-requests.test.ts` (send) and `app/worker/test/admin-request-actions.test.ts` (regenerate, revoke, consent, copied, email).
+
+## `step` on `POST /:id/email` (Plan 06-07, D-17)
+
+The staff signature card's `Email signing link` posts `{ step: <signature item id> }`. When `step` is
+present it must equal the `id` of an item with `kind === 'signature'` among the loaded request's items
+(`getRequest` already scoped the request to the staff firm). Anything else (an upload item, another
+request's item, a non-UUID, a non-string) is 400 `bad_request` before any send or event (T-06-28); the
+item lookup is the whole check, so no separate UUID test is needed. With a valid step the emailed URL is
+`linkUrl(...) + '?step=' + step`: the client's own ResSpark link, which `GET /c/:token?step=` turns into a
+redirect to that signing step after every link guard (Plan 06-06). Without `step` the Phase 2 behavior is
+unchanged. The step check runs before the `no_link` check.

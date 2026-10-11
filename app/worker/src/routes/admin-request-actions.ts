@@ -143,9 +143,12 @@ export const adminRequestActionsRoute = new Hono<AdminApp>()
     return c.json({ ok: true, event_id })
   })
   // Best-effort (D-09): always 200 with a truthful result. The recipient is the stored, validated
-  // contact; no body is read, so a caller cannot redirect the email (T-02-20).
+  // contact; only an optional `step` is read from the body, so a caller cannot redirect the email (T-02-20).
   .post('/:id/email', async (c) => {
-    const { request, link, firm_name } = await loadRequest(c)
+    const { request, items, link, firm_name } = await loadRequest(c)
+    // D-17: a step must name a signature item of this (firm-scoped) request (T-06-28).
+    const { step } = await readBody(c)
+    if (step !== undefined && !items.some((i) => i.id === step && i.kind === 'signature')) throw badRequest()
     const to = request.contact_email
     const url = link && (await linkUrl(c, link))
     if (!link || !url || !to) return c.json({ ok: false, reason: 'no_link' })
@@ -153,7 +156,7 @@ export const adminRequestActionsRoute = new Hono<AdminApp>()
       to,
       firmName: firm_name,
       agentName: request.agent_display_name,
-      url,
+      url: step === undefined ? url : `${url}?step=${step}`,
       expiresAt: link.expires_at,
     })
     await logEvent(c.env, {

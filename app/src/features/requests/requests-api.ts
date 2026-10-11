@@ -179,8 +179,17 @@ export interface EmailResult {
 export const isEmailResult = (v: unknown): v is EmailResult =>
   isObject(v) && typeof v.ok === 'boolean'
 
-export const emailLink = (id: string) =>
-  api(`/api/admin/requests/${id}/email`, json({}), isEmailResult)
+// D-09 result copy, shared by the request page and the signature card (D-17).
+export function emailCopy(result: EmailResult, to: string | null) {
+  if (result.ok) return `Email sent to ${to}`
+  return result.reason === 'not_configured'
+    ? 'Email not configured — copy the link and send it yourself'
+    : 'Email failed — copy the link and send it yourself'
+}
+
+// D-17: `step` (a signature item id) makes the emailed URL the client link plus ?step=.
+export const emailLink = (id: string, step?: string) =>
+  api(`/api/admin/requests/${id}/email`, json(step ? { step } : {}), isEmailResult)
 
 export const regenerateLink = (id: string) =>
   api(`/api/admin/requests/${id}/regenerate`, json({}), isSendResult)

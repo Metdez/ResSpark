@@ -9,13 +9,13 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
 import { ConfirmDialog } from '@/components/confirm-dialog'
 import {
+  emailCopy,
   emailLink,
   formatDate,
   recordConsent,
   regenerateLink,
   revokeLink,
   unlessHandled,
-  type EmailResult,
   type RequestDetail,
 } from './requests-api'
 
@@ -23,13 +23,6 @@ import {
 const CONFLICTS = ['request_not_active', 'request_revoked']
 const isConflict = (e: unknown) =>
   e instanceof ApiError && CONFLICTS.includes(e.code)
-
-function emailCopy(result: EmailResult, to: string | null) {
-  if (result.ok) return `Email sent to ${to}`
-  return result.reason === 'not_configured'
-    ? 'Email not configured — copy the link and send it yourself'
-    : 'Email failed — copy the link and send it yourself'
-}
 
 export function RequestLinkActions({
   request,

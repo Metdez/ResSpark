@@ -1,6 +1,7 @@
 type Payload = Record<string, unknown>
 
 const text = (v: unknown) => (typeof v === 'string' ? v : '')
+const words = (action: string) => action.replace(/[._]/g, ' ')
 
 // D-10: one plain sentence per event action. Payload values are read as strings only.
 export const ACTION_LABELS: Record<string, (payload: Payload) => string> = {
@@ -26,10 +27,18 @@ export const ACTION_LABELS: Record<string, (payload: Payload) => string> = {
   'integration.logics.tested': () => 'Tested the Logics connection',
   'address.confirmed': (p) =>
     p.verified === true ? 'Client confirmed their address' : 'Client entered their address (unverified)',
+  // SIGN-04: e-sign steps. Bank and payroll connection events keep their plain-word labels.
+  'consent.esign': () => 'Client agreed to sign electronically',
+  'esign.viewed': () => 'Client opened the form to sign',
+  'esign.started': () => 'Client started signing',
+  'connection.started': (p) => (p.provider === 'docuseal' ? 'Form sent for signing' : words('connection.started')),
+  'connection.done': (p) => (p.kind === 'signature' ? 'Form signed' : words('connection.done')),
+  'connection.error': (p) =>
+    p.kind === 'signature' && p.code === 'declined' ? 'Client declined to sign' : words('connection.error'),
 }
 
 // Unknown actions (provider webhooks of Phase 4 and later) still read as words.
 export function actionLabel(action: string, payload: Payload): string {
   const label = ACTION_LABELS[action]
-  return label ? label(payload) : action.replace(/[._]/g, ' ')
+  return label ? label(payload) : words(action)
 }

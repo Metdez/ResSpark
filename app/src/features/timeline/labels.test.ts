@@ -18,6 +18,16 @@ describe('actionLabel', () => {
     ['document.viewed', { disposition: 'attachment' }, 'Downloaded a file'],
     ['document.viewed', { disposition: 'inline' }, 'Previewed a file'],
     ['provider.plaid.item_added', {}, 'provider plaid item added'],
+    ['consent.esign', {}, 'Client agreed to sign electronically'],
+    ['esign.viewed', { connection_id: 'k1' }, 'Client opened the form to sign'],
+    ['esign.started', { connection_id: 'k1' }, 'Client started signing'],
+    ['connection.started', { provider: 'docuseal', template_key: 'form_8821' }, 'Form sent for signing'],
+    ['connection.done', { kind: 'signature', provider: 'docuseal' }, 'Form signed'],
+    ['connection.error', { kind: 'signature', code: 'declined' }, 'Client declined to sign'],
+    ['connection.error', { kind: 'signature', code: 'expired' }, 'connection error'],
+    ['connection.started', { provider: 'plaid' }, 'connection started'],
+    ['connection.done', { kind: 'bank', provider: 'plaid' }, 'connection done'],
+    ['connection.error', { kind: 'payroll', code: 'declined' }, 'connection error'],
   ])('%s %o → %s', (action, payload, label) => {
     expect(actionLabel(action, payload)).toBe(label)
   })

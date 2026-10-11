@@ -24,3 +24,24 @@ Actions not in the table today (they use the fallback): `request.email_failed`, 
 Tests: `labels.test.ts` covers each mapped sentence, the fallback, and a non-string payload value.
 
 - `address.confirmed` (Plan 06-03): `Client confirmed their address` when `payload.verified === true`, otherwise `Client entered their address (unverified)`. The event payload never carries street text (migration 0007), only `source`, `verified`, `county_fips`, and `rdi`.
+
+- `words(action)`: the plain-word fallback (`.` and `_` become spaces), used by `actionLabel` for unknown
+  actions and by the connection labels below for non-signature events.
+
+## E-sign labels (Plan 06-07, SIGN-04)
+
+Phase 4 defined no `connection.*` labels (bank and payroll events read through the word fallback), so these
+were added as new entries; bank and payroll keep their word labels.
+
+| action | payload condition | label |
+|---|---|---|
+| `consent.esign` | any | `Client agreed to sign electronically` |
+| `esign.viewed` | any | `Client opened the form to sign` |
+| `esign.started` | any | `Client started signing` |
+| `connection.started` | `provider === 'docuseal'` | `Form sent for signing` |
+| `connection.done` | `kind === 'signature'` | `Form signed` |
+| `connection.error` | `kind === 'signature'` and `code === 'declined'` | `Client declined to sign` |
+| `connection.*` | otherwise | `connection started` / `connection done` / `connection error` |
+
+`labels.test.ts` covers each row, including a signature `expired` error and bank/payroll payloads keeping
+the word labels.

@@ -1,11 +1,14 @@
-import { describe, expect, it } from 'vitest'
-import { ApiError } from '@/lib/api'
+import { describe, expect, it, vi } from 'vitest'
+import { api, ApiError } from '@/lib/api'
 import {
+  emailLink,
   isRequestDetail,
   isSendResult,
   isTemplates,
   sendErrorExtras,
 } from './requests-api'
+
+vi.mock('@/lib/api', async (orig) => ({ ...(await orig<typeof import('@/lib/api')>()), api: vi.fn() }))
 
 const DETAIL = {
   id: 'r1',
@@ -112,5 +115,20 @@ describe('sendErrorExtras', () => {
       differs: ['email'],
       changed: ['first_name'],
     })
+  })
+})
+
+describe('emailLink', () => {
+  const body = () => JSON.parse(String((vi.mocked(api).mock.lastCall![1] as RequestInit).body))
+
+  it('sends the step in the JSON body (D-17)', () => {
+    void emailLink('r1', 's1')
+    expect(vi.mocked(api).mock.lastCall![0]).toBe('/api/admin/requests/r1/email')
+    expect(body()).toEqual({ step: 's1' })
+  })
+
+  it('sends an empty body without a step (Phase 2 behavior)', () => {
+    void emailLink('r1')
+    expect(body()).toEqual({})
   })
 })

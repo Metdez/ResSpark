@@ -212,4 +212,46 @@ describe('POST /:id/email', () => {
     const res = await action('email', undefined, withKey)
     expect(res.status).toBe(404)
   })
+
+  describe('with a step (D-17)', () => {
+    const SIGN = 'aaaaaaaa-0000-4000-8000-000000000001'
+    const UPLOAD = 'aaaaaaaa-0000-4000-8000-000000000002'
+    const item = (id: string, kind: string) => ({ id, position: 1, kind, label: kind, required: true, status: 'pending', config: {}, rejection_note: null })
+    beforeEach(() => {
+      vi.mocked(getRequest).mockResolvedValue({ ...sentBundle(), items: [item(SIGN, 'signature'), item(UPLOAD, 'upload')] } as never)
+    })
+
+    it('emails the client link plus ?step=<signature item id>', async () => {
+      const f = resendOk()
+      const res = await action('email', { step: SIGN }, withKey)
+      expect(await res.json()).toEqual({ ok: true, id: 'em_1' })
+      const [, init] = outboundCalls(f)[0]
+      const text = String(JSON.parse(String(init?.body)).text)
+      const line = text.split('\n').find((l) => l.includes(ORIGIN)) ?? ''
+      expect(line.endsWith(`?step=${SIGN}`)).toBe(true)
+      expect(line.slice(line.indexOf(ORIGIN))).toMatch(/^\S+$/)
+    })
+
+    it.each([
+      ['an upload item', UPLOAD],
+      ['an item of another request', 'bbbbbbbb-0000-4000-8000-000000000003'],
+      ['a non-UUID', 'not-a-uuid'],
+      ['a non-string', 42],
+    ])('refuses %s with 400 bad_request and sends nothing', async (_name, step) => {
+      const f = resendOk()
+      const res = await action('email', { step }, withKey)
+      expect(res.status).toBe(400)
+      expect(await errorCode(res)).toBe('bad_request')
+      expect(outboundCalls(f)).toHaveLength(0)
+      expect(logEvent).not.toHaveBeenCalled()
+    })
+
+    it('keeps the Phase 2 URL without a step', async () => {
+      const f = resendOk()
+      await action('email', undefined, withKey)
+      const text = String(JSON.parse(String(outboundCalls(f)[0][1]?.body)).text)
+      expect(text).toContain(ORIGIN)
+      expect(text).not.toContain('?step=')
+    })
+  })
 })

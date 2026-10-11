@@ -17,7 +17,9 @@ The SPA side of the request routes from Plan 02-04 and the case read from Plan 0
 | `json(body)` | `POST` init with a JSON body. |
 | `getRequest`, `getTemplates`, `getCase`, `createRequest`, `sendRequest`, `markCopied` | One-line callers, each `api(path, init, guard)`. `markCopied` posts `/copied` so the Worker logs `request.link_copied` (D-09). |
 | `EmailResult`, `isEmailResult` | `POST .../email` always answers 200: `{ ok: true, id }` or `{ ok: false, reason: 'not_configured' \| 'send_failed' \| 'no_link' }` (D-09). The guard only requires a boolean `ok`. |
-| `emailLink`, `regenerateLink`, `revokeLink`, `recordConsent` | Plan 02-06 callers for `/email`, `/regenerate` (returns a `SendResult`), `/revoke` (`{ ok: true }`), and `/consent` (posts `{ agreed: true }`, the only body the Worker accepts). |
+| `emailCopy(result, to)` | The D-09 result line, moved here from `request-link-actions.tsx` so the request page and the signature card share it: `Email sent to {to}`, `Email not configured — copy the link and send it yourself` (`not_configured`), or `Email failed — copy the link and send it yourself` (any other failure). |
+| `emailLink(id, step?)` | Posts `/email` with `{}` (Phase 2) or `{ step }` when a signature item id is given (Plan 06-07, D-17); the Worker then emails the link plus `?step=`. |
+| `regenerateLink`, `revokeLink`, `recordConsent` | Plan 02-06 callers for `/email`, `/regenerate` (returns a `SendResult`), `/revoke` (`{ ok: true }`), and `/consent` (posts `{ agreed: true }`, the only body the Worker accepts). |
 | `RequestListRow`, `isRequestList`, `listRequests()` | `GET /api/admin/requests`: `{ requests: [{ id, status, client_name, sent_at, expires_at, created_at }] }`, newest first; `sent_at` and `expires_at` may be `null`. |
 | `SendErrorExtras`, `sendErrorExtras(err)` | Reads the extra fields of a 400/409 send refusal from `ApiError.body`: `email_error`, `phone_error`, `email_suggestion` (strings), `differs` (only `email`/`phone` survive), `changed` (strings). Returns `{}` when there is no body. |
 | `logicsErrorCopy` (re-export) | The Logics two-part copy, defined once in `features/lookup/lookup-api.ts` and re-exported here for the send screen. |
@@ -26,4 +28,4 @@ The SPA side of the request routes from Plan 02-04 and the case read from Plan 0
 
 ## Tests
 
-`requests-api.test.ts` (`web` project): `isRequestDetail` accepts the documented shape with and without a link, and rejects a missing `items` or a numeric `status`. `isSendResult` rejects a string `version` or a missing `url`. `isTemplates` rejects a template without `items`. `sendErrorExtras` reads the 409 extras, returns `{}` without a body, and drops `differs` entries outside `email|phone` and non-string `changed` entries.
+`requests-api.test.ts` (`web` project): `isRequestDetail` accepts the documented shape with and without a link, and rejects a missing `items` or a numeric `status`. `isSendResult` rejects a string `version` or a missing `url`. `isTemplates` rejects a template without `items`. `emailLink` (with `@/lib/api`'s `api` mocked) sends `{ step: 's1' }` with a step and `{}` without. `sendErrorExtras` reads the 409 extras, returns `{}` without a body, and drops `differs` entries outside `email|phone` and non-string `changed` entries.

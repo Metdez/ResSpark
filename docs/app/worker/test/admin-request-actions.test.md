@@ -40,3 +40,9 @@ Route tests for the link lifecycle and the event-only actions on one request. Th
 ## Firm scoping
 
 - Regenerate, revoke, consent, and copied each return 404 for a request outside the firm, with no RPC called and nothing logged.
+
+## `step` on the email route (Plan 06-07)
+
+With a request carrying one `signature` and one `upload` item: `{ step: <signature id> }` sends a text
+body whose link line ends with `?step=<id>`; an upload item, another request's item id, a non-UUID, or a
+number is 400 `bad_request` with no Resend call and no event; no body keeps the Phase 2 URL (no `?step=`).
