@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 01
 current_phase_name: Foundation & Staff Sign-In
 status: executing
-stopped_at: Completed 01-03-PLAN.md
-last_updated: "2026-10-11T04:08:04.944Z"
+stopped_at: Completed 01-04-PLAN.md
+last_updated: "2026-10-11T04:38:20.153Z"
 last_activity: 2026-10-10
 last_activity_desc: Phase 01 execution started
-state_head: 1cb9505fda1bace7637cead9c12f40274a90658c
+state_head: 37fe5c3b37f7632f017adf245cabdc44cae7b8ee
 progress:
   total_phases: 8
   completed_phases: 0
   total_plans: 35
-  completed_plans: 3
+  completed_plans: 4
   percent: 0
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-10-10)
 ## Current Position
 
 Phase: 01 (Foundation & Staff Sign-In) — EXECUTING
-Plan: 4 of 8
+Plan: 5 of 8
 Status: Ready to execute
 Last activity: 2026-10-10 — Phase 01 execution started
 
@@ -59,6 +59,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01 P01 | 6 min | 2 tasks | 15 files |
 | Phase 01 P02 | 34 min | 2 tasks | 158 files |
 | Phase 01 P03 | 52min | 3 tasks | 43 files |
+| Phase 01 P04 | 23min | 2 tasks | 13 files |
 
 ## Accumulated Context
 
@@ -83,6 +84,9 @@ Recent decisions affecting current work:
 - [Phase 01]: 01-03: actor_id (Supabase user UUID) and error_code (fixed enum) are not PII and may be logged
 - [Phase 01]: 01-03: api.ts imports @/lib/supabase lazily so the SPA boots without VITE_SUPABASE_* and public /api/config works
 - [Phase 01]: 01-03: SANDBOX banner shell offset via unlayered CSS on data-slot; vendored sidebar/header untouched
+- [Phase 01]: 01-04: rls.test.ts asserts strict 401+42501 per table (200 [] would hide leaked grants on empty tables)
+- [Phase 01]: 01-04: log_event EXECUTE revoked from PUBLIC/anon/authenticated, granted explicitly to service_role; events.case_id nullable FK with no ON DELETE
+- [Phase 01]: 01-04: question contract is 28 ids (reconciled 28=28); the 32 in CLAUDE.md/PROJECT.md is stale, pending user decision
 
 ### Pending Todos
 
@@ -110,6 +114,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-10-11T04:08:04.830Z
-Stopped at: Completed 01-03-PLAN.md
+Last session: 2026-10-11T04:38:19.997Z
+Stopped at: Completed 01-04-PLAN.md
 Resume file: None
