@@ -23,7 +23,7 @@ export function SignIn() {
       }
     >
       <UserAuthForm redirectTo={redirect} />
-      <Link to='/admin/forgot-password' className={`justify-self-center text-sm ${link}`}>
+      <Link to='/admin/forgot-password' className={`self-center text-sm ${link}`}>
         Forgot your password?
       </Link>
     </AuthCard>
