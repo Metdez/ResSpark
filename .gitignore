@@ -19,3 +19,4 @@ transcript.md
 .claude/skills/
 .planning/research/.cache/
 .planning/milestone.lock
+pin-*.sh
