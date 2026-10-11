@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { verifyStaffJwt } from '../auth/staff-jwt'
+import { getCaseAddress } from '../db/case-address'
 import { logEvent } from '../db/events'
 import * as review from '../db/review'
 import { ReviewError, type ReviewItem } from '../db/review'
@@ -12,6 +13,7 @@ import { signedReadUrl } from '../storage/case-documents'
 vi.mock('../auth/staff-jwt', () => ({ verifyStaffJwt: vi.fn() }))
 vi.mock('../db/staff', () => ({ getStaffProfile: vi.fn() }))
 vi.mock('../db/events', () => ({ logEvent: vi.fn() }))
+vi.mock('../db/case-address', () => ({ getCaseAddress: vi.fn() }))
 vi.mock('../db/review', async (importOriginal) => {
   const real = await importOriginal<typeof import('../db/review')>()
   return {
@@ -90,6 +92,7 @@ beforeEach(() => {
   vi.mocked(verifyStaffJwt).mockResolvedValue({ sub: 'U1', app_metadata: { firm_id: 'F1' } } as never)
   vi.mocked(getStaffProfile).mockResolvedValue({ user_id: 'U1', firm_id: 'F1', role: 'staff', display_name: 'Z' } as never)
   vi.mocked(review.getFirmRequest).mockResolvedValue(REQUEST)
+  vi.mocked(getCaseAddress).mockResolvedValue(null)
   vi.mocked(review.listItemsWithDocuments).mockResolvedValue(ITEMS)
   vi.mocked(review.getLatestClientSession).mockResolvedValue({ last_step: 'upload', last_error: null, seen_at: '2026-10-11T08:01:00Z' })
   vi.mocked(review.findFirmDocument).mockResolvedValue(doc() as never)
@@ -105,6 +108,16 @@ afterEach(() => {
 })
 
 describe('GET /requests/:id/review', () => {
+  it('carries the case address from getCaseAddress(request.case_id), or null', async () => {
+    const address = { line1: '1600 Amphitheatre Pkwy', line2: null, city: 'Mountain View', state_code: 'CA', zip5: '94043', zip4: '1351', county_name: 'Santa Clara', county_fips: '06085', rdi: 'Commercial' as const, dpv: 'Y', verified: true, source: 'smarty' as const, confirmed_at: '2026-10-11T08:00:00Z' }
+    vi.mocked(getCaseAddress).mockResolvedValueOnce(address)
+    const res = await call('GET', `/requests/${R1}/review`)
+    expect(((await res.json()) as { address: unknown }).address).toEqual(address)
+    expect(getCaseAddress).toHaveBeenCalledWith(ENV, 'C1')
+    const none = await call('GET', `/requests/${R1}/review`)
+    expect(((await none.json()) as { address: unknown }).address).toBeNull()
+  })
+
   it('returns the request, items with nested documents in the given order, and the client session', async () => {
     const res = await call('GET', `/requests/${R1}/review`)
     expect(res.status).toBe(200)

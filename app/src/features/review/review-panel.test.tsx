@@ -200,3 +200,27 @@ describe('ReviewPanel', () => {
     expect(itemEl('i1').textContent).toContain('Rejected')
   })
 })
+
+describe('ReviewPanel address item', () => {
+  const ADDRESS: api.CaseAddressView = {
+    line1: '1600 Amphitheatre Pkwy', line2: null, city: 'Mountain View', state_code: 'CA', zip5: '94043', zip4: '1351',
+    county_name: 'Santa Clara', county_fips: '06085', rdi: 'Commercial', dpv: 'Y', verified: true, source: 'smarty',
+    confirmed_at: '2026-10-11T08:00:00Z',
+  }
+
+  it('renders the address card inside the item and keeps Approve and Reject', async () => {
+    vi.mocked(api.fetchReview).mockResolvedValue({
+      ...REVIEW,
+      items: [item({ id: 'a1', kind: 'address', label: 'Confirm your address' })],
+      address: ADDRESS,
+    })
+    await render()
+    const el = itemEl('a1')
+    expect(el.querySelector('[data-address-card]')!.textContent).toContain('Santa Clara County (06085)')
+    expect(el.textContent).not.toContain('No files yet')
+    expect(button('Approve', el).disabled).toBe(false)
+    expect(button('Reject', el).disabled).toBe(false)
+    await click(button('Approve', el))
+    expect(api.approve).toHaveBeenCalledWith('a1')
+  })
+})

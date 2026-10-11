@@ -1,5 +1,6 @@
 import { Hono, type Context } from 'hono'
 import { HTTPException } from 'hono/http-exception'
+import { getCaseAddress } from '../db/case-address'
 import { logEvent } from '../db/events'
 import {
   approveItem,
@@ -35,11 +36,12 @@ export const adminReviewRoute = new Hono<AdminApp>()
     const { firmId } = c.var.staff
     const request = await getFirmRequest(c.env, firmId, idParam(c, 'id'))
     if (!request) throw fail(404, 'not_found')
-    const [items, client_session] = await Promise.all([
+    const [items, client_session, address] = await Promise.all([
       listItemsWithDocuments(c.env, request.id),
       getLatestClientSession(c.env, request.id),
+      getCaseAddress(c.env, request.case_id),
     ])
-    return c.json({ request, items, client_session })
+    return c.json({ request, items, client_session, address })
   })
   .get('/documents/:id/url', async (c) => {
     const { firmId, userId } = c.var.staff

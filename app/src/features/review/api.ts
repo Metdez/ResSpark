@@ -39,10 +39,29 @@ export interface ClientSessionView {
   seen_at: string
 }
 
+// Mirrors CaseAddressView of app/worker/src/db/case-address.ts (Plan 06-03, D-07).
+export interface CaseAddressView {
+  line1: string
+  line2: string | null
+  city: string | null
+  state_code: string | null
+  zip5: string | null
+  zip4: string | null
+  county_name: string | null
+  county_fips: string | null
+  rdi: 'Residential' | 'Commercial' | null
+  dpv: string | null
+  verified: boolean
+  source: 'smarty' | 'manual'
+  confirmed_at: string
+}
+
 export interface ReviewResponse {
   request: ReviewRequest
   items: ReviewItem[]
   client_session: ClientSessionView | null
+  // Optional so a response from before Plan 06-03 still passes the guard; read it as `?? null`.
+  address?: CaseAddressView | null
 }
 
 export interface DecisionResponse {
@@ -78,6 +97,15 @@ const isItem = (v: unknown): v is ReviewItem =>
 const isSession = (v: unknown): v is ClientSessionView =>
   isObject(v) && strOrNull(v.last_step) && strOrNull(v.last_error) && str(v.seen_at)
 
+const isAddress = (v: unknown): v is CaseAddressView =>
+  isObject(v) &&
+  str(v.line1) &&
+  [v.line2, v.city, v.state_code, v.zip5, v.zip4, v.county_name, v.county_fips, v.dpv].every(strOrNull) &&
+  (v.rdi === null || v.rdi === 'Residential' || v.rdi === 'Commercial') &&
+  typeof v.verified === 'boolean' &&
+  (v.source === 'smarty' || v.source === 'manual') &&
+  str(v.confirmed_at)
+
 export const isReviewResponse = (v: unknown): v is ReviewResponse =>
   isObject(v) &&
   isObject(v.request) &&
@@ -87,7 +115,8 @@ export const isReviewResponse = (v: unknown): v is ReviewResponse =>
   strOrNull(v.request.opened_at) &&
   Array.isArray(v.items) &&
   v.items.every(isItem) &&
-  (v.client_session === null || isSession(v.client_session))
+  (v.client_session === null || isSession(v.client_session)) &&
+  (v.address === undefined || v.address === null || isAddress(v.address))
 
 export const isUrlResponse = (v: unknown): v is { url: string; expires_in: number; disposition: Disposition } =>
   isObject(v) &&

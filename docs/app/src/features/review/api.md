@@ -19,3 +19,8 @@ The SPA client for the staff review routes in `app/worker/src/routes/admin-revie
 | `reject(itemId, note)` | `POST /api/admin/items/:itemId/reject` with `{ note }`. |
 
 All four go through `api()` from `@/lib/api`, which attaches the staff Bearer token and turns an error envelope into an `ApiError { status, code, message }`.
+
+## Address (Plan 06-03)
+
+- `CaseAddressView`: mirrors the Worker's `db/case-address.ts` view.
+- `ReviewResponse.address` is optional (`address?: CaseAddressView | null`). The guard accepts a missing key, `null`, or a valid view (`isAddress`: string `line1`, string-or-null text fields, `rdi` of `Residential`/`Commercial`/`null`, boolean `verified`, `source` of `smarty`/`manual`, string `confirmed_at`). A missing key is read as `null` by the panel, so a Worker deployed before this plan still passes the guard.

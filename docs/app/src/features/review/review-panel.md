@@ -29,3 +29,9 @@
 - Approve calls `approve('i1')` and invalidates `['review', 'r1']`, `['request', 'r1']`, `['requests']` (the dashboard) and `['events', 'c1']`.
 - A 409 `item_not_submitted` on approve shows `Nothing to approve yet.` with `item_not_submitted` in the muted span.
 - A rejected item shows `Note to client: blurry` and a `Rejected` badge.
+
+## Address item (Plan 06-03, D-07)
+
+- `address = review.data.address ?? null`.
+- For an item with `kind === 'address'`, the `AddressCard` renders inside the item's `<section>`, directly under the header row (and under any rejection note and decision error), where an upload item shows its file table. The "No files yet" line is not shown for an address item.
+- Approve and Reject are enabled for an address item once an address exists (`hasFiles` is true for `kind === 'address' && address !== null`), because an address step has no documents. The server still refuses an approval of an item that is not `submitted` (`item_not_submitted`).

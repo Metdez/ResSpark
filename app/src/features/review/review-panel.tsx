@@ -8,6 +8,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Table, TableBody, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { StatusBadge } from '@/components/status-badge'
+import { AddressCard } from './address-card'
 import type { ReviewItem } from './api'
 import { DocumentRow } from './document-row'
 import { RejectDialog } from './reject-dialog'
@@ -61,6 +62,7 @@ export function ReviewPanel({ requestId, caseId }: { requestId: string; caseId: 
   }
 
   const { request, items } = review.data
+  const address = review.data.address ?? null
   return (
     <Card>
       <CardContent className='grid gap-4'>
@@ -69,7 +71,8 @@ export function ReviewPanel({ requestId, caseId }: { requestId: string; caseId: 
           <StatusBadge {...requestStatusBadge(request.status)} />
         </div>
         {items.map((item) => {
-          const hasFiles = item.documents.length > 0
+          // An address item has no files; it is decidable once the client confirmed one (D-07).
+          const hasFiles = item.documents.length > 0 || (item.kind === 'address' && address !== null)
           const approving = approve.isPending && approve.variables === item.id
           return (
             <section key={item.id} data-review-item={item.id} className='grid gap-3 rounded-lg border p-4'>
@@ -106,7 +109,8 @@ export function ReviewPanel({ requestId, caseId }: { requestId: string; caseId: 
               {approve.variables === item.id && (
                 <DecisionError error={approve.error} notReady='Nothing to approve yet.' />
               )}
-              {hasFiles ? (
+              {item.kind === 'address' && <AddressCard address={address} />}
+              {item.documents.length > 0 ? (
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -127,7 +131,7 @@ export function ReviewPanel({ requestId, caseId }: { requestId: string; caseId: 
                   </TableBody>
                 </Table>
               ) : (
-                <p className='text-sm text-muted-foreground'>No files yet</p>
+                item.kind !== 'address' && <p className='text-sm text-muted-foreground'>No files yet</p>
               )}
             </section>
           )

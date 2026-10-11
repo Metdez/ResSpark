@@ -25,3 +25,47 @@ export async function confirmAddress(
   }
   return data as { item_status: string; request_status: string }
 }
+
+export interface CaseAddressView {
+  line1: string
+  line2: string | null
+  city: string | null
+  state_code: string | null
+  zip5: string | null
+  zip4: string | null
+  county_name: string | null
+  county_fips: string | null
+  rdi: 'Residential' | 'Commercial' | null
+  dpv: string | null
+  verified: boolean
+  source: AddressSource
+  confirmed_at: string
+}
+
+// Staff read model (D-07). The caller has already scoped caseId to the staff firm (getFirmRequest).
+export async function getCaseAddress(env: DbEnv, caseId: string): Promise<CaseAddressView | null> {
+  const { data, error } = await createAdminClient(env)
+    .from('cases')
+    .select(
+      'address_line1, address_line2, city, state_code, zip5, zip4, county_name, county_fips, address_rdi, address_dpv, address_verified, address_source, address_confirmed_at'
+    )
+    .eq('id', caseId)
+    .maybeSingle()
+  if (error) throw new Error('address_lookup_failed')
+  if (!data || !data.address_confirmed_at || !data.address_line1) return null
+  return {
+    line1: data.address_line1,
+    line2: data.address_line2,
+    city: data.city,
+    state_code: data.state_code,
+    zip5: data.zip5,
+    zip4: data.zip4,
+    county_name: data.county_name,
+    county_fips: data.county_fips,
+    rdi: data.address_rdi,
+    dpv: data.address_dpv,
+    verified: data.address_verified,
+    source: data.address_source,
+    confirmed_at: data.address_confirmed_at,
+  }
+}

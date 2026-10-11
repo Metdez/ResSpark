@@ -15,6 +15,14 @@ vi.mock('@/features/uploads/upload-sheet', () => ({
   ),
 }))
 
+vi.mock('./address/address-sheet', () => ({
+  AddressSheet: ({ step }: { step: { label: string } }) => (
+    <div role='dialog' data-testid='address-sheet'>
+      {step.label}
+    </div>
+  ),
+}))
+
 const STEPS: PortalStep[] = [
   {
     id: 's1',
@@ -91,5 +99,16 @@ describe('StepList upload step', () => {
     await click(viewOf('Connect your bank'))
     await waitFor(() => text().includes('Coming next'))
     expect(stub()).toBeNull()
+  })
+})
+
+describe('StepList address step', () => {
+  it('View on an address step opens the address sheet titled with the step label', async () => {
+    const step: PortalStep = { id: 's3', position: 3, kind: 'address', label: 'Confirm your address', required: true, status: 'pending' }
+    await renderWithQuery(<StepList steps={[...STEPS, step]} />, {})
+    await click(viewOf('Confirm your address'))
+    await waitFor(() => document.querySelector('[data-testid="address-sheet"]') !== null)
+    expect(document.querySelector('[role="dialog"]')!.textContent).toBe('Confirm your address')
+    expect(text()).not.toContain('Coming next')
   })
 })

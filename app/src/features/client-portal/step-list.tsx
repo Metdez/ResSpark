@@ -5,6 +5,7 @@ import { itemStatusBadge } from '@/lib/status'
 import { Button } from '@/components/ui/button'
 import { StatusBadge } from '@/components/status-badge'
 import { UploadSheet } from '@/features/uploads/upload-sheet'
+import { AddressSheet } from './address/address-sheet'
 import { ComingNextSheet } from './coming-next-sheet'
 import type { PortalStep } from './portal-api'
 import { STEP_DESCRIPTIONS } from './step-copy'
@@ -86,6 +87,8 @@ export function StepList({ steps, onView = () => {} }: StepListProps) {
             void qc.invalidateQueries({ queryKey: ['portal', 'state'] })
           }}
         />
+      ) : viewing?.kind === 'address' ? (
+        <AddressSheet step={viewing} open onClose={() => setViewing(null)} />
       ) : (
         <ComingNextSheet step={viewing} onClose={() => setViewing(null)} />
       )}

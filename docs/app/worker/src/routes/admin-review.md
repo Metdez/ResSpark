@@ -35,3 +35,7 @@ The Worker never writes `request_items.status` directly. `item_approve` and `ite
 ## Signed URL caveat (T-03-13)
 
 The signed URL is valid for 5 minutes and opens in a new tab with `noopener`; the SPA never renders it in an `<iframe>` or `<img>` (T-03-16). Supabase's Smart CDN may keep serving a cached response for a short time after the token expires. That is accepted for the demo.
+
+## Address on the review response (Plan 06-03, D-07)
+
+`GET /requests/:id/review` also returns `address`: `getCaseAddress(env, request.case_id)` runs in the same `Promise.all` as the items and the client session, after `getFirmRequest` has scoped the request to the staff firm. It is a `CaseAddressView` (see `db/case-address.md`) or `null` when the client has not confirmed an address. No other handler changed. The test file mocks `../db/case-address` and checks both the value and the `null` case, and that it is called with the request's `case_id`.

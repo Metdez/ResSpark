@@ -16,3 +16,7 @@
 
 - `portal-page.test.tsx`: row height, label size, chips, View size, order, same-kind rows, empty state, and no text below 16 px.
 - `step-list.test.tsx`: `View` opens the Coming next sheet with the step label, the copy, and a 44 px Close, and calls `onView` with the step; the vendored icon close is hidden; Close hides the sheet (on the bank step, since upload steps no longer open Coming next). With `UploadSheet` mocked to a stub: `View` on the upload step renders the stub with its label and no Coming next text; `View` on the bank step opens Coming next and no stub.
+
+## Address step (Plan 06-03)
+
+`viewing.kind === 'address'` renders `<AddressSheet step={viewing} open onClose={() => setViewing(null)} />` from `./address/address-sheet`. The sheet itself invalidates `['portal','state']` when a save succeeds, so the close handler only clears `viewing`. All other kinds are unchanged: `upload` opens `UploadSheet`, everything else opens `ComingNextSheet`. The test file mocks the sheet and checks that View on an address step opens a dialog titled with the step label.
