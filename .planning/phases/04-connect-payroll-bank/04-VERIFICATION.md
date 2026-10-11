@@ -228,7 +228,7 @@ The frontmatter and the report above are left as the verifier wrote them. This s
 |---|----------------|-----|--------|
 | 1 | PAY-03 / BANK-03: uploads on connect items refused with 409 `item_not_upload` | `c-uploads.ts`: the mint guard accepts `UPLOAD_KINDS = ['upload', 'bank_connect', 'payroll_connect']`. `address`, `signature`, `intake` and any other kind still get 409 `item_not_upload`. | `93a7b52` |
 | 2 | Warning: no "Add another employer" once payroll is `done` | `payroll-step.tsx`: every non-fresh status (including `done`) offers `Add another employer`. `startPayroll` reuses only a `pending`/`connected` order, so a tap at `done` opens a new order on the same item. | `533c246` |
-| 3 | Warning: README "Uploaded files land in the review panel" | No edit needed. With fix 1 the statement is true: `listReviewItems` (`db/review.ts`) returns the documents of every item regardless of kind, and with no keys both sheets show the upload as their only action. | n/a |
+| 3 | Warning: README "Uploaded files land in the review panel" | No edit needed. With fix 1 the statement is true: `listItemsWithDocuments` (`db/review.ts`) returns the documents of every item regardless of kind, and with no keys both sheets show the upload as their only action. | n/a |
 | 4 | Info: missing companion docs | Added `docs/app/worker/src/integrations/truv/orders.test.md`, `docs/app/worker/src/jobs/index.test.md`, `docs/app/worker/src/webhooks/plaid.test.md`, `docs/app/worker/src/webhooks/truv.test.md`. | `14a72af` |
 
 ### DB functions: no kind change needed
