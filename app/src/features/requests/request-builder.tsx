@@ -32,10 +32,10 @@ const CASE_NOT_FOUND = {
   title: 'Case not found',
   body: 'Look the client up again.',
 }
-const CREATE_COPY: Record<string, { title: string; body?: string }> = {
-  no_items: { title: NONE_ON },
-  case_not_found: CASE_NOT_FOUND,
-}
+const CREATE_COPY = new Map<string, { title: string; body?: string }>([
+  ['no_items', { title: NONE_ON }],
+  ['case_not_found', CASE_NOT_FOUND],
+])
 
 type Row = TemplateItem & { enabled: boolean }
 const rowsOf = (t: Template | undefined): Row[] =>
@@ -79,7 +79,7 @@ export function RequestBuilder({
     mutationFn: (body: Parameters<typeof createRequest>[0]) =>
       createRequest(body),
     onSuccess: (data) => onCreated(data.request_id),
-    onError: unlessHandled(qc, (e) => e.code in CREATE_COPY),
+    onError: unlessHandled(qc, (e) => CREATE_COPY.has(e.code)),
   })
 
   if (caseQuery.isError)
@@ -123,7 +123,9 @@ export function RequestBuilder({
   const noneOn = !rows.some((r) => r.enabled)
   const blank = (r: Row) => r.enabled && r.label.trim() === ''
   const createError =
-    create.error instanceof ApiError ? CREATE_COPY[create.error.code] : undefined
+    create.error instanceof ApiError
+      ? CREATE_COPY.get(create.error.code)
+      : undefined
 
   const update = (i: number, patch: Partial<Row>) =>
     setChosen({

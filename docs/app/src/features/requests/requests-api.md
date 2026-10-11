@@ -17,7 +17,7 @@ The SPA side of the request routes from Plan 02-04 and the case read from Plan 0
 | `json(body)` | `POST` init with a JSON body. |
 | `getRequest`, `getTemplates`, `getCase`, `createRequest`, `sendRequest`, `markCopied` | One-line callers, each `api(path, init, guard)`. `markCopied` posts `/copied` so the Worker logs `request.link_copied` (D-09). |
 | `SendErrorExtras`, `sendErrorExtras(err)` | Reads the extra fields of a 400/409 send refusal from `ApiError.body`: `email_error`, `phone_error`, `email_suggestion` (strings), `differs` (only `email`/`phone` survive), `changed` (strings). Returns `{}` when there is no body. |
-| `LOGICS_COPY`, `logicsErrorCopy(code)` | The two-part copy for `logics_not_configured`, `logics_unreachable`, and `logics_unauthorized` (UI-SPEC error convention: what happened, then what to do). One source for the lookup and send screens. |
+| `logicsErrorCopy` (re-export) | The Logics two-part copy, defined once in `features/lookup/lookup-api.ts` and re-exported here for the send screen. |
 | `unlessHandled(qc, handled)` | Builds a mutation `onError`. Errors the screen renders itself (inline or in an `Alert`) stop there. Everything else is passed to the app-wide default handler from `main.tsx`, so 401 still signs out, 403 still toasts, and unknown codes still get the generic toast. Needed because a mutation's own `onError` replaces the default one. |
 | `DATE`, `formatDate(iso)` | `Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' })` in the viewer's time zone (`Oct 24, 2026`). Callers put the raw timestamp in `title`. |
 

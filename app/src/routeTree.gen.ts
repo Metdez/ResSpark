@@ -15,6 +15,7 @@ import { Route as CTokenRouteImport } from './routes/c/$token'
 import { Route as AdminSignInRouteImport } from './routes/admin/sign-in'
 import { Route as AdminShellRouteRouteImport } from './routes/admin/_shell/route'
 import { Route as AdminShellIndexRouteImport } from './routes/admin/_shell/index'
+import { Route as AdminShellLookupRouteImport } from './routes/admin/_shell/lookup'
 import { Route as AdminShellSettingsRouteRouteImport } from './routes/admin/_shell/settings/route'
 import { Route as AdminShellSettingsAppearanceRouteImport } from './routes/admin/_shell/settings/appearance'
 import { Route as AdminShellRequestsNewRouteImport } from './routes/admin/_shell/requests/new'
@@ -49,6 +50,11 @@ const AdminShellIndexRoute = AdminShellIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AdminShellRouteRoute,
 } as any)
+const AdminShellLookupRoute = AdminShellLookupRouteImport.update({
+  id: '/lookup',
+  path: '/lookup',
+  getParentRoute: () => AdminShellRouteRoute,
+} as any)
 const AdminShellSettingsRouteRoute = AdminShellSettingsRouteRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -78,6 +84,7 @@ export interface FileRoutesByFullPath {
   '/c/$token': typeof CTokenRoute
   '/c/': typeof CIndexRoute
   '/admin/settings': typeof AdminShellSettingsRouteRouteWithChildren
+  '/admin/lookup': typeof AdminShellLookupRoute
   '/admin/': typeof AdminShellIndexRoute
   '/admin/requests/$requestId': typeof AdminShellRequestsRequestIdRoute
   '/admin/requests/new': typeof AdminShellRequestsNewRoute
@@ -89,6 +96,7 @@ export interface FileRoutesByTo {
   '/c/$token': typeof CTokenRoute
   '/c': typeof CIndexRoute
   '/admin/settings': typeof AdminShellSettingsRouteRouteWithChildren
+  '/admin/lookup': typeof AdminShellLookupRoute
   '/admin/requests/$requestId': typeof AdminShellRequestsRequestIdRoute
   '/admin/requests/new': typeof AdminShellRequestsNewRoute
   '/admin/settings/appearance': typeof AdminShellSettingsAppearanceRoute
@@ -101,6 +109,7 @@ export interface FileRoutesById {
   '/c/$token': typeof CTokenRoute
   '/c/': typeof CIndexRoute
   '/admin/_shell/settings': typeof AdminShellSettingsRouteRouteWithChildren
+  '/admin/_shell/lookup': typeof AdminShellLookupRoute
   '/admin/_shell/': typeof AdminShellIndexRoute
   '/admin/_shell/requests/$requestId': typeof AdminShellRequestsRequestIdRoute
   '/admin/_shell/requests/new': typeof AdminShellRequestsNewRoute
@@ -114,6 +123,7 @@ export interface FileRouteTypes {
     | '/c/$token'
     | '/c/'
     | '/admin/settings'
+    | '/admin/lookup'
     | '/admin/'
     | '/admin/requests/$requestId'
     | '/admin/requests/new'
@@ -125,6 +135,7 @@ export interface FileRouteTypes {
     | '/c/$token'
     | '/c'
     | '/admin/settings'
+    | '/admin/lookup'
     | '/admin/requests/$requestId'
     | '/admin/requests/new'
     | '/admin/settings/appearance'
@@ -136,6 +147,7 @@ export interface FileRouteTypes {
     | '/c/$token'
     | '/c/'
     | '/admin/_shell/settings'
+    | '/admin/_shell/lookup'
     | '/admin/_shell/'
     | '/admin/_shell/requests/$requestId'
     | '/admin/_shell/requests/new'
@@ -192,6 +204,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminShellIndexRouteImport
       parentRoute: typeof AdminShellRouteRoute
     }
+    '/admin/_shell/lookup': {
+      id: '/admin/_shell/lookup'
+      path: '/lookup'
+      fullPath: '/admin/lookup'
+      preLoaderRoute: typeof AdminShellLookupRouteImport
+      parentRoute: typeof AdminShellRouteRoute
+    }
     '/admin/_shell/settings': {
       id: '/admin/_shell/settings'
       path: '/settings'
@@ -239,6 +258,7 @@ const AdminShellSettingsRouteRouteWithChildren =
 
 interface AdminShellRouteRouteChildren {
   AdminShellSettingsRouteRoute: typeof AdminShellSettingsRouteRouteWithChildren
+  AdminShellLookupRoute: typeof AdminShellLookupRoute
   AdminShellIndexRoute: typeof AdminShellIndexRoute
   AdminShellRequestsRequestIdRoute: typeof AdminShellRequestsRequestIdRoute
   AdminShellRequestsNewRoute: typeof AdminShellRequestsNewRoute
@@ -246,6 +266,7 @@ interface AdminShellRouteRouteChildren {
 
 const AdminShellRouteRouteChildren: AdminShellRouteRouteChildren = {
   AdminShellSettingsRouteRoute: AdminShellSettingsRouteRouteWithChildren,
+  AdminShellLookupRoute: AdminShellLookupRoute,
   AdminShellIndexRoute: AdminShellIndexRoute,
   AdminShellRequestsRequestIdRoute: AdminShellRequestsRequestIdRoute,
   AdminShellRequestsNewRoute: AdminShellRequestsNewRoute,

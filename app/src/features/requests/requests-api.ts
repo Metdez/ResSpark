@@ -196,23 +196,8 @@ export function sendErrorExtras(err: ApiError): SendErrorExtras {
   return out
 }
 
-// Two-part copy for the Logics failures shared by the lookup and send screens.
-const LOGICS_COPY: Record<string, { title: string; body: string }> = {
-  logics_not_configured: {
-    title: 'Logics is not configured',
-    body: 'Ask your admin to enter the Logics API key and secret token in Settings → Integrations and run Test connection.',
-  },
-  logics_unreachable: {
-    title: "Couldn't reach Logics",
-    body: 'Try again in a moment. If it keeps failing, ask your admin to check Settings → Integrations.',
-  },
-  logics_unauthorized: {
-    title: 'Logics rejected the credentials',
-    body: 'Ask your admin to re-enter the API key and secret token in Settings → Integrations.',
-  },
-}
-
-export const logicsErrorCopy = (code: string) => LOGICS_COPY[code]
+// The Logics two-part copy lives with the lookup screen; re-exported for the send screen.
+export { logicsErrorCopy } from '@/features/lookup/lookup-api'
 
 // A mutation onError: codes the screen renders itself skip the app-wide handler; anything else
 // (401 sign-out, 403, generic toast) still reaches it, so one failure never shows twice.
