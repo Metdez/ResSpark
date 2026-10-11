@@ -23,7 +23,7 @@ Requirements for the first release. Each maps to a roadmap phase. The Oct 12 202
 - [ ] **LOOK-01**: Staff can search a Logics case by case ID, phone number, or email and see matching cases (name, phone, email, status) within 3 seconds
 - [ ] **LOOK-02**: Staff must confirm a case card ("Is this the right person?") before a request can be created; multiple matches are shown as a list to choose from
 - [ ] **LOOK-03**: Phone numbers are normalized before lookup so formats like `(121)121-2121`, `121-121-2121`, and `1211212121` all match
-- [ ] **LOOK-04**: Logics case data (name, contact, address, status) is cached on the local case record and re-fetched at send time so a stale match cannot be sent to
+- [x] **LOOK-04**: Logics case data (name, contact, address, status) is cached on the local case record and re-fetched at send time so a stale match cannot be sent to
 - [ ] **LOOK-05**: A firm admin can paste the firm's Logics API key and secret token into a Settings page; they are stored encrypted server-side, never shown again in full, and a "Test connection" button confirms they work before any lookup is allowed
 
 ### Request Builder & Link
@@ -175,7 +175,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | LOOK-01 | Phase 2 | Pending |
 | LOOK-02 | Phase 2 | Pending |
 | LOOK-03 | Phase 2 | Pending |
-| LOOK-04 | Phase 2 | Pending |
+| LOOK-04 | Phase 2 | Complete |
 | LOOK-05 | Phase 2 | Pending |
 | REQ-01 | Phase 2 | Pending |
 | REQ-02 | Phase 2 | Pending |
