@@ -31,6 +31,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 ## Phase Details
 
 ### Phase 1: Foundation & Staff Sign-In
+
 **Goal:** As a ValorTax case manager, I want to sign in to ResSpark at a real public URL on a secure, sandbox-safe base, so that every later feature ships on a deployed foundation where no data is reachable without auth and nothing can write to the real Logics tenant by accident.
 **Mode:** mvp
 **Depends on**: Nothing (first phase)
@@ -41,10 +42,11 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. An automated test proves the anon role returns zero rows from every table, the browser bundle holds no secret, and every change goes through the Worker rather than directly to Postgres (PLAT-02, PLAT-03)
   4. Signing in and signing out each appear as an event row with actor, timestamp, and id, on the same event-writing path every later phase's actions must use (PLAT-04)
   5. A fresh clone ignores every `.env` file, tracks no `dist/` folder, uses one package manager and one lockfile on Node 22.12 or newer, and a failed request's log line contains no tokens, document bytes, or PII (PLAT-06, PLAT-08)
-**Plans:** 8 plans
+
+**Plans:** 1/8 plans executed
 
 Plans:
-- [ ] 01-01-PLAN.md — Repo hygiene first: `.gitignore`, pnpm workspace, engines, 500-line gate, hygiene-check (PLAT-06)
+- [x] 01-01-PLAN.md — Repo hygiene first: `.gitignore`, pnpm workspace, engines, 500-line gate, hygiene-check (PLAT-06)
 - [ ] 01-02-PLAN.md — Fork shadcn-admin@e16c87f into `app/`, strip Clerk/axios/faker, `/admin/*` route tree, pinned deps, design-system pass
 - [ ] 01-03-PLAN.md — Hono Worker + first deploy to workers.dev, allowlisted logger, `logicsWriteGuard`, SANDBOX banner, spike (a) (PLAT-01, PLAT-05, PLAT-08)
 - [ ] 01-04-PLAN.md — Migration 0002 applied via Management API [BLOCKING], RLS/grants proof (strict 401), question reconciliation (PLAT-02, PLAT-04)
@@ -52,10 +54,12 @@ Plans:
 - [ ] 01-06-PLAN.md — `jose` JWT verification, `/api/admin/session` events, SPA sign-in / guard / sign-out, authenticated smoke (PLAT-04, PLAT-07)
 - [ ] 01-07-PLAN.md — Client-link HMAC token + signed-cookie exchange, uniform 404, per-IP rate limit, `/c/` client shell (PLAT-08, PLAT-07)
 - [ ] 01-08-PLAN.md — Spikes (c) and (e) run, (a)(b)(d)(f) recorded, reserved secret names, operator README
+
 **Scope notes**: New React + Vite + shadcn SPA forked from `satnaing/shadcn-admin` (Clerk, axios, faker stripped) with two route trees (`/admin/*`, `/c/:token`); Hono Worker on Workers Paid with Queue, DLQ, and cron, serving the SPA and API from one deploy; additive Supabase migrations only (the 0001 baseline is already applied) for firms, staff, cases, requests, items, links, connections, secrets, webhook_events, logics_pushes, events, consents, and retention columns, with RLS, grants, and RPCs; HMAC token and HttpOnly-cookie design; reconcile the 28 versus 32 question count; run the day-one spikes (Vitest 5 with the Workers plugin, `@supabase/server` Hono adapter, signed TUS upload from an unauthenticated browser, Cloudflare Email versus Resend, Truv `multiple.employments`, and confirming Logics scopes plus `FileCategoryID` and `ActivityType` values with Andrew).
 **UI hint**: yes
 
 ### Phase 2: Find the Client & Send the Link
+
 **Goal:** As a ValorTax case manager, I want to type a phone number, case ID, or email, confirm the matching Logics case, and copy a request link that the client opens on a phone, so that I can get a client started in under a minute while still on the call.
 **Mode:** mvp
 **Depends on**: Phase 1
@@ -66,11 +70,13 @@ Plans:
   3. After send, staff see a copyable client link that expires (default 14 days) and can be revoked or regenerated without changing the request, can email it from the app and see the delivery result, and can record "client agreed to be texted" in the event log; from typing a phone number to holding a copyable link takes under a minute (REQ-03, REQ-04, REQ-05)
   4. A client opens the link on a phone with no account, password, or app and sees the firm name, the agent's name, and a simple step list (connect bank, connect payroll, confirm address, upload documents, sign) with done and not-done state; the request counts as "opened" only after the client taps Start, closing and reopening the link resumes where they left off, and an expired or revoked link says "ask your agent for a new link" (PORT-01, PORT-02, PORT-03, PORT-04, PORT-06)
   5. Portal pages are mobile-first with 44 px targets and readable contrast, send no-referrer, no-store, and noindex headers, load no analytics or session replay, and repeated token guessing is rate-limited per IP (PORT-05, PORT-06)
+
 **Plans**: TBD
 **Scope notes**: Logics Find endpoints and `Case/CaseInfo` with header authentication; case data cached locally; HMAC-signed link, cookie exchange, and token stripped from the URL; ask Andrew for Logics key scopes, `FileCategoryID` list, and `ActivityType` values before this phase ends.
 **UI hint**: yes
 
 ### Phase 3: Uploads, Review & Live Status
+
 **Goal:** As a ValorTax case manager, I want to review what clients upload from their phones and watch status update live, so that I can approve or reject each item without chasing anyone.
 **Mode:** mvp
 **Depends on**: Phase 2
@@ -81,11 +87,13 @@ Plans:
   3. The admin dashboard lists requests with status (sent, opened, in progress, waiting on staff, complete), age, and overdue flags, sortable and filterable, and a request moves from "in progress" to "done" on screen within 5 to 10 seconds with no manual reload while the tab is visible (STAT-01, STAT-02)
   4. Staff can see which step the client is on and the last error the client hit, so they can say on the phone "are you on this step?" (STAT-03)
   5. The case view shows a timeline of who did what and when (lookup, send, open, upload, approve, reject), and provider webhook events join the same timeline once the providers arrive in Phase 4 (STAT-04)
+
 **Plans**: TBD
 **Scope notes**: Worker-minted signed TUS uploads direct to Supabase Storage (bytes never touch the Worker), client-side image compression, magic-byte checks, HEIC handling; polling rather than Realtime for the demo.
 **UI hint**: yes
 
 ### Phase 4: Connect Payroll & Bank
+
 **Goal:** As a tax-resolution client, I want to connect my payroll and my bank from the link on my phone, so that my pay stubs, W-2s, and 6 months of bank statements reach my case manager without me hunting for documents.
 **Mode:** mvp
 **Depends on**: Phase 3
@@ -96,12 +104,14 @@ Plans:
   3. After connecting, staff see 6 months of transactions and every available monthly statement PDF in the case, with the last 3 months and the full 6 visible, and each account shows statement status by month (available, not supported by this bank, uploaded manually) with manual statement upload as a first-class fallback (BANK-02, BANK-03)
   4. Plaid and Truv webhooks are signature-verified on the raw body, stored once per event, and acknowledged within a second, then processed with retries and a dead-letter queue; a missed or out-of-order webhook never leaves a request stuck or moves a step from done back to pending, because a cron reconciler and a staff Refresh button re-read provider state (WEBH-01, WEBH-02, WEBH-03)
   5. Bank data flows through a `BankProvider` interface with declared capabilities so a second provider is a configuration change, and Plaid Items older than the configured window (default 30 days) are removed so per-Item billing stops (BANK-04, BANK-06)
+
 **Plans**: TBD
 **Scope notes**: Plaid Hosted Link opened from our own portal button (not Plaid-sent SMS or email Link Delivery); `transactions.days_requested` of 200 or more because it cannot change later; `statements` in `required_if_supported_products`; access tokens encrypted; plain `fetch` provider clients (no `plaid` npm package); the generic `/api/webhooks/:provider` route also takes the DocuSeal verifier in Phase 6.
 **UI hint**: yes
 **Research hint**: yes
 
 ### Phase 5: Push to Logics
+
 **Goal:** As a ValorTax case manager, I want to push approved documents into the client's Logics case with one click, so that the file is complete in the system of record without downloading and re-uploading by hand.
 **Mode:** mvp
 **Depends on**: Phase 3
@@ -111,12 +121,14 @@ Plans:
   2. One activity note per push batch appears on the Logics case naming the agent and the documents uploaded (PUSH-03)
   3. A file over 6 MB is converted to PDF or split into parts of at most 5.5 MiB, or flagged "needs manual compression" before the click; nothing over 6 MB is ever sent (PUSH-02)
   4. When Logics gives no clear answer, the file shows "unknown" and the UI asks staff to decide (check Logics, mark sent, or retry); a push is never blindly retried, so Logics never receives duplicate documents (PUSH-04)
+
 **Plans**: TBD
 **Scope notes**: Local ledger because Logics cannot list documents; serial, low-concurrency pushes; `FileCategoryID` and `ActivityType` taken from a config table; PDF work (`@cantoo/pdf-lib`, `unpdf`) runs in the Queue consumer; until Andrew confirms write scopes, push is exercised against a fake behind the allowlist.
 **UI hint**: yes
 **Research hint**: yes
 
 ### Phase 6: Address & E-Sign
+
 **Goal:** As a tax-resolution client, I want to confirm my address and sign my forms on my phone from the same link, so that I am done without zooming, scrolling, or waiting on an email.
 **Mode:** mvp
 **Depends on**: Phase 4
@@ -127,11 +139,13 @@ Plans:
   3. After opening the link on a phone, the client reaches the first signature field in at most 3 taps with no pinch-zoom or horizontal scrolling, and the agent can see which step the client is on; this is the "senior on the phone" test (SIGN-04)
   4. Staff get a copyable signing link (not just an email) and an ESIGN consent record is captured before the client signs (SIGN-03)
   5. On completion the signed PDF and the audit-trail PDF are stored in the case immediately with a content hash, the item shows as signed, and the signed PDF can be pushed to Logics like any other document (SIGN-02)
+
 **Plans**: TBD
 **Scope notes**: Smarty US Autocomplete Pro; DocuSeal used as a service (cloud API or unmodified container, never forked because it is AGPL) with Anvil evaluated against the same acceptance test; DocuSeal `form.completed` verifier plugs into the Phase 4 webhook route; which forms may be e-signed needs ValorTax counsel input, and the official Form 433-A is not signed in the portal.
 **UI hint**: yes
 
 ### Phase 7: 433-A Pre-Population
+
 **Goal:** As a ValorTax settlement officer, I want to review a 433-A worksheet pre-filled from connected bank, payroll, intake, and Logics data with IRS standards for the client's county, so that I only confirm values and read the recommendation instead of retyping the form.
 **Mode:** mvp
 **Depends on**: Phase 4, Phase 5, Phase 6
@@ -142,12 +156,14 @@ Plans:
   3. Staff accept or edit each proposed value; only accepted values enter `case_financial_data`, and an unknown value stays unknown and blocks evaluation instead of defaulting to zero (FORM-04)
   4. IRS standards for the county from the client's confirmed address are applied with no county dropdown, and the engine's recommendation (OIC, installment, CNC, or manual review) is shown with its math; the TypeScript engine matches the Python tests on golden fixtures with no constant changed (FORM-01, FORM-05, ADDR-02)
   5. Staff export the worksheet as a PDF labeled "Not an IRS form" and push it to Logics like any other document (FORM-06)
+
 **Plans**: TBD
 **Scope notes**: Mechanical TypeScript port of `src/determination.py` with Python kept as the test oracle; thresholds and formulas unchanged (any change needs an authoritative source and tests); standards through Postgres RPC functions; Plaid-category-to-433-A-line and Truv deduction mappings in SQL tables; interview Nicole and Sandra on the layout before planning; port the `document_parse.py` extractors split under 500 lines.
 **UI hint**: yes
 **Research hint**: yes
 
 ### Phase 8: Reminders, Teller & Production Readiness
+
 **Goal:** As a ValorTax case manager, I want to nudge clients automatically, offer a cheaper second bank option, and run on a platform that meets security and vendor requirements, so that ResSpark can move from the demo to live ValorTax cases.
 **Mode:** mvp
 **Depends on**: Phase 6
@@ -158,6 +174,7 @@ Plans:
   3. Staff switch the bank provider from Plaid to Teller with one configuration change and a client can connect a bank through Teller, transactions only (REM-03)
   4. Staff sign-in requires MFA, a WISP evidence pack (access log, encryption, retention, incident runbook) can be produced, and documents and provider connections past the retention window (default 2 years) are purged while the audit record stays (PROD-02, PROD-03)
   5. Plaid and Truv production access is configured with a consistent use-case statement, consent screen, and privacy policy, and AI document classification runs only on redacted text with zero-data-retention parameters and produces suggestions that staff must confirm (PROD-01, PROD-04)
+
 **Plans**: TBD
 **Scope notes**: Teller via the mTLS binding (assume no statement PDFs); Plaid compliance framed as tax preparation and tax paperwork help; legal scoping (IRC 7216, FTC Safeguards, TCPA) needs counsel; reminders are email only, there is no own SMS in v1.
 **UI hint**: yes
@@ -170,7 +187,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation & Staff Sign-In | 0/8 | Planned | - |
+| 1. Foundation & Staff Sign-In | 1/8 | In Progress | - |
 | 2. Find the Client & Send the Link | 0/TBD | Not started | - |
 | 3. Uploads, Review & Live Status | 0/TBD | Not started | - |
 | 4. Connect Payroll & Bank | 0/TBD | Not started | - |

@@ -1,18 +1,18 @@
 ---
 gsd_state_version: "1.0"
-current_phase: 1
+current_phase: 01
 current_phase_name: Foundation & Staff Sign-In
-status: planning
-stopped_at: Phase 1 UI-SPEC approved
-last_updated: "2026-10-11T01:20:15.273Z"
+status: executing
+stopped_at: Completed 01-01-PLAN.md
+last_updated: "2026-10-11T02:23:44.803Z"
 last_activity: 2026-10-10
-last_activity_desc: Roadmap created (8 phases, 70 v1 requirements mapped)
-state_head: 18100f14a3fcb055dd9a37ce85c466ee94829740
+last_activity_desc: Phase 01 execution started
+state_head: 4351047fc115ee90a0646a5e7e30df2669075ea7
 progress:
   total_phases: 8
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_plans: 8
+  completed_plans: 1
   percent: 0
 ---
 
@@ -23,14 +23,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-10-10)
 
 **Core value:** A case manager can send a client one link and get bank statements, pay stubs, and documents back into the Logics case without chasing, babysitting, or re-uploading.
-**Current focus:** Phase 1 - Foundation & Staff Sign-In
+**Current focus:** Phase 01 — Foundation & Staff Sign-In
 
 ## Current Position
 
-Phase: 1 of 8 (Foundation & Staff Sign-In)
-Plan: 0 of TBD in current phase
-Status: Ready to plan
-Last activity: 2026-10-10 - Roadmap created (8 phases, 70 v1 requirements mapped)
+Phase: 01 (Foundation & Staff Sign-In) — EXECUTING
+Plan: 2 of 8
+Status: Ready to execute
+Last activity: 2026-10-10 — Phase 01 execution started
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -52,6 +52,11 @@ Progress: [░░░░░░░░░░] 0%
 - Trend: -
 
 *Updated after each plan completion*
+**Per-Plan Metrics:**
+
+| Plan | Duration | Tasks | Files |
+|------|----------|-------|-------|
+| Phase 01 P01 | 6 min | 2 tasks | 15 files |
 
 ## Accumulated Context
 
@@ -65,6 +70,9 @@ Recent decisions affecting current work:
 - [Roadmap]: HMAC-signed, stateful client link exchanged for an HttpOnly cookie; a GET never marks "opened" (Phase 2)
 - [Roadmap]: Plaid Hosted Link opened from our own portal button, not Plaid-sent SMS; polling (5-10 s) instead of Realtime for status
 - [Roadmap]: Copy code only from MIT/Apache repos; ERPNext, DocuSeal, Gather, Bigcapital are visual references only
+- [Phase 01]: Workspace lockfile lives at the repo root (pnpm-lock.yaml); the one-lockfile gate asserts none exists under app/
+- [Phase 01]: Added .gitattributes (*.sh text eol=lf) so hygiene-check.sh survives core.autocrlf=true checkouts
+- [Phase 01]: check-file-sizes.mjs excludes only routeTree.gen.ts, worker-configuration.d.ts, and vendored src/components/ui/**; the 500-line limit is not configurable
 
 ### Pending Todos
 
@@ -91,6 +99,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-10-11T01:20:15.224Z
-Stopped at: Phase 1 UI-SPEC approved
-Resume file: .planning/phases/01-foundation-staff-sign-in/01-UI-SPEC.md
+Last session: 2026-10-11T02:23:44.749Z
+Stopped at: Completed 01-01-PLAN.md
+Resume file: None
