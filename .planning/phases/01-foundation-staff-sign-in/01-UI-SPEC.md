@@ -1,7 +1,8 @@
 ---
 phase: "1"
 slug: "01-foundation-staff-sign-in"
-status: draft
+status: approved
+reviewed_at: "2026-10-10"
 shadcn_initialized: false
 preset: "new-york / slate / cssVariables / lucide — inherited verbatim from satnaing/shadcn-admin components.json (copied in Plan 01, not npx shadcn init)"
 created: "2026-10-10"
@@ -200,7 +201,7 @@ Badge geometry: 14 px / 400, `px-3 py-1` (12 / 4), `rounded-full`, optional 16 p
 
 ## Copywriting Contract
 
-Voice — **Inherited**: second person, sentence case, plain words, no exclamation marks, no "Oops", no jargon on client pages ("agent", never "staff" or "user"; "link", never "token"; "bank", never "financial institution"). Buttons start with a verb and name the object ("Send link", "Copy link"). Errors say what happened and what to do next, in that order. Staff may see an error `code` in 14 px muted text for support; clients never see codes.
+Voice — **Inherited**: second person, sentence case, plain words, no exclamation marks, no "Oops", no jargon on client pages ("agent", never "staff" or "user"; "link", never "token"; "bank", never "financial institution"). Buttons start with a verb and name the object ("Send link", "Copy link"). Exception, accepted by the checker: the sign-in form button is "Sign in" (industry-standard; the page title already names ResSpark). Do not "fix" it to add an object. Errors say what happened and what to do next, in that order. Staff may see an error `code` in 14 px muted text for support; clients never see codes.
 
 | Element | Copy |
 |---------|------|
@@ -335,12 +336,12 @@ Visual-reference-only sources (never copied): `frappe/erpnext` (GPL-3.0) for lis
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
-- [ ] Dimension 7 Inventory Provenance: PASS
+- [x] Dimension 1 Copywriting: PASS (FLAG, non-blocking: "Sign in" button names no object; accepted as the industry-standard exception, see Voice)
+- [x] Dimension 2 Visuals: PASS
+- [x] Dimension 3 Color: PASS
+- [x] Dimension 4 Typography: PASS
+- [x] Dimension 5 Spacing: PASS
+- [x] Dimension 6 Registry Safety: PASS
+- [x] Dimension 7 Inventory Provenance: PASS (FLAG, non-blocking: the composites sub-table is a non-exhaustive list enumerated from the GitHub trees API at e16c87f on 2026-10-10, not a closed allowlist; Plan 01 re-enumerates with `npx shadcn info`)
 
-**Approval:** pending
+**Approval:** approved 2026-10-10 by gsd-ui-checker (`## UI-SPEC VERIFIED`). UI-consideration probe: the researcher-authored `## UI Considerations` table (14 covered, 3 backstop, 1 unresolved) was accepted as the probe result; the heuristic engine was not re-run to avoid clobbering explicit resolutions.
