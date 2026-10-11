@@ -128,3 +128,11 @@ _Verifier: Claude (gsd-verifier)_
 ## Orchestrator evidence (2026-10-11)
 
 SIGN-02 behavior proven live: `pnpm -C app run test:live:file worker/test/esign-complete.test.ts worker/test/esign-reconcile-live.test.ts` → 2 files, 11/11 passed (test firm only, cleaned up). Deployed commit `ec8efea` (version `300b5f25`) passes `smoke` (14 ok), `smoke:connect` and `smoke:esign` (keys: smarty no, docuseal no).
+
+## Hardening follow-up (2026-10-11)
+
+Both Info items in the anti-pattern table are fixed:
+- `fa4739e`: `startSignature` no longer writes `link_ref: s.slug`. A grep found no reader of `link_ref` for DocuSeal rows (the only `findConnectionByLinkRef` caller is the Plaid webhook path), and `connections.link_ref` is nullable TEXT, so the schema did not change. `start.test.ts` asserts the update carries no `link_ref` or slug, and the live `esign-start.test.ts` asserts `link_ref: null`. `pnpm -C app run test:live:file worker/test/esign-start.test.ts` gave 4/4 passed.
+- `64ccf02`: `AddressCard` adds ` County` only when the name does not already end in County, Parish, Borough, City, Census Area, Municipality, or Municipio. Tests cover Los Angeles, Richmond City, Orleans Parish, Anchorage Municipality, and Juneau City and Borough.
+
+`pnpm -C app run check` passed: 162 test files passed and 36 live files skipped (1962 tests passed). Nothing was deployed. `covered_digest` above predates these edits to `start.ts` and `address-card.tsx`.
