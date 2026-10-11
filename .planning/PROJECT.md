@@ -13,7 +13,7 @@ A case manager can send a client one link and get bank statements, pay stubs, an
 - **Customer**: Tax-resolution firms (ValorTax first; Alleviate and other firms named as follow-on). Users are case managers and settlement officers (Nicole, head of resolution; Sandra, in-the-trenches case manager) and their clients (taxpayers with IRS debt).
 - **Revenue model**: Build for ValorTax first, then white-label and resell to other CPA, EA, and tax-resolution firms. Integration costs are pay-as-you-go (Plaid roughly $10-14 per user all-in; Teller cheaper; Truv pay-as-you-go).
 - **Success metric**: Time from "agent is on the phone with the client" to "all required docs are in the Logics case". Target: minutes, not days. Secondary: number of chase calls, texts, and emails per case.
-- **Strategy notes**: Call transcript `transcript.md` (ValorTax Meet, Oct 6 2026, Zack Hanna and Andrew Rios). Demo scheduled Mon Oct 12 2026 11:30 ("Build MVP: admin + client, Supabase, Truv, Plaid/Teller, eSign, Logics"). Then meetings every 2-3 days to refine.
+- **Strategy notes**: Full call transcript at `.planning/Client/call1.md` (ValorTax Meet, Oct 6 2026, Zack Hanna and Andrew Rios; the root `transcript.md` is empty). Demo scheduled Mon Oct 12 2026 11:30 ("Build MVP: admin + client, Supabase, Truv, Plaid/Teller, eSign, Logics"); Andrew will join from his dad's office and act as a case manager during the demo. Then meetings every 2-3 days to refine. Build it the way Andrew described it; his words are the acceptance test.
 
 ## Requirements
 
@@ -86,6 +86,21 @@ Platform:
 - **Reference repos (copy patterns, do not reinvent)**: `satnaing/shadcn-admin` (15.7k stars, MIT, Vite + React + TanStack Router + shadcn/ui: admin shell, sidebar, data tables, command palette); `seziro-team/gather` (open-source client document collection: request builder, no-account magic-link portal, per-item approve and reject, reminders, audit trail; AGPL, so copy patterns not code); `plaid/react-plaid-link` and `plaid/pattern`; `docusealco/docuseal-react`; `frappe/erpnext` (list and table views, status badges, sidebar nav); `bigcapitalhq/bigcapital` (money-formatted fields, financial statements); `docusealco/docuseal` (document upload, builder, submission status screens). Before each new feature, web-search for an existing repo and copy from it.
 - **Design direction**: everything redesigned; data-heavy business UI like ERPNext for staff; clean, mobile-first, step-by-step like DocuSeal and Gather for clients. Front end must be TypeScript.
 - **People**: Nicole and Sandra are the users to interview about the 433-A layout and admin UI. Andrew will send the 5-minute pitch video and the strategy-report PDF.
+- **What Andrew asked for, in his words** (from the call; treat as acceptance criteria):
+  - Staff: "type in the case ID or search for the name, case ID, it pops up, this person's name, their phone, their email. What do you want to send them?" then "is this the person? Yes" before anything goes out. Email and phone "errorified" so nothing is sent to an empty or typo'd address.
+  - "Here's a link that an agent could copy in case they wanna send it out from their own" email or phone when the client says it went to spam.
+  - A dashboard that says what was sent, then "a refresh or a poll that says that person's application link is in progress, and then it's done."
+  - Staff must be able to say on the phone "are you on this step? What does the text message look like?" so the client view is simple, step-by-step, and screenshot-able for internal training.
+  - Multiple jobs: "if they have two jobs, one 1099, I wanna make sure I have both... switched jobs two years ago, we need those."
+  - Bank statements: 6 months pulled, 3 months is the standard resolution window; both must be visible.
+  - Logics: "copy and paste their credentials in, a copy of your API key and then your secret" in a settings page; Logics integrations are "super weird", so expect quirks and test the connection.
+  - Push: "send those to the docs in IRS Logics... with a little comment like uploaded by ResSpark, last ran by {agent}".
+  - 433-A: pre-populate the form from bank and payroll data with IRS standards by county, "and then the rest is yes or no or type in whatever"; layout to be confirmed with Nicole and Sandra.
+  - Address: Smarty autocomplete, post-office verified, gives the county "so you can skip the whole county you live in" step.
+  - E-sign: the current Logics e-sign "only sends an email, I can't copy the link, and on the phone you have to zoom in and scroll"; the fix is email plus text plus a copyable link, usable by a senior on the phone. Andrew's favorite UX is Anvil ("literally the best and easiest thing", roughly $1.50 per signature, white-label embeddable, no SMS); DocuSeal and Documenso are the mature open-source alternatives.
+  - Sandra's day: open email, download attachment, search Logics, upload attachment. Andrew is automating that separately; ResSpark must not make it worse.
+  - Plaid compliance framing: "help people prepare tax returns and tax paperwork", not "tax resolution" or "consumer lending"; pay-as-you-go only. Teller is the cheaper fallback once Plaid works.
+  - Open-source first: "research and find open source and just play Lego"; judge repos by stars and active PRs.
 
 ## Constraints
 
@@ -112,6 +127,10 @@ Platform:
 | 433-A pre-population is a later phase, reusing the existing engine | Zack: solve getting docs in faster before analyzing; layout needs Nicole and Sandra input | — Pending |
 | No own SMS provider in v1; copyable link plus provider-sent SMS (Plaid, Truv) | No SMS provider key available; avoids blocking the demo | — Pending |
 | Fix `.gitignore` and untrack `dist/` in Phase 1 | Secrets hygiene before any new env vars are added | — Pending |
+| E-sign provider: DocuSeal first (open source, API, embeddable React form), Anvil evaluated against the same "senior on the phone" test; provider calls kept in one module | Andrew's pain is phone UX and a copyable link, not the vendor; DocuSeal is AGPL so it is used as a service, never forked | — Pending |
+| Firm-level Logics credentials entered in a Settings page and stored encrypted, not in env vars | Andrew: "copy and paste their credentials in"; also what white-labeling needs | — Pending |
+| Copy only from MIT/Apache repos; GPL/AGPL repos (ERPNext, DocuSeal, Gather, Bigcapital) are visual references | Product will be white-labeled and resold | — Pending |
+| Engine: mechanical TypeScript port with golden fixtures from the 27 Python tests; Python stays as the oracle | Python Workers run on Pyodide without psycopg; the engine is 228 lines behind a 6-method Protocol | — Pending |
 
 ## Evolution
 
