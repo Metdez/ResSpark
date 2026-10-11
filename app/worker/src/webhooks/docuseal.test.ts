@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fixtureText } from '../../test/fixtures/connections'
 import { signDocuseal } from '../../test/helpers/docuseal-sign'
 import { docusealAdapter } from './docuseal'
@@ -11,9 +11,16 @@ const now = () => Math.floor(Date.now() / 1000)
 const verify = async (body: string, sig: string) => docusealAdapter.verify(body, headers(sig), env)
 
 describe('docusealAdapter', () => {
+  // Pin the clock: signing and the 300 s window check must read the same "now", even under load.
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-10-11T12:00:00.900Z'))
+  })
+  afterEach(() => vi.useRealTimers())
+
   it('verifies a body signed over `${ts}.${raw}` and keys it by event, submitter and timestamp', async () => {
     const v = await verify(raw, await signDocuseal(raw, SECRET))
-    expect(v?.iat).toBeCloseTo(now(), -1)
+    expect(v?.iat).toBe(now())
     expect(docusealAdapter.eventKey(v!)).toBe('form.completed:5001:2026-10-11T12:00:00Z')
   })
 

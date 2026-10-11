@@ -28,4 +28,4 @@ DocuSeal's signing secret is the `whsec_…` string, used as the raw key bytes a
 
 ## Tests
 
-`docuseal.test.ts`: a signed body verifies with the expected `eventKey`; an appended byte, 301 s old, 301 s in the future, no dot, 63 hex characters, non-hex, a missing header, another secret, `submission.created`, a missing `submission_id`, and a signed non-JSON body all return `null`; 299 s old verifies; `configured` is false with an empty secret. `test/esign-complete.test.ts` proves the route live.
+`docuseal.test.ts` (only `Date` faked and pinned to `2026-10-11T12:00:00.900Z` in `beforeEach`, so signing and the window check read the same clock however slow the run): a signed body verifies with `iat` equal to the pinned second with the expected `eventKey`; an appended byte, 301 s old, 301 s in the future, no dot, 63 hex characters, non-hex, a missing header, another secret, `submission.created`, a missing `submission_id`, and a signed non-JSON body all return `null`; 299 s old verifies; `configured` is false with an empty secret. `test/esign-complete.test.ts` proves the route live.
