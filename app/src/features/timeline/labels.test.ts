@@ -8,6 +8,8 @@ describe('actionLabel', () => {
     ['request.email_sent', {}, 'Emailed the link'],
     ['case.looked_up', {}, 'Looked up the case'],
     ['staff.signed_in', {}, 'Signed in'],
+    ['address.confirmed', { verified: true }, 'Client confirmed their address'],
+    ['address.confirmed', { verified: false }, 'Client entered their address (unverified)'],
     ['document.uploaded', { mime_type: 'application/pdf' }, 'Client uploaded a PDF'],
     ['document.uploaded', { mime_type: 'image/jpeg' }, 'Client uploaded a photo'],
     ['item.approved', { label: 'ID' }, 'Approved ID'],

@@ -22,3 +22,5 @@ Turns an `events.action` name and its JSON payload into one plain-language sente
 Actions not in the table today (they use the fallback): `request.email_failed`, `connection.refresh_requested`, `webhook.rejected`, `logics.push_*`, `logics.activity_*`, `job.*`.
 
 Tests: `labels.test.ts` covers each mapped sentence, the fallback, and a non-string payload value.
+
+- `address.confirmed` (Plan 06-03): `Client confirmed their address` when `payload.verified === true`, otherwise `Client entered their address (unverified)`. The event payload never carries street text (migration 0007), only `source`, `verified`, `county_fips`, and `rdi`.

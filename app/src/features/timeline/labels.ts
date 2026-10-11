@@ -24,6 +24,8 @@ export const ACTION_LABELS: Record<string, (payload: Payload) => string> = {
     return `Rejected ${text(p.label) || 'an item'}${note ? ` — ${note}` : ''}`
   },
   'integration.logics.tested': () => 'Tested the Logics connection',
+  'address.confirmed': (p) =>
+    p.verified === true ? 'Client confirmed their address' : 'Client entered their address (unverified)',
 }
 
 // Unknown actions (provider webhooks of Phase 4 and later) still read as words.
