@@ -43,7 +43,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. Signing in and signing out each appear as an event row with actor, timestamp, and id, on the same event-writing path every later phase's actions must use (PLAT-04)
   5. A fresh clone ignores every `.env` file, tracks no `dist/` folder, uses one package manager and one lockfile on Node 22.12 or newer, and a failed request's log line contains no tokens, document bytes, or PII (PLAT-06, PLAT-08)
 
-**Plans:** 6/8 plans executed
+**Plans:** 7/8 plans executed
 
 Plans:
 - [x] 01-01-PLAN.md — Repo hygiene first: `.gitignore`, pnpm workspace, engines, 500-line gate, hygiene-check (PLAT-06)
@@ -51,7 +51,7 @@ Plans:
 - [x] 01-03-PLAN.md — Hono Worker + first deploy to workers.dev, allowlisted logger, `logicsWriteGuard`, SANDBOX banner, spike (a) (PLAT-01, PLAT-05, PLAT-08)
 - [x] 01-04-PLAN.md — Migration 0002 applied via Management API [BLOCKING], RLS/grants proof (strict 401), question reconciliation (PLAT-02, PLAT-04)
 - [x] 01-05-PLAN.md — Worker secrets over stdin, `db/` module (`createAdminClient`, `logEvent`, `getStaffProfile`), two demo staff users, sign-up disabled (PLAT-03, PLAT-04, PLAT-07)
-- [ ] 01-06-PLAN.md — `jose` JWT verification, `/api/admin/session` events, SPA sign-in / guard / sign-out, authenticated smoke (PLAT-04, PLAT-07)
+- [x] 01-06-PLAN.md — `jose` JWT verification, `/api/admin/session` events, SPA sign-in / guard / sign-out, authenticated smoke (PLAT-04, PLAT-07)
 - [ ] 01-07-PLAN.md — Client-link HMAC token + signed-cookie exchange, uniform 404, per-IP rate limit, `/c/` client shell (PLAT-08, PLAT-07)
 - [x] 01-08-PLAN.md — Spikes (c) and (e) run, (a)(b)(d)(f) recorded, reserved secret names, operator README
 
@@ -222,6 +222,7 @@ Plans:
 - [ ] 07-10-PLAN.md — [Wave 5] Evidence drill-down Sheet: transactions by month, pay stubs with signed links, intake/Logics/address/staff (FORM-03)
 - [ ] 07-11-PLAN.md — [Wave 5, non-gating] Regex document extractors ported with `_page_text`, golden-extract parity (FORM-03)
 - [ ] 07-12-PLAN.md — [Wave 6, non-gating] Extract values route and button → document proposals (FORM-03)
+
 **Scope notes**: Mechanical TypeScript port of `src/determination.py` with Python kept as the test oracle; thresholds and formulas unchanged (any change needs an authoritative source and tests); standards through Postgres RPC functions; Plaid-category-to-433-A-line and Truv deduction mappings in SQL tables; interview Nicole and Sandra on the layout before planning; port the `document_parse.py` extractors split under 500 lines.
 **UI hint**: yes
 **Research hint**: yes
@@ -266,7 +267,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation & Staff Sign-In | 6/8 | In Progress | - |
+| 1. Foundation & Staff Sign-In | 7/8 | In Progress | - |
 | 2. Find the Client & Send the Link | 2/8 | In Progress | - |
 | 3. Uploads, Review & Live Status | 0/TBD | Not started | - |
 | 4. Connect Payroll & Bank | 0/TBD | Not started | - |

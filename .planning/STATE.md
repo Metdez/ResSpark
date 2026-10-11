@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 01
 current_phase_name: Foundation & Staff Sign-In
 status: executing
-stopped_at: Completed 02-01-PLAN.md
-last_updated: "2026-10-11T05:35:55.346Z"
+stopped_at: Completed 01-06-PLAN.md
+last_updated: "2026-10-11T06:01:43.253Z"
 last_activity: 2026-10-10
 last_activity_desc: Phase 01 execution started
-state_head: db5baa5f4ccfb76c9bae8339b0b4e7705553da67
+state_head: f6df5bbc9f6d19a09f38ae593a802f7b47755799
 progress:
   total_phases: 8
   completed_phases: 0
-  total_plans: 55
-  completed_plans: 9
+  total_plans: 67
+  completed_plans: 10
   percent: 0
 ---
 
@@ -63,6 +63,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01 P05 | 27 min | 3 tasks | 31 files |
 | Phase 01 P08 | 9min | 2 tasks | 6 files |
 | Phase 02 P01 | 10 min | 2 tasks | 7 files |
+| Phase 01 P06 | 30 min | 3 tasks | 48 files |
 
 ## Accumulated Context
 
@@ -97,6 +98,10 @@ Recent decisions affecting current work:
 - [Phase 02]: 02-01: requests carries contact_email/contact_phone_e164 (planner assumption beyond D-06) for D-09 email and LOOK-04 send-time check; awaiting user confirm
 - [Phase 02]: 02-01: every request RPC locks requests then client_links; RAISE tokens are bare (no_items, case_not_found, request_not_found, request_not_draft, request_not_active, request_revoked, link_inactive)
 - [Phase 02]: 02-01: live-test probe case Logics 999999001 is a permanent fixture (events FK + append-only block case deletes); admin case lists should filter it
+- [Phase 01]: PLAT-07 assumption: refresh persistence = supabase-js localStorage + auto-refresh; a Worker 401 on /api/admin/* means signed out (local sign-out + redirect)
+- [Phase 01]: GET /api/admin/session added so nav-user has display_name before Phase 2's /api/admin/me
+- [Phase 01]: staffAuth takes firm/role from staff_profiles and 403s when app_metadata.firm_id disagrees; jwtVerify pins iss, aud and ES256
+- [Phase 01]: Hygiene gate (h) matches sb_secret_ plus 16+ key chars; supabase-js ships the bare literal
 
 ### Pending Todos
 
@@ -125,6 +130,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-10-11T05:35:55.197Z
-Stopped at: Completed 02-01-PLAN.md
+Last session: 2026-10-11T06:01:43.107Z
+Stopped at: Completed 01-06-PLAN.md
 Resume file: None
