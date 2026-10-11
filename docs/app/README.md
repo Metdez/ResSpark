@@ -30,6 +30,7 @@ Run from the repo root. Every script that needs a secret loads it with `dotenv -
 - **smoke** — `pnpm -C app run smoke https://resspark.zh-a16.workers.dev`: post-deploy proof without credentials (`/admin`, `/api/config`, the 404s, `/c/` pages and headers, the `/api/c` 401s).
 - **smoke:auth** — `pnpm -C app run smoke:auth https://resspark.zh-a16.workers.dev --auth`: adds the staff and client-link checks. Add `--client-flow` for the Phase 2 acceptance run: lookup, confirm, create, send, open the link, Start, heartbeat, revoke, and the dead link, on fixture case 900003 (see `docs/app/scripts/smoke.md`).
 - **smoke:connect** — `pnpm -C app run smoke:connect https://resspark.zh-a16.workers.dev`: the Phase 4 acceptance run. It is `--auth --connect-flow`: the client flow plus item views, consent, both start routes (503 `provider_not_configured` without keys, 200 with keys), `/c/return` (302 and CSP), and the staff connections list. It ends `ok connect-flow complete (keys: payroll yes|no, bank yes|no)`. See `docs/app/scripts/smoke-connect.md`.
+- **smoke:esign** — `pnpm -C app run smoke:esign https://resspark.zh-a16.workers.dev`: the Phase 6 acceptance run. It is `--auth --esign-flow`: the client flow plus the address step (Smarty suggest or the manual fallback), the staff review's address and signature, the ESIGN consent, the signing start (503 without DocuSeal keys or a mapped template, 200 with), the `/c/sign/<item>` CSP, and the `?step=` signing link. It ends `ok esign-flow complete (keys: smarty yes|no, docuseal yes|no)`. See `docs/app/scripts/smoke-esign.md`.
 - **db:migrate** — `pnpm -C app run db:migrate` (or `node app/scripts/db-migrate.mjs`): applies pending `supabase/migrations/*.sql` in order and records them in `public.app_migrations`. `--status`, `--dry-run`, and `--query "<sql>"` are also accepted.
 - **secrets:provision** — `pnpm -C app run secrets:provision`: sets the five required Worker secrets over stdin and appends missing keys to `app/.dev.vars`. Re-runs keep the existing `CLIENT_LINK_HMAC_KEY`, `INTEGRATION_ENC_KEY`, and `TOKEN_ENC_KEY_1`.
 - **secrets:provider** — `pnpm -C app run secrets:provider plaid` (or `truv`): prompts for that provider's two vendor keys with echo off (or reads them line by line from piped stdin) and sets them on the Worker. See § USER ACTION REQUIRED (Phase 4).
@@ -168,6 +169,58 @@ Phase 4 deploys and runs without any vendor key: payroll and bank steps show the
 7. **Sandbox only until Phase 8.** Do not install Plaid Production or Truv Production keys before the Phase 8 go-live review.
 
 If payroll connections stop advancing, see [Truv webhook endpoint](runbooks/truv-webhook-endpoint.md).
+
+## Demo script (Phase 6)
+
+Use DocuSeal **Test Mode**, the synthetic `Engagement letter (demo)` template, a public test address, and Logics in fake mode (D-21). DocuSeal never emails or texts anyone: every submission sends `send_email` and `send_sms` false, and the send-copy button is off.
+
+With keys (see § USER ACTION REQUIRED (Phase 6)):
+
+1. Open https://resspark.zh-a16.workers.dev/admin and sign in as the demo admin.
+2. Open a request built from the `Standard resolution packet`, or create one with steps 2-6 of § Demo script (Phase 2). Copy the client link into a phone-sized private window.
+3. Tap `Start`.
+4. Address: tap `Confirm your address`, type `1600 Amphitheatre Pkwy`, pick the suggestion, then tap `Yes, that's my address`.
+5. In admin, the address card shows the county, the 5-digit FIPS, the RDI (`Residential` or `Commercial`), and `USPS verified`. The client was never asked for a county.
+6. Back on the phone: tap `Sign` on `Engagement letter`, then `I agree`. The signature field is the next thing on screen (3 taps from a fresh link; 2 from the card's `Copy signing link`).
+7. The embed shows DocuSeal's **"Developer Sandbox. Upgrade to start using in Production."** banner in Test Mode. Do not tap it; it goes away with a production key (RESEARCH Pitfall 10).
+8. Type a name in the signature field and finish. The phone returns to the step list.
+9. In admin, the signature card shows `Signed` and the `Test` badge, and the item lists two PDFs (signed document and audit trail), each with a sha256.
+10. Approve the item, then `Push to Logics (simulated)`. In fake mode the push completes with a fake Logics document id.
+
+Without keys, both steps still demo honestly and are presented as "coming next" (D-21). With no Smarty keys the address step opens the manual form at once and saves the address unverified (`Unverified — county unknown` on the staff card). With no DocuSeal key, or with the template not mapped, the signing page reads `Your agent will send this form another way.` and the staff card shows `E-sign not set up`.
+
+The no-click version is `pnpm -C app run smoke:esign https://resspark.zh-a16.workers.dev`. Its last line records the key mode.
+
+Runbooks:
+
+- [DocuSeal Test Mode setup](runbooks/docuseal-test-mode.md): account, key, webhook, HMAC, template, notifications, the Test Mode webhook question, production switch.
+- [E-sign and address real-device check](runbooks/esign-phone-check.md). Run it once on a real iPhone and a real Android phone before the demo.
+
+## USER ACTION REQUIRED (Phase 6)
+
+Phase 6 deploys and runs without any vendor key: the address step uses the manual form and the signing step shows its not-set-up state. To turn both on:
+
+1. **DocuSeal (Zack).** Full steps in [docuseal-test-mode.md](runbooks/docuseal-test-mode.md).
+   1. Create a docuseal.com account (US cloud) and switch the Console to **Test Mode**.
+   2. Create a test API key and enter it with `pnpm -C app secrets:provider docuseal` (`DOCUSEAL_API_KEY`).
+   3. While in Test Mode, add a webhook at `https://resspark.zh-a16.workers.dev/api/webhooks/docuseal` for `form.viewed`, `form.started`, `form.completed`, and `form.declined`.
+   4. Turn on Security → HMAC and enter that secret with the same command (`DOCUSEAL_WEBHOOK_SECRET`).
+   5. Build `Engagement letter (demo)` with one signer role and the fields `Full name`, `Case ID`, `Address` (optional), `Signature`, and `Date`.
+   6. In ResSpark, map it under **Settings → Integrations → E-sign templates** and click `Save templates`.
+   7. Turn off DocuSeal's account-level signer notification emails (Settings → Notifications). ResSpark already sends `send_email: false`, but account settings may still email signers (RESEARCH A7).
+   8. Optional: set `DOCUSEAL_CONTRACT_TEMPLATE_ID` (the template's numeric id) next to the key in `app/.dev.vars` and run `pnpm -C app test:live:file worker/test/docuseal-contract.test.ts` to check the live API contract.
+2. **Smarty (Zack).** Create a smarty.com account (free trial), generate a **secret** key pair with US Autocomplete Pro and US Street access, and enter it with `pnpm -C app secrets:provider smarty` (`SMARTY_AUTH_ID`, `SMARTY_AUTH_TOKEN`).
+3. **Re-run the smoke.** `pnpm -C app run smoke:esign https://resspark.zh-a16.workers.dev` must end `ok esign-flow complete (keys: smarty yes, docuseal yes)`. If code changed since the last deploy, deploy first with `pnpm -C app run deploy`.
+4. **ValorTax counsel (via Andrew).**
+   - Which forms may be e-signed: the engagement or fee agreement, Form 2848, Form 8821. **Form 433-A stays out of the portal**; it is never offered for e-signing.
+   - Review the ESIGN consent text (`esign-v1`, in `app/src/lib/consent-text.ts`) and any state disclosure rules for tax-resolution contracts.
+   - Confirm ValorTax submits e-signed 2848 and 8821 forms **online** (IRS.gov/Submit2848, IRS.gov/Submit8821, one form per submission) and how it **authenticates the client's identity** for a remote signature, as the IRS requires.
+   - Form 2848 also needs the **representative's Part II** declaration and signature. A one-role template captures only the taxpayer, so for now the representative signs Part II outside the portal (RESEARCH Open Question 6).
+5. **Andrew.**
+   - Upload the real ValorTax engagement letter and the official 2848 and 8821 PDFs as DocuSeal templates once counsel approves, and map them in Settings.
+   - Accept DocuSeal production pricing (per completed document, on top of a Pro seat) before switching off Test Mode.
+   - Optional: share an Anvil developer key if a hands-on Anvil comparison is still wanted (D-09; the written evaluation is in the 06-08 SUMMARY).
+6. **Real-device check.** Run [esign-phone-check.md](runbooks/esign-phone-check.md) on a real iPhone (Safari) and a real Android phone (Chrome): at most 3 taps from a fresh link and 2 from a copied signing link to the signature field, no zoom when the typed-signature input is focused, no sideways scroll, and `Signed` with both PDFs on the staff card within seconds. Also note whether Test Mode fired the webhooks (`webhook_events` rows with `provider 'docuseal'`; RESEARCH A2).
 
 ## Workers plan notes
 
