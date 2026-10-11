@@ -1,6 +1,7 @@
 // Pure page layout of the 433-A screening worksheet (D-16): rows of text -> Letter pages with the
 // disclaimer header and footer on every page. No amounts are computed here; every number is the run's.
 import type { RunView } from '../financials/evaluate'
+import { LINES, type LineMeta, SECTIONS } from '../financials/lines'
 import { money, toWinAnsi } from './text'
 
 export const HEADER_TEXT = 'Screening worksheet — Not an IRS form'
@@ -163,6 +164,123 @@ function recommendationRows(input: WorksheetInput, measure: Measure): Row[] {
   return rows
 }
 
+const SOURCE_LABELS: Readonly<Record<string, string>> = {
+  truv: 'Truv',
+  plaid: 'Plaid',
+  intake: 'Intake',
+  logics: 'Logics',
+  address: 'Address',
+  document: 'Document',
+  staff: 'Staff',
+}
+
+function sourceText(input: WorksheetInput, column: string | null): string {
+  const s = column ? input.sources[column] : undefined
+  if (!column) return 'IRS standard'
+  if (!s) return 'Not recorded'
+  return `${SOURCE_LABELS[s.source] ?? s.source}${s.status === 'edited' ? ' (edited)' : ''}${s.by_name ? `, ${s.by_name}` : ''}`
+}
+
+const notApplicable = (meta: LineMeta, snap: Record<string, unknown>): boolean =>
+  (meta.na_rule === 'not_married' && snap.filing_status_married === false) ||
+  (meta.na_rule === 'owns_home' && snap.owns_home === true) ||
+  (meta.na_rule === 'not_wage_earner' && snap.is_wage_earner === false)
+
+function valueText(meta: LineMeta, v: unknown, snap: Record<string, unknown>): string {
+  if (v === null || v === undefined) return notApplicable(meta, snap) ? 'Not applicable' : 'Unknown'
+  if (meta.kind === 'money') return money(Number(v))
+  if (meta.kind === 'bool') return v === true ? 'Yes' : v === false ? 'No' : String(v)
+  return String(v)
+}
+
+// Columns: line number, item, value (right edge), source.
+const COL = { line: PAGE.margin, item: 76, value: 380, source: 392 } as const
+const EXP = { actual: 300, standard: 380, allowed: 450, source: 460 } as const
+
+const cells = (items: WorksheetLine[]): Row => ({ height: LEADING, items })
+
+function lineRows(input: WorksheetInput, meta: LineMeta, measure: Measure): Row[] {
+  const v = input.snapshot[meta.column as string]
+  const source = line(fit(sourceText(input, meta.column), RIGHT - COL.source, 8, measure), COL.source, 8)
+  const label = (text: string, x: number = COL.item) => line(fit(text, COL.value - x - 80, SIZE, measure), x, SIZE)
+  const lineNo = line(meta.line ?? '', COL.line)
+  if (meta.kind !== 'money_list' || !Array.isArray(v)) {
+    return [cells([lineNo, label(meta.label), line(valueText(meta, v, input.snapshot), COL.value, SIZE, { align: 'right' }), source])]
+  }
+  return [
+    cells([lineNo, label(meta.label), ...(v.length === 0 ? [line('None', COL.value, SIZE, { align: 'right' })] : []), source]),
+    ...v.map((x, i) => cells([label(`Vehicle ${i + 1}`, COL.item + 12), line(money(Number(x)), COL.value, SIZE, { align: 'right' })])),
+  ]
+}
+
+function standardText(key: LineMeta['standard_key'], b: RunView['standards_inputs']): string {
+  if (!key) return '—'
+  if (key === 'health') return b.health_under_65 === null || b.health_65_plus === null ? 'n/a' : `${money(b.health_under_65)} / ${money(b.health_65_plus)}`
+  const amount = b[key]
+  return amount === null ? 'n/a' : money(amount)
+}
+
+const header = (labels: Array<[string, number, 'left' | 'right']>): Row => ({
+  height: LEADING,
+  items: labels.map(([t, x, align]) => line(t, x, 8, { bold: true, align })),
+})
+
+function expenseRows(input: WorksheetInput, measure: Measure): Row[] {
+  const { run } = input
+  const allowed = (key: string | undefined) => (key && run.allowable_breakdown[key] !== undefined ? money(run.allowable_breakdown[key]) : '—')
+  const rows: Row[] = [
+    header([['Line', COL.line, 'left'], ['Item', COL.item, 'left'], ['Actual', EXP.actual, 'right'], ['IRS standard', EXP.standard, 'right'], ['Allowed', EXP.allowed, 'right'], ['Source', EXP.source, 'left']]),
+  ]
+  for (const meta of LINES.filter((x) => x.section === 'expenses')) {
+    rows.push(
+      cells([
+        line(meta.line ?? '', COL.line),
+        line(fit(meta.label, EXP.actual - COL.item - 62, SIZE, measure), COL.item),
+        line(meta.column ? valueText(meta, input.snapshot[meta.column], input.snapshot) : '—', EXP.actual, SIZE, { align: 'right' }),
+        line(standardText(meta.standard_key, run.standards_inputs), EXP.standard, SIZE, { align: 'right' }),
+        line(allowed(meta.allowable_key), EXP.allowed, SIZE, { align: 'right' }),
+        line(fit(sourceText(input, meta.column), RIGHT - EXP.source, 8, measure), EXP.source, 8),
+      ])
+    )
+  }
+  if (run.allowable_breakdown.total !== undefined) {
+    rows.push(cells([line('Total allowable expenses', COL.item, SIZE, { bold: true }), line(allowed('total'), EXP.allowed, SIZE, { bold: true, align: 'right' })]))
+  }
+  rows.push(...paragraph('The line 42 standard is per person: under 65 / 65 and older.', measure, { size: 7 }))
+  return rows
+}
+
+function sectionRows(input: WorksheetInput, measure: Measure): Row[] {
+  return SECTIONS.flatMap((s) => [
+    spacer(),
+    heading(s.title),
+    ...(s.id === 'expenses'
+      ? expenseRows(input, measure)
+      : [
+          header([['Line', COL.line, 'left'], ['Item', COL.item, 'left'], ['Value', COL.value, 'right'], ['Source', COL.source, 'left']]),
+          ...LINES.filter((x) => x.section === s.id).flatMap((meta) => lineRows(input, meta, measure)),
+        ]),
+  ])
+}
+
+const amountRow = (label: string, value: number, measure: Measure, bold = false): Row =>
+  cells([line(fit(label, RIGHT - PAGE.margin - 90, SIZE, measure), PAGE.margin, SIZE, { bold }), line(money(value), RIGHT, SIZE, { bold, align: 'right' })])
+
+function totalsRows(input: WorksheetInput, measure: Measure): Row[] {
+  const { run } = input
+  return [
+    spacer(),
+    heading('Monthly totals'),
+    amountRow('Box D — Total monthly income', run.monthly_income, measure),
+    amountRow('Box E — Allowable monthly expenses', run.monthly_expenses, measure),
+    amountRow('Box F — Net disposable income (Box D less Box E)', run.net_disposable_income, measure, true),
+    spacer(),
+    heading('Net realizable equity'),
+    ...run.nre_lines.map((l) => amountRow(l.label, l.value, measure)),
+    amountRow('Net realizable equity, total', run.net_realizable_equity, measure, true),
+  ]
+}
+
 // Two passes (RESEARCH Pattern 6): place rows on pages, then stamp the header and `Page N of M` footer.
 export function paginate(rows: Row[]): WorksheetPage[] {
   const bodies: Array<WorksheetPage['lines']> = [[]]
@@ -189,5 +307,5 @@ export function paginate(rows: Row[]): WorksheetPage[] {
 }
 
 export function layoutWorksheet(input: WorksheetInput, measure: Measure): WorksheetPage[] {
-  return paginate([...titleRows(input, measure), spacer(), ...recommendationRows(input, measure)])
+  return paginate([...titleRows(input, measure), ...sectionRows(input, measure), ...totalsRows(input, measure), spacer(), ...recommendationRows(input, measure)])
 }
