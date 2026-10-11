@@ -25,3 +25,11 @@ Route tests for `GET /c/:token`, run in the `worker-node` project through `app.r
 
 - With a `LINK_RATE_LIMITER` binding that refuses, the response is the 429 page with `no-store`, and `findClientLink` is not called.
 - Without the binding, the 21st request from one IP inside the window is 429 while another IP is still served. `_resetRateLimitForTests()` clears the in-memory window before each test.
+
+## Copied signing link (Plan 06-06)
+
+- A valid token with `?step=3F2504E0-…` redirects to `/c/?step=3f2504e0-…` (lowercased).
+- `step=../admin`, `step=javascript:alert(1)`, an empty `step`, and a UUID with a trailing `x` each redirect to exactly `/c/`.
+- `step=<uuid>&next=https://evil.example` forwards only the step.
+- An invalid token with a valid `step` returns the same 404 body as without it.
+- `/c/sign/<uuid>` is not treated as a token: `findClientLink` is never called, and the SPA fallback answers 200 with the client CSP (including `https://cdn.docuseal.com`).

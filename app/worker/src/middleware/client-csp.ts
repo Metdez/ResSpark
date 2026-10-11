@@ -1,15 +1,16 @@
 import { createMiddleware } from 'hono/factory'
 
-// D-16: Truv Bridge and Plaid Link load on the client portal; nothing else third-party does.
+// D-16: Truv Bridge and Plaid Link load on the client portal, and DocuSeal's signing form (D-15);
+// nothing else third-party does. DocuSeal renders in a shadow root, not an iframe, so no new frame host.
 export function buildClientCsp(env: Pick<Env, 'SUPABASE_URL'>): string {
   return [
     "default-src 'self'",
-    "script-src 'self' https://cdn.truv.com https://cdn.plaid.com",
+    "script-src 'self' https://cdn.truv.com https://cdn.plaid.com https://cdn.docuseal.com https://docuseal.com",
     'frame-src https://my.truv.com https://cdn.plaid.com',
-    `connect-src 'self' https://*.truv.com https://*.plaid.com ${new URL(env.SUPABASE_URL).origin} https://*.storage.supabase.co`,
+    `connect-src 'self' https://*.truv.com https://*.plaid.com https://docuseal.com ${new URL(env.SUPABASE_URL).origin} https://*.storage.supabase.co`,
     "img-src 'self' data: blob: https:",
     "style-src 'self' 'unsafe-inline'",
-    "font-src 'self' data:",
+    "font-src 'self' data: https://docuseal.com",
     "worker-src 'self' blob:",
     "base-uri 'self'",
     "form-action 'self'",

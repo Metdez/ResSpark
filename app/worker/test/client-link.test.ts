@@ -83,6 +83,43 @@ describe('GET /c/:token with a valid token', () => {
   })
 })
 
+describe('GET /c/:token?step= (D-17 copied signing link)', () => {
+  const UPPER = '3F2504E0-4F89-11D3-9A0C-0305E82C3301'
+  const withQuery = async (q: string) => app.request(`/c/${await mint()}?${q}`, {}, ENV)
+
+  it('forwards a UUID step, lowercased', async () => {
+    const res = await withQuery(`step=${UPPER}`)
+    expect(res.status).toBe(302)
+    expect(res.headers.get('location')).toBe(`/c/?step=${UPPER.toLowerCase()}`)
+  })
+
+  it.each(['step=../admin', 'step=javascript:alert(1)', 'step=', `step=${UPPER}x`])('drops %s', async (q) => {
+    const res = await withQuery(q)
+    expect(res.status).toBe(302)
+    expect(res.headers.get('location')).toBe('/c/')
+  })
+
+  it('forwards only the step, never other params', async () => {
+    const res = await withQuery(`step=${UPPER}&next=https://evil.example`)
+    expect(res.headers.get('location')).toBe(`/c/?step=${UPPER.toLowerCase()}`)
+  })
+
+  it('an invalid token with a valid step is the same 404 as without it', async () => {
+    vi.mocked(findClientLink).mockResolvedValue(null)
+    const plain = await get(random64())
+    const stepped = await app.request(`/c/${random64()}?step=${UPPER}`, {}, ENV)
+    expect(stepped.status).toBe(404)
+    expect(await stepped.text()).toBe(await plain.text())
+  })
+
+  it('/c/sign/<uuid> is not a token: it falls through to the SPA with the client CSP', async () => {
+    const res = await app.request(`https://resspark.example.workers.dev/c/sign/${UPPER.toLowerCase()}`, {}, ENV)
+    expect(res.status).toBe(200)
+    expect(res.headers.get('content-security-policy')).toContain('https://cdn.docuseal.com')
+    expect(findClientLink).not.toHaveBeenCalled()
+  })
+})
+
 describe('GET /c/:token failures are one uniform 404', () => {
   const cases: [string, () => Promise<string>, ClientLinkRow | null][] = [
     ['malformed', async () => 'not-a-token', row()],

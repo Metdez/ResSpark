@@ -11,7 +11,7 @@
    - value: JSON `{ link_id, exp }`, where `exp` is now + 24 h in ms epoch;
    - signed with `cookieSecret(CLIENT_LINK_HMAC_KEY)`, a key distinct from the link MAC key;
    - attributes `Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=86400`.
-5. `c.redirect('/c/', 302)`. The `Location` is a constant, so the token never appears in the response.
+5. Redirect 302. With a `step` query value that matches the case-insensitive UUID pattern, `Location` is `/c/?step=<lowercased uuid>` (D-17, a copied signing link); otherwise it is exactly `/c/`. No other query parameter is forwarded and the path is fixed, so the token never appears in the response and `step` cannot become an open redirect or script URL (T-06-23). `routes/c/index.tsx` checks the pattern again.
 
 ## Cookie contract (Phase 2 reads it)
 
