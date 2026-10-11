@@ -170,6 +170,17 @@ describe('ReviewPanel', () => {
     expect(button('Reject', dialog).disabled).toBe(true)
   })
 
+  it('approves and invalidates the review, request, dashboard and events queries', async () => {
+    const invalidate = vi.spyOn(QueryClient.prototype, 'invalidateQueries')
+    await render()
+    await click(button('Approve', itemEl('i1')))
+    await tick()
+    expect(api.approve).toHaveBeenCalledWith('i1')
+    const keys = invalidate.mock.calls.map((c) => c[0]?.queryKey)
+    expect(keys).toEqual(expect.arrayContaining([['review', 'r1'], ['request', 'r1'], ['requests'], ['events', 'c1']]))
+    invalidate.mockRestore()
+  })
+
   it('explains a 409 on approve with the code in muted text', async () => {
     vi.mocked(api.approve).mockRejectedValue(new ApiError(409, 'item_not_submitted', 'item_not_submitted'))
     await render()

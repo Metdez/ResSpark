@@ -26,5 +26,6 @@
 - `Preview` calls `documentUrl('d1', 'inline')` and then `window.open(url, '_blank', 'noopener')`; `Download` calls `documentUrl('d1', 'attachment')`.
 - `Reject` opens `Reject this item?` with the four presets; confirm is disabled until `blurry` is chosen; confirming calls `reject('i1', 'blurry')`.
 - A 501-character note shows `Keep the note under 500 characters.` and keeps confirm disabled.
+- Approve calls `approve('i1')` and invalidates `['review', 'r1']`, `['request', 'r1']`, `['requests']` (the dashboard) and `['events', 'c1']`.
 - A 409 `item_not_submitted` on approve shows `Nothing to approve yet.` with `item_not_submitted` in the muted span.
 - A rejected item shows `Note to client: blurry` and a `Rejected` badge.
