@@ -126,7 +126,7 @@ Plans:
   4. Plaid and Truv webhooks are signature-verified on the raw body, stored once per event, and acknowledged within a second, then processed with retries and a dead-letter queue; a missed or out-of-order webhook never leaves a request stuck or moves a step from done back to pending, because a cron reconciler and a staff Refresh button re-read provider state (WEBH-01, WEBH-02, WEBH-03)
   5. Bank data flows through a `BankProvider` interface with declared capabilities so a second provider is a configuration change, and Plaid Items older than the configured window (default 30 days) are removed so per-Item billing stops (BANK-04, BANK-06)
 
-**Plans:** 4/7 plans executed
+**Plans:** 5/7 plans executed
 
 Plans:
 - [x] 04-01-PLAN.md — [BLOCKING, Wave 1] Migration 0005 (`connections`, `connection_secrets`, `bank_accounts`, `bank_statement_months`, `bank_transactions`, `webhook_events`, `consents`, `status_rank`, `connection_set_status`, `connection_record_event`) + generic `/api/webhooks/:provider` with Truv HMAC and Plaid ES256 adapters + queue consumer/DLQ + `reconcileConnection` payroll branch, proven live with a signed Truv fixture (WEBH-01, WEBH-03, PAY-04, BANK-04)
@@ -134,7 +134,7 @@ Plans:
 - [x] 04-03-PLAN.md — [Wave 3] Consents + client connection routes (`/items/:id/connection`, `/consents`, `/connections/:kind/start`, `/connections/:id/reconcile`), Truv order creation with multi-employer reuse, income report + documents → Storage + `documents` per employer, CSP for `/c/*` (PAY-01, PAY-02, PAY-03, PAY-04, BANK-05)
 - [x] 04-04-PLAN.md — [Wave 4] Plaid behind `BankProvider`: Hosted Link per tap, single-use `/c/return`, SESSION_FINISHED/`link/token/get` → exchange → AES-GCM vault, `/transactions/sync`, statements → Storage + month cells, manual attribution, `ITEM_LOGIN_REQUIRED`, daily `/item/remove` (BANK-01, BANK-02, BANK-03, BANK-04, BANK-06, WEBH-02)
 - [ ] 04-05-PLAN.md — [Wave 5] Client portal: consent sheets, payroll sheet with Truv Bridge + add-another-employer, bank sheet with Hosted Link + accounts × months upload buttons, `/c/return` polling page, Phase 3 upload sheet as the fallback in both (PAY-01, PAY-03, PAY-04, BANK-01, BANK-03, BANK-04, BANK-05)
-- [ ] 04-06-PLAN.md — [Wave 5] Staff: connection cards with Refresh, statement grid (last 3 / months 4–6), transactions table with money formatting, payroll panel with document links (PAY-02, PAY-04, BANK-02, BANK-03, WEBH-02)
+- [x] 04-06-PLAN.md — [Wave 5] Staff: connection cards with Refresh, statement grid (last 3 / months 4–6), transactions table with money formatting, payroll panel with document links (PAY-02, PAY-04, BANK-02, BANK-03, WEBH-02)
 - [ ] 04-07-PLAN.md — [Wave 6] Final deploy, `smoke --connect-flow` in both modes (keys / no keys), Nyquist gate, demo script, USER ACTION REQUIRED, Truv endpoint runbook, Plaid sandbox rehearsal checklist (WEBH-01, WEBH-02, PAY-01, PAY-04, BANK-01, BANK-05)
 
 **Scope notes**: Plaid Hosted Link opened from our own portal button (not Plaid-sent SMS or email Link Delivery); `transactions.days_requested` of 200 or more because it cannot change later; `statements` in `required_if_supported_products`; access tokens encrypted; plain `fetch` provider clients (no `plaid` npm package); the generic `/api/webhooks/:provider` route also takes the DocuSeal verifier in Phase 6.
@@ -270,7 +270,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 1. Foundation & Staff Sign-In | 8/8 | In Progress | - |
 | 2. Find the Client & Send the Link | 8/8 | In Progress | - |
 | 3. Uploads, Review & Live Status | 7/7 | In Progress | - |
-| 4. Connect Payroll & Bank | 4/7 | In Progress | - |
+| 4. Connect Payroll & Bank | 5/7 | In Progress | - |
 | 5. Push to Logics | 5/5 | In Progress | - |
 | 6. Address & E-Sign | 3/8 | In Progress | - |
 | 7. 433-A Pre-Population | 3/12 | In Progress | - |
