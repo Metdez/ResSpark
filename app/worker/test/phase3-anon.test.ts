@@ -1,5 +1,5 @@
-import { createClient } from '@supabase/supabase-js'
-import { describe, expect, it } from 'vitest'
+import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import { beforeAll, describe, expect, it } from 'vitest'
 
 // T-03-07 / Phase 1 F-6 through the API: the publishable key (PostgREST role anon) can neither read
 // request_dashboard_v nor call any 0004 function. Run with `pnpm -C app run test:live:file worker/test/phase3-anon.test.ts`.
@@ -9,7 +9,11 @@ const key = process.env.SUPABASE_PUBLISHABLE_KEY ?? process.env.VITE_SUPABASE_PU
 const ZERO = '00000000-0000-0000-0000-000000000000'
 
 describe.skipIf(!url || !key)('0004 view and functions are not reachable with the publishable key', () => {
-  const anon = createClient(url!, key!, { auth: { persistSession: false, autoRefreshToken: false } })
+  // Built in beforeAll: skipIf still collects this body, and createClient throws without a url.
+  let anon: SupabaseClient
+  beforeAll(() => {
+    anon = createClient(url!, key!, { auth: { persistSession: false, autoRefreshToken: false } })
+  })
 
   // Same strict bar as rls.test.ts: 401 + 42501 (grant revoked), never a 200 with data.
   const refused = (res: { data: unknown; error: { code?: string } | null; status: number }) => {
