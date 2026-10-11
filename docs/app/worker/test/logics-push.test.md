@@ -10,7 +10,11 @@ The Phase 5 tracer, live against the Supabase project in `fake` mode: staff rout
 - `beforeAll`: `seedPushRequest` (`fixtures/logics-push.ts`) under the test firm: the permanent case `…e5` with `logics_case_id 900001`, a `waiting_on_staff` request, one `approved` upload item, one `ready` document whose object is uploaded to the bucket with its size and SHA-256.
 - `afterAll`: `cleanup()` deletes the ledger rows, batches, object, document, item and request. The case and the append-only events stay under the test firm, never visible to ValorTax.
 
+- `enableFirmWrites(db)`: D-08 firm toggle. Upserts the test firm's `firm_integrations` row with `settings.write_enabled = true` (keeping its other settings) and returns a restore function that puts the previous settings back, or deletes the row if there was none. Both suites call it in `beforeAll` and restore in `afterAll`.
+
 ## Cases (in order; each builds on the previous)
+
+0. Firm toggle restored (off) → 403 `Logics writes are turned off for this firm in Settings`; nothing enqueued; then re-enabled.
 
 1. Writes off → 403, message `Logics writes are disabled in this environment`; allowlist `'1'` → 403, message contains `is not on the test allowlist`; nothing enqueued.
 2. `{ document_ids: [] }` → 400 `no_items`.

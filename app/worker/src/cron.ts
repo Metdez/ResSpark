@@ -8,6 +8,7 @@ import {
 import { logEvent } from './db/events'
 import { defaultFirmId } from './db/webhook-events'
 import type { Job } from './jobs/index'
+import { logicsPushSweep } from './jobs/logics-push-sweep'
 
 export const DAILY_CRON = '0 3 * * *'
 const BATCH = 100 // Queues sendBatch limit
@@ -67,6 +68,8 @@ export async function scheduled(controller: ScheduledController, env: Env, _ctx:
   const start = Date.now()
   const daily = controller.cron === DAILY_CRON
   const counts = daily ? await dailyJobs(env) : await reconcileTick(env)
+  // Every trigger: a lost consumer never blocks a case for long (D-03); the RPC logs its own events.
+  await step(null, () => logicsPushSweep(env))
   // The logger allowlist has no count fields, so the counts go to one firm-level event per run.
   await step(0, async () =>
     logEvent(env, {

@@ -15,6 +15,41 @@ export interface FirmIntegrationRow {
   last_test_ok: boolean | null
   updated_by: string | null
   updated_at: string
+  settings?: Record<string, unknown> // NOT NULL in SQL (default {}); optional so row literals in tests need not set it
+}
+
+// D-08 firm configuration in firm_integrations.settings (migration 0006).
+export interface LogicsSettings {
+  file_category_id: number | null
+  activity_type: string
+  write_enabled: boolean
+  activity_types_seen: string[]
+}
+
+// Defaults for a missing row or key; unknown keys are ignored.
+export function readSettings(row: Pick<FirmIntegrationRow, 'settings'> | null): LogicsSettings {
+  const s = row?.settings ?? {}
+  const id = s.file_category_id
+  const type = typeof s.activity_type === 'string' ? s.activity_type.trim() : ''
+  const seen = Array.isArray(s.activity_types_seen) ? s.activity_types_seen : []
+  return {
+    file_category_id: Number.isInteger(id) && (id as number) >= 1 ? (id as number) : null,
+    activity_type: type || 'General',
+    write_enabled: s.write_enabled === true,
+    activity_types_seen: seen.filter((t): t is string => typeof t === 'string'),
+  }
+}
+
+// Read-then-merge-then-write (only `settings` is written): two admins racing on settings is last-writer-wins, not a safety issue.
+export async function updateSettings(env: DbEnv, firmId: string, patch: Partial<LogicsSettings>): Promise<LogicsSettings> {
+  const row = await getIntegration(env, firmId, 'logics')
+  const settings = { ...row?.settings, ...patch }
+  // Upsert: a firm in fake mode may configure settings before saving any credentials.
+  const { error } = await createAdminClient(env)
+    .from('firm_integrations')
+    .upsert({ firm_id: firmId, provider: 'logics', settings }, { onConflict: 'firm_id,provider' })
+  if (error) throw new Error('integration_write_failed')
+  return readSettings({ settings })
 }
 
 export async function getIntegration(

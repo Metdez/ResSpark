@@ -12,3 +12,5 @@ Unit tests for `cron.ts`. These modules are mocked: `./db/connections-ops`, `./d
 | dailyJobs: dispatches / no-op / swallows | Due Items get `remove_item` jobs. Nothing is sent when nothing is due. A failed query resolves to `{ removals: 0 }`. |
 | scheduled branches | `0 3 * * *` runs only the daily step and logs `cron.daily` with the counts. `*/15 * * * *` runs only the reconciler and logs `cron.tick`. |
 | logs only allowlisted fields | The console line has exactly `route`, `status`, and `duration_ms`. |
+
+`./jobs/logics-push-sweep` is mocked. `sweeps the Logics push ledger on every trigger, and a failing sweep skips nothing`: one daily and one 15-minute run call `logicsPushSweep` twice; the second rejects and the `cron.tick` event is still written.

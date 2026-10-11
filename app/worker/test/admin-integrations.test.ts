@@ -14,10 +14,12 @@ import { DEFAULT_LOGICS_BASE_URL } from '../src/integrations/logics/config'
 
 vi.mock('../src/db/staff', () => ({ getStaffProfile: vi.fn() }))
 vi.mock('../src/db/events', () => ({ logEvent: vi.fn() }))
-vi.mock('../src/db/integrations', () => ({
+vi.mock('../src/db/integrations', async (orig) => ({
+  ...(await orig<typeof import('../src/db/integrations')>()),
   getIntegration: vi.fn(),
   upsertIntegration: vi.fn(),
   recordIntegrationTest: vi.fn(),
+  updateSettings: vi.fn(),
 }))
 
 const FIRM = '00000000-0000-0000-0000-000000000001'
@@ -132,6 +134,8 @@ describe('GET /api/admin/integrations/logics', () => {
       last_test_ok: null,
       updated_at: null,
       mode: 'fake',
+      settings: { file_category_id: null, activity_type: 'General', write_enabled: false },
+      activity_types: [],
     })
   })
 

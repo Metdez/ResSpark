@@ -1,7 +1,15 @@
 import { Hono, type Context } from 'hono'
 import { HTTPException } from 'hono/http-exception'
 import { logEvent } from '../db/events'
-import { getIntegration, recordIntegrationTest, upsertIntegration, type FirmIntegrationRow } from '../db/integrations'
+import {
+  getIntegration,
+  readSettings,
+  recordIntegrationTest,
+  updateSettings,
+  upsertIntegration,
+  type FirmIntegrationRow,
+  type LogicsSettings,
+} from '../db/integrations'
 import { encryptSecret, keyHint } from '../integrations/credential-crypto'
 import { LogicsError } from '../integrations/logics/client'
 import {
@@ -36,11 +44,48 @@ const toStatus = (row: FirmIntegrationRow | null, mode: LogicsMode) => ({
 
 const nonBlank = (v: unknown): v is string => typeof v === 'string' && v.trim() !== ''
 
+// D-08: what staff see and set; `activity_types_seen` is written only by Test connection.
+const publicSettings = ({ activity_types_seen: _seen, ...rest }: LogicsSettings) => rest
+
+type SettingsPatch = Partial<Pick<LogicsSettings, 'file_category_id' | 'activity_type' | 'write_enabled'>>
+
+// T-05-18: integer >= 1 or null, 1..60 chars trimmed, boolean; at least one key; nothing else.
+function parseSettings(body: unknown): SettingsPatch | null {
+  if (typeof body !== 'object' || body === null || Array.isArray(body)) return null
+  const b = body as Record<string, unknown>
+  const patch: SettingsPatch = {}
+  for (const key of Object.keys(b)) {
+    const v = b[key]
+    if (key === 'file_category_id' && (v === null || (Number.isInteger(v) && (v as number) >= 1))) patch.file_category_id = v as number | null
+    else if (key === 'activity_type' && typeof v === 'string' && v.trim().length >= 1 && v.trim().length <= 60) patch.activity_type = v.trim()
+    else if (key === 'write_enabled' && typeof v === 'boolean') patch.write_enabled = v
+    else return null
+  }
+  return Object.keys(patch).length > 0 ? patch : null
+}
+
 export const adminIntegrationsRoute = new Hono<AdminApp>()
   .use('*', staffAuth)
   .get('/logics', async (c) => {
     const row = await getIntegration(c.env, c.var.staff.firmId, 'logics')
-    return c.json(toStatus(row, modeOf(c.env)))
+    const settings = readSettings(row)
+    return c.json({ ...toStatus(row, modeOf(c.env)), settings: publicSettings(settings), activity_types: settings.activity_types_seen })
+  })
+  // PUT /api/admin/integrations/logics/settings (admin only; T-05-17).
+  .put('/logics/settings', async (c) => {
+    requireAdmin(c)
+    const patch = parseSettings(await c.req.json().catch(() => null))
+    if (!patch) throw new HTTPException(400, { message: 'bad_request' })
+    const { staff } = c.var
+    const settings = await updateSettings(c.env, staff.firmId, patch)
+    await logEvent(c.env, {
+      firm_id: staff.firmId,
+      actor_type: 'staff',
+      actor_id: staff.userId,
+      action: 'integration.logics.settings_updated',
+      payload: { changed: Object.keys(patch) },
+    })
+    return c.json({ settings: publicSettings(settings) })
   })
   .put('/logics', async (c) => {
     requireAdmin(c)
@@ -83,11 +128,21 @@ export const adminIntegrationsRoute = new Hono<AdminApp>()
     if (!hasCredentials(row)) throw new HTTPException(400, { message: 'no_credentials' })
     let ok: boolean
     let status: number | null
+    let activityTypesError: number | undefined
     try {
       const client = await liveClientFromRow(c.env, row)
       await client.findByEmail(staff.email ?? '')
       ok = true
       status = 200
+      // D-08: list real ActivityType strings so staff pick a valid one. Activity scopes may differ
+      // from Find scopes, so a failed listing never fails the test.
+      const caseId = (c.env.LOGICS_TEST_CASE_IDS ?? '').split(',').map((s) => s.trim()).find(Boolean)
+      if (caseId) {
+        const listed = await client.listActivities(Number(caseId))
+        if ('activityTypes' in listed) {
+          await updateSettings(c.env, staff.firmId, { activity_types_seen: [...new Set(listed.activityTypes)].sort() })
+        } else activityTypesError = listed.status
+      }
     } catch (e) {
       if (!(e instanceof LogicsError)) throw e
       ok = false
@@ -102,5 +157,10 @@ export const adminIntegrationsRoute = new Hono<AdminApp>()
       action: 'integration.logics.tested',
       payload: { ok, status },
     })
-    return c.json({ ok, status, tested_at: new Date().toISOString() })
+    return c.json({
+      ok,
+      status,
+      tested_at: new Date().toISOString(),
+      ...(activityTypesError === undefined ? {} : { activity_types_error: activityTypesError }),
+    })
   })

@@ -26,6 +26,19 @@ vi.mock('../src/middleware/staff-auth', async () => {
 })
 
 const { SUPABASE_URL, SUPABASE_SECRET_KEY } = process.env
+
+// D-08: the push route also needs the firm's own write toggle; on for the test firm only, then restored.
+async function enableFirmWrites(db: SupabaseClient): Promise<() => Promise<void>> {
+  const before = (await db.from('firm_integrations').select('settings').eq('firm_id', TEST_FIRM_ID).eq('provider', 'logics').maybeSingle()).data
+  const write = (settings: Record<string, unknown>) =>
+    db.from('firm_integrations').upsert({ firm_id: TEST_FIRM_ID, provider: 'logics', settings }, { onConflict: 'firm_id,provider' })
+  const { error } = await write({ ...before?.settings, write_enabled: true })
+  if (error) throw new Error(`enable firm writes: ${error.message}`)
+  return async () => {
+    if (before) await write(before.settings)
+    else await db.from('firm_integrations').delete().eq('firm_id', TEST_FIRM_ID).eq('provider', 'logics')
+  }
+}
 const PDF = readFileSync(
   fileURLToPath(new URL('../../../examples/01_marcus_delgado_CNC/01_IRS_Account_Transcript.pdf', import.meta.url).href)
 )
@@ -43,6 +56,7 @@ describe.skipIf(!SUPABASE_URL || !SUPABASE_SECRET_KEY)('logics push tracer (live
   } as unknown as Env
   let db: SupabaseClient
   let fx: PushFixture
+  let restore = async () => {}
   let pushId = ''
 
   const push = (body: unknown, over: Partial<Record<string, string>> = {}) =>
@@ -64,11 +78,22 @@ describe.skipIf(!SUPABASE_URL || !SUPABASE_SECRET_KEY)('logics push tracer (live
   beforeAll(async () => {
     vi.spyOn(console, 'log').mockImplementation(() => {})
     db = createAdminClient(env)
+    restore = await enableFirmWrites(db)
     fx = await seedPushRequest(db, { logicsCaseId: 900001, docs: [{ name: 'transcript.pdf', bytes: new Uint8Array(PDF) }] })
   })
 
   afterAll(async () => {
     if (fx) await fx.cleanup()
+    await restore()
+  })
+
+  it('refuses with the firm message when the firm toggle is off', async () => {
+    await restore()
+    const res = await push({ document_ids: fx.document_ids })
+    expect(res.status).toBe(403)
+    expect((await errorOf(res)).message).toBe('Logics writes are turned off for this firm in Settings')
+    restore = await enableFirmWrites(db)
+    expect(sent).toHaveLength(0)
   })
 
   it('refuses before anything is enqueued when writes are off or the case is not allowlisted', async () => {
@@ -169,10 +194,12 @@ describe.skipIf(!SUPABASE_URL || !SUPABASE_SECRET_KEY)('logics push multipart (l
   const opts = { targetBytes: 200_000, clientFactory: () => fake }
   let db: SupabaseClient
   let fx: PushFixture
+  let restore = async () => {}
   let prefix = ''
 
   beforeAll(async () => {
     db = createAdminClient(env)
+    restore = await enableFirmWrites(db)
     fx = await seedPushRequest(db, { logicsCaseId: 900001, docs: [{ name: 'statement.pdf', bytes: await makeMultiPagePdf(12, 60_000) }] })
     prefix = `firm/${TEST_FIRM_ID}/case/${fx.case_id}/logics/${fx.document_ids[0]}`
   })
@@ -182,6 +209,7 @@ describe.skipIf(!SUPABASE_URL || !SUPABASE_SECRET_KEY)('logics push multipart (l
     const { data } = await db.storage.from(BUCKET).list(prefix)
     if (data?.length) await db.storage.from(BUCKET).remove(data.map((o) => `${prefix}/${o.name}`))
     await fx.cleanup()
+    await restore()
   })
 
   it('normalizes into stored, hashed parts and sends every part once', async () => {
@@ -220,5 +248,5 @@ describe.skipIf(!SUPABASE_URL || !SUPABASE_SECRET_KEY)('logics push multipart (l
     expect(comment).toContain('(part 1 of ')
     process.stdout.write(`multipart: ${n} parts, bytes ${rows.map((r) => r.part_bytes).join('/')}, consumer wall ${wall} ms
 `)
-  })
+  }, 60_000)
 })

@@ -17,10 +17,10 @@ Body `{ document_ids: uuid[] (1..50), push_again?: uuid[] }`.
 1. Not an array → 400 `bad_request`; empty → 400 `no_items`; over 50, a non-uuid, or a bad `push_again` → 400 `bad_request`. Duplicate ids are collapsed.
 2. `getFirmRequestCase(staff.firmId, id)` → 404 `not_found` for another firm's request; no `logics_case_id` → 422 `not_pushable` (`This case has no Logics CaseID`).
 3. Demo safety (D-10, C1): `LOGICS_WRITE_ENABLED !== 'true'` → 403 `logics_write_blocked` `Logics writes are disabled in this environment`; `logicsWriteGuard` throws → 403 `Case {id} is not on the test allowlist`. This runs in fake mode too, so the demo exercises the real gate.
-4. Live mode needs a tested integration (both ciphertexts, `last_test_ok === true`) → else 503 `logics_no_credentials`. Firm settings (`firm_integrations.settings`, D-08): `file_category_id` when an integer, `activity_type` when a non-empty string, else `General`.
+4. Firm settings are read once with `readSettings(integration)` (D-08). `write_enabled` not `true` (the default, including a firm with no row) → 403 `logics_write_blocked`, `Logics writes are turned off for this firm in Settings`; this is in addition to the env guard above, never instead of it. Live mode then needs a tested integration (both ciphertexts, `last_test_ok === true`) → else 503 `logics_no_credentials`. `file_category_id` (integer >= 1 or `null`, never 0, Pitfall 5) and `activity_type` (default `General`) come from the same settings object.
 5. Every id must be a `ready` document of this request under an `approved` item with `size_bytes > 0` and a `sha256` → else 422 `not_pushable` naming the first offender. Fingerprint `fingerprintHex(case_id, sha256, 0)`.
 6. `createBatch` (agent = `staff.displayName`, mode, settings, items, `push_again`) → `already_pushed` 409, `not_pushable` 422.
-7. One queue message per push id, then 202 `{ batch_id, push_ids, mode }`. A `shortcut:` comment records that a failed `send` after the RPC commit leaves the row `queued` for the Plan 03 sweeper to re-enqueue.
+7. One queue message per push id, then 202 `{ batch_id, push_ids, mode }`. A `shortcut:` comment records that a failed `send` after the RPC commit leaves the row `queued` for the cron sweeper (`jobs/logics-push-sweep.ts`) to re-enqueue.
 
 ## `GET /requests/:id/logics-pushes`
 
@@ -32,5 +32,5 @@ Body `{ action: 'mark_sent' | 'resend', logics_document_id?: positive integer }`
 
 ## Tests
 
-- `admin-logics-push.test.ts` (unit, mocked db and `staffAuth`): body validation, both guard messages with no batch created, 404, `not_pushable`, `logics_no_credentials`, the happy path's `createBatch` arguments and one `JOBS.send` per push id, firm settings passed through, `already_pushed` 409, GET, resolve validation, resend enqueue, `not_resolvable` 409.
+- `admin-logics-push.test.ts` (unit, mocked db and `staffAuth`): body validation, both guard messages with no batch created, 404, `not_pushable`, `logics_no_credentials`, the happy path's `createBatch` arguments and one `JOBS.send` per push id, firm settings passed through, the firm write toggle off or missing → 403 with no batch, `already_pushed` 409, GET, resolve validation, resend enqueue, `not_resolvable` 409.
 - `app/worker/test/logics-push.test.ts` (live, fake mode): guard refusals, `no_items`, a real batch and queue message, `already_pushed`, and the ledger GET after the handler ran.

@@ -1,5 +1,5 @@
 import { Hono, type Context } from 'hono'
-import { getIntegration } from '../db/integrations'
+import { getIntegration, readSettings } from '../db/integrations'
 import {
   createBatch,
   fingerprintHex,
@@ -75,14 +75,17 @@ export const adminLogicsPushRoute = new Hono<AdminApp>()
 
     const mode = modeOf(c.env)
     const integration = await getIntegration(c.env, staff.firmId, 'logics')
+    // D-08 firm toggle: in addition to the env guard above, never instead of it.
+    const settings = readSettings(integration)
+    if (!settings.write_enabled) {
+      return refuse(c, 403, 'logics_write_blocked', 'Logics writes are turned off for this firm in Settings')
+    }
     if (mode === 'live' && !(integration?.api_key_ciphertext && integration.secret_ciphertext && integration.last_test_ok === true)) {
       return refuse(c, 503, 'logics_no_credentials')
     }
-    // D-08 firm settings (migration 0006 column; not yet on FirmIntegrationRow).
-    const settings = (integration as { settings?: Record<string, unknown> } | null)?.settings ?? {}
-    const fileCategoryId = Number.isInteger(settings.file_category_id) ? (settings.file_category_id as number) : null
-    const activityType =
-      typeof settings.activity_type === 'string' && settings.activity_type ? settings.activity_type : 'General'
+    // Pitfall 5: FileCategoryID null means omitted from the request, never 0.
+    const fileCategoryId = settings.file_category_id
+    const activityType = settings.activity_type
 
     const pushable = new Map((await listPushableDocuments(c.env, staff.firmId, id)).map((d) => [d.id, d]))
     const items: Array<{ documentId: string; fingerprint: string; fileName: string }> = []

@@ -8,6 +8,7 @@ import {
   listStuckWebhookEvents,
 } from './db/connections-ops'
 import { logEvent } from './db/events'
+import { logicsPushSweep } from './jobs/logics-push-sweep'
 
 vi.mock('./db/connections-ops', () => ({
   listStaleConnections: vi.fn(),
@@ -18,6 +19,7 @@ vi.mock('./db/connections-ops', () => ({
 vi.mock('./db/connections', () => ({ setConnectionStatus: vi.fn() }))
 vi.mock('./db/webhook-events', () => ({ defaultFirmId: vi.fn(async () => 'F1') }))
 vi.mock('./db/events', () => ({ logEvent: vi.fn(async () => 1) }))
+vi.mock('./jobs/logics-push-sweep', () => ({ logicsPushSweep: vi.fn(async () => ({ swept: 0, requeued: 0 })) }))
 
 const send = vi.fn()
 const sendBatch = vi.fn()
@@ -110,6 +112,14 @@ describe('scheduled', () => {
     await scheduled(controller('*/15 * * * *'), env, ctx)
     expect(listStaleConnections).toHaveBeenCalledTimes(1)
     expect(listRemovalCandidates).not.toHaveBeenCalled()
+    expect(logEvent).toHaveBeenCalledWith(env, expect.objectContaining({ action: 'cron.tick' }))
+  })
+
+  it('sweeps the Logics push ledger on every trigger, and a failing sweep skips nothing', async () => {
+    await scheduled(controller(DAILY_CRON), env, ctx)
+    vi.mocked(logicsPushSweep).mockRejectedValueOnce(new Error('logics_sweep_failed'))
+    await scheduled(controller('*/15 * * * *'), env, ctx)
+    expect(logicsPushSweep).toHaveBeenCalledTimes(2)
     expect(logEvent).toHaveBeenCalledWith(env, expect.objectContaining({ action: 'cron.tick' }))
   })
 

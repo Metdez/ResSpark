@@ -14,7 +14,7 @@ vi.mock('../middleware/staff-auth', async () => {
     }),
   }
 })
-vi.mock('../db/integrations', () => ({ getIntegration: vi.fn() }))
+vi.mock('../db/integrations', async (orig) => ({ ...(await orig<typeof import('../db/integrations')>()), getIntegration: vi.fn() }))
 vi.mock('../db/logics-pushes', () => ({
   createBatch: vi.fn(),
   fingerprintHex: vi.fn(async (c: string, s: string, i: number) => `fp:${c}:${s}:${i}`),
@@ -53,7 +53,7 @@ const pushable = (over: Record<string, unknown> = {}) => ({
 
 beforeEach(() => {
   vi.mocked(getFirmRequestCase).mockResolvedValue({ id: REQ, case_id: 'C1', logics_case_id: 900001 })
-  vi.mocked(getIntegration).mockResolvedValue(null)
+  vi.mocked(getIntegration).mockResolvedValue({ settings: { write_enabled: true } } as unknown as FirmIntegrationRow)
   vi.mocked(listPushableDocuments).mockResolvedValue([pushable()])
   vi.mocked(createBatch).mockResolvedValue({ batchId: 'B1', pushIds: [PUSH] })
 })
@@ -121,10 +121,22 @@ describe('POST /requests/:id/logics-push', () => {
 
   it('passes the firm settings through', async () => {
     vi.mocked(getIntegration).mockResolvedValue({
-      settings: { file_category_id: 7, activity_type: 'Document sent' },
+      settings: { file_category_id: 7, activity_type: 'Document sent', write_enabled: true },
     } as unknown as FirmIntegrationRow)
     await pushDocs({ document_ids: [DOC] })
     expect(createBatch).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ fileCategoryId: 7, activityType: 'Document sent' }))
+  })
+
+  it('403 when the firm turned Logics writes off (or never turned them on), and no batch', async () => {
+    for (const settings of [{ write_enabled: false }, {}]) {
+      vi.mocked(getIntegration).mockResolvedValue({ settings } as unknown as FirmIntegrationRow)
+      const res = await pushDocs({ document_ids: [DOC] })
+      expect(res.status).toBe(403)
+      expect(await errorOf(res)).toEqual({ code: 'logics_write_blocked', message: 'Logics writes are turned off for this firm in Settings' })
+    }
+    vi.mocked(getIntegration).mockResolvedValue(null)
+    expect((await pushDocs({ document_ids: [DOC] })).status).toBe(403)
+    expect(createBatch).not.toHaveBeenCalled()
   })
 
   it('409 already_pushed from the ledger, nothing enqueued', async () => {

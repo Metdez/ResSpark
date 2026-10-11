@@ -12,6 +12,10 @@ The Worker's `scheduled()` handler (D-04, D-13, WEBH-02, BANK-06). `app/wrangler
 | `dailyJobs(env)` | Runs daily. `listRemovalCandidates` finds Plaid connections with `remove_after <= now()` that are not removed and still hold a secret, oldest first, at most 20. Each becomes a `{ type: 'remove_item', ref }` job. If nothing is due, nothing is sent. Returns `{ removals }`. The queue consumer's `remove_item` branch makes the vendor call (Plan 04). |
 | `scheduled(controller, env, ctx)` | Runs `dailyJobs` when `controller.cron === DAILY_CRON`, otherwise `reconcileTick`. The logger allowlist has no count fields, so the counts are written as one firm-level event per run: action `cron.tick` or `cron.daily`, `actor_type: 'system'`, payload = the counts, under `defaultFirmId`. This event is the heartbeat staff can see. The handler then prints one console line with the allowlisted fields `route: 'cron'`, `status: 200`, and `duration_ms`. |
 
+## Logics push sweep (Phase 5)
+
+After the branch, every trigger (both crons) runs `logicsPushSweep(env)` (`jobs/logics-push-sweep.ts`) inside its own `step`, so a failing sweep is logged as `cron_step_failed` and skips nothing else. It moves `sending` rows claimed over 10 minutes ago to `unknown` (`consumer_lost`) and re-enqueues `queued` rows idle over 5 minutes (D-03, Pitfall 3). The 15-minute cadence bounds how long a lost consumer can block a case. Its counts are not added to the `cron.tick` / `cron.daily` payload; the RPC writes a `logics.push_unknown` event per swept row.
+
 ## Why cron and webhooks agree on the final status
 
 Cron does not set a connection's status itself. The only exception is the `link_expired` RPC call. Everything else is enqueued as a job, and the consumer calls the same `reconcileConnection` that the webhook path and staff Refresh use.
