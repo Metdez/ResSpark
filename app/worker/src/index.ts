@@ -10,6 +10,7 @@ import { adminRequestActionsRoute } from './routes/admin-request-actions'
 import { adminRequestsRoute } from './routes/admin-requests'
 import { adminSessionRoute } from './routes/admin-session'
 import { clientLinkRoute } from './routes/client-link'
+import { clientPortalRoute } from './routes/client-portal'
 import { configRoute } from './routes/config'
 
 export const app = new Hono<{
@@ -47,6 +48,7 @@ app.route('/api/admin/requests', adminRequestActionsRoute)
 // Last of the /api/admin mounts: its '*' staffAuth would otherwise run again on sibling admin routes.
 app.route('/api/admin', adminLookupRoute)
 app.route('/c', clientLinkRoute)
+app.route('/api/c', clientPortalRoute)
 
 app.notFound(async (c) => {
   // path read for routing only, never logged
