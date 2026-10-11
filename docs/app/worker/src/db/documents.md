@@ -25,4 +25,4 @@ Request-scoped access to `documents` and `request_items` for the client upload r
 
 ## Tests
 
-`app/worker/test/uploads.test.ts` exercises every function except `countActiveDocuments` and `listItemDocuments` against the live project. The route unit tests (`app/worker/src/routes/c-uploads.test.ts`) mock this module.
+`app/worker/test/uploads.test.ts` exercises every function except `countActiveDocuments` and `listItemDocuments` against the live project. The route unit tests (`app/worker/src/routes/c-uploads.test.ts`) mock this module and cover how the routes use those two: the 10-file cap (`countActiveDocuments` ≥ 10 → 409 `too_many_files`) and the `GET /items/:itemId/documents` mapping.

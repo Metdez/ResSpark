@@ -6,8 +6,10 @@ The client upload API (Plan 03-01; D-01, D-02, D-03, UPL-01, UPL-02), mounted in
 
 | Route | Guard | Success | Errors |
 |-------|-------|---------|--------|
-| `POST /api/c/items/:itemId/uploads` body `{ name, mime, size }` | cookie + `X-Requested-With: ResSpark` | 201 `{ document_id, path, token, signed_url }` | 400 `bad_request`, 401 `no_session`, 403 `bad_origin`, 404 `not_found`, 413 `file_too_large`, 415 `unsupported_type` |
+| `POST /api/c/items/:itemId/uploads` body `{ name, mime, size }` | cookie + `X-Requested-With: ResSpark` | 201 `{ document_id, path, token, signed_url }` | 400 `bad_request`, 401 `no_session`, 403 `bad_origin`, 404 `not_found`, 409 `item_not_upload` / `item_approved` / `too_many_files`, 413 `file_too_large`, 415 `unsupported_type` |
 | `POST /api/c/uploads/:documentId/complete` body `{ sha256, size }` | cookie + `X-Requested-With: ResSpark` | 200 `{ document_status: 'ready', item_status, request_status }` (plus `already: true` when it was already ready) | 400, 401, 403, 404, 409 `upload_incomplete`, 409 `document_not_uploading`, 413 `file_too_large`, 422 `bad_file_type` |
+| `POST /api/c/uploads/:documentId/token` | cookie + `X-Requested-With: ResSpark` | 200 `{ document_id, path, token, signed_url }` | 401, 403, 404, 409 `document_not_uploading` |
+| `GET /api/c/items/:itemId/documents` | cookie | 200 `{ item: { id, label, status, rejection_note }, documents: [{ id, name, mime, size_bytes, status, uploaded_at }] }` | 401, 404 |
 
 Error bodies are `{ error: { code, message } }` with a plain sentence as `message` (for example 422 → `That file is not a PDF or photo. Try again.`). The SPA shows its own copy keyed by `code`. Every response carries `Cache-Control: no-store`, `X-Robots-Tag: noindex` and `Referrer-Policy: no-referrer` from the `/api/c/*` middleware in `index.ts`.
 
@@ -22,8 +24,15 @@ Error bodies are `{ error: { code, message } }` with a plain sentence as `messag
 | `isObject`, `isCount` | Type guards for the JSON body: a plain object; an integer of at least 1. |
 | `session(c)` | `{ link_id, request_id, firm_id }` from the cookie session. |
 | `session_` | Runs `clientSession` unless the session is already resolved, and is the first handler of every route in this file. `clientPortalRoute`'s own `'*'` middleware also matches `/api/c/*` and runs first, so without the check the cookie and link row would be looked up twice. It is attached per route, not with `use('*')`: a `'*'` here would also match `clientPortalRoute`'s paths and become the route pattern the logger records for them. |
-| `POST /items/:itemId/uploads` | `requireClientHeader` first (403 `bad_origin`, nothing read or written). Then, first failure wins: body not an object, `name` not 1-200 characters, `mime` not a string, or `size` not an integer ≥ 1 → 400; `mime` not PDF/JPEG/PNG → 415; `size` over 25 MiB → 413; item not in the session's request → 404; request gone → 404. Then `createUploadingDocument` (status `uploading`, path from `objectPath`) and `signedUploadToken` for that exact path → 201. |
+| `POST /items/:itemId/uploads` | `requireClientHeader` first (403 `bad_origin`, nothing read or written). Then, first failure wins: body not an object, `name` not 1-200 characters, `mime` not a string, or `size` not an integer ≥ 1 → 400; `mime` not PDF/JPEG/PNG → 415; `size` over 25 MiB → 413; item not in the session's request → 404; item `kind` is not `upload` → 409 `item_not_upload`; item already `approved` → 409 `item_approved` (only staff decide "done", and an approved item takes no new files); 10 or more `uploading`/`ready` files on the item → 409 `too_many_files`; request gone → 404. Then `createUploadingDocument` (status `uploading`, path from `objectPath`) and `signedUploadToken` for that exact path → 201. |
 | `POST /uploads/:documentId/complete` | `requireClientHeader`, then the body (`sha256` hex-64, `size` integer ≥ 1) → else 400. Document not in the session's request → 404. Already `ready` → 200 with the current item and request statuses and `already: true`; no RPC, no event. Any status other than `uploading` → 409 `document_not_uploading`. Then `headBytes`: no object → 409 `upload_incomplete` (the row stays `uploading`, so the next call after a finished upload completes it). Magic bytes that do not match the declared `mime_type` → the object is removed, the row marked `deleted`, 422 `bad_file_type`. The real size (from Storage's `Content-Range`, else the body's `size`) over 25 MiB → removed, `deleted`, 413. Otherwise `completeUpload` (the `upload_complete` RPC) → 200. If a concurrent call changed the row between the read and the RPC's lock, the RPC's `document_not_found` → 404 and `document_not_uploading` → 409. |
+
+| `POST /uploads/:documentId/token` | Resume support for the SPA's TUS upload (Plan 03-02). Document not in the session's request → 404; not `uploading` → 409 `document_not_uploading`; else a fresh `signedUploadToken` for the same `storage_key`, so a reloaded page can continue the same object. Tokens expire after 2 hours on the Storage side. |
+| `GET /items/:itemId/documents` | Item not in the session's request → 404. Otherwise the item's id, label, status and rejection note (the SPA shows the note on a rejected item, D-05) and its `ready`/`rejected` documents, mapped field by field and ordered `uploaded_at ASC, id ASC` by the SQL in `listItemDocuments`. `uploading` rows (an interrupted upload) and `deleted` rows are never returned. |
+
+## The 10-file cap shortcut
+
+The count check runs before the insert, outside a transaction: two simultaneous mints on an item with 9 files can both pass and reach 11. The bucket's 25 MiB per-file limit and the per-file checks still hold, so the cost is two extra files at most. The `shortcut:` comment names the upgrade: count `FOR UPDATE` inside an RPC if a real client hits it.
 
 ## Logging
 
@@ -32,4 +41,4 @@ No `console.log` is added. The Phase 1 logger records only the allow-listed fiel
 ## Tests
 
 - `app/worker/test/uploads.test.ts` (live): 403 without the header, mint, PUT to Storage, complete, idempotent second complete, mismatch delete.
-- `app/worker/src/routes/c-uploads.test.ts` (unit, Task 2).
+- `app/worker/src/routes/c-uploads.test.ts` (unit): `db/documents` and the Storage calls are mocked, `clientSession` sets a fixed session, `requireClientHeader` is real. It covers 403 `bad_origin` with no db call on all three POSTs, every mint guard (400, 404, 409 ×3, 413, 415), the complete paths (200, 400, 404, 409 `upload_incomplete`, 422 with exactly one remove and one delete, the idempotent `ready` path without the RPC), the token route (409 on a `ready` document, 200 with the same path, 404), the documents list, and `Cache-Control: no-store` on success and error responses.

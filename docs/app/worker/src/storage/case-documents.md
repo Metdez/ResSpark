@@ -21,4 +21,4 @@ The Worker's only access to Supabase Storage (Plan 03-01; D-01, D-02, D-03, D-05
 ## Tests
 
 - `app/worker/test/uploads.test.ts` (live): mint, PUT, complete, mismatch delete, and the 206 check.
-- `app/worker/src/storage/case-documents.test.ts` (unit, Task 2): `safeName`, `objectPath`, `sniffType`.
+- `app/worker/src/storage/case-documents.test.ts` (unit): `safeName` (`../../etc/passwd` → `passwd`, `My Statement (Jan).PDF` → `My_Statement_Jan_.PDF`, `.hidden` → `hidden`, empty and dots-only → `file`, 80-character cap), the exact `objectPath` with no `..`, and `sniffType` for PDF, JPEG, PNG, `GIF89a`, 3 bytes and an empty array.
