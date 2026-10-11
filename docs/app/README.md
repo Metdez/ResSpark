@@ -87,6 +87,8 @@ USER ACTION to switch to real Logics:
 
 In `live` mode a lookup needs stored credentials whose last test succeeded; otherwise it answers 409 `logics_not_configured`. Saving new credentials clears the last test result.
 
+Pushing documents into Logics (Phase 5) has its own ordered USER ACTION runbook: [logics-live-switch.md](logics-live-switch.md) (write-scoped key and test CaseIDs from Andrew, Test connection, push settings, `LOGICS_TEST_CASE_IDS`, `LOGICS_WRITE_ENABLED`, then `LOGICS_MODE`). In fake mode a push needs only a ValorTax admin to turn on **Write enabled** in Settings → Integrations → Push settings.
+
 ## Demo script (Phase 2)
 
 Runs end to end in fixture mode (`LOGICS_MODE=fake`), with no Logics credentials and no Resend key. The fixture cases use `example.com` emails and `555-010-xxxx` phones.

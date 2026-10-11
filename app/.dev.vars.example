@@ -18,6 +18,12 @@ DOCUSEAL_API_KEY=
 DOCUSEAL_WEBHOOK_SECRET=
 SMARTY_AUTH_ID=
 SMARTY_AUTH_TOKEN=
+# Logics credentials are not env vars: each firm pastes them in Settings -> Integrations (stored
+# encrypted in firm_integrations). The old names stay reserved and unused:
+# LOGICS_API_KEY=
+# LOGICS_SECRET_TOKEN=
+# Local override of the wrangler.jsonc var (keep fake; live is a USER ACTION, docs/app/logics-live-switch.md):
+# LOGICS_MODE=fake
 # Reserved for later phases:
 # RESEND_API_KEY=
 # RESEND_FROM=   a wrangler.jsonc var in production; set here only to override locally

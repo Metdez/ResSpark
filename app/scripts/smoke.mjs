@@ -218,11 +218,16 @@ const checks = [
     name: '/api/config',
     run: async () => {
       const res = await fetch(`${base}/api/config`)
-      await expectJson(
-        res,
-        200,
-        (b) => typeof b.app_env === 'string' && typeof b.logics_write_enabled === 'boolean'
-      )
+      let mode
+      await expectJson(res, 200, (b) => {
+        mode = b.logics_mode
+        return (
+          typeof b.app_env === 'string' &&
+          typeof b.logics_write_enabled === 'boolean' &&
+          (mode === 'fake' || mode === 'live')
+        )
+      })
+      return `logics_mode=${mode}`
     },
   },
   {
@@ -355,8 +360,8 @@ let failed = false
 for (const check of checks) {
   if (check.auth && !withAuth) continue
   try {
-    await check.run()
-    console.log(`ok ${check.name}`)
+    const detail = await check.run()
+    console.log(`ok ${check.name}${typeof detail === 'string' ? ` (${detail})` : ''}`)
   } catch (error) {
     failed = true
     console.log(`FAIL ${check.name}: ${error instanceof Error ? error.message : String(error)}`)
