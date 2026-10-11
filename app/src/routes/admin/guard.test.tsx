@@ -44,14 +44,12 @@ describe('safeRedirect', () => {
     expect(safeRedirect('/admin')).toBe('/admin')
   })
 
-  it.each([
-    ['an absolute URL', 'https://evil.example'],
-    ['a protocol-relative URL', '//evil'],
-    ['undefined', undefined],
-    ['a non-admin path', '/c/abc'],
-    ['a look-alike prefix', '/administrator'],
-    ['a backslash trick', '/admin\\@evil.example'],
-  ])('falls back to /admin for %s', (_name, value) => {
-    expect(safeRedirect(value)).toBe('/admin')
+  it('falls back to /admin for anything else', () => {
+    expect(safeRedirect('https://evil.example')).toBe('/admin')
+    expect(safeRedirect('//evil')).toBe('/admin')
+    expect(safeRedirect(undefined)).toBe('/admin')
+    expect(safeRedirect('/c/abc')).toBe('/admin')
+    expect(safeRedirect('/administrator')).toBe('/admin')
+    expect(safeRedirect('/admin\\@evil.example')).toBe('/admin')
   })
 })

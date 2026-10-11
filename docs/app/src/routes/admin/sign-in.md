@@ -11,3 +11,4 @@ Route for `/admin/sign-in`. Moved from the fork's `(auth)/sign-in.tsx`; same com
 ## Notes
 
 - Lives outside the pathless `_shell` layout so it is reachable without a session.
+- The `redirect` value is untrusted. The sign-in form passes it through `safeRedirect` (`src/lib/session.ts`), so only `/admin…` paths are followed (T-01-28).

@@ -2,12 +2,16 @@ import { useState } from 'react'
 import { z } from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { isAuthRetryableFetchError } from '@supabase/supabase-js'
 import { useNavigate } from '@tanstack/react-router'
-import { Loader2, LogIn } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
-import { IconFacebook, IconGithub } from '@/assets/brand-icons'
-import { useAuthStore } from '@/stores/auth-store'
-import { sleep, cn } from '@/lib/utils'
+import { ApiError, api, isOk } from '@/lib/api'
+import { GENERIC_ERROR } from '@/lib/handle-server-error'
+import { safeRedirect } from '@/lib/session'
+import { supabase } from '@/lib/supabase'
+import { cn } from '@/lib/utils'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import {
   Form,
@@ -22,13 +26,22 @@ import { PasswordInput } from '@/components/password-input'
 
 const formSchema = z.object({
   email: z.email({
-    error: (iss) => (iss.input === '' ? 'Please enter your email.' : undefined),
+    error: (iss) =>
+      iss.input === ''
+        ? 'Enter your email.'
+        : "That doesn't look like an email address.",
   }),
-  password: z
-    .string()
-    .min(1, 'Please enter your password.')
-    .min(7, 'Password must be at least 7 characters long.'),
+  password: z.string().min(1, 'Enter your password.'),
 })
+
+const WRONG_CREDENTIALS = {
+  title: 'Email or password is incorrect',
+  body: "Check both and try again. If you've forgotten your password, ask your admin to reset it.",
+}
+const NETWORK = {
+  title: "Couldn't reach ResSpark",
+  body: 'Check your connection and try again.',
+}
 
 interface UserAuthFormProps extends React.HTMLAttributes<HTMLFormElement> {
   redirectTo?: string
@@ -39,46 +52,48 @@ export function UserAuthForm({
   redirectTo,
   ...props
 }: UserAuthFormProps) {
-  const [isLoading, setIsLoading] = useState(false)
+  const [pending, setPending] = useState(false)
+  const [formError, setFormError] = useState<typeof NETWORK | null>(null)
   const navigate = useNavigate()
-  const { auth } = useAuthStore()
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      email: '',
-      password: '',
-    },
+    mode: 'onBlur',
+    defaultValues: { email: '', password: '' },
   })
 
-  function onSubmit(data: z.infer<typeof formSchema>) {
-    setIsLoading(true)
+  async function signIn({ email, password }: z.infer<typeof formSchema>) {
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email, password })
+      if (!error) return true
+      setFormError(isAuthRetryableFetchError(error) ? NETWORK : WRONG_CREDENTIALS)
+    } catch {
+      setFormError(NETWORK)
+    }
+    return false
+  }
 
-    toast.promise(sleep(2000), {
-      loading: 'Signing in...',
-      success: () => {
-        setIsLoading(false)
-
-        // Mock successful authentication with expiry computed at success time
-        const mockUser = {
-          accountNo: 'ACC001',
-          email: data.email,
-          role: ['user'],
-          exp: Date.now() + 24 * 60 * 60 * 1000, // 24 hours from now
-        }
-
-        // Set user and access token
-        auth.setUser(mockUser)
-        auth.setAccessToken('mock-access-token')
-
-        // Redirect to the stored location or default to dashboard
-        const targetPath = redirectTo || '/admin'
-        navigate({ to: targetPath, replace: true })
-
-        return `Welcome back, ${data.email}!`
-      },
-      error: 'Error',
-    })
+  async function onSubmit(data: z.infer<typeof formSchema>) {
+    if (pending) return
+    setPending(true)
+    setFormError(null)
+    if (!(await signIn(data))) {
+      setPending(false)
+      return
+    }
+    try {
+      // D-16 audit event; the session already exists, so a failed post only warns
+      await api(
+        '/api/admin/session',
+        { method: 'POST', body: JSON.stringify({ event: 'signed_in' }) },
+        isOk
+      )
+    } catch (error) {
+      toast.error(GENERIC_ERROR, {
+        description: error instanceof ApiError ? error.code : undefined,
+      })
+    }
+    await navigate({ to: safeRedirect(redirectTo), replace: true })
   }
 
   return (
@@ -86,6 +101,7 @@ export function UserAuthForm({
       <form
         onSubmit={form.handleSubmit(onSubmit)}
         className={cn('grid gap-3', className)}
+        noValidate
         {...props}
       >
         <FormField
@@ -95,7 +111,12 @@ export function UserAuthForm({
             <FormItem>
               <FormLabel>Email</FormLabel>
               <FormControl>
-                <Input placeholder='name@example.com' {...field} />
+                <Input
+                  type='email'
+                  autoComplete='username'
+                  inputMode='email'
+                  {...field}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -105,39 +126,25 @@ export function UserAuthForm({
           control={form.control}
           name='password'
           render={({ field }) => (
-            <FormItem className='relative'>
+            <FormItem>
               <FormLabel>Password</FormLabel>
               <FormControl>
-                <PasswordInput placeholder='********' {...field} />
+                <PasswordInput autoComplete="current-password" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-        <Button className='mt-2' disabled={isLoading}>
-          {isLoading ? <Loader2 className='animate-spin' /> : <LogIn />}
-          Sign in
+        {formError && (
+          <Alert variant='destructive'>
+            <AlertTitle className='whitespace-normal'>{formError.title}</AlertTitle>
+            <AlertDescription>{formError.body}</AlertDescription>
+          </Alert>
+        )}
+        <Button type='submit' className='mt-2 h-10 w-full' disabled={pending}>
+          {pending && <Loader2 className='size-4 animate-spin' />}
+          {pending ? 'Signing in…' : 'Sign in'}
         </Button>
-
-        <div className='relative my-2'>
-          <div className='absolute inset-0 flex items-center'>
-            <span className='w-full border-t' />
-          </div>
-          <div className='relative flex justify-center text-xs uppercase'>
-            <span className='bg-background px-2 text-muted-foreground'>
-              Or continue with
-            </span>
-          </div>
-        </div>
-
-        <div className='grid grid-cols-2 gap-2'>
-          <Button variant='outline' type='button' disabled={isLoading}>
-            <IconGithub className='h-4 w-4' /> GitHub
-          </Button>
-          <Button variant='outline' type='button' disabled={isLoading}>
-            <IconFacebook className='h-4 w-4' /> Facebook
-          </Button>
-        </div>
       </form>
     </Form>
   )

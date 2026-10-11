@@ -7,8 +7,8 @@ in `app/vitest.config.ts`.
 |-------|--------------|
 | 1-6 | Node `path`, Vite `defineConfig`, the React, Tailwind 4, TanStack Router, and Cloudflare plugins. |
 | 8-9 | `cloudflare()` must stay last so the Worker builds after the framework plugins. |
-| 10-19 | Plugin order: router plugin first (generates `src/routeTree.gen.ts`, splits every route file with `autoCodeSplitting`), then React, Tailwind, and `cloudflare()`, which reads `wrangler.jsonc`, runs `worker/src/index.ts` in workerd during `vite dev`, and on build emits `dist/client` (assets), `dist/resspark/index.js` (Worker), and the output `dist/resspark/wrangler.json` that `wrangler deploy` uses. |
-| 20-24 | `@` alias to `./src`, matching `tsconfig.*.json` `paths` and `components.json`. |
+| 10-21 | Plugin order: router plugin first (generates `src/routeTree.gen.ts`, splits every route file with `autoCodeSplitting`, and skips `*.test.ts(x)` files via `routeFileIgnorePattern` so co-located tests such as `routes/admin/guard.test.tsx` never become routes), then React, Tailwind, and `cloudflare()`, which reads `wrangler.jsonc`, runs `worker/src/index.ts` in workerd during `vite dev`, and on build emits `dist/client` (assets), `dist/resspark/index.js` (Worker), and the output `dist/resspark/wrangler.json` that `wrangler deploy` uses. |
+| 22-26 | `@` alias to `./src`, matching `tsconfig.*.json` `paths` and `components.json`. |
 
 ## Notes
 
