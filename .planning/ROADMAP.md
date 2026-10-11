@@ -41,7 +41,17 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. An automated test proves the anon role returns zero rows from every table, the browser bundle holds no secret, and every change goes through the Worker rather than directly to Postgres (PLAT-02, PLAT-03)
   4. Signing in and signing out each appear as an event row with actor, timestamp, and id, on the same event-writing path every later phase's actions must use (PLAT-04)
   5. A fresh clone ignores every `.env` file, tracks no `dist/` folder, uses one package manager and one lockfile on Node 22.12 or newer, and a failed request's log line contains no tokens, document bytes, or PII (PLAT-06, PLAT-08)
-**Plans**: TBD
+**Plans:** 8 plans
+
+Plans:
+- [ ] 01-01-PLAN.md — Repo hygiene first: `.gitignore`, pnpm workspace, engines, 500-line gate, hygiene-check (PLAT-06)
+- [ ] 01-02-PLAN.md — Fork shadcn-admin@e16c87f into `app/`, strip Clerk/axios/faker, `/admin/*` route tree, pinned deps, design-system pass
+- [ ] 01-03-PLAN.md — Hono Worker + first deploy to workers.dev, allowlisted logger, `logicsWriteGuard`, SANDBOX banner, spike (a) (PLAT-01, PLAT-05, PLAT-08)
+- [ ] 01-04-PLAN.md — Migration 0002 applied via Management API [BLOCKING], RLS/grants proof (strict 401), question reconciliation (PLAT-02, PLAT-04)
+- [ ] 01-05-PLAN.md — Worker secrets over stdin, `db/` module (`createAdminClient`, `logEvent`, `getStaffProfile`), two demo staff users, sign-up disabled (PLAT-03, PLAT-04, PLAT-07)
+- [ ] 01-06-PLAN.md — `jose` JWT verification, `/api/admin/session` events, SPA sign-in / guard / sign-out, authenticated smoke (PLAT-04, PLAT-07)
+- [ ] 01-07-PLAN.md — Client-link HMAC token + signed-cookie exchange, uniform 404, per-IP rate limit, `/c/` client shell (PLAT-08, PLAT-07)
+- [ ] 01-08-PLAN.md — Spikes (c) and (e) run, (a)(b)(d)(f) recorded, reserved secret names, operator README
 **Scope notes**: New React + Vite + shadcn SPA forked from `satnaing/shadcn-admin` (Clerk, axios, faker stripped) with two route trees (`/admin/*`, `/c/:token`); Hono Worker on Workers Paid with Queue, DLQ, and cron, serving the SPA and API from one deploy; additive Supabase migrations only (the 0001 baseline is already applied) for firms, staff, cases, requests, items, links, connections, secrets, webhook_events, logics_pushes, events, consents, and retention columns, with RLS, grants, and RPCs; HMAC token and HttpOnly-cookie design; reconcile the 28 versus 32 question count; run the day-one spikes (Vitest 5 with the Workers plugin, `@supabase/server` Hono adapter, signed TUS upload from an unauthenticated browser, Cloudflare Email versus Resend, Truv `multiple.employments`, and confirming Logics scopes plus `FileCategoryID` and `ActivityType` values with Andrew).
 **UI hint**: yes
 
@@ -160,7 +170,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation & Staff Sign-In | 0/TBD | Not started | - |
+| 1. Foundation & Staff Sign-In | 0/8 | Planned | - |
 | 2. Find the Client & Send the Link | 0/TBD | Not started | - |
 | 3. Uploads, Review & Live Status | 0/TBD | Not started | - |
 | 4. Connect Payroll & Bank | 0/TBD | Not started | - |
