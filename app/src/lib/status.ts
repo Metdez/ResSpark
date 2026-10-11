@@ -39,15 +39,24 @@ const ITEM: Record<'staff' | 'client', Record<string, Badge>> = {
     approved: { tone: 'success', label: 'Approved' },
     rejected: { tone: 'destructive', label: 'Rejected' },
   },
-  // Clients never see "review": a submitted item is still in progress from their side.
+  // Clients never see "review": once they submit, their part is done and the item waits on the agent.
   client: {
     pending: { tone: 'neutral', label: 'Not started' },
     in_progress: { tone: 'info', label: 'In progress' },
-    submitted: { tone: 'info', label: 'In progress' },
+    submitted: { tone: 'warning', label: 'With your agent' },
     approved: { tone: 'success', label: 'Done' },
     rejected: { tone: 'destructive', label: 'Needs attention' },
   },
 }
+
+const DOCUMENT: Record<string, Badge> = {
+  uploading: { tone: 'neutral', label: 'Uploading' },
+  ready: { tone: 'success', label: 'Ready' },
+  rejected: { tone: 'destructive', label: 'Rejected' },
+  deleted: { tone: 'muted', label: 'Deleted' },
+}
+
+export const OVERDUE_BADGE = { tone: 'destructive', label: 'Overdue' } as const
 
 // A status this map does not know yet still renders, as its raw value.
 const fallback = (status: string): Badge => ({ tone: 'neutral', label: status })
@@ -61,4 +70,8 @@ export function itemStatusBadge(
   audience: 'staff' | 'client'
 ): Badge {
   return ITEM[audience][status] ?? fallback(status)
+}
+
+export function documentStatusBadge(status: string): Badge {
+  return DOCUMENT[status] ?? fallback(status)
 }

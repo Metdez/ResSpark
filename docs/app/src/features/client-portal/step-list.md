@@ -6,7 +6,7 @@
 - **Order:** a sorted copy by `position`. The Worker already sorts; this is defensive and never mutates the prop.
 - **Row:** an `<li data-step-row>` with `min-h-11` (44 px), `flex-wrap` so the chip and button drop below the text on a 320 px screen at 200 % zoom, and a bottom border except on the last row.
   - Left: the label (`data-step-label`, `text-base`, `break-words`) and its description from `STEP_DESCRIPTIONS[kind]` (`text-base`, muted).
-  - Right: a `StatusBadge size='lg'` (16 px) from `itemStatusBadge(status, 'client')`: Not started, In progress (also for `submitted`; clients never see "review"), Done, Needs attention. The label text is always present, so the chip never relies on color alone.
+  - Right: a `StatusBadge size='lg'` (16 px) from `itemStatusBadge(status, 'client')`: Not started, In progress, With your agent (for `submitted`; clients never see "review"), Done, Needs attention. The label text is always present, so the chip never relies on color alone.
   - A `Button size='xl' variant='outline'` "View" (44 px) with `aria-label` "View {label}" so screen readers can tell rows apart. It sets the step being viewed and calls `onView(step)` (a no-op by default). `PortalPage` uses that to send the step kind in the next heartbeat.
 - **Sheet:** `viewing` state (`useState`, declared before the empty-state return) drives one `ComingNextSheet` below the list; closing it sets `viewing` back to `null`.
 - Two steps of the same kind are two rows, each with its own label; `key` is the item id.
