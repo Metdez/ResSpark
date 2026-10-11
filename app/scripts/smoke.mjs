@@ -1,13 +1,14 @@
-// Deployed full-stack check: node app/scripts/smoke.mjs <baseUrl> [--auth]
+// Deployed full-stack check: node app/scripts/smoke.mjs <baseUrl> [--auth] [--client-flow]
 // Prints `ok <name>` or `FAIL <name>: <reason>` per check; exits 1 if any check fails.
 const args = process.argv.slice(2)
 const baseUrl = args.find((a) => !a.startsWith('--'))
 if (!baseUrl) {
-  console.error('usage: node app/scripts/smoke.mjs <baseUrl> [--auth]')
+  console.error('usage: node app/scripts/smoke.mjs <baseUrl> [--auth] [--client-flow]')
   process.exit(1)
 }
 const base = baseUrl.replace(/\/$/, '')
-const withAuth = args.includes('--auth')
+const withClientFlow = args.includes('--client-flow')
+const withAuth = args.includes('--auth') || withClientFlow
 
 const isObject = (v) => typeof v === 'object' && v !== null && !Array.isArray(v)
 
@@ -331,4 +332,103 @@ for (const check of checks) {
     console.log(`FAIL ${check.name}: ${error instanceof Error ? error.message : String(error)}`)
   }
 }
+
+// Plan 02-08, --client-flow (fake mode): the whole phase as staff and client would do it, on fixture
+// case 900003. Stops at the first failing step. Prints step names and the request id only, never
+// the link URL, token, or cookie. The probe request is revoked, then deleted; its events remain.
+async function clientFlow() {
+  const headers = { authorization: `Bearer ${await staffToken()}`, 'content-type': 'application/json' }
+  const admin = async (method, path, body, status = 200) => {
+    const res = await fetch(`${base}/api/admin${path}`, { method, headers, body: body && JSON.stringify(body) })
+    if (res.status !== status) throw new Error(`status ${res.status}, expected ${status}`)
+    return res.json()
+  }
+  let cookie = ''
+  const client = (path, method = 'GET', body, csrf = true) =>
+    fetch(`${base}/api/c${path}`, {
+      method,
+      headers: { cookie, 'content-type': 'application/json', ...(csrf ? { 'X-Requested-With': 'ResSpark' } : {}) },
+      body: body && JSON.stringify(body),
+    })
+  let step = 'lookup'
+  let requestId
+  const ok = (next) => {
+    console.log(`ok client-flow ${step}`)
+    step = next
+  }
+  try {
+    const { results } = await admin('POST', '/lookup', { type: 'phone', value: '(555)010-0003' })
+    if (results.length !== 1 || results[0].logics_case_id !== 900003) throw new Error('expected one result, 900003')
+    ok('confirm')
+    const { case_id } = await admin('POST', '/cases/900003/confirm', { search_type: 'phone' })
+    if (typeof case_id !== 'string') throw new Error('no case_id')
+    ok('templates')
+    const { templates } = await admin('GET', '/requests/templates')
+    const template = templates.find((t) => t.name === 'Standard resolution packet')
+    if (!template) throw new Error('Standard resolution packet missing')
+    ok('create')
+    ;({ request_id: requestId } = await admin(
+      'POST', '/requests', { case_id, template_id: template.id, items: template.items }, 201
+    ))
+    ok('send')
+    const { url } = await admin('POST', `/requests/${requestId}/send`, {
+      email: 'morgan.lee@example.com', phone: '(555) 010-0003',
+    })
+    if (!/^https:\/\/.+\/c\/[A-Za-z0-9_-]{64}$/.test(url)) throw new Error('url is not https://<host>/c/<token>')
+    const token = url.slice(url.lastIndexOf('/') + 1)
+    ok('exchange 302')
+    const exchanged = await fetch(url, { redirect: 'manual' })
+    if (exchanged.status !== 302) throw new Error(`status ${exchanged.status}`)
+    if (exchanged.headers.get('location') !== '/c/') throw new Error('location is not /c/')
+    cookie = (exchanged.headers.getSetCookie().find((c) => c.startsWith('rs_client=')) ?? '').split(';')[0]
+    if (!cookie) throw new Error('no rs_client cookie')
+    if ((await exchanged.text()).includes(token)) throw new Error('body contains the token')
+    ok('state unopened')
+    const unopened = await client('/state')
+    if (unopened.status !== 200) throw new Error(`status ${unopened.status}`)
+    const text = await unopened.text()
+    const state = JSON.parse(text)
+    if (state.steps.length !== 5 || state.opened_at !== null || state.firm_name !== 'ValorTax') {
+      throw new Error(`steps ${state.steps.length}, opened_at ${state.opened_at}, firm ${state.firm_name}`)
+    }
+    if (/morgan\.lee|010-0003|5550100003/.test(text)) throw new Error('state contains contact details')
+    ok('start csrf 403')
+    const bare = await client('/start', 'POST', undefined, false)
+    if (bare.status !== 403) throw new Error(`status ${bare.status} without X-Requested-With`)
+    ok('start')
+    const started = await client('/start', 'POST')
+    if (started.status !== 200 || typeof (await started.json()).opened_at !== 'string') throw new Error('no opened_at')
+    ok('state opened')
+    const opened = await (await client('/state')).json()
+    if (!opened.opened_at || opened.status !== 'opened') throw new Error(`status ${opened.status}`)
+    ok('heartbeat')
+    const beat = await client('/heartbeat', 'POST', { last_step: 'list', user_agent_class: 'desktop' })
+    if (beat.status !== 200) throw new Error(`status ${beat.status}`)
+    ok('admin opened')
+    const detail = await admin('GET', `/requests/${requestId}`)
+    if (detail.status !== 'opened' || !detail.link?.opened_at) throw new Error(`status ${detail.status}`)
+    ok('revoke')
+    await admin('POST', `/requests/${requestId}/revoke`)
+    ok('revoke 401')
+    const revoked = await client('/state')
+    if (revoked.status !== 401) throw new Error(`status ${revoked.status}`)
+    ok('exchange 404')
+    const dead = await fetch(url, { redirect: 'manual' })
+    if (dead.status !== 404) throw new Error(`status ${dead.status}`)
+    if (!(await dead.text()).includes("This link isn't active")) throw new Error('no invalid-link copy')
+    ok('complete')
+    console.log(`ok client-flow complete request ${requestId}`)
+    return true
+  } catch (error) {
+    console.log(`FAIL client-flow ${step}: ${error instanceof Error ? error.message : String(error)}`)
+    return false
+  } finally {
+    if (requestId) {
+      const { createClient } = await import('@supabase/supabase-js')
+      const db = createClient(env.SUPABASE_URL, env.SUPABASE_SECRET_KEY, { auth: { persistSession: false } })
+      await db.from('requests').delete().eq('id', requestId)
+    }
+  }
+}
+if (withClientFlow && !(await clientFlow())) failed = true
 process.exit(failed ? 1 : 0)

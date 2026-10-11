@@ -27,7 +27,8 @@ Run from the repo root. Every script that needs a secret loads it with `dotenv -
 - **test:live** — `pnpm -C app run test:live`: live suites in `app/worker/test` against the real Supabase project (RLS, events, sign-up disabled). Env-gated: they skip when the vars are absent.
 - **test:live:file** — `pnpm -C app run test:live:file worker/test/<file>.test.ts`: one live file with the same env files as `test:live`, so no env file is named on the command line.
 - **deploy** — `pnpm -C app run deploy`: builds and runs `wrangler deploy` with `CLOUDFLARE_API_TOKEN` loaded from the root env file. Deploy refuses to run if a name in `secrets.required` is missing on the Worker.
-- **smoke** — `pnpm -C app run smoke https://resspark.zh-a16.workers.dev`: post-deploy proof (4 checks).
+- **smoke** — `pnpm -C app run smoke https://resspark.zh-a16.workers.dev`: post-deploy proof without credentials (`/admin`, `/api/config`, the 404s, `/c/` pages and headers, the `/api/c` 401s).
+- **smoke:auth** — `pnpm -C app run smoke:auth https://resspark.zh-a16.workers.dev --auth`: adds the staff and client-link checks. Add `--client-flow` for the Phase 2 acceptance run: lookup, confirm, create, send, open the link, Start, heartbeat, revoke, and the dead link, on fixture case 900003 (see `docs/app/scripts/smoke.md`).
 - **db:migrate** — `pnpm -C app run db:migrate` (or `node app/scripts/db-migrate.mjs`): applies pending `supabase/migrations/*.sql` in order and records them in `public.app_migrations`. `--status`, `--dry-run`, and `--query "<sql>"` are also accepted.
 - **secrets:provision** — `pnpm -C app run secrets:provision`: sets the three Worker secrets over stdin and appends missing keys to `app/.dev.vars`. Re-runs keep the existing `CLIENT_LINK_HMAC_KEY`.
 - **staff:create** — `pnpm -C app run staff:create --email <e> --name <n> [--role staff|admin]`: creates a staff user with `app_metadata` claims and a `staff_profiles` row.
@@ -78,6 +79,36 @@ USER ACTION to switch to real Logics:
 3. Set `"LOGICS_MODE": "live"` in `app/wrangler.jsonc` `vars` and redeploy with `pnpm -C app run deploy`.
 
 In `live` mode a lookup needs stored credentials whose last test succeeded; otherwise it answers 409 `logics_not_configured`. Saving new credentials clears the last test result.
+
+## Demo script (Phase 2)
+
+Runs end to end in fixture mode (`LOGICS_MODE=fake`), with no Logics credentials and no Resend key. The fixture cases use `example.com` emails and `555-010-xxxx` phones.
+
+1. Open https://resspark.zh-a16.workers.dev/admin and sign in as the demo admin.
+2. Click `Find a client` and type `(555) 010-0001`. Two cards appear, because the spouses on the fixture share that phone.
+3. Confirm Jordan Rivera. The request builder opens.
+4. In the builder, switch one item off and rename another, then click `Create request`.
+5. On the request page, type the email with a typo (for example `jordan.rivera@gmial.com`) and accept the suggested fix.
+6. Click `Send link`, then `Copy link`.
+7. Open the copied link in a phone-sized private window. The client sees the firm, the agent, and one `Start` button.
+8. Tap `Start`. The step list appears, with a status chip on each step.
+9. Tap `View` on a step. The `Coming next` sheet opens; close it.
+10. Back in admin, click `Email link`. It shows `Email not configured` until Resend is set up.
+11. Tick the SMS consent checkbox.
+12. Click `Revoke link`, then refresh the phone window. The client now sees the ask-your-agent page ("This link isn't active").
+
+The same path, minus the clicks, is checked by `pnpm -C app run smoke:auth https://resspark.zh-a16.workers.dev --client-flow`. It uses fixture case 900003 and deletes its probe request afterwards.
+
+## USER ACTION REQUIRED (Phase 2)
+
+Phase 2 works in fixture mode today. These items need the user (or Andrew at ValorTax) before it runs against real data:
+
+1. **Logics credentials.** Paste a Logics API key and secret token in Settings → Integrations and click Test connection; it must succeed. Then set `"LOGICS_MODE": "live"` in `app/wrangler.jsonc` and redeploy (see § Logics mode).
+2. **Email.** Create a Resend API key and store it with `pnpm -C app wrangler secret put RESEND_API_KEY`. Verify a sending domain in Resend and set `RESEND_FROM` in `app/wrangler.jsonc` to an address on it. Until the domain is verified, Resend only delivers to the account owner.
+3. **Questions for Andrew.** Which permission scopes the Logics API key should carry; the `FileCategoryID` to use for uploaded documents; and the `ActivityType` for the case notes ResSpark will write.
+4. **Two open `shortcut:` questions in the Logics client.**
+   - What `CaseInfo` returns for an unknown case id (`app/worker/src/integrations/logics/client.ts`). The code currently treats the undocumented answer as "not found".
+   - Which phone format the `phone` lookup header accepts (`app/worker/src/integrations/logics/lookup.ts`). The code currently retries in the documented format.
 
 ## Workers plan notes
 
