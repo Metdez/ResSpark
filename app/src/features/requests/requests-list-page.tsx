@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { Inbox } from 'lucide-react'
 import { GENERIC_ERROR } from '@/lib/handle-server-error'
+import { ago } from '@/lib/relative-time'
 import { requestStatusBadge } from '@/lib/status'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -19,32 +20,12 @@ import {
 import { StatusBadge } from '@/components/status-badge'
 import { listRequests, type RequestListRow } from './requests-api'
 
-const RTF = new Intl.RelativeTimeFormat('en-US', { numeric: 'auto' })
-const UNITS: [Intl.RelativeTimeFormatUnit, number][] = [
-  ['year', 365 * 86400],
-  ['month', 30 * 86400],
-  ['day', 86400],
-  ['hour', 3600],
-  ['minute', 60],
-  ['second', 1],
-]
-
-// UI-SPEC dense tables: relative time in the largest unit that fits; callers put the ISO in `title`.
-export function relativeTime(iso: string, now = Date.now()): string {
-  const seconds = (Date.parse(iso) - now) / 1000
-  const [unit, size] = UNITS.find(([, s]) => Math.abs(seconds) >= s) ?? [
-    'second',
-    1,
-  ]
-  return RTF.format(Math.round(seconds / size), unit)
-}
-
 const COLUMNS = ['Client', 'Status', 'Sent', 'Expires']
 const HEAD = 'sticky top-0 bg-muted px-3 py-2 font-semibold'
 const CELL = 'px-3 py-2'
 
 const Time = ({ iso }: { iso: string | null }) =>
-  iso ? <span title={iso}>{relativeTime(iso)}</span> : <>—</>
+  iso ? <span title={iso}>{ago(iso)}</span> : <>—</>
 
 function Rows({ rows }: { rows: RequestListRow[] }) {
   return rows.map((r) => (

@@ -178,6 +178,12 @@ describe('GET /api/admin/requests/:id', () => {
     expect(body.link.url).toBeNull()
   })
 
+  it('returns url null for an expired link', async () => {
+    vi.mocked(getRequest).mockResolvedValue(sentBundle(linkRow({ expires_at: '2020-01-01T00:00:00Z' })))
+    const body = (await (await call('GET', `/api/admin/requests/${REQ}`)).json()) as { link: { url: null } }
+    expect(body.link.url).toBeNull()
+  })
+
   it('is 404 for a request outside the firm', async () => {
     vi.mocked(getRequest).mockResolvedValue(null)
     const res = await call('GET', `/api/admin/requests/${REQ}`)

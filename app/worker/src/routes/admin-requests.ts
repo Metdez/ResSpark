@@ -50,12 +50,13 @@ export function requestIdParam(c: Context<AdminApp>): string {
   return id
 }
 
-// D-17: the URL is minted per response from the link row and never stored; null once revoked.
+// D-17: the URL is minted per response from the link row and never stored; null once revoked or expired.
 export async function linkUrl(
   c: Context<AdminApp>,
-  link: { id: string; version: number; revoked_at: string | null }
+  link: { id: string; version: number; revoked_at: string | null; expires_at?: string | null }
 ): Promise<string | null> {
   if (link.revoked_at) return null
+  if (link.expires_at && Date.parse(link.expires_at) <= Date.now()) return null
   const token = await mintLinkToken(await hmacKey(c.env.CLIENT_LINK_HMAC_KEY), uuidToBytes(link.id), link.version)
   return `${new URL(c.req.url).origin}/c/${token}`
 }
