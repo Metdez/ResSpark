@@ -1,49 +1,59 @@
-# Session handoff — 2026-10-11 09:10 EDT
+# Session handoff — 2026-10-11 16:10 EDT
 
-Branch `zack`, HEAD `e455a74`. Working tree clean except the user's own pre-existing edits (`.planning/config.json`, `src/document_parse.py`, `src/tests/test_document_parse.py`, `AGENTS.md`, `.env.example`, `src/frontend/package*.json`). Full check green: `pnpm -C app run check` → 1018 passed, 137 skipped (one known load-sensitive flake, `request-builder.test.tsx`, passed on rerun).
+Branch `zack` (pushed to `origin/zack` and `origin/main`). Phases 1–7 are built, verified and deployed. Phase 8 is planned and checked but **not started**: it adds migrations to the live project and waits for the reply "approve phase 8 migrations".
 
-Live: https://resspark.zh-a16.workers.dev (Worker version `3b407e92`, `LOGICS_MODE=fake`, `LOGICS_WRITE_ENABLED=false`). Migrations 0002–0006 applied.
+Live: https://resspark.zh-a16.workers.dev, deployed from commit `4219f2b` (Worker version `73f9b33b`) with `pnpm -C app run deploy:snapshot`. Smoke: 14 ok. `LOGICS_MODE=fake`, `LOGICS_WRITE_ENABLED=false`. Migrations 0002–0009 are applied.
 
-## Plan status
+## Phase status
 
-| Phase | Done | Next to run | Notes |
-|---|---|---|---|
-| 1 Foundation | 8/8 | — | Verification `human_needed` (browser checks) |
-| 2 Find client & send link | 8/8 | — | Verification `human_needed`; expired-link fix landed in `38492b4` |
-| 3 Uploads, review, status | 6/7 | **03-05** (depends 03-03 ✓) | then phase verification |
-| 4 Connect payroll & bank | 2/7 | **04-03** (depends 04-01 ✓, 04-02 ✓) | longest chain before the demo: 04-03 → 04-04 → 04-05 ‖ 04-06 → 04-07 |
-| 5 Push to Logics | 2/5 | **05-03 and 05-04** (depend 05-01 ✓, 05-02 ✓) | then 05-05 |
-| 6 Address & e-sign | 0/8 | after Phases 4–5 | planned and checked |
-| 7 433-A | 1/12 | 07-02 after Phase 6 migration 0007 | engine port 07-01 merged |
-| 8 Reminders & readiness | 0/12 | after the demo (gated) | planned and checked |
+| Phase | Plans | Verification |
+|---|---|---|
+| 1 Foundation & staff sign-in | 8/8 | human_needed (lockfile override accepted) |
+| 2 Find the client & send the link | 8/8 | human_needed |
+| 3 Uploads, review & live status | 7/7 | human_needed 6/7 |
+| 4 Connect payroll & bank | 7/7 | human_needed 7/10 |
+| 5 Push to Logics | 5/5 | human_needed 8/8 (SC1 override per D-10) |
+| 6 Address & e-sign | 8/8 | human_needed 7/8 (SIGN-02 proven live, 11/11) |
+| 7 433-A pre-population | 12/12 | human_needed 66/71, no blocking gaps; the 9 live suites then passed (39/39) |
+| 8 Reminders & readiness | 0/12 | gated on "approve phase 8 migrations" |
 
-Ready to run in parallel next session: **03-05, 04-03, 05-03, 05-04** (check file overlap first; use the shared-file protocol).
+"human_needed" means the code and automated checks pass, and what is left is browser, phone or people review (listed below).
 
 ## How to resume
 
-1. `/gsd-execute-phase` style dispatch on the main tree (worktrees have no `app/.dev.vars`): for each plan run `gsd-tools query dispatch-isolation --raw --phase NN --plan NN-NN --force-isolation none` immediately before its `gsd-executor` dispatch (one sentinel per dispatch).
-2. Executor prompts carry: project-root pin guard (unique `pin-<plan>.sh`), `git add <paths> && git commit -m "…" -- <paths>`, shared-file protocol for `app/worker/src/index.ts`, `app/worker/src/jobs/index.ts`, `app/package.json`, `app/wrangler.jsonc`, `app/worker/test/rls.test.ts`, deploy once at the end on a green full check, never route around a blocked deploy, never name env files in Bash, commit each task as soon as it is done.
-3. Handoff details for 04-03/04-04 are in `04-02-SUMMARY.md` ("Before 04-03 and 04-04 run").
+1. Phase 8: after the approval reply, run `/gsd-execute-phase 8`. Dispatch on the main tree (worktrees have no `app/.dev.vars`). Run `gsd-tools query dispatch-isolation --raw --phase 08 --plan 08-NN --force-isolation none` right before each executor dispatch.
+2. Executor prompts carry:
+   - the project-root pin guard (a unique `pin-<plan>.sh`);
+   - path-limited commits (`git add <paths> && git commit -m "…" -- <paths>`);
+   - the shared-file protocol for `app/worker/src/index.ts`, `jobs/index.ts`, `app/package.json`, `app/wrangler.jsonc`, `rls.test.ts`, `smoke.mjs`, `request-page.tsx` and `step-list.tsx`;
+   - "never name env files in Bash";
+   - "executors do not deploy".
+3. Deploy with `pnpm -C app run deploy:snapshot`. It builds the last commit in a clean worktree, so uncommitted work never ships. Then run `node app/scripts/smoke.mjs <url>`, `pnpm -C app run smoke:connect <url>` and `pnpm -C app run smoke:esign <url>`.
+
+## Before the demo (Mon Oct 12, 11:30)
+
+- Provider keys via `pnpm -C app run secrets:provider`: Plaid, Truv, DocuSeal, Smarty, Resend (plus a verified `RESEND_FROM` domain). Until then, those steps run on stubs or report `not_configured`.
+- To show a real push: enter the Logics key and secret in Settings → Integrations, click Test connection, and turn on "Write enabled". Keep `LOGICS_MODE=fake` unless Andrew has given a write key and test CaseIDs.
+- Run each step on a real phone: link → intake → bank → payroll → address → upload → sign.
 
 ## Waiting on the user / ValorTax
 
-- Browser checks for Phases 1–3 (sign-in walkthrough, client screens at 320 px / 200 % zoom, staff lookup → send → copy, upload on a real phone, review approve/reject, dashboard).
-- Resend API key + verified domain (`RESEND_FROM`) — email link reports `not_configured` until then.
-- Truv and Plaid sandbox keys via `pnpm -C app run secrets:provider` — Phase 4 runs on stubs until then.
-- Logics API key + secret in Settings → Integrations, Test connection, then `LOGICS_MODE=live`.
-- Andrew: key scopes, `FileCategoryID`, `ActivityType`, unknown-CaseID response, phone format.
-- Decision: should a request with some items approved read "In progress" instead of "Opened"? (locked D-06 says Opened.)
-- Commit or discard the uncommitted edits in `src/frontend/` before Plan 07-08 removes that folder.
-- Fix "32 questions" → 28 in `CLAUDE.md` and `.claude/CLAUDE.md`.
+- **Andrew:** Logics write key and scopes, test CaseIDs, `FileCategoryID` (documents and the 433-A worksheet), `ActivityType`, the unknown-CaseID response, phone format, and the disclaimer wording.
+- **Nicole and Sandra:** layout review of the admin case view, the 433-A view and the worksheet PDF.
+- **CPA/EA:** review `plaid_category_map` and `truv_deduction_map`, plus three real-shaped cases.
+- **Counsel:** consent and e-sign wording.
+- **Decisions:**
+  - Should a request with some items approved read "In progress" instead of "Opened"? (Locked D-06 says Opened.)
+  - Should the evaluation keep blocking on NULLs, or zero-fill like Python `_screenable`?
+  - Keep or remove `src/frontend/`. The Vercel deployment on main still serves it.
+  - Fix "32 questions" → 28 in `CLAUDE.md` and `.claude/CLAUDE.md`.
+- **Browser and phone checks** for Phases 1–7 are listed under "Human Verification Required" in each `NN-VERIFICATION.md`.
 
-## Follow-up from the 2026-10-11 merge of origin/main
+## Notes from this session
 
-- **Re-port the 433-A engine (redo 07-01 as gap closure).** origin/main changed `src/determination.py` and its tests (v2 determination, OIC calculator wording). Regenerating `golden.json` against the merged Python gives 95 parity failures, so `golden.json` was kept at the pre-merge oracle and `pnpm -C app run check` now fails only at the golden-freshness step until the TypeScript engine is re-ported.
-- origin/main also brought `vercel.json`, `api/cases.py`, `src/logics.py`, timestamped Supabase CLI migrations, and a root npm lockfile. The lockfile was dropped (pnpm root only); `app/scripts/db-migrate.mjs` now applies only `NNNN_*.sql` files so the timestamped migrations are never run against the live project; `supabase/config.toml` kept the minimal pushed version; `.gitignore` did not take main's `.planning/` ignore.
-
-## Flaky tests fixed (2026-10-11)
-
-- `app/worker/src/jobs/logics-push-normalize.test.ts` › "is deterministic" — **real bug, not load**: pdf-lib's `PDFDocument.create()` stamps `CreationDate`/`ModDate` with the current second, so two splits that straddled a second boundary differed in bytes and sha256 (the test runs in ~50 ms, so it failed whenever a busy run crossed a second). In production an interrupted part-0 re-run would re-upload parts whose hashes no longer match the sibling rows (`part_hash_mismatch`). Fix: `PDFDocument.create({ updateMetadata: false })` in `pdf/split-pdf.ts` and `pdf/image-to-pdf.ts`; the test now fakes `Date` and re-runs five minutes later, and `image-to-pdf.test.ts` gained a same-bytes-under-two-clocks test. Commit `aeb6b7c`.
-- `app/worker/src/webhooks/docuseal.test.ts` — signing and the adapter's 300 s window check each read real `Date.now()`; a sub-second stall pushed the 299 s case out of the window and the +301 s case into it. Fix (test only): `vi.useFakeTimers({ toFake: ['Date'] })` pinned to `2026-10-11T12:00:00.900Z` per test. Commit `6461e5f`.
-- `app/src/features/requests/request-builder.test.tsx` — the first render pays the lazy `@/lib/supabase` import and module graph, which under a full parallel run exceeded `waitFor`'s 2 s default. Fix (test only): every `waitFor` passes `SETTLE_MS` = 10 s; the describe allows 20 s per test. Commit `c397dcd`.
-- Seen once in a full run, not fixed (out of scope): `app/src/features/requests/request-page.test.tsx` › "shows the review panel instead of the items card once sent" asserted the `/api/admin/cases/c1/events` fetch before the timeline had loaded; passes alone. Likely the same load pattern (assert after `waitFor` for the timeline fetch).
+- The origin/main merge is fully absorbed. The 433-A TypeScript engine was re-ported against the merged Python oracle and matches all 165 golden cases. `app/scripts/db-migrate.mjs` applies only `NNNN_*.sql`, so the timestamped Supabase CLI migrations from main are never run.
+- Flaky tests fixed:
+  - pdf-lib metadata timestamps caused a real hash mismatch (`aeb6b7c`).
+  - The DocuSeal webhook clock (`6461e5f`).
+  - `waitFor` timeouts in the request builder and request page.
+- The shared git index can sweep another executor's staged files into your commit. Always commit with `-- <paths>`, and wait for `.git/index.lock` to clear first.

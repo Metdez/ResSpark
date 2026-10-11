@@ -105,7 +105,7 @@ Requirements for the first release. Each maps to a roadmap phase. The Oct 12 202
 - [x] **FORM-03**: Staff see a 433-A pre-population view of income, expenses, and assets with source badges (Truv, Plaid, intake, Logics), proposed versus confirmed values, and evidence drill-down to the transaction or pay stub
 - [x] **FORM-04**: Staff can accept or edit each proposed value; only accepted values enter `case_financial_data`, and unknown values stay null
 - [x] **FORM-05**: IRS standards for the client's county are applied and the engine's recommendation (OIC, installment, CNC, manual review) with its math is visible to staff
-- [ ] **FORM-06**: Staff can export the worksheet as a PDF labeled "Not an IRS form" and push it to Logics like any other document
+- [x] **FORM-06**: Staff can export the worksheet as a PDF labeled "Not an IRS form" and push it to Logics like any other document
 - [x] **FORM-07**: The Plaid-category-to-433-A-line mapping and the Truv deduction mapping live in SQL tables, not in code
 
 ### Reminders & Second Provider
@@ -224,7 +224,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | FORM-03 | Phase 7 | Complete |
 | FORM-04 | Phase 7 | Complete |
 | FORM-05 | Phase 7 | Complete |
-| FORM-06 | Phase 7 | Pending |
+| FORM-06 | Phase 7 | Complete |
 | FORM-07 | Phase 7 | Complete |
 | REM-01 | Phase 8 | Pending |
 | REM-02 | Phase 8 | Pending |

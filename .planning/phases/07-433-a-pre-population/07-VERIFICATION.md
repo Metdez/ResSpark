@@ -370,6 +370,7 @@ All 20 trackable CONTEXT.md decisions are honored by the shipped artifacts (`che
 ### Human Verification Required
 
 1. **Live Phase 7 suites.** Run the nine live suites once against the test firm. This upgrades the 5 behavior-unverified truths.
+   **Done 2026-10-11 16:02 EDT:** `pnpm -C app run test:live:file` on the nine suites against test firm `…000e`: 9 files, 39 tests passed (extract round trip 1471 ms; worksheet live sample 3 pages; fake push 202). The 5 behavior-unverified truths are now exercised.
 2. **Nicole and Sandra layout review.** Review the 433-A view and the worksheet PDF.
 3. **CPA/EA mapping review.** Review the `plaid_category_map` and `truv_deduction_map` line assignments.
 4. **CPA/EA case review.** Check three real-shaped cases, including how the OIC math is shown and OIC's `needs_manual_review=false`.
