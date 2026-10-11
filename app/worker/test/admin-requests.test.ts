@@ -1,7 +1,8 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { verifyLinkToken } from '../src/auth/client-link'
 import { getIntegration } from '../src/db/integrations'
-import { createRequest, getRequest, getTemplates, listRequests, sendRequest } from '../src/db/requests'
+import { listDashboardRequests } from '../src/db/dashboard'
+import { createRequest, getRequest, getTemplates, sendRequest } from '../src/db/requests'
 import { getStaffProfile } from '../src/db/staff'
 import {
   bundle,
@@ -26,10 +27,13 @@ vi.mock('../src/db/staff', () => ({ getStaffProfile: vi.fn() }))
 vi.mock('../src/db/events', () => ({ logEvent: vi.fn() }))
 vi.mock('../src/db/integrations', () => ({ getIntegration: vi.fn() }))
 vi.mock('../src/db/cases', () => ({ confirmLogicsCase: vi.fn(), getCase: vi.fn() }))
+vi.mock('../src/db/dashboard', async (orig) => ({
+  ...(await orig<typeof import('../src/db/dashboard')>()),
+  listDashboardRequests: vi.fn(),
+}))
 vi.mock('../src/db/requests', () => ({
   getTemplates: vi.fn(),
   createRequest: vi.fn(),
-  listRequests: vi.fn(),
   getRequest: vi.fn(),
   sendRequest: vi.fn(),
   regenerateLink: vi.fn(),
@@ -68,7 +72,7 @@ beforeEach(() => {
 afterEach(() => {
   vi.unstubAllGlobals()
   vi.restoreAllMocks()
-  for (const f of [getTemplates, createRequest, listRequests, getRequest, sendRequest]) vi.mocked(f).mockReset()
+  for (const f of [getTemplates, createRequest, listDashboardRequests, getRequest, sendRequest]) vi.mocked(f).mockReset()
 })
 
 describe('templates and drafts', () => {
@@ -147,14 +151,69 @@ describe('templates and drafts', () => {
     await call('POST', '/api/admin/requests', draft())
     expect(createRequest).toHaveBeenCalledTimes(2)
   })
+})
 
-  it('lists the firm requests', async () => {
-    const rows = [{ id: REQ, status: 'sent', client_name: 'Jordan Rivera', sent_at: null, expires_at: null, created_at: 'x' }]
-    vi.mocked(listRequests).mockResolvedValue(rows)
-    const res = await call('GET', '/api/admin/requests')
+describe('GET /api/admin/requests (dashboard list)', () => {
+  const ROW = {
+    id: REQ,
+    case_id: CASE,
+    status: 'sent',
+    template_name: 'Documents only',
+    agent_display_name: 'Zack',
+    client_name: 'Jordan Rivera',
+    first_name: 'Jordan',
+    last_name: 'Rivera',
+    email: 'j@x.com',
+    created_at: '2026-10-01T00:00:00Z',
+    sent_at: null,
+    opened_at: null,
+    completed_at: null,
+    expires_at: null,
+    last_activity_at: null,
+    overdue: false,
+  }
+  const list = async (query = '') => {
+    vi.mocked(listDashboardRequests).mockResolvedValue([ROW])
+    return call('GET', `/api/admin/requests${query}`)
+  }
+
+  it('lists every non-draft firm request with the Phase 2 keys when no filter is given', async () => {
+    const res = await list()
     expect(res.status).toBe(200)
-    expect(await res.json()).toEqual({ requests: rows })
-    expect(listRequests).toHaveBeenCalledWith(expect.anything(), FIRM)
+    const body = (await res.json()) as { requests: Record<string, unknown>[] }
+    for (const key of ['id', 'status', 'client_name', 'sent_at', 'expires_at', 'created_at'])
+      expect(body.requests[0]).toHaveProperty(key)
+    expect(listDashboardRequests).toHaveBeenCalledWith(expect.anything(), FIRM, { status: undefined, q: undefined })
+  })
+
+  it('passes a known status through', async () => {
+    await list('?status=complete')
+    expect(listDashboardRequests).toHaveBeenCalledWith(expect.anything(), FIRM, { status: 'complete', q: undefined })
+  })
+
+  it('refuses an unknown status with bad_request', async () => {
+    const res = await list('?status=bogus')
+    expect(res.status).toBe(400)
+    expect(await errorCode(res)).toBe('bad_request')
+    expect(listDashboardRequests).not.toHaveBeenCalled()
+  })
+
+  it('refuses draft, which the dashboard never lists', async () => {
+    const res = await list('?status=draft')
+    expect(res.status).toBe(400)
+  })
+
+  it('sanitizes q before it reaches the filter', async () => {
+    await list('?q=%20%20Ann%20(Smith),%20ann@x.com%20')
+    expect(listDashboardRequests).toHaveBeenCalledWith(expect.anything(), FIRM, {
+      status: undefined,
+      q: 'Ann Smith ann@x.com',
+    })
+  })
+
+  it('treats an empty q as no search', async () => {
+    await list('?q=')
+    expect(listDashboardRequests).toHaveBeenCalledWith(expect.anything(), FIRM, { status: undefined, q: undefined })
   })
 })
 

@@ -28,7 +28,6 @@ vi.mock('../src/db/cases', () => ({ confirmLogicsCase: vi.fn(), getCase: vi.fn()
 vi.mock('../src/db/requests', () => ({
   getTemplates: vi.fn(),
   createRequest: vi.fn(),
-  listRequests: vi.fn(),
   getRequest: vi.fn(),
   sendRequest: vi.fn(),
   regenerateLink: vi.fn(),
