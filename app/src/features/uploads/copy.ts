@@ -14,6 +14,7 @@ export const uploadCopy = {
   rejectedPrefix: 'Your agent asked for a new copy: ',
   retry: 'Try again',
   remove: 'Remove',
+  close: 'Close',
 } as const
 
 const ERRORS: Record<string, string> = {

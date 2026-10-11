@@ -1,8 +1,10 @@
 import { useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { Inbox } from 'lucide-react'
 import { itemStatusBadge } from '@/lib/status'
 import { Button } from '@/components/ui/button'
 import { StatusBadge } from '@/components/status-badge'
+import { UploadSheet } from '@/features/uploads/upload-sheet'
 import { ComingNextSheet } from './coming-next-sheet'
 import type { PortalStep } from './portal-api'
 import { STEP_DESCRIPTIONS } from './step-copy'
@@ -12,9 +14,10 @@ interface StepListProps {
   onView?: (step: PortalStep) => void
 }
 
-// D-11: one column of 44 px rows in position order; only View is interactive in Phase 2.
+// D-11: one column of 44 px rows in position order; View opens the step (upload) or Coming next.
 export function StepList({ steps, onView = () => {} }: StepListProps) {
   const [viewing, setViewing] = useState<PortalStep | null>(null)
+  const qc = useQueryClient()
   if (steps.length === 0)
     return (
       <div className='flex flex-col items-center gap-2 text-center'>
@@ -69,7 +72,23 @@ export function StepList({ steps, onView = () => {} }: StepListProps) {
           )
         })}
       </ul>
-      <ComingNextSheet step={viewing} onClose={() => setViewing(null)} />
+      {viewing?.kind === 'upload' ? (
+        <UploadSheet
+          item={{
+            id: viewing.id,
+            label: viewing.label,
+            status: viewing.status,
+          }}
+          open
+          onClose={() => {
+            setViewing(null)
+            // the chip turns into "With your agent" once the Worker marks the item submitted
+            void qc.invalidateQueries({ queryKey: ['portal', 'state'] })
+          }}
+        />
+      ) : (
+        <ComingNextSheet step={viewing} onClose={() => setViewing(null)} />
+      )}
     </>
   )
 }

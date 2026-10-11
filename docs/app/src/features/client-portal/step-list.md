@@ -8,11 +8,11 @@
   - Left: the label (`data-step-label`, `text-base`, `break-words`) and its description from `STEP_DESCRIPTIONS[kind]` (`text-base`, muted).
   - Right: a `StatusBadge size='lg'` (16 px) from `itemStatusBadge(status, 'client')`: Not started, In progress, With your agent (for `submitted`; clients never see "review"), Done, Needs attention. The label text is always present, so the chip never relies on color alone.
   - A `Button size='xl' variant='outline'` "View" (44 px) with `aria-label` "View {label}" so screen readers can tell rows apart. It sets the step being viewed and calls `onView(step)` (a no-op by default). `PortalPage` uses that to send the step kind in the next heartbeat.
-- **Sheet:** `viewing` state (`useState`, declared before the empty-state return) drives one `ComingNextSheet` below the list; closing it sets `viewing` back to `null`.
+- **Sheet:** `viewing` state (`useState`, declared before the empty-state return) picks the sheet below the list. An `upload` step opens `UploadSheet` (Plan 03-02) with the step's `{ id, label, status }`; every other kind still opens `ComingNextSheet`. Closing either sets `viewing` back to `null`; closing the upload sheet also invalidates `['portal', 'state']` (through `useQueryClient`) so the chip re-renders, for example as With your agent once a file landed. The rejection note is shown inside the upload sheet, never under the row (`/api/c/state` steps carry no note).
 - Two steps of the same kind are two rows, each with its own label; `key` is the item id.
-- Imports only `@/lib/status`, `ui/button`, `status-badge`, the portal types, the copy file, and `coming-next-sheet`. Nothing from the admin shell, `@/lib/api`, or supabase.
+- Imports only `@/lib/status`, `ui/button`, `status-badge`, `@tanstack/react-query`, `@/features/uploads/upload-sheet`, the portal types, the copy file, and `coming-next-sheet`. Nothing from the admin shell, `@/lib/api`, or supabase (the uploads feature follows the same rule).
 
 ## Tests
 
 - `portal-page.test.tsx`: row height, label size, chips, View size, order, same-kind rows, empty state, and no text below 16 px.
-- `step-list.test.tsx`: `View` opens the Coming next sheet with the step label, the copy, and a 44 px Close, and calls `onView` with the step; the vendored icon close is hidden; Close hides the sheet.
+- `step-list.test.tsx`: `View` opens the Coming next sheet with the step label, the copy, and a 44 px Close, and calls `onView` with the step; the vendored icon close is hidden; Close hides the sheet (on the bank step, since upload steps no longer open Coming next). With `UploadSheet` mocked to a stub: `View` on the upload step renders the stub with its label and no Coming next text; `View` on the bank step opens Coming next and no stub.

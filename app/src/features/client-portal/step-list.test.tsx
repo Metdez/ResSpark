@@ -9,6 +9,12 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { PortalStep } from './portal-api'
 import { StepList } from './step-list'
 
+vi.mock('@/features/uploads/upload-sheet', () => ({
+  UploadSheet: ({ item }: { item: { label: string } }) => (
+    <div data-testid='upload-sheet'>{item.label}</div>
+  ),
+}))
+
 const STEPS: PortalStep[] = [
   {
     id: 's1',
@@ -51,7 +57,7 @@ describe('StepList Coming next sheet', () => {
 
   it('Close hides the sheet', async () => {
     await renderWithQuery(<StepList steps={STEPS} />, {})
-    await click(viewOf('Upload your ID'))
+    await click(viewOf('Connect your bank'))
     await waitFor(() => text().includes('Coming next'))
     await click(button('Close', document.querySelector('[role="dialog"]')!)!)
     await waitFor(() => !text().includes('Coming next'))
@@ -66,5 +72,24 @@ describe('StepList Coming next sheet', () => {
     expect(dialog.lastElementChild!.tagName).toBe('BUTTON')
     expect(dialog.lastElementChild!.className).not.toContain('h-11')
     expect(dialog.className).toContain('[&>button:last-child]:hidden')
+  })
+})
+
+describe('StepList upload step', () => {
+  const stub = () => document.querySelector('[data-testid="upload-sheet"]')
+
+  it('View on an upload step opens UploadSheet, not Coming next', async () => {
+    await renderWithQuery(<StepList steps={STEPS} />, {})
+    await click(viewOf('Upload your ID'))
+    await waitFor(() => stub() !== null)
+    expect(stub()!.textContent).toBe('Upload your ID')
+    expect(text()).not.toContain('Coming next')
+  })
+
+  it('View on a bank step still opens Coming next and no UploadSheet', async () => {
+    await renderWithQuery(<StepList steps={STEPS} />, {})
+    await click(viewOf('Connect your bank'))
+    await waitFor(() => text().includes('Coming next'))
+    expect(stub()).toBeNull()
   })
 })
