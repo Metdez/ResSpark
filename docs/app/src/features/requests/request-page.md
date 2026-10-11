@@ -19,6 +19,7 @@
 | `LinkRow` | A read-only input holding the URL (focus selects all), the primary `Copy link` button, and `Expires {Oct 24, 2026}` with the ISO timestamp in `title`. Copy writes to the clipboard, toasts `Link copied`, and fire-and-forgets `markCopied` (`POST /copied`, D-09). A clipboard failure toasts `Couldn't copy the link` / `Select the link and copy it yourself.` instead. |
 | `ItemsCard` | Heading `Items`, one row per item sorted by `position`: label, muted `Required`/`Optional`, and the staff item badge. |
 | Review panel (Plan 03-03) | While the request is a `draft`, `ItemsCard` lists the items. Once it is sent (any other status), `<ReviewPanel requestId caseId />` replaces it: the same items, plus each item's files, Preview/Download, Approve and Reject. Showing both would list every item twice. The panel has its own 5 s polled query (`['review', id]`); the detail query is not polled, and the panel's decisions invalidate `['request', id]` so the header badge follows. See `docs/app/src/features/review/review-panel.md`. |
+| Push card (Plan 05-04) | Mounted directly below `<ReviewPanel>` in the same non-draft branch (a fragment holds both): `<LogicsPushCard requestId caseId />` lists approved, ready files and pushes them to Logics. Nothing else on the page changes. See `docs/app/src/features/logics-push/logics-push-card.md`. |
 
 ## Notes
 

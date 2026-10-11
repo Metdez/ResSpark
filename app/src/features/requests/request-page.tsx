@@ -12,6 +12,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { StatusBadge } from '@/components/status-badge'
 import { RequestContactForm } from './request-contact-form'
 import { ReviewPanel } from '@/features/review/review-panel'
+import { LogicsPushCard } from '@/features/logics-push/logics-push-card'
 import { RequestLinkActions } from './request-link-actions'
 import {
   formatDate,
@@ -171,7 +172,10 @@ export function RequestPage({ requestId }: { requestId: string }) {
         {d.status === 'draft' ? (
           <ItemsCard items={d.items} />
         ) : (
-          <ReviewPanel requestId={d.id} caseId={d.case.case_id} />
+          <>
+            <ReviewPanel requestId={d.id} caseId={d.case.case_id} />
+            <LogicsPushCard requestId={d.id} caseId={d.case.case_id} />
+          </>
         )}
       </div>
     </>
