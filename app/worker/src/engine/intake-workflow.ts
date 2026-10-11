@@ -1,7 +1,7 @@
 // Port of src/intake_workflow.py (the parts the Worker evaluates; question
 // declarations and validation live in app/shared/questions.ts).
 import { isApplicable, QUESTIONS } from '../../../shared/questions'
-import { type Determination, determineResolutionPath } from './determination'
+import { type Determination, determineResolutionPath } from './resolution-path'
 import {
   type CaseRow,
   financialDataFromCaseRow,

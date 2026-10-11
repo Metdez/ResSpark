@@ -7,6 +7,7 @@ import { calculateAllowableExpenses, netRealizableEquityLines } from './determin
 import { financialDataFromCaseRow, REQUIRED_FINANCIAL_COLUMNS } from './financial-data'
 import { evaluateCase } from './intake-workflow'
 import { NEXT_STEP, PATHS } from './outcome'
+import { pyFixed, wholeDollars } from './py'
 import type { StandardsRepository } from './standards'
 
 interface GoldenCall {
@@ -176,6 +177,22 @@ describe('contract constants', () => {
       }
       expect([v.question_id, v.value, error]).toEqual([v.question_id, v.value, v.error])
     }
+  })
+})
+
+describe('Python formatting helpers', () => {
+  // Expected values printed by Python 3.11: format(x, ',.2f'), format(x, ',.0f') and _whole_dollars.
+  it('pyFixed matches format(x, ",.Nf"), including exact binary ties to even', () => {
+    expect([0.125, 0.375, 0.005, -1234.5, -0, 1234567.891].map((x) => pyFixed(x, 2))).toEqual(
+      ['0.12', '0.38', '0.01', '-1,234.50', '-0.00', '1,234,567.89']
+    )
+    expect([2.5, 3.5, 1234567, 0.5].map((x) => pyFixed(x, 0))).toEqual(['2', '4', '1,234,567', '0'])
+  })
+
+  it('wholeDollars matches Decimal(str(x)) quantized ROUND_HALF_UP', () => {
+    const out = [2.5, -2.5, 0.49999, 1e-7, -0.3, 50516.5, 0.1 + 0.2].map(wholeDollars)
+    expect(out).toEqual([3, -3, 0, 0, 0, 50517, 0])
+    expect(Object.is(out[4], 0)).toBe(true)
   })
 })
 

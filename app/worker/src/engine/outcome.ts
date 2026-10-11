@@ -1,4 +1,4 @@
-// _PATHS and _NEXT from src/case_api.py:28-40, verbatim (recommendation wording).
+// _PATHS and _NEXT from src/case_api.py:29-42, verbatim (recommendation wording).
 
 export const NEXT_STEP = 'A tax professional must review this result before anything is filed.'
 
@@ -9,10 +9,11 @@ export const PATHS: Readonly<Record<string, { id: string; label: string }>> = {
   'Simple Payment Plan': { id: 'simple_plan', label: 'Simple payment plan' },
   'Non-Simple Installment Agreement': { id: 'non_simple_installment', label: 'Non-simple installment agreement' },
   'MANUAL REVIEW — payment resolution needs review': { id: 'manual_payment', label: 'Manual review' },
+  'Offer in Compromise': { id: 'oic', label: 'Offer in compromise' },
 }
 
 export const outcomeFor = (path: string): { id: string; label: string } | null =>
   Object.hasOwn(PATHS, path) ? PATHS[path] : null
 
 // Recorded with every evaluation so a stored run names the engine that produced it.
-export const ENGINE_VERSION = 'ts-port-1'
+export const ENGINE_VERSION = 'ts-port-2'
