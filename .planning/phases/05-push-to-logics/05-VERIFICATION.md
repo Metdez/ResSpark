@@ -196,3 +196,38 @@ There is one gap, and it only matters in live mode. The firm `write_enabled` tog
 
 _Verified: 2026-10-11T15:30:00Z_
 _Verifier: Claude (gsd-verifier)_
+
+## Gap closure (2026-10-11)
+
+Closes the truth 7 gap and the "Push again on unknown" warning (Anti-Patterns rows 1 and 2). Not deployed by the executor; the orchestrator deploys.
+
+### Gap: firm `write_enabled` not enforced after batch creation (truth 7) — commit `627dd9f`
+
+- `app/worker/src/jobs/logics-push.ts` `prepare()`: after the live env guard and the `mode_changed` check, the firm row is read once with `getIntegration(env, job.firm_id, 'logics')` in both modes. If `readSettings(row).write_enabled` is not `true`, the row fails `logics_write_blocked` / "Logics writes are turned off for this firm in Settings" before any client (fake or live) is built. The message is acked once, the normalizer and `createCaseDocument` never run, and the batch finalizes with the refusal note client. The same row is reused for the live credential check, so there is no extra read in live mode.
+- `app/worker/src/routes/admin-logics-push.ts` resolve route: when `action === 'resend'` and the firm switch is off → 403 `logics_write_blocked` with the same message, before `resolvePush` runs, so nothing is resolved or enqueued. `mark_sent` writes nothing to Logics and stays allowed. The live env flag and allowlist are still enforced for re-sends by the consumer (unchanged).
+- Tests (all pass):
+  - `jobs/logics-push.test.ts` "D-08: the firm switch turned off after queueing fails the row in fake mode; the client is never called" (failed `logics_write_blocked` with the Settings message, injected `createCaseDocument` spy never called, normalizer never called, ack once, no retry).
+  - `jobs/logics-push.test.ts` "D-08: live mode with the env guard passing but the firm switch off never builds a live client" (`liveClientFromRow` never called, normalizer never called, ack once).
+  - `routes/admin-logics-push.test.ts` "D-08: resend is 403 when the firm turned Logics writes off" (403 envelope, `resolvePush` and `JOBS.send` never called) and "mark_sent still works with the firm switch off".
+
+Truth 7 now holds: in live mode the env guard, the allowlist, and the firm toggle apply to the create route, the resend route (toggle at the route, guard and toggle again in the consumer), and every consumer run, including rows re-enqueued by the sweeper.
+
+### Warning: "Push again" on an `unknown` row could duplicate — commit `c1d52ed`
+
+Choice: **"Push again" removed for both `unknown` and `sent`.** `logics_push_create_batch` (0006, and its 0008 replacement) inserts the `push_again` row with the same part-0 fingerprint, and the partial unique index `logics_pushes_fingerprint_live` covers `sent`. So a pushed-again `sent` document always ends in 409 `already_pushed`; the option could never succeed.
+
+- `app/src/features/logics-push/logics-push-card.tsx`: a document whose latest rows include `unknown` or `sent` is not selectable. `unknown` shows only the "Needs your decision" chip, which opens the two-action resolve dialog (D-04: mark sent, or Re-send, which fails the old row first). `sent` shows "Already pushed" with no control. A `failed` row can still be selected and pushed fresh (the create RPC allows it).
+- The now-dead browser plumbing was removed: `PushableDoc.pushAgain` (`plan.ts`), `push_again` in `push-sheet.tsx`, `api.ts` `createPush`, and `use-logics-push.ts`. The `already_pushed` copy now reads "Already pushed to Logics. Refresh to see its state." (it only shows when the ledger on screen was stale). The Worker route still accepts `push_again`; nothing in the UI sends it.
+- Tests (all pass): `logics-push-card.test.tsx` "shows a sent row with its id, Simulated and Already pushed, with no way to push it again", "D-04: an unknown row cannot be selected or pushed again; only the decision dialog resolves it", "a failed row can be pushed again fresh"; `push-sheet.test.tsx` updated (the `push_again` forwarding case removed, new `already_pushed` copy).
+
+### Checks
+
+| Check | Result |
+|-------|--------|
+| `pnpm -C app exec vitest run worker/src/jobs/logics-push.test.ts worker/src/routes/admin-logics-push.test.ts src/features/logics-push` | 6 files, 59/59 passed |
+| `tsc -b`, `eslint` on the touched files, `check-file-sizes` | clean (every touched file under 500 lines) |
+| `pnpm -C app run check` (full) | 1513 passed, 1 failed, 2 files failed, none in this change: `worker/test/esign-start.test.ts` (06-02, file-level failure) and `logics-push-normalize.test.ts` "is deterministic" (flaky under the full run; passes 9/9 alone; the normalizer was not touched) |
+
+Companion docs updated: `docs/app/worker/src/jobs/logics-push.md`, `logics-push.test.md`, `docs/app/worker/src/routes/admin-logics-push.md`, `docs/app/src/features/logics-push/{logics-push-card,plan,push-sheet,api,use-logics-push}.md`.
+
+Still open (unchanged by this closure): Human Verification 1 (D-10 override), 2 (deployed UI rehearsal), 3 (firm switch demo step), 4 (Andrew's write key). Info rows 3 (D-03 batch stop on 401/403) and 4 (resent file not in an activity note) are not addressed.
