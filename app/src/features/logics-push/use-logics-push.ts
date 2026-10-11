@@ -1,7 +1,7 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { pollInterval } from '@/lib/polling'
 import { unlessHandled } from '@/features/requests/requests-api'
-import { createPush, fetchLedger, resolvePush, type LedgerBatch, type LedgerPush } from './api'
+import { createPush, fetchLedger, listWorksheets, resolvePush, type LedgerBatch, type LedgerPush } from './api'
 
 // D-10: polls while the tab is visible (refetchIntervalInBackground stays false).
 export function useLedger(requestId: string) {
@@ -10,6 +10,16 @@ export function useLedger(requestId: string) {
     queryFn: () => fetchLedger(requestId),
     refetchInterval: pollInterval,
     placeholderData: keepPreviousData,
+    meta: { errorShown: true },
+  })
+}
+
+// The case's generated 433-A worksheets; the card shows them on the request named by request_id (D-16).
+export function useWorksheets(caseId: string) {
+  return useQuery({
+    queryKey: ['case-worksheets', caseId],
+    queryFn: () => listWorksheets(caseId),
+    refetchInterval: pollInterval,
     meta: { errorShown: true },
   })
 }

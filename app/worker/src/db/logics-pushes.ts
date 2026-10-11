@@ -129,26 +129,41 @@ export async function listPushableDocuments(
     status: string
   }>
 > {
-  const { data, error } = await createAdminClient(env)
+  const db = createAdminClient(env)
+  const { data, error } = await db
     .from('documents')
     .select('id, original_filename, mime_type, size_bytes, sha256, status, request_items!inner(label, status, request_id, requests!inner(firm_id))')
     .eq('status', 'ready')
     .eq('request_items.request_id', requestId)
     .eq('request_items.requests.firm_id', firmId)
   if (error) throw new Error('documents_read_failed')
-  return (data ?? []).map((d) => {
-    const item = d.request_items as unknown as { label: string; status: string }
-    return {
-      id: d.id as string,
-      original_filename: d.original_filename as string,
-      mime_type: d.mime_type as string,
-      size_bytes: d.size_bytes === null ? null : Number(d.size_bytes),
-      sha256: d.sha256 as string | null,
-      item_label: item.label,
-      item_status: item.status,
-      status: d.status as string,
-    }
+  // D-16: a generated 433-A worksheet has no request item; it is pushable from any request of its own case.
+  const { data: req, error: reqError } = await db.from('requests').select('case_id').eq('firm_id', firmId).eq('id', requestId).maybeSingle()
+  if (reqError) throw new Error('request_lookup_failed')
+  const worksheets = req
+    ? await db
+        .from('documents')
+        .select('id, original_filename, mime_type, size_bytes, sha256, status')
+        .eq('case_id', req.case_id)
+        .eq('document_type', 'worksheet_433a')
+        .eq('status', 'ready')
+        .is('request_item_id', null)
+    : { data: [], error: null }
+  if (worksheets.error) throw new Error('documents_read_failed')
+  const row = (d: Record<string, unknown>, item: { label: string; status: string }) => ({
+    id: d.id as string,
+    original_filename: d.original_filename as string,
+    mime_type: d.mime_type as string,
+    size_bytes: d.size_bytes === null ? null : Number(d.size_bytes),
+    sha256: d.sha256 as string | null,
+    item_label: item.label,
+    item_status: item.status,
+    status: d.status as string,
   })
+  return [
+    ...(data ?? []).map((d) => row(d, d.request_items as unknown as { label: string; status: string })),
+    ...(worksheets.data ?? []).map((d) => row(d, { label: '433-A worksheet', status: 'approved' })),
+  ]
 }
 
 export async function createBatch(

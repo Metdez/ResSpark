@@ -50,6 +50,21 @@ export interface ResolveResponse {
   new_push_id: string | null
 }
 
+// GET /api/admin/cases/:id/worksheets (app/worker/src/routes/admin-worksheet.ts).
+export interface CaseWorksheet {
+  id: string
+  file_name: string
+  size_bytes: number | null
+  sha256: string | null
+  created_at: string
+  run_id: string
+}
+
+export interface WorksheetsResponse {
+  request_id: string | null
+  worksheets: CaseWorksheet[]
+}
+
 const str = (v: unknown) => typeof v === 'string'
 const isMode = (v: unknown): v is PushMode => v === 'fake' || v === 'live'
 const STATES: readonly unknown[] = ['queued', 'sending', 'sent', 'failed', 'unknown']
@@ -78,6 +93,17 @@ const isCreated = (v: unknown): v is CreatePushResponse =>
 const isResolved = (v: unknown): v is ResolveResponse =>
   isObject(v) && str(v.state) && (v.new_push_id === null || str(v.new_push_id))
 
+const isWorksheet = (v: unknown): v is CaseWorksheet =>
+  isObject(v) &&
+  str(v.id) &&
+  str(v.file_name) &&
+  (v.size_bytes === null || typeof v.size_bytes === 'number') &&
+  str(v.created_at) &&
+  str(v.run_id)
+
+export const isWorksheetsResponse = (v: unknown): v is WorksheetsResponse =>
+  isObject(v) && (v.request_id === null || str(v.request_id)) && Array.isArray(v.worksheets) && v.worksheets.every(isWorksheet)
+
 const id = encodeURIComponent
 
 export const fetchLedger = (requestId: string) =>
@@ -85,6 +111,9 @@ export const fetchLedger = (requestId: string) =>
 
 export const createPush = (requestId: string, body: { document_ids: string[] }) =>
   api('/api/admin/requests/' + id(requestId) + '/logics-push', { method: 'POST', body: JSON.stringify(body) }, isCreated)
+
+export const listWorksheets = (caseId: string) =>
+  api('/api/admin/cases/' + id(caseId) + '/worksheets', {}, isWorksheetsResponse)
 
 export const resolvePush = (pushId: string, body: { action: 'mark_sent' | 'resend'; logics_document_id?: number }) =>
   api(`/api/admin/logics-pushes/${id(pushId)}/resolve`, { method: 'POST', body: JSON.stringify(body) }, isResolved)

@@ -6,7 +6,7 @@ import { pollInterval } from '@/lib/polling'
 import type { ReviewItem } from '@/features/review/api'
 import { useReview } from '@/features/review/use-review'
 import * as api from './api'
-import type { LedgerPush, LedgerResponse } from './api'
+import type { LedgerPush, LedgerResponse, WorksheetsResponse } from './api'
 import { LogicsPushCard } from './logics-push-card'
 
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }))
@@ -15,6 +15,7 @@ vi.mock('@/lib/session', () => ({ useSession: () => ({ data: { display_name: 'Da
 vi.mock('./api', async (orig) => ({
   ...(await orig<typeof import('./api')>()),
   fetchLedger: vi.fn(),
+  listWorksheets: vi.fn(),
   createPush: vi.fn(),
   resolvePush: vi.fn(),
 }))
@@ -84,9 +85,18 @@ const ledger = (mode: 'fake' | 'live', pushes: LedgerPush[] = []): LedgerRespons
 let root: Root | undefined
 let container: HTMLDivElement
 
-async function render(items: ReviewItem[], led: LedgerResponse = ledger('fake')) {
+const NO_WORKSHEETS: WorksheetsResponse = { request_id: null, worksheets: [] }
+const worksheetsFor = (requestId: string): WorksheetsResponse => ({
+  request_id: requestId,
+  worksheets: [
+    { id: 'ws1', file_name: '433A-screening-worksheet-900001-2026-10-11.pdf', size_bytes: 4096, sha256: 'a'.repeat(64), created_at: '2026-10-11T10:00:00Z', run_id: 'run1' },
+  ],
+})
+
+async function render(items: ReviewItem[], led: LedgerResponse = ledger('fake'), ws: WorksheetsResponse = NO_WORKSHEETS) {
   vi.mocked(useReview).mockReturnValue({ data: { request: { id: 'r1', case_id: 'c1', status: 'x' }, items } } as never)
   vi.mocked(api.fetchLedger).mockResolvedValue(led)
+  vi.mocked(api.listWorksheets).mockResolvedValue(ws)
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   container = document.createElement('div')
   document.body.append(container)
@@ -214,6 +224,30 @@ describe('LogicsPushCard', () => {
     await click(button('Push to Logics (simulated)'))
     const sheet = document.body.querySelector('[role="dialog"]') as HTMLElement
     expect(sheet.textContent).toContain('Uploaded via ResSpark by Dana Agent — small.pdf')
+  })
+
+  it("D-16: shows the case's worksheets under 433-A worksheets on its most recent request", async () => {
+    await render(ITEMS, ledger('fake'), worksheetsFor('r1'))
+    const headings = [...container.querySelectorAll('h3')].map((h) => h.textContent)
+    expect(headings).toContain('433-A worksheets')
+    const name = '433A-screening-worksheet-900001-2026-10-11.pdf'
+    expect(row('ws1').textContent).toContain('Sends as 1 file')
+    await click(box(`Select ${name}`))
+    await click(button('Push to Logics (simulated)'))
+    expect((document.body.querySelector('[role="dialog"]') as HTMLElement).textContent).toContain(name)
+    expect(vi.mocked(api.listWorksheets)).toHaveBeenCalledWith('c1')
+  })
+
+  it('D-16: hides the worksheet group on any other request of the case', async () => {
+    await render(ITEMS, ledger('fake'), worksheetsFor('r-other'))
+    expect(container.textContent).not.toContain('433-A worksheets')
+    expect(row('ws1')).toBeNull()
+  })
+
+  it('D-16: a worksheet alone fills an otherwise empty card', async () => {
+    await render([], ledger('fake'), worksheetsFor('r1'))
+    expect(container.textContent).not.toContain('Nothing approved yet')
+    expect(row('ws1')).not.toBeNull()
   })
 
   it('opens the resolution dialog from an unknown chip', async () => {

@@ -13,7 +13,7 @@ import type { LedgerPush } from './api'
 import { planLabel, pushPlan, sizeLabel, type PushableDoc } from './plan'
 import { PushSheet } from './push-sheet'
 import { ResolveUnknownDialog } from './resolve-unknown-dialog'
-import { latestPushesByDocument, useLedger } from './use-logics-push'
+import { latestPushesByDocument, useLedger, useWorksheets } from './use-logics-push'
 
 const Heading = () => <h2 className='text-xl leading-tight font-semibold'>Push to Logics</h2>
 
@@ -28,6 +28,7 @@ interface Row extends PushableDoc {
 export function LogicsPushCard({ requestId, caseId }: { requestId: string; caseId: string }) {
   const review = useReview(requestId)
   const ledger = useLedger(requestId)
+  const worksheets = useWorksheets(caseId)
   const agent = useSession().data?.display_name ?? '…'
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [pushing, setPushing] = useState<PushableDoc[] | null>(null)
@@ -49,29 +50,31 @@ export function LogicsPushCard({ requestId, caseId }: { requestId: string; caseI
   }
 
   const ledgerByDoc = latestPushesByDocument(ledger.data?.batches ?? [])
-  const rows: Row[] = review.data.items
-    .filter((item) => item.status === 'approved')
-    .flatMap((item) =>
-      item.documents
-        .filter((d) => d.status === 'ready')
-        .map((d) => {
-          const pushes = ledgerByDoc.get(d.id) ?? []
-          const inFlight = pushes.some((p) => p.state === 'queued' || p.state === 'sending')
-          const sent = pushes.some((p) => p.state === 'sent')
-          const unknown = pushes.some((p) => p.state === 'unknown')
-          const plan = pushPlan({ mime: d.mime, size_bytes: d.size_bytes, name: d.name })
-          return {
-            id: d.id,
-            name: d.name,
-            size_bytes: d.size_bytes,
-            plan,
-            itemLabel: item.label,
-            pushes,
-            sent,
-            disabled: plan.kind === 'manual' || inFlight || sent || unknown,
-          }
-        })
-    )
+  const toRow = (d: { id: string; name: string; mime: string; size_bytes: number | null }, itemLabel: string): Row => {
+    const pushes = ledgerByDoc.get(d.id) ?? []
+    const inFlight = pushes.some((p) => p.state === 'queued' || p.state === 'sending')
+    const sent = pushes.some((p) => p.state === 'sent')
+    const unknown = pushes.some((p) => p.state === 'unknown')
+    const plan = pushPlan({ mime: d.mime, size_bytes: d.size_bytes, name: d.name })
+    return {
+      id: d.id,
+      name: d.name,
+      size_bytes: d.size_bytes,
+      plan,
+      itemLabel,
+      pushes,
+      sent,
+      disabled: plan.kind === 'manual' || inFlight || sent || unknown,
+    }
+  }
+  // D-16: the case's worksheets show on its most recent request only, so one file is offered once.
+  const caseWorksheets = worksheets.data?.request_id === requestId ? worksheets.data.worksheets : []
+  const rows: Row[] = [
+    ...review.data.items
+      .filter((item) => item.status === 'approved')
+      .flatMap((item) => item.documents.filter((d) => d.status === 'ready').map((d) => toRow(d, item.label))),
+    ...caseWorksheets.map((w) => toRow({ id: w.id, name: w.file_name, mime: 'application/pdf', size_bytes: w.size_bytes }, '433-A worksheets')),
+  ]
 
   if (rows.length === 0) {
     return (

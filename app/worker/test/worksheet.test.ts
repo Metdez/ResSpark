@@ -35,6 +35,19 @@ const logicsId = () => 900_000_000 + Math.floor(Math.random() * 99_999_999)
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- loose response JSON in assertions only
 type Json = Record<string, any>
 
+// D-08: the push route also needs the firm's own write toggle; on for the test firm only, then restored.
+async function enableFirmWrites(db: SupabaseClient): Promise<() => Promise<void>> {
+  const before = (await db.from('firm_integrations').select('settings').eq('firm_id', TEST_FIRM).eq('provider', 'logics').maybeSingle()).data
+  const write = (settings: Record<string, unknown>) =>
+    db.from('firm_integrations').upsert({ firm_id: TEST_FIRM, provider: 'logics', settings }, { onConflict: 'firm_id,provider' })
+  const { error } = await write({ ...before?.settings, write_enabled: true })
+  if (error) throw new Error(`enable firm writes: ${error.message}`)
+  return async () => {
+    if (before) await write(before.settings)
+    else await db.from('firm_integrations').delete().eq('firm_id', TEST_FIRM).eq('provider', 'logics')
+  }
+}
+
 describe.skipIf(!live)('433-A worksheet export (live)', () => {
   const env = { SUPABASE_URL, SUPABASE_SECRET_KEY } as unknown as Env
   let db: SupabaseClient
@@ -114,5 +127,32 @@ describe.skipIf(!live)('433-A worksheet export (live)', () => {
     const other = await seed({})
     expect((await call(`/api/admin/cases/${other.caseId}/evaluations/${runId}/worksheet`, { method: 'POST' })).status).toBe(404)
     expect(await worksheets(other.caseId)).toHaveLength(0)
-  })
+  }, 30_000)
+
+  it('pushes a worksheet through the request push route in fake mode and refuses another case worksheet', async () => {
+    const sent: unknown[] = []
+    const fake = { LOGICS_MODE: 'fake', JOBS: { send: async (m: unknown) => void sent.push(m) } } as unknown as Partial<Env>
+    const restore = await enableFirmWrites(db)
+    try {
+      const mine = await exported()
+      const theirs = await exported()
+      const pushPath = `/api/admin/requests/${mine.fx.requestId}/logics-push`
+      const push = (documentId: string) => call(pushPath, { method: 'POST', body: JSON.stringify({ document_ids: [documentId] }) }, fake)
+
+      const foreign = await push(theirs.first.body.document_id)
+      expect(foreign.status).toBe(422)
+      expect(foreign.body.error.code).toBe('not_pushable')
+
+      const ok = await push(mine.first.body.document_id)
+      expect(ok.status).toBe(202)
+      expect(ok.body.mode).toBe('fake')
+      const rows = (await db.from('logics_pushes').select('*').eq('request_id', mine.fx.requestId)).data!
+      expect(rows).toHaveLength(1)
+      expect(rows[0]).toMatchObject({ document_id: mine.first.body.document_id, state: 'queued', mode: 'fake', case_id: mine.fx.caseId })
+      expect(sent).toHaveLength(1)
+      process.stderr.write(`worksheet fake push: 202, push ${rows[0].id} queued\n`)
+    } finally {
+      await restore()
+    }
+  }, 30_000)
 })
