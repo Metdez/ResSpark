@@ -14,7 +14,6 @@ export interface PushableDoc {
   name: string
   size_bytes: number | null
   plan: PushPlan
-  pushAgain: boolean
 }
 
 const manual =(reason: string): PushPlan => ({ kind: 'manual', reason })

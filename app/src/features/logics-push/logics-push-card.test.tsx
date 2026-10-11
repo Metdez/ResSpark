@@ -154,7 +154,7 @@ describe('LogicsPushCard', () => {
     expect(options?.refetchInterval).toBe(pollInterval)
   })
 
-  it('shows a sent row with its id and Simulated, guarded by Push again', async () => {
+  it('shows a sent row with its id, Simulated and Already pushed, with no way to push it again', async () => {
     await render(ITEMS, ledger('fake', [push({})]))
     const r = row('small')
     expect(r.textContent).toContain('Sent')
@@ -162,7 +162,21 @@ describe('LogicsPushCard', () => {
     expect(r.textContent).toContain('Simulated')
     expect(r.textContent).toContain('Already pushed')
     expect(box('Select small.pdf').disabled).toBe(true)
-    await click(box('Push small.pdf again'))
+    expect(box('Push small.pdf again')).toBeNull()
+    expect(r.textContent).not.toContain('Push again')
+  })
+
+  it('D-04: an unknown row cannot be selected or pushed again; only the decision dialog resolves it', async () => {
+    await render(ITEMS, ledger('fake', [push({ state: 'unknown', logics_document_id: null })]))
+    const r = row('small')
+    expect(box('Select small.pdf').disabled).toBe(true)
+    expect(box('Push small.pdf again')).toBeNull()
+    expect(r.textContent).not.toContain('Already pushed')
+    expect(button('Needs your decision')).toBeTruthy()
+  })
+
+  it('a failed row can be pushed again fresh', async () => {
+    await render(ITEMS, ledger('fake', [push({ state: 'failed', logics_document_id: null, error_detail: 'Logics returned HTTP 500' })]))
     expect(box('Select small.pdf').disabled).toBe(false)
   })
 

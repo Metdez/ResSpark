@@ -51,7 +51,6 @@ export function PushSheet({
   const push = useCreatePush(requestId, caseId)
   const live = mode === 'live'
   const sendable = selected.filter((d) => d.plan.kind !== 'manual')
-  const again = sendable.filter((d) => d.pushAgain).map((d) => d.id)
   // The note preview uses the estimate; the consumer writes the real part count (D-07).
   const noteFiles = sendable.flatMap(({ name, plan }) => {
     if (plan.kind !== 'split') return [name]
@@ -63,7 +62,7 @@ export function PushSheet({
 
   const confirm = () =>
     push.mutate(
-      { document_ids: sendable.map((d) => d.id), ...(again.length > 0 && { push_again: again }) },
+      { document_ids: sendable.map((d) => d.id) },
       {
         onSuccess: () => {
           toast.success('Push started')

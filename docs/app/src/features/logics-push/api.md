@@ -15,8 +15,8 @@ Typed callers and response guards for the three admin push routes of `app/worker
 | `isLedgerResponse` | Exported guard for the ledger; `api()` throws `invalid_response` when it fails. |
 | `isCreated`, `isResolved` | Guards for the two POST answers. |
 | `fetchLedger(requestId)` | `GET /api/admin/requests/:id/logics-pushes`. |
-| `createPush(requestId, { document_ids, push_again? })` | `POST /api/admin/requests/:id/logics-push`. `push_again` lists documents that already have a `sent`/`unknown` row and that staff chose to send again. |
+| `createPush(requestId, { document_ids })` | `POST /api/admin/requests/:id/logics-push`. The browser never sends `push_again`: a `sent` document cannot be pushed twice (the fingerprint index answers 409 `already_pushed`) and an `unknown` one is resolved only through the dialog (D-04). The Worker route still accepts the field. |
 | `resolvePush(pushId, { action, logics_document_id? })` | `POST /api/admin/logics-pushes/:pushId/resolve` with `mark_sent` or `resend` (D-04). |
-| `PUSH_ERROR_COPY` | Staff copy per route refusal code (`logics_write_blocked`, `logics_no_credentials`, `already_pushed`, `not_pushable`, `no_items`, `not_resolvable`). For `logics_write_blocked` the sheet shows the Worker's own message instead, because it names the case (`Case 123 is not on the test allowlist`); the entry here is the fallback. Logics' own response bodies never reach the browser (T-05-22). |
+| `PUSH_ERROR_COPY` | Staff copy per route refusal code (`logics_write_blocked`, `logics_no_credentials`, `already_pushed` (`Already pushed to Logics. Refresh to see its state.`, shown when the ledger on screen was stale), `not_pushable`, `no_items`, `not_resolvable`). For `logics_write_blocked` the sheet shows the Worker's own message instead, because it names the case (`Case 123 is not on the test allowlist`); the entry here is the fallback. Logics' own response bodies never reach the browser (T-05-22). |
 
 All ids are passed through `encodeURIComponent`.

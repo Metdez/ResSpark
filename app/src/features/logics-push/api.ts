@@ -83,7 +83,7 @@ const id = encodeURIComponent
 export const fetchLedger = (requestId: string) =>
   api('/api/admin/requests/' + id(requestId) + '/logics-pushes', {}, isLedgerResponse)
 
-export const createPush = (requestId: string, body: { document_ids: string[]; push_again?: string[] }) =>
+export const createPush = (requestId: string, body: { document_ids: string[] }) =>
   api('/api/admin/requests/' + id(requestId) + '/logics-push', { method: 'POST', body: JSON.stringify(body) }, isCreated)
 
 export const resolvePush = (pushId: string, body: { action: 'mark_sent' | 'resend'; logics_document_id?: number }) =>
@@ -93,7 +93,7 @@ export const resolvePush = (pushId: string, body: { action: 'mark_sent' | 'resen
 export const PUSH_ERROR_COPY: Record<string, string> = {
   logics_write_blocked: 'Logics writes are turned off here.',
   logics_no_credentials: 'Logics is not connected. Add the Logics keys in Settings, then try again.',
-  already_pushed: 'Already pushed. Tick "Push again" to send it anyway.',
+  already_pushed: 'Already pushed to Logics. Refresh to see its state.',
   not_pushable: 'One of these files is no longer approved and ready. Refresh the page and try again.',
   no_items: 'Select at least one file to push.',
   not_resolvable: 'This file was already resolved. Refresh to see its state.',

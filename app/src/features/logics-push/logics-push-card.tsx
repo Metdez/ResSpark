@@ -20,8 +20,8 @@ const Heading = () => <h2 className='text-xl leading-tight font-semibold'>Push t
 interface Row extends PushableDoc {
   itemLabel: string
   pushes: LedgerPush[]
-  // Latest rows are sent/unknown: the duplicate guard needs "Push again" (PUSH-04).
-  done: boolean
+  // A sent file is never pushed again (the fingerprint index refuses it); an unknown one goes through the resolve dialog only (D-04).
+  sent: boolean
   disabled: boolean
 }
 
@@ -30,7 +30,6 @@ export function LogicsPushCard({ requestId, caseId }: { requestId: string; caseI
   const ledger = useLedger(requestId)
   const agent = useSession().data?.display_name ?? '…'
   const [selected, setSelected] = useState<Set<string>>(new Set())
-  const [again, setAgain] = useState<Set<string>>(new Set())
   const [pushing, setPushing] = useState<PushableDoc[] | null>(null)
   const [resolving, setResolving] = useState<LedgerPush | null>(null)
 
@@ -58,19 +57,18 @@ export function LogicsPushCard({ requestId, caseId }: { requestId: string; caseI
         .map((d) => {
           const pushes = ledgerByDoc.get(d.id) ?? []
           const inFlight = pushes.some((p) => p.state === 'queued' || p.state === 'sending')
-          const done = !inFlight && pushes.some((p) => p.state === 'sent' || p.state === 'unknown')
+          const sent = pushes.some((p) => p.state === 'sent')
+          const unknown = pushes.some((p) => p.state === 'unknown')
           const plan = pushPlan({ mime: d.mime, size_bytes: d.size_bytes, name: d.name })
-          const pushAgain = done && again.has(d.id)
           return {
             id: d.id,
             name: d.name,
             size_bytes: d.size_bytes,
             plan,
-            pushAgain,
             itemLabel: item.label,
             pushes,
-            done,
-            disabled: plan.kind === 'manual' || inFlight || (done && !pushAgain),
+            sent,
+            disabled: plan.kind === 'manual' || inFlight || sent || unknown,
           }
         })
     )
@@ -123,7 +121,6 @@ export function LogicsPushCard({ requestId, caseId }: { requestId: string; caseI
                   row={r}
                   checked={selected.has(r.id) && !r.disabled}
                   onCheck={(on) => setSelected((s) => toggle(s, r.id, on))}
-                  onAgain={(on) => setAgain((s) => toggle(s, r.id, on))}
                   onResolve={setResolving}
                 />
               ))}
@@ -147,7 +144,6 @@ export function LogicsPushCard({ requestId, caseId }: { requestId: string; caseI
           onDone={() => {
             setPushing(null)
             setSelected(new Set())
-            setAgain(new Set())
           }}
         />
       )}
@@ -167,13 +163,11 @@ function DocRow({
   row: r,
   checked,
   onCheck,
-  onAgain,
   onResolve,
 }: {
   row: Row
   checked: boolean
   onCheck(on: boolean): void
-  onAgain(on: boolean): void
   onResolve(push: LedgerPush): void
 }) {
   return (
@@ -195,19 +189,7 @@ function DocRow({
         <PushChip key={p.id} push={p} onResolve={onResolve} />
       ))}
       {r.pushes.some((p) => p.mode === 'fake') && <StatusBadge tone='muted' label='Simulated' />}
-      {r.done && (
-        <span className='flex items-center gap-2 text-sm text-muted-foreground'>
-          Already pushed
-          <label className='flex items-center gap-1'>
-            <Checkbox
-              aria-label={`Push ${r.name} again`}
-              checked={r.pushAgain}
-              onCheckedChange={(v) => onAgain(v === true)}
-            />
-            Push again
-          </label>
-        </span>
-      )}
+      {r.sent && <span className='text-sm text-muted-foreground'>Already pushed</span>}
     </div>
   )
 }

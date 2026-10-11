@@ -29,7 +29,7 @@ function usePushMutation<V, R>(requestId: string, caseId: string, mutationFn: (v
 }
 
 export const useCreatePush = (requestId: string, caseId: string) =>
-  usePushMutation(requestId, caseId, (body: { document_ids: string[]; push_again?: string[] }) =>
+  usePushMutation(requestId, caseId, (body: { document_ids: string[] }) =>
     createPush(requestId, body)
   )
 

@@ -7,7 +7,7 @@ Pure helpers that tell staff, before they click, what pushing a file to Logics w
 | `LOGICS_PART_LIMIT_BYTES` | `5_767_168` (5.5 MiB). Mirrors `LOGICS_MAX_PART_BYTES` in `app/worker/src/integrations/logics/write-types.ts`; `plan.test.ts` imports the Worker constant and asserts they are equal, so the two cannot drift. |
 | `LOGICS_MAX_SOURCE_BYTES` | `41_943_040` (40 MiB). Anything larger is not split automatically. |
 | `PushPlan` | `single`, `split` (with `estimatedParts`), `image_to_pdf`, or `manual` (with a staff-facing `reason`). |
-| `PushableDoc` | One approved, ready document as the push card and sheet see it: `id`, `name`, `size_bytes`, its `plan`, and `pushAgain` (staff ticked `Push again`). |
+| `PushableDoc` | One approved, ready document as the push card and sheet see it: `id`, `name`, `size_bytes`, and its `plan`. |
 | `manual(reason)` | Small constructor for the `manual` case. |
 | `pushPlan(doc)` | Checks in this order: no size (`null` or `0`) → `manual` `File not finished uploading`; HEIC/HEIF by mime (`image/heic`, `image/heif`) or by extension (`.heic`, `.heif`, case-insensitive, so the extension wins over a wrong `image/jpeg` mime) → `manual` `Ask the client to re-upload as JPG or PDF.`; over 40 MiB → `manual` `over 40 MB`; a mime that is not PDF, JPEG, or PNG → `manual` `Unsupported file type`; over the part limit → `split` with `ceil(size / limit)` parts (an image over the limit splits too, because one photo must fit in one part); otherwise `image_to_pdf` for JPEG/PNG and `single` for PDF. |
 | `planLabel(p)` | The row text: `Sends as 1 file`, `Will split into about N parts`, `Converted to PDF`, or `Needs manual compression — {reason}`. |

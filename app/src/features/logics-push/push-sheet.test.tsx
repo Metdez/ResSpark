@@ -11,12 +11,11 @@ import { PushSheet } from './push-sheet'
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }))
 vi.mock('./api', async (orig) => ({ ...(await orig<typeof import('./api')>()), createPush: vi.fn() }))
 
-const doc = (id: string, name: string, mime: string, size: number, pushAgain = false): PushableDoc => ({
+const doc = (id: string, name: string, mime: string, size: number): PushableDoc => ({
   id,
   name,
   size_bytes: size,
   plan: pushPlan({ mime, size_bytes: size, name }),
-  pushAgain,
 })
 const SELECTED = [
   doc('pdf1', 'stmt.pdf', 'application/pdf', 2048),
@@ -91,13 +90,6 @@ describe('PushSheet', () => {
     expect(onDone).toHaveBeenCalled()
   })
 
-  it('forwards push_again ids', async () => {
-    vi.mocked(api.createPush).mockResolvedValue({ batch_id: 'b1', push_ids: ['p1'], mode: 'fake' })
-    const sheet = await render('fake', [doc('pdf1', 'stmt.pdf', 'application/pdf', 2048, true)])
-    await click(button(sheet, 'Push 1 file'))
-    expect(api.createPush).toHaveBeenCalledWith('r1', { document_ids: ['pdf1'], push_again: ['pdf1'] })
-  })
-
   it('shows the server message when writes are blocked', async () => {
     vi.mocked(api.createPush).mockRejectedValue(
       new ApiError(403, 'logics_write_blocked', 'Case 123 is not on the test allowlist')
@@ -112,7 +104,7 @@ describe('PushSheet', () => {
     vi.mocked(api.createPush).mockRejectedValue(new ApiError(409, 'already_pushed', 'already_pushed'))
     const sheet = await render('fake')
     await click(button(sheet, 'Push 2 files'))
-    expect(sheet.textContent).toContain('Already pushed. Tick "Push again" to send it anyway.')
+    expect(sheet.textContent).toContain('Already pushed to Logics. Refresh to see its state.')
   })
 
   it('warns about a real write in live mode', async () => {
