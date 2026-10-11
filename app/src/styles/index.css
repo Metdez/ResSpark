@@ -93,3 +93,12 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Unlayered so they beat Tailwind utilities: push the fixed sidebar and sticky header below the 36px SANDBOX banner */
+body:has([data-slot='sandbox-banner']) [data-slot='sidebar-container'] {
+  top: 2.25rem;
+  height: calc(100svh - 2.25rem);
+}
+body:has([data-slot='sandbox-banner']) .header-fixed {
+  top: 2.25rem;
+}

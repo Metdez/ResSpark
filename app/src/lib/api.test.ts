@@ -9,12 +9,18 @@ vi.mock('@/lib/supabase', () => ({
 const session = (token: string | null) =>
   vi
     .mocked(supabase.auth.getSession)
-    .mockResolvedValue({ data: { session: token ? { access_token: token } : null } } as never)
+    .mockResolvedValue({
+      data: { session: token ? { access_token: token } : null },
+    } as never)
 
 const response = (ok: boolean, status: number, body: unknown) =>
   vi.fn().mockResolvedValue({ ok, status, json: async () => body })
 
-const config = { app_env: 'sandbox', logics_write_enabled: false, app_name: 'ResSpark' }
+const config = {
+  app_env: 'sandbox',
+  logics_write_enabled: false,
+  app_name: 'ResSpark',
+}
 
 describe('api', () => {
   afterEach(() => vi.unstubAllGlobals())
@@ -49,9 +55,15 @@ describe('api', () => {
       response(false, 401, { error: { code: 'unauthorized', message: 'x' } })
     )
 
-    const error = await api('/api/config', {}, isConfig).catch((e: unknown) => e)
+    const error = await api('/api/config', {}, isConfig).catch(
+      (e: unknown) => e
+    )
     expect(error).toBeInstanceOf(ApiError)
-    expect(error).toMatchObject({ status: 401, code: 'unauthorized', message: 'x' })
+    expect(error).toMatchObject({
+      status: 401,
+      code: 'unauthorized',
+      message: 'x',
+    })
   })
 
   it('maps a non-2xx without an envelope to http_error', async () => {

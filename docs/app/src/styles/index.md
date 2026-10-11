@@ -15,3 +15,4 @@ reduced-motion block from the UI-SPEC accessibility floor.
 | 41-58 | Utilities: `container` (centered, 2 rem inline padding), `no-scrollbar`, `faded-bottom` gradient for scroll areas. |
 | 60-87 | Radix `Collapsible` open/close height animations (sidebar nav groups). |
 | 89-95 | `prefers-reduced-motion: reduce` collapses every animation and transition to 0.01 ms (WCAG 2.2 AA floor). |
+| 97-104 | Plan 03 SANDBOX offset. When a `[data-slot='sandbox-banner']` is on the page, the fixed sidebar container moves down 2.25 rem (36 px) and shrinks by the same amount, and the sticky `.header-fixed` header sticks at 2.25 rem. The rules are unlayered so they beat Tailwind's utility layer without editing the vendored `sidebar.tsx`/`header.tsx`. |

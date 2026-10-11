@@ -24,12 +24,48 @@ export const isConfig = (v: unknown): v is AppConfig =>
   typeof v.logics_write_enabled === 'boolean' &&
   typeof v.app_name === 'string'
 
-export const isOk = (v: unknown): v is { ok: true } => isObject(v) && v.ok === true
+export const isOk = (v: unknown): v is { ok: true } =>
+  isObject(v) && v.ok === true
+
+// Lazy import: the deployed SPA has no VITE_SUPABASE_* yet, and supabase.ts throws at load.
+// Without a client there is no session, so public routes like /api/config still work.
+async function accessToken(): Promise<string | undefined> {
+  try {
+    const { supabase } = await import('@/lib/supabase')
+    const { data } = await supabase.auth.getSession()
+    return data.session?.access_token
+  } catch {
+    return undefined
+  }
+}
 
 export async function api<T>(
-  _path: string,
-  _init: RequestInit & { headers?: Record<string, string> },
-  _guard: (v: unknown) => v is T
+  path: string,
+  init: RequestInit & { headers?: Record<string, string> },
+  guard: (v: unknown) => v is T
 ): Promise<T> {
-  throw new Error('not_implemented')
+  const token = await accessToken()
+  const res = await fetch(path, {
+    ...init,
+    headers: {
+      'content-type': 'application/json',
+      ...(token ? { authorization: `Bearer ${token}` } : {}),
+      ...init.headers,
+    },
+  })
+  const body: unknown = await res.json().catch(() => undefined)
+  if (!res.ok) {
+    const err = isObject(body) && isObject(body.error) ? body.error : undefined
+    if (
+      err &&
+      typeof err.code === 'string' &&
+      typeof err.message === 'string'
+    ) {
+      throw new ApiError(res.status, err.code, err.message)
+    }
+    throw new ApiError(res.status, 'http_error', 'Request failed')
+  }
+  if (!guard(body))
+    throw new ApiError(500, 'invalid_response', 'Invalid response')
+  return body
 }

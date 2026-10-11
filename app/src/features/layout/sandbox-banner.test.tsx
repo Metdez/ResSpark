@@ -32,7 +32,11 @@ async function render(fetchImpl: () => Promise<unknown>) {
   return container
 }
 
-const json = (body: unknown) => async () => ({ ok: true, status: 200, json: async () => body })
+const json = (body: unknown) => async () => ({
+  ok: true,
+  status: 200,
+  json: async () => body,
+})
 
 describe('SandboxBanner', () => {
   afterEach(() => {
@@ -42,7 +46,13 @@ describe('SandboxBanner', () => {
   })
 
   it('shows SANDBOX and the fixed copy when app_env is sandbox, with no close control', async () => {
-    const el = await render(json({ app_env: 'sandbox', logics_write_enabled: false, app_name: 'ResSpark' }))
+    const el = await render(
+      json({
+        app_env: 'sandbox',
+        logics_write_enabled: false,
+        app_name: 'ResSpark',
+      })
+    )
     expect(el.textContent).toContain('SANDBOX')
     expect(el.textContent).toContain(COPY)
     expect(el.querySelector('button')).toBeNull()
@@ -59,7 +69,13 @@ describe('SandboxBanner', () => {
   })
 
   it('is absent only when app_env is production', async () => {
-    const el = await render(json({ app_env: 'production', logics_write_enabled: false, app_name: 'ResSpark' }))
+    const el = await render(
+      json({
+        app_env: 'production',
+        logics_write_enabled: false,
+        app_name: 'ResSpark',
+      })
+    )
     expect(el.textContent).toBe('')
   })
 })
