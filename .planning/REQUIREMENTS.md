@@ -11,7 +11,7 @@ Requirements for the first release. Each maps to a roadmap phase. The Oct 12 202
 
 - [x] **PLAT-01**: App is deployed to a public Cloudflare Workers URL that serves the SPA and the `/api/*` and `/webhooks/*` routes from one deploy
 - [x] **PLAT-02**: Every Supabase table the app uses has RLS enabled with deny-by-default grants, and an automated test proves the anon role returns zero rows from every table
-- [ ] **PLAT-03**: The browser never holds a secret or writes to Postgres directly; every mutation goes through the Worker, and integration credentials exist only as Worker secrets
+- [x] **PLAT-03**: The browser never holds a secret or writes to Postgres directly; every mutation goes through the Worker, and integration credentials exist only as Worker secrets
 - [ ] **PLAT-04**: Every staff and client action (lookup, send, open, connect, upload, approve, reject, push, sign) writes an event row with actor, timestamp, and case/request id
 - [x] **PLAT-05**: Demo safety: a `LOGICS_WRITE_ENABLED` flag, a code-enforced test-CaseID allowlist, and a visible SANDBOX banner make writes to the real Logics tenant impossible when the flag is off
 - [x] **PLAT-06**: Repo hygiene: `.gitignore` ignores all `.env` files, `src/frontend/dist/` is untracked, Node engines is `>=22.12`, and one package manager with one lockfile is used
@@ -166,7 +166,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 |-------------|-------|--------|
 | PLAT-01 | Phase 1 | Complete |
 | PLAT-02 | Phase 1 | Complete |
-| PLAT-03 | Phase 1 | Pending |
+| PLAT-03 | Phase 1 | Complete |
 | PLAT-04 | Phase 1 | Pending |
 | PLAT-05 | Phase 1 | Complete |
 | PLAT-06 | Phase 1 | Complete |

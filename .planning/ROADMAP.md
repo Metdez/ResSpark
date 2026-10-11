@@ -43,7 +43,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. Signing in and signing out each appear as an event row with actor, timestamp, and id, on the same event-writing path every later phase's actions must use (PLAT-04)
   5. A fresh clone ignores every `.env` file, tracks no `dist/` folder, uses one package manager and one lockfile on Node 22.12 or newer, and a failed request's log line contains no tokens, document bytes, or PII (PLAT-06, PLAT-08)
 
-**Plans:** 5/8 plans executed
+**Plans:** 6/8 plans executed
 
 Plans:
 - [x] 01-01-PLAN.md — Repo hygiene first: `.gitignore`, pnpm workspace, engines, 500-line gate, hygiene-check (PLAT-06)
@@ -53,7 +53,7 @@ Plans:
 - [x] 01-05-PLAN.md — Worker secrets over stdin, `db/` module (`createAdminClient`, `logEvent`, `getStaffProfile`), two demo staff users, sign-up disabled (PLAT-03, PLAT-04, PLAT-07)
 - [ ] 01-06-PLAN.md — `jose` JWT verification, `/api/admin/session` events, SPA sign-in / guard / sign-out, authenticated smoke (PLAT-04, PLAT-07)
 - [ ] 01-07-PLAN.md — Client-link HMAC token + signed-cookie exchange, uniform 404, per-IP rate limit, `/c/` client shell (PLAT-08, PLAT-07)
-- [ ] 01-08-PLAN.md — Spikes (c) and (e) run, (a)(b)(d)(f) recorded, reserved secret names, operator README
+- [x] 01-08-PLAN.md — Spikes (c) and (e) run, (a)(b)(d)(f) recorded, reserved secret names, operator README
 
 **Scope notes**: New React + Vite + shadcn SPA forked from `satnaing/shadcn-admin` (Clerk, axios, faker stripped) with two route trees (`/admin/*`, `/c/:token`); Hono Worker on Workers Paid with Queue, DLQ, and cron, serving the SPA and API from one deploy; additive Supabase migrations only (the 0001 baseline is already applied) for firms, staff, cases, requests, items, links, connections, secrets, webhook_events, logics_pushes, events, consents, and retention columns, with RLS, grants, and RPCs; HMAC token and HttpOnly-cookie design; reconcile the 28 versus 32 question count; run the day-one spikes (Vitest 5 with the Workers plugin, `@supabase/server` Hono adapter, signed TUS upload from an unauthenticated browser, Cloudflare Email versus Resend, Truv `multiple.employments`, and confirming Logics scopes plus `FileCategoryID` and `ActivityType` values with Andrew).
 **UI hint**: yes
@@ -190,6 +190,7 @@ Plans:
 - [ ] 06-06-PLAN.md — Full-bleed signing route with lazy `@docuseal/react`, consent sheet, deep link `?step=`, DocuSeal CSP hosts, Playwright 3-tap/2-tap proof at 390×844
 - [ ] 06-07-PLAN.md — Staff signature card: status chip, Test badge, copy/email signing link, Refresh, IRS 2848/8821 note, e-sign timeline labels
 - [ ] 06-08-PLAN.md — Deployed `--esign-flow` smoke, full gate, README demo script + USER ACTION, runbooks, opt-in DocuSeal contract test, Anvil comparison, real-device checks
+
 **Scope notes**: Smarty US Autocomplete Pro; DocuSeal used as a service (cloud API or unmodified container, never forked because it is AGPL) with Anvil evaluated against the same acceptance test; DocuSeal `form.completed` verifier plugs into the Phase 4 webhook route; which forms may be e-signed needs ValorTax counsel input, and the official Form 433-A is not signed in the portal.
 **UI hint**: yes
 
@@ -236,7 +237,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation & Staff Sign-In | 5/8 | In Progress | - |
+| 1. Foundation & Staff Sign-In | 6/8 | In Progress | - |
 | 2. Find the Client & Send the Link | 1/8 | In Progress | - |
 | 3. Uploads, Review & Live Status | 0/TBD | Not started | - |
 | 4. Connect Payroll & Bank | 0/TBD | Not started | - |

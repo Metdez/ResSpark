@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 01
 current_phase_name: Foundation & Staff Sign-In
 status: executing
-stopped_at: Completed 01-05-PLAN.md
-last_updated: "2026-10-11T05:20:52.276Z"
+stopped_at: Completed 01-08-PLAN.md
+last_updated: "2026-10-11T05:35:47.520Z"
 last_activity: 2026-10-10
 last_activity_desc: Phase 01 execution started
-state_head: fb71f113ab46646a7ef2adba5d3a8113ab14f0f2
+state_head: 1e0b78df501926915420552266fe2c31c3fcf4dd
 progress:
   total_phases: 8
   completed_phases: 0
-  total_plans: 41
-  completed_plans: 7
+  total_plans: 55
+  completed_plans: 9
   percent: 0
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-10-10)
 ## Current Position
 
 Phase: 01 (Foundation & Staff Sign-In) — EXECUTING
-Plan: 6 of 8
+Plan: 8 of 8
 Status: Ready to execute
 Last activity: 2026-10-10 — Phase 01 execution started
 
@@ -61,6 +61,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01 P03 | 52min | 3 tasks | 43 files |
 | Phase 01 P04 | 23min | 2 tasks | 13 files |
 | Phase 01 P05 | 27 min | 3 tasks | 31 files |
+| Phase 01 P08 | 9min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -90,6 +91,8 @@ Recent decisions affecting current work:
 - [Phase 01]: 01-04: question contract is 28 ids (reconciled 28=28); the 32 in CLAUDE.md/PROJECT.md is stale, pending user decision
 - [Phase 01]: provision-secrets reads sb_secret_ with --reveal and accepts only the full key shape; CLIENT_LINK_HMAC_KEY is kept on re-run
 - [Phase 01]: create-staff re-applies app_metadata on existing users; lib/dev-vars.mjs is the only writer of app/.dev.vars
+- [Phase 01]: 01-08: Phase 3 uploads use Worker-minted createSignedUploadUrl + no-session publishable client: uploadToSignedUrl <=6 MiB, TUS on <ref>.storage.supabase.co/storage/v1/upload/resumable/sign with x-signature above (spike c PASS/PASS)
+- [Phase 01]: 01-08: Phase 2 email via Resend over fetch; RESEND_API_KEY/MAIL_FROM reserved, not in secrets.required until a key exists (spike d)
 
 ### Pending Todos
 
@@ -118,6 +121,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-10-11T05:20:52.158Z
-Stopped at: Completed 01-05-PLAN.md
+Last session: 2026-10-11T05:35:27.377Z
+Stopped at: Completed 01-08-PLAN.md
 Resume file: None
