@@ -4,6 +4,7 @@ import { requestId, type RequestIdVariables } from 'hono/request-id'
 import { secureHeaders } from 'hono/secure-headers'
 import { logger } from './log/logger'
 import { type StaffCtx } from './middleware/staff-auth'
+import { adminIntegrationsRoute } from './routes/admin-integrations'
 import { adminLookupRoute } from './routes/admin-lookup'
 import { adminSessionRoute } from './routes/admin-session'
 import { clientLinkRoute } from './routes/client-link'
@@ -38,6 +39,7 @@ app.onError((err, c) => {
 
 app.route('/api/config', configRoute)
 app.route('/api/admin/session', adminSessionRoute)
+app.route('/api/admin/integrations', adminIntegrationsRoute)
 // Last of the /api/admin mounts: its '*' staffAuth would otherwise run again on sibling admin routes.
 app.route('/api/admin', adminLookupRoute)
 app.route('/c', clientLinkRoute)
