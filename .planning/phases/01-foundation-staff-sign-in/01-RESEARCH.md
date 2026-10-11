@@ -786,13 +786,13 @@ COMMIT;
 | A-9 | Supabase Auth sign-ups are currently enabled on the project (default) | Runtime State | None if already disabled; the push is idempotent |
 | A-10 | Free-plan 10 ms CPU is enough for Phase 1 handlers (JWT verify + 1–2 Supabase calls) | Q2 | 1102 CPU errors in prod; the Paid checkpoint covers it |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Upgrade to Workers Paid before the Oct 12 demo?** What we know: account is Free (F-1); Email Sending and >10 ms CPU need Paid ($5/mo). Recommendation: `checkpoint:human-verify` in the first plan; proceed either way (Queues/cron work on Free).
-2. **Who creates the `sb_secret_` key and runs `wrangler secret put`?** What we know: 0 secrets exist; the Bash guard blocks reading `.env`. Recommendation: a checkpoint task listing the three `wrangler secret put` commands and the `.dev.vars` lines (names only).
-3. **Is the 500-line `ui/**` exclusion acceptable (A-3)?** Recommendation: ask in the first plan's checkpoint; default to exclusion.
-4. **Logics scopes/`FileCategoryID`/`ActivityType` (spike f)** — question for Andrew; record in the plan summary, no code.
-5. **Truv keys (spike e)** — blocked until secrets exist; record "blocked: no Truv keys" unless provided.
+1. RESOLVED: CONTEXT D-06 update — the account is on Workers Paid (verified via the subscriptions API 2026-10-10); no checkpoint needed. **Upgrade to Workers Paid before the Oct 12 demo?** What we know: account is Free (F-1); Email Sending and >10 ms CPU need Paid ($5/mo). Recommendation: `checkpoint:human-verify` in the first plan; proceed either way (Queues/cron work on Free).
+2. RESOLVED: Plan 05 `app/scripts/provision-secrets.mjs` fetches the key via `supabase projects api-keys` and pipes values into `wrangler secret put` over stdin; a missing key degrades to a USER ACTION REQUIRED note. **Who creates the `sb_secret_` key and runs `wrangler secret put`?** What we know: 0 secrets exist; the Bash guard blocks reading `.env`. Recommendation: a checkpoint task listing the three `wrangler secret put` commands and the `.dev.vars` lines (names only).
+3. RESOLVED: Plan 01 excludes vendored `app/src/components/ui/**` from the 500-line gate (CLAUDE.md exempts vendored code). **Is the 500-line `ui/**` exclusion acceptable (A-3)?** Recommendation: ask in the first plan's checkpoint; default to exclusion.
+4. RESOLVED (as a recorded question for Andrew, Plan 08 spike f; Phase 5 research defaults `ActivityType` to `General` and omits `FileCategoryID`). **Logics scopes/`FileCategoryID`/`ActivityType` (spike f)** — question for Andrew; record in the plan summary, no code.
+5. RESOLVED (Plan 08 spike e records "blocked: no Truv keys" unless secrets exist). **Truv keys (spike e)** — blocked until secrets exist; record "blocked: no Truv keys" unless provided.
 
 ## Environment Availability
 

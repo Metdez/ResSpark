@@ -2,7 +2,7 @@
 
 ## What This Is
 
-ResSpark is a two-sided web platform for tax-resolution firms (first customer: ValorTax, who use IRS Logics as their case CRM). Staff log in to an admin portal, look up an existing Logics case by case ID, phone, or email, confirm the client, and send the client a link. The client opens that link on their phone with no account or password, and in a guided flow connects their bank (Plaid, with Teller as a drop-in alternative), connects their payroll provider (Truv), confirms their address, uploads any remaining documents, and e-signs forms. Everything the client provides lands in the admin case view with live status, and staff push the documents straight into the Logics case with one click. The existing ResSpark screening engine (32-question intake, Form 433-A math, IRS standards, resolution-path determination) becomes the "433-A pre-population" view that staff can review.
+ResSpark is a two-sided web platform for tax-resolution firms (first customer: ValorTax, who use IRS Logics as their case CRM). Staff log in to an admin portal, look up an existing Logics case by case ID, phone, or email, confirm the client, and send the client a link. The client opens that link on their phone with no account or password, and in a guided flow connects their bank (Plaid, with Teller as a drop-in alternative), connects their payroll provider (Truv), confirms their address, uploads any remaining documents, and e-signs forms. Everything the client provides lands in the admin case view with live status, and staff push the documents straight into the Logics case with one click. The existing ResSpark screening engine (28-question intake, Form 433-A math, IRS standards, resolution-path determination) becomes the "433-A pre-population" view that staff can review.
 
 ## Core Value
 
@@ -21,7 +21,7 @@ A case manager can send a client one link and get bank statements, pay stubs, an
 
 Inferred from the existing codebase (see `.planning/codebase/`). These work today and are relied upon:
 
-- ✓ 32-question intake definition with applicability rules and typed validation (`src/questions.py`, `src/frontend/src/questions.ts`, `src/intake_workflow.py`) — existing
+- ✓ 28-question intake definition (the docs previously said 32; the code and database both have 28) with applicability rules and typed validation (`src/questions.py`, `src/frontend/src/questions.ts`, `src/intake_workflow.py`) — existing
 - ✓ Document-request derivation from answers, e.g. two vehicles produce two vehicle document requests (`src/intake_workflow.py`, `src/frontend/src/document-upload/requests.ts`) — existing
 - ✓ Canonical `FinancialData` dataclass mirroring Form 433-A line items, with NULL-means-unknown semantics (`src/financial_data.py`) — existing
 - ✓ Deterministic IRS screening math: gross monthly income, allowable expenses from IRS standards, net disposable income, net realizable equity, compliance gate, resolution-path selection (`src/determination.py`) — existing, 27 Python tests pass
@@ -50,7 +50,7 @@ Client portal (client side):
 - [ ] Client confirms their home address with Smarty autocomplete, which yields a USPS-validated address and county so county selection and IRS local standards need no manual step
 - [ ] Client uploads documents by drag-drop or camera roll per requested item, with progress, resumable on reload
 - [ ] Client e-signs requested forms (DocuSeal) from the same link, mobile-friendly, with a copyable signing link for the agent
-- [ ] Client answers the 32 intake questions (existing contract) in the redesigned UI; questions answerable from connected data or Logics case data are pre-filled
+- [ ] Client answers the 28 intake questions (existing contract) in the redesigned UI; questions answerable from connected data or Logics case data are pre-filled
 
 Platform:
 - [ ] All integration calls (Logics, Plaid, Truv, DocuSeal, Smarty, OpenRouter) run server-side; no secrets reach the browser
