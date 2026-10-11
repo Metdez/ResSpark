@@ -204,6 +204,23 @@ const checks = [
       expectPrivacyHeaders(res)
     },
   },
+  // --- Plan 02-07: client portal API without a cookie ---
+  {
+    name: '/api/c 401 no_session',
+    run: async () => {
+      const res = await fetch(`${base}/api/c/state`)
+      expectPrivacyHeaders(res)
+      await expectJson(res, 401, (b) => isObject(b.error) && b.error.code === 'no_session')
+    },
+  },
+  {
+    name: '/api/c start 401',
+    run: async () => {
+      const res = await fetch(`${base}/api/c/start`, { method: 'POST', headers: { 'x-requested-with': 'ResSpark' } })
+      expectPrivacyHeaders(res)
+      await expectJson(res, 401, (b) => isObject(b.error) && b.error.code === 'no_session')
+    },
+  },
   { name: 'auth /c/ exchange', auth: true, run: linkExchange },
   {
     name: 'auth signed_in',

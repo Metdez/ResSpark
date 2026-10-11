@@ -37,6 +37,20 @@ Eight cases: missing cookie, an altered signature character (ten characters from
 - The exchange plus `GET /api/c/state` never call `openRequest`.
 - Logger lines include the route patterns `/api/c/state` and `/api/c/start`, and no line contains the cookie value.
 
+## `POST /api/c/heartbeat`
+
+- With `{ last_step: 'bank_connect', user_agent_class: 'phone', link_id: LINK2 }` → 200 `{ ok: true }`, privacy headers, and `upsertClientSession` called with `LINK` (the body's `link_id` is ignored), `last_error: null`.
+- `{}` → 200 with all three fields `null`. Exactly 64 and 200 characters pass.
+- 400 `bad_request` with no write for: `last_step` of 65 characters, `last_error` of 201, `user_agent_class: 'watch'`, a numeric `last_step`, and an array body.
+- No header → 403 `bad_origin`; no cookie → 401 `no_session`; neither writes.
+- After the window reset, 10 heartbeats succeed, the 11th is 429 `rate_limited` with privacy headers, and `upsertClientSession` ran exactly 10 times. A second link (`LINK2`) is still served.
+- No regression: the 21st `GET /c/:token` from one IP inside the window is still 429.
+
+## `allowInWindow`
+
+- With limit 3, three calls pass and the fourth fails; another key is independent.
+- With `Date.now` mocked, a hit older than the window (60 001 ms later) is forgotten.
+
 ## `db/portal` (real module)
 
 Runs the real module through `vi.importActual` against a mocked `createAdminClient`:
