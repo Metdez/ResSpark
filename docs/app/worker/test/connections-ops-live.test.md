@@ -24,3 +24,13 @@ Other suites may own rows that match the same queries, so each assertion checks 
 | `pendingWithToken` | pending bank, 7 h old, has a secret | not expired |
 | `dueOlder`, `dueNow` | Plaid, `remove_after` 2 days ago and 1 s ago, with a secret | removal candidates, `dueOlder` first |
 | `notDue`, `dueNoSecret`, `dueRemoved`, `dueTruv` | future date / no secret / already removed / Truv | not candidates |
+
+## Staff read model
+
+A second fixture request holds two Plaid connections. The `older` one is back-dated an hour. The `newer` one has `transactions_update_status: HISTORICAL_UPDATE_COMPLETE`, two accounts (masks `2222` and `1111`), one `not_supported` cell for last month on the `1111` account, and four transactions. `t1` and `t2` are 5 days old with the same date, `t3` is 40 days old, and `t4` is 400 days old.
+
+| Test | Proves |
+|------|--------|
+| firm scope | `firmOwnsRequest` and `getFirmConnection` return true and the row for the test firm, and false and `null` for firm `...0001`. |
+| `listRequestConnections` | The newest connection comes first. Accounts are ordered `1111`, `2222`. There are six month cells, with the stored `not_supported` cell first and the rest `missing`. `transactions` is `{ count: 4, update_status: 'historical' }`. Plaid capabilities are present. Another firm gets `[]`. |
+| `listConnectionTransactions` | A 3-month window returns `t1`, `t2`, `t3` in that order (the same-date tie is broken by `plaid_transaction_id`) with `total: 3`. `t4` is excluded. Amounts are numbers. Another firm gets `null`. |

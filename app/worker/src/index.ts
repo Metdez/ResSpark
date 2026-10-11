@@ -7,6 +7,7 @@ import { scheduled } from './cron'
 import { queue, type Job } from './jobs/index'
 import { logger } from './log/logger'
 import { type StaffCtx } from './middleware/staff-auth'
+import { adminConnectionsRoute } from './routes/admin-connections'
 import { adminEventsRoute } from './routes/admin-events'
 import { adminIntegrationsRoute } from './routes/admin-integrations'
 import { adminLookupRoute } from './routes/admin-lookup'
@@ -56,6 +57,7 @@ app.route('/api/admin/requests', adminRequestsRoute)
 app.route('/api/admin/requests', adminRequestActionsRoute)
 app.route('/api/admin', adminReviewRoute)
 app.route('/api/admin', adminEventsRoute)
+app.route('/api/admin', adminConnectionsRoute)
 // Last of the /api/admin mounts: its '*' staffAuth would otherwise run again on sibling admin routes.
 app.route('/api/admin', adminLookupRoute)
 app.route('/c', clientLinkRoute)
