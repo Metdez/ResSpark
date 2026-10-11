@@ -47,7 +47,9 @@ describe('startSignature', () => {
     const body = createBody()
     expect(body).toMatchObject({ send_email: false, send_sms: false, expire_at: FUTURE })
     expect(body.submitters[0]).toMatchObject({ send_email: false, external_id: 'I1', role: 'Client' })
-    expect(vi.mocked(db.updateConnection).mock.calls[0][2]).toMatchObject({ external_id: '4001', link_ref: 'fixtureSlug1' })
+    expect(vi.mocked(db.updateConnection).mock.calls[0][2]).toMatchObject({ external_id: '4001' })
+    expect(vi.mocked(db.updateConnection).mock.calls[0][2]).not.toHaveProperty('link_ref')
+    expect(JSON.stringify(vi.mocked(db.updateConnection).mock.calls[0][2])).not.toContain('fixtureSlug1')
   })
 
   it('a two-role template is template_invalid and writes no row', async () => {

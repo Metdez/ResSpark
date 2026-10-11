@@ -119,7 +119,7 @@ describe.skipIf(!live)('esign start (live; needs SUPABASE_URL, SUPABASE_SECRET_K
       kind: 'signature',
       status: 'pending',
       external_id: '4001',
-      link_ref: 'fixtureSlug1',
+      link_ref: null,
       data: { template_key: 'engagement_letter', template_id: 1001, submitter_id: 5001, env: 'test' },
     })
     expect(Date.parse(rows[0].data.expire_at)).toBe(Date.parse(link.expires_at))

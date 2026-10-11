@@ -8,7 +8,7 @@ Setup: `seedPortalItems({ kinds: ['signature'], logicsCaseId: 900002 })` (test f
 |------|--------|
 | refuses before consent | 409 `consent_required`, zero vendor calls, zero connections |
 | records the esign consent | one `consents` row `esign`/`esign-v1`, one `consent.esign` event |
-| creates row then submission | 200 `{ connection_id, embed_src }`; body has `send_email`/`send_sms` false, `expire_at` = link expiry, one `Client` submitter with name, email, item id, and only `Full name` and `Case ID` prefilled read-only (the fixture template has no `Address`); every call has `x-auth-token`; the row is `docuseal`/`signature`/`pending` with submission id and slug; one `connection.started`; no event or row data contains the embed URL or slug; the start latency is printed |
+| creates row then submission | 200 `{ connection_id, embed_src }`; body has `send_email`/`send_sms` false, `expire_at` = link expiry, one `Client` submitter with name, email, item id, and only `Full name` and `Case ID` prefilled read-only (the fixture template has no `Address`); every call has `x-auth-token`; the row is `docuseal`/`signature`/`pending` with submission id and `link_ref` null (the slug is never stored); one `connection.started`; no event or row data contains the embed URL or slug; the start latency is printed |
 | reuses on the next start | same `connection_id`, one `GET /submitters/5001`, still one `POST /submissions`; `listRequestConnections` hides the signature row |
 
 - The admin client is built only when the live env is present (`live ? createAdminClient(env) : undefined`), because `describe.skipIf` still runs the describe body at collection time; without this the whole file crashed `pnpm check` when env was missing.

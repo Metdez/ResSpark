@@ -113,9 +113,9 @@ export async function startSignature(env: Env, ctx: SignStartCtx): Promise<SignS
     throw e
   }
   const [s] = submitters
+  // The slug is a bearer signing link; it is never stored (reuse goes through GET /submitters/{id}).
   await updateConnection(env, conn.id, {
     external_id: String(s.submission_id),
-    link_ref: s.slug,
     data: { ...data, submitter_id: s.id },
   })
   await recordConnectionEvent(env, conn.id, 'connection.started', { provider: 'docuseal', template_key: templateKey }, {

@@ -26,7 +26,7 @@ Lazy DocuSeal submission for one signature item (D-12, RESEARCH Pattern 2). Same
 2. Prefill candidates: `Full name` (first + last), `Case ID` (Logics case id), `Address` (`line1, city, state zip5`, only when a confirmed address exists). Only names present in the template's fields and with a non-empty value are sent, each `readonly: true`.
 3. `insertConnection` (`provider 'docuseal'`, `kind 'signature'`, `data { template_key, template_id, env, expire_at }`) **before** the vendor call.
 4. `createSubmission` with `send_email: false` (submission and submitter), `send_sms: false` (D-21), `expire_at` = the link's `expires_at` (ISO 8601 as stored), one submitter with the template's role, the case name, `contactEmail ?? case email`, `external_id` = item id. A `ProviderError` sets the row to `error` with its code and rethrows.
-5. `updateConnection`: `external_id` = submission id, `link_ref` = slug, `data.submitter_id`.
+5. `updateConnection`: `external_id` = submission id, `data.submitter_id`. The submitter `slug` is **not** stored: `docuseal.com/s/{slug}` is a bearer signing link, and nothing reads it (reuse fetches a fresh `embed_src` through `GET /submitters/{id}`), so `link_ref` stays `NULL` for DocuSeal rows (2026-10-11 hardening).
 6. `connection.started` event with `{ provider, template_key }` only.
 
 `embed_src` exists only in the return value: never in a table, event, or log (T-06-07).

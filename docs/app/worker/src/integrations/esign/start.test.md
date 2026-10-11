@@ -4,7 +4,7 @@ Unit tests for `startSignature`. `db/connections` and `./docuseal` are auto-mock
 
 | Test | Proves |
 |------|--------|
-| no prior row | `insertConnection` runs before `createSubmission` (`invocationCallOrder`); `docuseal`/`signature`; `send_email: false` at both levels, `send_sms: false`, `expire_at` = link expiry; `external_id` = item id; the row gets submission id and slug |
+| no prior row | `insertConnection` runs before `createSubmission` (`invocationCallOrder`); `docuseal`/`signature`; `send_email: false` at both levels, `send_sms: false`, `expire_at` = link expiry; `external_id` = item id; the row gets the submission id and no `link_ref` (the slug never appears in the update) |
 | two-role template | `TemplateInvalidError` (`template_invalid`), no row written |
 | Address field and confirmed address | three read-only prefill fields, address as `line1, city, state zip5` |
 | create fails `http_500` | new row set to `error` `{ code: 'http_500' }`, same error rethrown |
