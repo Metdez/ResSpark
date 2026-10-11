@@ -6,7 +6,7 @@ import { createAdminClient } from '../src/db/client'
 import { findClientLink } from '../src/db/client-links'
 import { getPortalState, openRequest, upsertClientSession, type PortalState } from '../src/db/portal'
 import { app } from '../src/index'
-import { _resetRateLimitForTests } from '../src/middleware/link-rate-limit'
+import { _resetRateLimitForTests, allowInWindow } from '../src/middleware/link-rate-limit'
 
 vi.mock('../src/db/client-links', () => ({ findClientLink: vi.fn(), createClientLink: vi.fn() }))
 vi.mock('../src/db/portal', () => ({ getPortalState: vi.fn(), openRequest: vi.fn(), upsertClientSession: vi.fn() }))
@@ -251,6 +251,99 @@ describe('opening is explicit', () => {
     expect(routes).toContain('/api/c/start')
     const value = cookie.slice('rs_client='.length)
     for (const line of lines) expect(line).not.toContain(value)
+  })
+})
+
+describe('POST /api/c/heartbeat', () => {
+  const beat = (cookie: string | undefined, body: unknown = {}, header = true) =>
+    post('/api/c/heartbeat', cookie, body, header)
+
+  it('upserts the session row for the cookie link', async () => {
+    const res = await beat(await exchange(), { last_step: 'bank_connect', user_agent_class: 'phone', link_id: LINK2 })
+    expect(res.status).toBe(200)
+    expectPrivacy(res)
+    expect(await res.json()).toEqual({ ok: true })
+    expect(upsertClientSession).toHaveBeenCalledWith(expect.anything(), {
+      link_id: LINK,
+      last_step: 'bank_connect',
+      last_error: null,
+      user_agent_class: 'phone',
+    })
+  })
+
+  it('accepts an empty body as three nulls', async () => {
+    expect((await beat(await exchange(), {})).status).toBe(200)
+    expect(vi.mocked(upsertClientSession).mock.calls[0][1]).toEqual({
+      link_id: LINK,
+      last_step: null,
+      last_error: null,
+      user_agent_class: null,
+    })
+  })
+
+  it('accepts the length limits exactly', async () => {
+    const res = await beat(await exchange(), { last_step: 's'.repeat(64), last_error: 'e'.repeat(200) })
+    expect(res.status).toBe(200)
+  })
+
+  it.each([
+    ['last_step over 64', { last_step: 'x'.repeat(65) }],
+    ['last_error over 200', { last_error: 'e'.repeat(201) }],
+    ['unknown user_agent_class', { user_agent_class: 'watch' }],
+    ['non-string last_step', { last_step: 7 }],
+    ['array body', ['bank_connect']],
+  ])('%s → 400 bad_request and no write', async (_name, body) => {
+    const res = await beat(await exchange(), body)
+    expect(res.status).toBe(400)
+    expectPrivacy(res)
+    expect(await errorCode(res)).toBe('bad_request')
+    expect(upsertClientSession).not.toHaveBeenCalled()
+  })
+
+  it('refuses without the header (403) and without a cookie (401)', async () => {
+    const noHeader = await beat(await exchange(), {}, false)
+    expect(noHeader.status).toBe(403)
+    expect(await errorCode(noHeader)).toBe('bad_origin')
+    const noCookie = await beat(undefined)
+    expect(noCookie.status).toBe(401)
+    expect(await errorCode(noCookie)).toBe('no_session')
+    expect(upsertClientSession).not.toHaveBeenCalled()
+  })
+
+  it('limits each link to 10 heartbeats per 60 s; the 11th is 429 and writes nothing', async () => {
+    const cookie = await exchange()
+    for (let i = 0; i < 10; i++) expect((await beat(cookie)).status).toBe(200)
+    const limited = await beat(cookie)
+    expect(limited.status).toBe(429)
+    expectPrivacy(limited)
+    expect(await errorCode(limited)).toBe('rate_limited')
+    expect(upsertClientSession).toHaveBeenCalledTimes(10)
+    const other = await beat(await exchange(LINK2))
+    expect(other.status).toBe(200)
+    expect(vi.mocked(upsertClientSession).mock.calls[10][1].link_id).toBe(LINK2)
+  })
+
+  it('leaves the per-ip exchange limit unchanged (21st GET /c/:token is 429)', async () => {
+    const token = await mintLinkToken(await hmacKey(SECRET), uuidToBytes(LINK), 1)
+    const fromIp = () => app.request(`/c/${token}`, { headers: { 'cf-connecting-ip': '203.0.113.7' } }, ENV)
+    for (let i = 0; i < 20; i++) expect((await fromIp()).status).toBe(302)
+    expect((await fromIp()).status).toBe(429)
+  })
+})
+
+describe('allowInWindow', () => {
+  it('allows `limit` hits per key inside the window, then refuses', () => {
+    for (let i = 0; i < 3; i++) expect(allowInWindow('unit:a', 3, 60_000)).toBe(true)
+    expect(allowInWindow('unit:a', 3, 60_000)).toBe(false)
+    expect(allowInWindow('unit:b', 3, 60_000)).toBe(true)
+  })
+
+  it('forgets hits older than the window', () => {
+    const now = vi.spyOn(Date, 'now').mockReturnValue(1_000_000)
+    expect(allowInWindow('unit:c', 1, 60_000)).toBe(true)
+    expect(allowInWindow('unit:c', 1, 60_000)).toBe(false)
+    now.mockReturnValue(1_000_000 + 60_001)
+    expect(allowInWindow('unit:c', 1, 60_000)).toBe(true)
   })
 })
 

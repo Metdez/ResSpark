@@ -8,6 +8,11 @@ const MAX_KEYS = 10_000
 // shortcut: in-memory window is per isolate and resets on redeploy, upgrade when the Rate Limiting binding is confirmed on this plan
 const hits = new Map<string, number[]>()
 
+// RED stub: replaced in the GREEN commit.
+export function allowInWindow(_key: string, _limit: number, _periodMs: number): boolean {
+  return true
+}
+
 export function _resetRateLimitForTests(): void {
   hits.clear()
 }
