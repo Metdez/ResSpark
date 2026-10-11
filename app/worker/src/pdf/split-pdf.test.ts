@@ -1,6 +1,5 @@
 import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { fileURLToPath } from 'node:url'
 import { PDFDocument } from '@cantoo/pdf-lib'
 import { describe, expect, it } from 'vitest'
 import { splitPdf } from './split-pdf'
@@ -12,8 +11,7 @@ import {
 } from './test-fixtures'
 
 const LOGICS_GATE = 5_767_168
-const EXAMPLES = fileURLToPath(new URL('../../../../examples/', import.meta.url))
-const encrypted = await makeEncryptedPdf()
+const EXAMPLES = join(import.meta.dirname, '../../../../examples')
 
 describe('splitPdf', () => {
   it('returns a PDF at or under the gate untouched', async () => {
@@ -25,9 +23,7 @@ describe('splitPdf', () => {
 
   it('splits greedily, keeps every part under the gate, and preserves page order', async () => {
     const source = await makeMultiPagePdf(12, 50_000)
-    const started = performance.now()
     const result = await splitPdf(source, 200_000)
-    const elapsedMs = Math.round(performance.now() - started)
     if (!('parts' in result)) throw new Error(`unexpected ${JSON.stringify(result)}`)
 
     expect(result.parts.length).toBeGreaterThanOrEqual(3)
@@ -42,10 +38,6 @@ describe('splitPdf', () => {
     expect(pageCounts.reduce((a, b) => a + b, 0)).toBe(12)
     expect(pageCounts[0]).toBeGreaterThanOrEqual(2)
     expect(order).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11])
-    // Recorded in the plan SUMMARY (input to the Plan 03 cpu_ms decision).
-    console.info(
-      `split 12x50KB @200KB: ${elapsedMs} ms, parts=${result.parts.map((p) => p.byteLength).join(',')}, pages=${pageCounts.join(',')}`
-    )
   })
 
   it('names a single page that alone exceeds the gate', async () => {
@@ -64,13 +56,10 @@ describe('splitPdf', () => {
     expect(result).toEqual({ error: 'pdf_unparseable' })
   })
 
-  it.skipIf(!encrypted)(
-    'reports a user-password PDF as pdf_encrypted (skipped when the library cannot encrypt)',
-    async () => {
-      const result = await splitPdf(encrypted!, 100)
-      expect(result).toEqual({ error: 'pdf_encrypted' })
-    }
-  )
+  it('reports a user-password PDF as pdf_encrypted', async () => {
+    const result = await splitPdf(await makeEncryptedPdf(), 100)
+    expect(result).toEqual({ error: 'pdf_encrypted' })
+  })
 
   it('passes every examples/ PDF through unchanged at the Logics gate', async () => {
     const files = readdirSync(EXAMPLES, { recursive: true, encoding: 'utf8' })
