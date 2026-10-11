@@ -2,9 +2,11 @@
 
 Live proof of the client upload path (Plan 03-01; UPL-01, UPL-02) against project `zvkphuikjpwoauqdimcf`. It drives the real Worker app (`app.request`) with a real `rs_client` cookie, PUTs real bytes to Supabase Storage, and checks the rows the `upload_complete` RPC writes.
 
-Run: `pnpm -C app run test:live:file worker/test/uploads.test.ts`. The script loads the env files through `dotenv-cli`; the test never prints a secret. Without `SUPABASE_URL`, `SUPABASE_SECRET_KEY`, `CLIENT_LINK_HMAC_KEY` and a publishable key (`SUPABASE_PUBLISHABLE_KEY` or `VITE_SUPABASE_PUBLISHABLE_KEY`) the suite is skipped, and its title names what is missing.
+Run: `pnpm -C app run test:live:file worker/test/uploads.test.ts`. The script loads the env files through `dotenv-cli`; the test never prints a secret. Without `SUPABASE_URL`, `SUPABASE_SECRET_KEY`, `CLIENT_LINK_HMAC_KEY` (checked by `liveEnvOrSkip()`, which prints the missing names) and a publishable key (`SUPABASE_PUBLISHABLE_KEY` or `VITE_SUPABASE_PUBLISHABLE_KEY`) the suite is skipped, and its title names what is missing.
 
 ## Fixtures
+
+Since Plan 03-07 the firm, case, request, item and link come from the shared `fixtures/request.ts` (`seedRequest(db, { items: [ID], status: 'opened', withLink: true })`); the token is minted from the returned `link_id` and `link_version`. The assertions did not change.
 
 | Fixture | Value |
 |---------|-------|
@@ -12,7 +14,7 @@ Run: `pnpm -C app run test:live:file worker/test/uploads.test.ts`. The script lo
 | Case | `00000000-0000-0000-0000-0000000000e1` under the test firm, upserted if missing. It is permanent: `events` is append-only and `events.case_id` has no `ON DELETE`, so a case with events cannot be deleted. |
 | Request | Inserted per run: `status 'opened'`, `sent_at`/`opened_at` now, `template_name 'test'`. |
 | Item | One `upload` item, required, `pending`, label `ID`. |
-| Link and cookie | `createClientLink`, then `mintLinkToken` and `GET /c/<token>` (`redirect: 'manual'`); the `rs_client=` pair from `set-cookie` is sent on every later call. |
+| Link and cookie | `seedRequest`'s `client_links` row, then `mintLinkToken` and `GET /c/<token>` (`redirect: 'manual'`); the `rs_client=` pair from `set-cookie` is sent on every later call. |
 
 ## Helpers
 
@@ -30,4 +32,4 @@ Run: `pnpm -C app run test:live:file worker/test/uploads.test.ts`. The script lo
 
 ## Cleanup
 
-`afterAll` removes every object whose key is in a `documents` row of the test case, deletes those rows, and deletes the request (which cascades its items, link and session). The test firm, its case and the events stay; every admin query is firm-scoped, so ValorTax staff never see them. After a run, `storage.objects` in `case-documents` and `public.documents` both count 0.
+`afterAll` calls `cleanupRequest`: it removes every object named by a `documents` row of this request's items, deletes those rows, and deletes the request (which cascades its items, link and session). Scoping by request, not by the shared case, keeps it from deleting `request-status.test.ts` rows when both suites run in parallel. The test firm, its case and the events stay; every admin query is firm-scoped, so ValorTax staff never see them. After a run, `storage.objects` in `case-documents` and `public.documents` both count 0.
