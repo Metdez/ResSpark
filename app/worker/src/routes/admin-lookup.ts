@@ -19,7 +19,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const badRequest = () => new HTTPException(400, { message: 'bad_request' })
 
 // Error kinds become fixed codes; nothing from the request or Logics reaches the response (D-03).
-function toHttp(e: unknown): unknown {
+export function toHttp(e: unknown): unknown {
   if (e instanceof LogicsError) {
     if (e.kind === 'not_configured') return new HTTPException(409, { message: 'logics_not_configured' })
     if (e.kind === 'unauthorized' || e.kind === 'forbidden') {

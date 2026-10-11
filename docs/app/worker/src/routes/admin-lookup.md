@@ -10,7 +10,7 @@ The staff lookup and confirm API (D-05, D-15, LOOK-01, LOOK-02, LOOK-04). Mounte
 | 15 | Input errors thrown by `lookupCases` that become 400 with the same code. |
 | 16-17 | Path-param shapes: a Logics CaseID is 1 to 9 digits; a local case id is a UUID. |
 | 19 | `badRequest()`: the shared 400 `bad_request`. |
-| 21-32 | `toHttp`: maps a `LogicsError` kind to a fixed code. `not_configured` → 409 `logics_not_configured`; `unauthorized`/`forbidden` → 502 `logics_unauthorized`; `network`/`upstream`/`invalid_response` → 502 `logics_unreachable`. A known input error → 400 with its code. Anything else is rethrown unchanged and `onError` turns it into 500 `internal`. |
+| 21-32 | `toHttp` (exported; `admin-request-actions.ts` reuses it for the send-time re-read): maps a `LogicsError` kind to a fixed code. `not_configured` → 409 `logics_not_configured`; `unauthorized`/`forbidden` → 502 `logics_unauthorized`; `network`/`upstream`/`invalid_response` → 502 `logics_unreachable`. A known input error → 400 with its code. Anything else is rethrown unchanged and `onError` turns it into 500 `internal`. |
 | 34-37 | `logicsClient`: reads the firm's `firm_integrations` row and lets `resolveLogicsClient` pick fixtures or live. In `LOGICS_MODE=fake` the row is ignored. |
 | 39-42 | `readBody`: the JSON body, or `{}` for a missing or non-JSON body, never a throw. |
 | 44-45 | The route instance and `staffAuth` for every method and path under it. |

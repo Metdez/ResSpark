@@ -15,6 +15,8 @@ export interface StaffCtx {
 // cross-checked against staff_profiles. Body, query and other headers are never consulted.
 export const staffAuth = createMiddleware<{ Bindings: Env; Variables: { staff: StaffCtx } }>(
   async (c, next) => {
+    // Sub-apps sharing a prefix each declare staffAuth; verify once per request.
+    if (c.get('staff')) return next()
     const token = c.req.header('authorization')?.replace(/^Bearer\s+/i, '').trim()
     if (!token) throw new HTTPException(401, { message: 'unauthorized' })
     const claims = await verifyStaffJwt(token, c.env.SUPABASE_URL).catch(() => {

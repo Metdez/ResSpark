@@ -49,7 +49,7 @@ const TEMPLATES = [
   { id: T1, name: 'Standard resolution packet', items: ITEMS },
   { id: T2, name: 'Documents only', items: [ITEMS[3]] },
 ]
-const draft = (items = ITEMS) => ({ case_id: CASE, template_id: T1, items })
+const draft = (items: unknown[] = ITEMS) => ({ case_id: CASE, template_id: T1, items })
 const tokenOf = (url: string) => url.slice(ORIGIN.length)
 
 beforeAll(initKeys)
@@ -298,6 +298,12 @@ describe('POST /api/admin/requests/:id/send', () => {
     expect(res.status).toBe(409)
     expect(await errorCode(res)).toBe('logics_not_configured')
     expect(sendRequest).not.toHaveBeenCalled()
+  })
+
+  it('verifies the staff token once although two sub-apps share the prefix', async () => {
+    vi.mocked(getStaffProfile).mockClear()
+    await send(jordan)
+    expect(getStaffProfile).toHaveBeenCalledTimes(1)
   })
 
   it('is 404 for a request outside the firm', async () => {
