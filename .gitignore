@@ -10,3 +10,12 @@ dist/
 .wrangler/
 supabase/.temp/
 .vercel/
+# local-only: client data, sandboxes, agent worktrees, GSD runtime files (repo is public)
+Discovery/
+transcript.md
+.planning/Client/
+.sandboxes/
+.claude/worktrees/
+.claude/skills/
+.planning/research/.cache/
+.planning/milestone.lock
