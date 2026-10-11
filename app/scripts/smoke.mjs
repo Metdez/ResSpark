@@ -185,6 +185,16 @@ async function requestSend() {
     if (copied.ok !== true) throw new Error('copied not recorded')
     const email = await api('POST', `/requests/${request_id}/email`)
     if (email.ok !== true && email.reason !== 'not_configured') throw new Error(`email ${email.reason}`)
+    // Plan 03-03: the staff review read, an approve refused before any upload, and the case timeline.
+    const review = await api('GET', `/requests/${request_id}/review`)
+    if (review.request.id !== request_id || review.items.length === 0) throw new Error('review has no items')
+    if (review.items.some((i) => i.documents.length !== 0)) throw new Error('review lists files before any upload')
+    // null until the portal's first heartbeat writes client_sessions; the join itself is proven in review-live.test.ts
+    if (review.client_session !== null && typeof review.client_session.seen_at !== 'string') throw new Error('bad client_session')
+    const refused = await api('POST', `/items/${review.items[0].id}/approve`, undefined, 409)
+    if (refused.error?.code !== 'item_not_submitted') throw new Error(`approve ${refused.error?.code}`)
+    const { events } = await api('GET', `/cases/${case_id}/events?limit=5`)
+    if (!events.some((e) => e.request_id === request_id && e.action === 'request.sent')) throw new Error('timeline lacks request.sent')
   } finally {
     const { createClient } = await import('@supabase/supabase-js')
     const db = createClient(env.SUPABASE_URL, env.SUPABASE_SECRET_KEY, { auth: { persistSession: false } })
