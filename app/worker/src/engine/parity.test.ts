@@ -1,8 +1,12 @@
-import { readFileSync } from 'node:fs'
+import { readdirSync, readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
-import { QUESTIONS } from '../../../shared/questions'
+import { INITIAL_QUESTION_IDS, QUESTIONS, validateAnswer } from '../../../shared/questions'
+import { calculateAllowableExpenses, netRealizableEquityLines } from './determination'
+import { financialDataFromCaseRow, REQUIRED_FINANCIAL_COLUMNS } from './financial-data'
 import { evaluateCase } from './intake-workflow'
+import { NEXT_STEP, PATHS } from './outcome'
 import type { StandardsRepository } from './standards'
 
 interface GoldenCall {
@@ -14,21 +18,34 @@ interface GoldenCall {
 interface GoldenCase {
   name: string
   row: Record<string, unknown>
-  expected: Record<string, unknown>
+  expected: {
+    status: string
+    missing_question_ids: string[]
+    missing_financial_fields: string[]
+    review_flags: string[]
+    document_requests: unknown[]
+    allowable_breakdown: Record<string, number> | null
+    nre_lines: Record<string, number> | null
+    determination: unknown
+  }
   standards_calls: GoldenCall[]
 }
 
 interface Golden {
   questions: { id: string; prompt: string; type: string }[]
+  initial_question_ids: string[]
+  required_financial_columns: string[]
+  paths: Record<string, [string, string]>
+  next: string
+  validations: { question_id: string; value: unknown; ok: boolean; error: string | null }[]
   cases: GoldenCase[]
 }
 
+// .href: the Workers and Node URL types clash under tsc.
+const here = (relative: string) => fileURLToPath(new URL(relative, import.meta.url).href)
+
 const golden = JSON.parse(
-  readFileSync(
-    // .href: the Workers and Node URL types clash under tsc.
-    fileURLToPath(new URL('../../test/fixtures/engine/golden.json', import.meta.url).href),
-    'utf8'
-  )
+  readFileSync(here('../../test/fixtures/engine/golden.json'), 'utf8')
 ) as Golden
 
 const caseNamed = (name: string): GoldenCase => {
@@ -63,6 +80,8 @@ function replay(calls: readonly GoldenCall[]) {
   return { repo, remaining: () => queue.length }
 }
 
+const complete = golden.cases.filter((c) => c.expected.status !== 'information_needed')
+
 describe('golden parity with the Python oracle', () => {
   it.each(golden.cases.map((c) => [c.name, c] as const))('%s', (_name, c) => {
     const fake = replay(c.standards_calls)
@@ -92,10 +111,91 @@ describe('golden parity with the Python oracle', () => {
   })
 })
 
-describe('question contract', () => {
+describe('allowable breakdown and NRE lines', () => {
+  // The breakdown makes exactly the lookups evaluateCase made (the exporter asserts this).
+  it.each(complete.map((c) => [c.name, c] as const))('%s', (_name, c) => {
+    const fd = financialDataFromCaseRow(c.row)
+    const fake = replay(c.standards_calls)
+    expect(calculateAllowableExpenses(fd, fake.repo)).toEqual(c.expected.allowable_breakdown)
+    expect(fake.remaining()).toBe(0)
+    expect(netRealizableEquityLines(fd)).toEqual(c.expected.nre_lines)
+  })
+
+  it('information_needed cases carry no breakdown and no NRE lines', () => {
+    for (const c of golden.cases.filter((x) => x.expected.status === 'information_needed')) {
+      expect([c.name, c.expected.allowable_breakdown, c.expected.nre_lines]).toEqual([c.name, null, null])
+    }
+  })
+})
+
+describe('fixture coverage', () => {
+  it('holds at least 60 grid and boundary cases', () => {
+    const grid = golden.cases.filter((c) => /^(grid|boundary)_/.test(c.name))
+    expect(grid.length).toBeGreaterThanOrEqual(60)
+  })
+
+  it('has one information_needed null case per required and question-only column', () => {
+    const questionOnly = ['pay_frequency', 'has_real_property', 'has_retirement_accounts',
+      'has_life_insurance_cash_value', 'has_investment_accounts']
+    for (const column of [...golden.required_financial_columns, ...questionOnly]) {
+      const c = caseNamed(`null_${column}`)
+      expect(c.expected.status).toBe('information_needed')
+      expect([...c.expected.missing_question_ids, ...c.expected.missing_financial_fields]).toContain(column)
+    }
+  })
+
+  it('a non-wage earner with pay_frequency not_applicable is evaluated', () => {
+    expect(caseNamed('pay_frequency_not_applicable').expected.status).not.toBe('information_needed')
+  })
+})
+
+describe('contract constants', () => {
   it('declares the 28 Python questions in order', () => {
     expect(QUESTIONS.length === 28).toBe(true)
     expect(QUESTIONS.map((q) => q.id)).toEqual(golden.questions.map((q) => q.id))
     expect(QUESTIONS.map(({ id, prompt, type }) => ({ id, prompt, type }))).toEqual(golden.questions)
+  })
+
+  it('matches INITIAL_QUESTION_IDS, required columns, paths and the next-step sentence', () => {
+    expect(INITIAL_QUESTION_IDS).toEqual(golden.initial_question_ids)
+    expect(REQUIRED_FINANCIAL_COLUMNS).toEqual(golden.required_financial_columns)
+    expect(Object.fromEntries(Object.entries(PATHS).map(([path, o]) => [path, [o.id, o.label]]))).toEqual(
+      golden.paths
+    )
+    expect(NEXT_STEP).toBe(golden.next)
+  })
+
+  it('validateAnswer accepts and rejects exactly what validate_answer does', () => {
+    expect(golden.validations.length).toBe(QUESTIONS.length * 5)
+    for (const v of golden.validations) {
+      let error: string | null = null
+      try {
+        validateAnswer(v.question_id, v.value)
+      } catch (e) {
+        error = e instanceof TypeError ? e.message : `not a TypeError: ${String(e)}`
+      }
+      expect([v.question_id, v.value, error]).toEqual([v.question_id, v.value, v.error])
+    }
+  })
+})
+
+describe('engine purity', () => {
+  const dir = here('.')
+  const sources = readdirSync(dir).filter((f) => f.endsWith('.ts') && !f.endsWith('.test.ts'))
+  const forbidden = [
+    /from\s+['"]hono/,
+    /from\s+['"]@supabase/,
+    /\bfetch\s*\(/,
+    /\bDate\b/,
+    /Math\s*\.\s*(max|min)\b/,
+  ]
+
+  it('scans the engine modules', () => {
+    expect(sources.length).toBeGreaterThanOrEqual(6)
+  })
+
+  it.each(sources)('%s imports nothing impure', (file) => {
+    const text = readFileSync(join(dir, file), 'utf8')
+    for (const pattern of forbidden) expect(text).not.toMatch(pattern)
   })
 })
