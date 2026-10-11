@@ -121,7 +121,7 @@ describe('proposeBank', () => {
 
 // T-07-33: category logic stays in SQL rows; no source file under financials/ names a category.
 describe('category guard', () => {
-  const root = fileURLToPath(new URL('..', import.meta.url))
+  const root = fileURLToPath(new URL('..', import.meta.url).href)
   const files = (readdirSync(root, { recursive: true }) as string[])
     .filter((f) => f.endsWith('.ts') && !f.endsWith('.test.ts'))
     .map((f) => join(root, f))

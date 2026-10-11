@@ -16,7 +16,7 @@ vi.mock('../../db/client', () => ({
 }))
 
 const FIXTURE = JSON.parse(
-  readFileSync(fileURLToPath(new URL('../../../test/fixtures/truv/income_report_proposals.json', import.meta.url)), 'utf8')
+  readFileSync(fileURLToPath(new URL('../../../test/fixtures/truv/income_report_proposals.json', import.meta.url).href), 'utf8')
 ) as { employers: Record<string, unknown>[] }
 // Mirrors the 0009 seed rows (test data; the code never names a category).
 const row = (truv_category: string, name_pattern: string, canonical_column: string | null, reliability: 'A' | 'B' | 'C' | null): DeductionMapRow => ({

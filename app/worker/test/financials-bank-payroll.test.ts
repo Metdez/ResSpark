@@ -91,7 +91,7 @@ describe.skipIf(!live)('financials bank and payroll proposals (live)', { timeout
     })
 
     const view = (await (await app.request(`/api/admin/cases/${fx.caseId}/financials`, {}, env)).json()) as Json
-    const wages = line(view, 'gross_wages_taxpayer')
+    const wages = line(view, 'gross_wages_taxpayer')!
     expect(wages.status).toBe('proposed')
     expect(wages.proposals[0]).toMatchObject({ source: 'truv', window_start: '2026-07-01', window_end: '2026-09-30', proposed_value: 9341.67 })
 
