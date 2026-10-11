@@ -164,13 +164,82 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| (filled by roadmap) | | |
+| PLAT-01 | Phase 1 | Pending |
+| PLAT-02 | Phase 1 | Pending |
+| PLAT-03 | Phase 1 | Pending |
+| PLAT-04 | Phase 1 | Pending |
+| PLAT-05 | Phase 1 | Pending |
+| PLAT-06 | Phase 1 | Pending |
+| PLAT-07 | Phase 1 | Pending |
+| PLAT-08 | Phase 1 | Pending |
+| LOOK-01 | Phase 2 | Pending |
+| LOOK-02 | Phase 2 | Pending |
+| LOOK-03 | Phase 2 | Pending |
+| LOOK-04 | Phase 2 | Pending |
+| LOOK-05 | Phase 2 | Pending |
+| REQ-01 | Phase 2 | Pending |
+| REQ-02 | Phase 2 | Pending |
+| REQ-03 | Phase 2 | Pending |
+| REQ-04 | Phase 2 | Pending |
+| REQ-05 | Phase 2 | Pending |
+| PORT-01 | Phase 2 | Pending |
+| PORT-02 | Phase 2 | Pending |
+| PORT-03 | Phase 2 | Pending |
+| PORT-04 | Phase 2 | Pending |
+| PORT-05 | Phase 2 | Pending |
+| PORT-06 | Phase 2 | Pending |
+| UPL-01 | Phase 3 | Pending |
+| UPL-02 | Phase 3 | Pending |
+| UPL-03 | Phase 3 | Pending |
+| UPL-04 | Phase 3 | Pending |
+| STAT-01 | Phase 3 | Pending |
+| STAT-02 | Phase 3 | Pending |
+| STAT-03 | Phase 3 | Pending |
+| STAT-04 | Phase 3 | Pending |
+| BANK-01 | Phase 4 | Pending |
+| BANK-02 | Phase 4 | Pending |
+| BANK-03 | Phase 4 | Pending |
+| BANK-04 | Phase 4 | Pending |
+| BANK-05 | Phase 4 | Pending |
+| BANK-06 | Phase 4 | Pending |
+| PAY-01 | Phase 4 | Pending |
+| PAY-02 | Phase 4 | Pending |
+| PAY-03 | Phase 4 | Pending |
+| PAY-04 | Phase 4 | Pending |
+| ADDR-01 | Phase 6 | Pending |
+| ADDR-02 | Phase 7 | Pending |
+| SIGN-01 | Phase 6 | Pending |
+| SIGN-02 | Phase 6 | Pending |
+| SIGN-03 | Phase 6 | Pending |
+| SIGN-04 | Phase 6 | Pending |
+| PUSH-01 | Phase 5 | Pending |
+| PUSH-02 | Phase 5 | Pending |
+| PUSH-03 | Phase 5 | Pending |
+| PUSH-04 | Phase 5 | Pending |
+| WEBH-01 | Phase 4 | Pending |
+| WEBH-02 | Phase 4 | Pending |
+| WEBH-03 | Phase 4 | Pending |
+| FORM-01 | Phase 7 | Pending |
+| FORM-02 | Phase 7 | Pending |
+| FORM-03 | Phase 7 | Pending |
+| FORM-04 | Phase 7 | Pending |
+| FORM-05 | Phase 7 | Pending |
+| FORM-06 | Phase 7 | Pending |
+| FORM-07 | Phase 7 | Pending |
+| REM-01 | Phase 8 | Pending |
+| REM-02 | Phase 8 | Pending |
+| REM-03 | Phase 8 | Pending |
+| REM-04 | Phase 8 | Pending |
+| PROD-01 | Phase 8 | Pending |
+| PROD-02 | Phase 8 | Pending |
+| PROD-03 | Phase 8 | Pending |
+| PROD-04 | Phase 8 | Pending |
 
 **Coverage:**
-- v1 requirements: 62 total
-- Mapped to phases: 0
-- Unmapped: 62 ⚠️
+- v1 requirements: 70 total
+- Mapped to phases: 70
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-10-10*
-*Last updated: 2026-10-10 after initial definition*
+*Last updated: 2026-10-10 after roadmap creation (traceability filled; v1 count corrected from 62 to 70)*
