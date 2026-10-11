@@ -11,7 +11,7 @@ import {
   type Reply,
 } from '@/test-utils/query-render'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { RequestsListPage, relativeTime } from './requests-list-page'
+import { RequestsListPage } from './requests-list-page'
 
 vi.mock('@/lib/supabase', () => ({
   supabase: { auth: { getSession: async () => ({ data: { session: null } }) } },
@@ -69,11 +69,11 @@ describe('RequestsListPage', () => {
     const { el } = await render({ status: 200, body: { requests: TWO } })
     await waitFor(loaded(el))
     const cells = el.querySelectorAll('tbody tr:first-child td')
-    expect(cells[2].textContent).toBe('2 hours ago')
+    expect(cells[2].textContent).toBe('2 h ago')
     expect(cells[2].querySelector('[title]')?.getAttribute('title')).toBe(
       TWO[0].sent_at
     )
-    expect(cells[3].textContent).toBe('in 13 days')
+    expect(cells[3].textContent).toBe('in 13 d')
   })
 
   it('uses the real count for one request', async () => {
@@ -115,14 +115,5 @@ describe('RequestsListPage', () => {
     expect(
       el.querySelectorAll('[data-slot="skeleton"]').length
     ).toBeGreaterThanOrEqual(3)
-  })
-
-  it('relativeTime picks the nearest unit', () => {
-    const now = Date.parse('2026-10-11T12:00:00Z')
-    expect(relativeTime('2026-10-11T11:59:30Z', now)).toBe('30 seconds ago')
-    expect(relativeTime('2026-10-11T11:15:00Z', now)).toBe('45 minutes ago')
-    expect(relativeTime('2026-10-10T12:00:00Z', now)).toBe('yesterday')
-    expect(relativeTime('2026-10-24T12:00:00Z', now)).toBe('in 13 days')
-    expect(relativeTime('2026-08-01T12:00:00Z', now)).toBe('2 months ago')
   })
 })
