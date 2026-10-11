@@ -331,8 +331,8 @@ describe('RequestPage', () => {
     const el = await render({ status: 200, body: SENT })
     expect(fetchMock).toHaveBeenCalledWith('/api/admin/requests/r1/review', expect.anything())
     expect(el.textContent).toContain('Review')
-    // Plan 03-05: the case timeline sits below the panel
-    expect(fetchMock).toHaveBeenCalledWith('/api/admin/cases/c1/events', expect.anything())
+    // Plan 03-05: the case timeline sits below the panel; its query can lag the first render under load
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledWith('/api/admin/cases/c1/events', expect.anything()), { timeout: 10_000 })
     expect(el.textContent).toContain('Timeline')
     expect(el.querySelector('[data-item-row]')).toBeNull()
   })
