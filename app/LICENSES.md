@@ -75,6 +75,8 @@ SOFTWARE.
   signing form for the client's signing page (Phase 6, SIGN-04). Loaded with a dynamic `import()` only
   on `/c/sign/$itemId`, so it stays out of the `/c/*` entry chunk. It loads DocuSeal's `form.js` from
   `cdn.docuseal.com` at runtime; that script is not redistributed here. Verified with `pnpm view` on 2026-10-11.
+- `@playwright/test` 1.63.0 (Apache-2.0), <https://github.com/microsoft/playwright>. Dev dependency for the
+  390x844 tap-budget test in `app/e2e/` (Phase 6, SIGN-04); not shipped. Verified with `pnpm view` on 2026-10-11.
 
 ## Visual references (no code copied)
 

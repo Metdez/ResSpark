@@ -8,6 +8,8 @@ dist/
 .dev.vars*
 !.dev.vars.example
 .wrangler/
+test-results/
+playwright-report/
 supabase/.temp/
 .vercel/
 # local-only: client data, sandboxes, agent worktrees, GSD runtime files (repo is public)

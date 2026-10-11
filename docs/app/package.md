@@ -12,6 +12,7 @@ The app's npm manifest (pnpm workspace member `app`; the lockfile is `pnpm-lock.
 | `lint`, `format`, `format:check` | ESLint and Prettier |
 | `test` | Vitest `web` (jsdom) and `worker-node` projects |
 | `test:workerd` | Vitest in workerd |
+| `test:e2e` | Playwright (`playwright.config.ts`, specs in `e2e/`); every API call is mocked, so it needs no env file |
 | `test:live`, `test:live:file`, `test:rls`, `test:requests` | Opt-in tests against live services, with env files loaded by `dotenv-cli` |
 | `check` | file-size check, golden-fixture check, `tsc -b`, ESLint, `pnpm test` |
 | `cf-typegen`, `wrangler`, `deploy:raw`, `deploy` | Wrangler types and deploys |
@@ -23,5 +24,6 @@ The app's npm manifest (pnpm workspace member `app`; the lockfile is `pnpm-lock.
 | Package | Version | License | Kind | Why |
 |---|---|---|---|---|
 | `@docuseal/react` | 1.0.75 | MIT | runtime | DocuSeal's embedded signing form (`DocusealForm`), lazy-loaded only by `src/features/client-portal/sign/docuseal-embed.tsx`. Approved in 06-RESEARCH's Package Legitimacy Audit (no postinstall) |
+| `@playwright/test` | 1.63.0 | Apache-2.0 | dev | The 390×844 tap-budget test (`e2e/sign-taps.spec.ts`). Pinned to 1.63.0 because 1.64.0 was flagged too new in the audit. Browsers: Chromium only |
 
-Verified with `pnpm view <pkg>@<version> version license` (2026-10-11) and recorded in `app/LICENSES.md`.
+Both verified with `pnpm view <pkg>@<version> version license` (2026-10-11) and recorded in `app/LICENSES.md`.

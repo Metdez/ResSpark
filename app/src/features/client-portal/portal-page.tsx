@@ -58,7 +58,8 @@ export function PortalPage() {
 
   useEffect(() => {
     if (!search.signed) return
-    toast.success(SIGN_COPY.signed)
+    // a fixed id: StrictMode's second effect run (and any re-run) updates the same toast
+    toast.success(SIGN_COPY.signed, { id: 'signed' })
     void navigate({ to: '/c', search: { step: search.step }, replace: true })
   }, [search.signed, search.step, navigate])
 

@@ -336,7 +336,7 @@ describe('PortalPage', () => {
     await render(okState({ opened_at: OPENED }))
     await waitFor(() => rows().length === 5)
     expect(toastSuccess).toHaveBeenCalledOnce()
-    expect(toastSuccess).toHaveBeenCalledWith('Signed. Your agent has it.')
+    expect(toastSuccess).toHaveBeenCalledWith('Signed. Your agent has it.', { id: 'signed' })
     expect(router.navigate).toHaveBeenCalledWith({ to: '/c', search: { step: undefined }, replace: true })
   })
 
