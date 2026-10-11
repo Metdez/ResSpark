@@ -15,6 +15,17 @@ export const tick = () =>
     await new Promise((r) => setTimeout(r, 0))
   })
 
+// Polls until `check` passes (queries settle after the lazy supabase import on first use).
+export async function waitFor(check: () => boolean, ms = 2000) {
+  const end = Date.now() + ms
+  while (!check()) {
+    if (Date.now() > end) throw new Error('waitFor timed out')
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 10))
+    })
+  }
+}
+
 export async function renderWithQuery(
   ui: ReactNode,
   replies: Record<string, Reply>

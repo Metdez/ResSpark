@@ -8,6 +8,7 @@ import {
   renderWithQuery,
   type,
   type Reply,
+  waitFor,
 } from '@/test-utils/query-render'
 import { RequestBuilder } from './request-builder'
 
@@ -61,11 +62,14 @@ const base = (): Record<string, Reply> => ({
   'GET /api/admin/cases/c1': { status: 200, body: CASE },
   'GET /api/admin/requests/templates': { status: 200, body: TEMPLATES },
 })
-const render = (extra: Record<string, Reply> = {}) =>
-  renderWithQuery(<RequestBuilder caseId='c1' onCreated={onCreated} />, {
-    ...base(),
-    ...extra,
-  })
+async function render(extra: Record<string, Reply> = {}) {
+  const out = await renderWithQuery(
+    <RequestBuilder caseId='c1' onCreated={onCreated} />,
+    { ...base(), ...extra }
+  )
+  await waitFor(() => !out.el.querySelector('[data-slot="skeleton"]'))
+  return out
+}
 
 const rows = (el: HTMLElement) => [...el.querySelectorAll('[data-builder-row]')]
 const rowLabels = (el: HTMLElement) =>
