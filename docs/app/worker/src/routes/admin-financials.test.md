@@ -17,3 +17,5 @@ Unit tests for the 433-A admin routes through `app.request`. These tests use no 
 | non-UUID case id on decide | Returns 404, and the RPC is not called. |
 | foreign or missing cases | GET financials, POST evaluations and GET evaluations/latest each return 404 `not_found` when the firm-scoped read (`F1`) finds no case. |
 | non-UUID id | Returns 404 before any read. |
+| refresh body guard | `window_months` 4 or `'6'`, a non-array, a number, an empty or 101-character id, and 21 ids each return 400 before `getCaseForFinancials` is called. |
+| refresh, foreign case | A valid body for a case the firm-scoped read cannot find returns 404. |

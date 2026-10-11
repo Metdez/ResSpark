@@ -17,3 +17,4 @@ Unit tests for `buildFinancialsView`, which is pure, so the suite needs no datab
 - **Standard-only lines.** Lines 36 and 42 have status `standard`, a `null` column and no proposals.
 - **Settings.** By default the window is 3 months with no spouse employers. `window_months: 6` is kept, and non-string employer ids are dropped.
 - **Section order.** The seven sections come back in order.
+- **Window, county and employers.** The helper passes a `waiting_for_address` county block (`countyBlock({}, null, null)`), two employers and a fixed `now` of 2026-10-11. With `window_months: 6` and `spouse_employer_ids: ['emp_2']`, the window is 2026-04-01 to 2026-09-30, `emp_1` is `taxpayer` and `emp_2` is `spouse`.

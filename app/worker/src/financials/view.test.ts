@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import { REQUIRED_FINANCIAL_COLUMNS } from '../engine/financial-data'
+import { countyBlock } from './county'
 import type { FinancialsCase, ProposalRow } from './db'
 import { buildFinancialsView, type FinancialsView, type LineView } from './view'
 
@@ -30,6 +31,11 @@ const proposal = (over: Partial<ProposalRow>): ProposalRow => ({
   ...over,
 })
 
+const WAITING = countyBlock({}, null, null)
+const EMPLOYERS = [
+  { employer_id: 'emp_1', connection_id: 'K1', company_name: 'Acme', status: 'done' },
+  { employer_id: 'emp_2', connection_id: 'K1', company_name: null, status: 'pending' },
+]
 const build = (row: Record<string, unknown> | null, proposals: ProposalRow[] = [], settings = {}) =>
   buildFinancialsView({
     caseRow: { ...CASE, financials_settings: settings },
@@ -37,6 +43,9 @@ const build = (row: Record<string, unknown> | null, proposals: ProposalRow[] = [
     proposals,
     staffNames: { S1: 'Sandra' },
     standardsVersion: null,
+    county: WAITING,
+    employers: EMPLOYERS,
+    now: new Date('2026-10-11T12:00:00Z'),
   })
 const line = (view: FinancialsView, column: string | null, label?: string): LineView =>
   view.sections.flatMap((s) => s.lines).find((l) => l.column === column && (!label || l.label === label))!
@@ -108,5 +117,12 @@ describe('buildFinancialsView', () => {
     expect(build(COMPLETE).sections.map((s) => s.id)).toEqual([
       'household', 'employment', 'income', 'expenses', 'assets', 'compliance', 'liability',
     ])
+  })
+
+  it('window follows the settings; spouse employer ids mark the person', () => {
+    const view = build(COMPLETE, [], { window_months: 6, spouse_employer_ids: ['emp_2'] })
+    expect(view.window).toEqual({ start: '2026-04-01', end: '2026-09-30', months: 6 })
+    expect(view.county.status).toBe('waiting_for_address')
+    expect(view.employers.map((e) => [e.employer_id, e.person])).toEqual([['emp_1', 'taxpayer'], ['emp_2', 'spouse']])
   })
 })

@@ -63,3 +63,19 @@ export function countyBlock(
   }
   return { ...base, status: 'waiting_for_address', irs_county: null }
 }
+
+// GET financials: the case's address columns firm-scoped, the map row when a confirmed FIPS exists,
+// and the newest address-source county proposal (`proposals` is newest first).
+export async function loadCountyBlock(
+  env: DbEnv,
+  firmId: string,
+  caseId: string,
+  proposals: Array<{ canonical_column: string; source: string; method: string; proposed_value: unknown }>
+): Promise<CountyBlock> {
+  const { data, error } = await createAdminClient(env).from('cases').select(ADDRESS_COLUMNS).eq('firm_id', firmId).eq('id', caseId).maybeSingle()
+  if (error) throw new Error('case_lookup_failed')
+  const row = (data ?? {}) as Record<string, unknown>
+  const fips = confirmedFips(row)
+  const proposal = proposals.find((p) => p.canonical_column === 'county_of_residence' && p.source === 'address') ?? null
+  return countyBlock(row, fips ? await lookupCountyFips(env, fips) : null, proposal)
+}

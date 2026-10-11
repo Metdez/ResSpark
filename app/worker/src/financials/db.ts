@@ -108,3 +108,46 @@ export async function getLatestRun(env: DbEnv, firmId: string, caseId: string): 
   if (error) throw new Error('run_lookup_failed')
   return data
 }
+
+export async function saveFinancialsSettings(env: DbEnv, firmId: string, caseId: string, settings: Record<string, unknown>): Promise<void> {
+  const { error } = await createAdminClient(env)
+    .from('cases')
+    .update({ financials_settings: settings })
+    .eq('firm_id', firmId)
+    .eq('id', caseId)
+  if (error) throw new Error('settings_update_failed')
+}
+
+export interface CaseEmployer {
+  employer_id: string
+  connection_id: string
+  company_name: string | null
+  status: string
+}
+
+// Payroll connections of the case (not removed), flattened to their data.employers[] (Phase 4 Plan 03).
+export async function listCaseEmployers(env: DbEnv, firmId: string, caseId: string): Promise<CaseEmployer[]> {
+  const { data, error } = await createAdminClient(env)
+    .from('connections')
+    .select('id, data')
+    .eq('firm_id', firmId)
+    .eq('case_id', caseId)
+    .eq('kind', 'payroll')
+    .neq('status', 'removed')
+    .order('created_at')
+  if (error) throw new Error('connections_lookup_failed')
+  return (data ?? []).flatMap((row) => {
+    const list = (row.data as { employers?: unknown } | null)?.employers
+    if (!Array.isArray(list)) return []
+    return list.flatMap((e: Record<string, unknown> | null) =>
+      e && typeof e.employer_id === 'string'
+        ? [{
+            employer_id: e.employer_id,
+            connection_id: row.id as string,
+            company_name: typeof e.company_name === 'string' ? e.company_name : null,
+            status: typeof e.status === 'string' ? e.status : 'unknown',
+          }]
+        : []
+    )
+  })
+}

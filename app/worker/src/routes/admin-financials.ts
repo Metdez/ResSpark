@@ -1,16 +1,44 @@
 import { Hono, type Context } from 'hono'
 import { HTTPException } from 'hono/http-exception'
-import { getCaseForFinancials, getLatestRun, getStandardsVersion, listProposals, staffDisplayNames } from '../financials/db'
+import { logEvent } from '../db/events'
+import { loadCountyBlock } from '../financials/county'
+import {
+  getCaseForFinancials,
+  getLatestRun,
+  getStandardsVersion,
+  listCaseEmployers,
+  listProposals,
+  saveFinancialsSettings,
+  staffDisplayNames,
+} from '../financials/db'
 import { evaluateForCase, toRunView } from '../financials/evaluate'
 import { lineFor } from '../financials/lines'
 import { type DecideAction, decideValue, FinancialRpcError } from '../financials/rpc'
-import { buildFinancialsView } from '../financials/view'
+import { buildFinancialsView, settingsOf } from '../financials/view'
 import { staffAuth } from '../middleware/staff-auth'
 import { badRequest, notFound, readBody, type AdminApp } from './admin-requests'
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const ACTIONS: readonly string[] = ['accept', 'edit', 'known_zero', 'unknown', 'reject', 'not_applicable']
 const MAX_NOTE = 2000
+const MAX_SPOUSE_IDS = 20
+const MAX_ID_LENGTH = 100
+
+// Refresh body: window 3|6 and spouse employer ids (strings, deduped); anything else is 400.
+function refreshPatch(body: Record<string, unknown>): Record<string, unknown> {
+  const patch: Record<string, unknown> = {}
+  const { window_months, spouse_employer_ids: ids } = body
+  if (window_months !== undefined) {
+    if (window_months !== 3 && window_months !== 6) throw badRequest()
+    patch.window_months = window_months
+  }
+  if (ids !== undefined) {
+    const ok = (x: unknown) => typeof x === 'string' && x.length > 0 && x.length <= MAX_ID_LENGTH
+    if (!Array.isArray(ids) || ids.length > MAX_SPOUSE_IDS || !ids.every(ok)) throw badRequest()
+    patch.spouse_employer_ids = [...new Set(ids)]
+  }
+  return patch
+}
 
 // RAISE tokens of financial_value_decide -> HTTP; anything else falls through to onError's 500.
 const RPC_STATUS: Record<string, [400 | 404 | 409, string]> = {
@@ -42,12 +70,39 @@ export const adminFinancialsRoute = new Hono<AdminApp>()
     const { firmId } = c.var.staff
     const found = await getCaseForFinancials(c.env, firmId, caseIdParam(c))
     if (!found) throw notFound()
-    const [proposals, standardsVersion] = await Promise.all([
-      listProposals(c.env, firmId, found.caseRow.id),
+    const caseId = found.caseRow.id
+    const [proposals, standardsVersion, employers] = await Promise.all([
+      listProposals(c.env, firmId, caseId),
       getStandardsVersion(c.env),
+      listCaseEmployers(c.env, firmId, caseId),
     ])
-    const staffNames = await namesFor(c, proposals.map((p) => p.decided_by))
-    return c.json(buildFinancialsView({ caseRow: found.caseRow, row: found.row, proposals, staffNames, standardsVersion }))
+    const [staffNames, county] = await Promise.all([
+      namesFor(c, proposals.map((p) => p.decided_by)),
+      loadCountyBlock(c.env, firmId, caseId, proposals),
+    ])
+    return c.json(
+      buildFinancialsView({ caseRow: found.caseRow, row: found.row, proposals, staffNames, standardsVersion, county, employers, now: new Date() })
+    )
+  })
+  .post('/cases/:id/financials/refresh', async (c) => {
+    const { staff } = c.var
+    const caseId = caseIdParam(c)
+    const patch = refreshPatch(await readBody(c))
+    const found = await getCaseForFinancials(c.env, staff.firmId, caseId)
+    if (!found) throw notFound()
+    const merged = { ...found.caseRow.financials_settings, ...patch }
+    await saveFinancialsSettings(c.env, staff.firmId, caseId, merged)
+    const settings = settingsOf(merged)
+    await logEvent(c.env, {
+      firm_id: staff.firmId,
+      case_id: caseId,
+      actor_type: 'staff',
+      actor_id: staff.userId,
+      action: 'financials.refresh_requested',
+      payload: { window_months: settings.window_months, spouse_employers: settings.spouse_employer_ids.length },
+    })
+    await c.env.JOBS.send({ type: 'financials_propose', ref: caseId, reason: 'refresh' })
+    return c.json({ queued: true, settings }, 202)
   })
   .post('/cases/:id/financials/:column/decide', async (c) => {
     const { staff } = c.var

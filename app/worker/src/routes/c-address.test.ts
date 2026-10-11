@@ -212,4 +212,23 @@ describe('POST /api/c/items/:itemId/address', () => {
   it('rejects an unknown source (400)', async () => {
     expect((await confirm({ ...MANUAL, source: 'gps' })).status).toBe(400)
   })
+
+  it('enqueues financials_propose for the session case after a confirmation', async () => {
+    vi.mocked(docs.sessionRequest).mockResolvedValue({ case_id: 'CASE1', status: 'in_progress' })
+    const send = vi.fn(async () => {})
+    const res = await confirm(MANUAL, { ...NO_KEYS, JOBS: { send } } as unknown as Env)
+    expect(res.status).toBe(200)
+    expect(docs.sessionRequest).toHaveBeenCalledWith(expect.anything(), 'R1', 'F1')
+    expect(send).toHaveBeenCalledWith({ type: 'financials_propose', ref: 'CASE1', reason: 'address_confirmed' })
+  })
+
+  it('a failed enqueue never fails the confirmation', async () => {
+    vi.mocked(docs.sessionRequest).mockResolvedValue({ case_id: 'CASE1', status: 'in_progress' })
+    vi.stubGlobal('fetch', vi.fn(async () => new Response('{}', { status: 500 })))
+    const send = vi.fn(async () => {
+      throw new Error('queue down')
+    })
+    const res = await confirm(MANUAL, { ...NO_KEYS, JOBS: { send } } as unknown as Env)
+    expect(res.status).toBe(200)
+  })
 })

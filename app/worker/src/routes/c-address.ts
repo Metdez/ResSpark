@@ -2,7 +2,8 @@ import { Hono, type Context, type MiddlewareHandler } from 'hono'
 import type { ContentfulStatusCode } from 'hono/utils/http-status'
 import { isUsStateCode } from '../../../src/lib/us-states'
 import { confirmAddress, type AddressPayload } from '../db/case-address'
-import { findSessionItem } from '../db/documents'
+import { findSessionItem, sessionRequest } from '../db/documents'
+import { logEvent } from '../db/events'
 import { ProviderError } from '../integrations/provider-error'
 import { smartyConfigured, suggest, verifyStreet } from '../integrations/smarty/client'
 import { allowInWindow } from '../middleware/link-rate-limit'
@@ -114,6 +115,20 @@ export const cAddressRoute = new Hono<Env_>()
       if (token === 'item_approved') return fail(c, 409, 'item_approved', 'Your agent already approved this item.')
       if (token === 'bad_address') return badRequest(c)
       throw err
+    }
+    // D-07: re-propose state and county. A queue failure never fails the client's confirmation.
+    const { requestId, firmId } = c.var.client
+    try {
+      const req = await sessionRequest(c.env, requestId, firmId)
+      if (req) await c.env.JOBS.send({ type: 'financials_propose', ref: req.case_id, reason: 'address_confirmed' })
+    } catch {
+      await logEvent(c.env, {
+        firm_id: firmId,
+        request_id: requestId,
+        actor_type: 'system',
+        action: 'financials.enqueue_failed',
+        payload: { reason: 'address_confirmed' },
+      }).catch(() => {})
     }
     // County, FIPS, and RDI are staff-only facts and never go back to the phone.
     return c.json({

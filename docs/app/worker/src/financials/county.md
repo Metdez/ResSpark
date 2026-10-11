@@ -11,6 +11,7 @@ This module turns a USPS-verified address into the IRS county name, and it build
 | `confirmedFips(caseRow)` | Returns the case's FIPS only when the client confirmed a Smarty address (`address_confirmed_at` set, `address_source = 'smarty'`, a 5-digit `county_fips`). Otherwise it returns `null`. A manual address is unverified, so it never counts (open question 5). |
 | `lookupCountyFips(env, fips)` | Reads `county_fips_map` by FIPS with the admin client. A FIPS that is not 5 digits is `'unmapped'` and is never sent to the database. A database error throws `county_lookup_failed`. |
 | `countyBlock(caseRow, mapHit, countyProposal)` | A pure function that derives the status, using the rules below. |
+| `loadCountyBlock(env, firmId, caseId, proposals)` | The GET financials reader. It reads the case's `ADDRESS_COLUMNS` filtered by firm and id, looks up the map only when `confirmedFips` returns a FIPS, and picks the first (newest) `address` `county_of_residence` row from `proposals`, which `listProposals` returns newest first. Then it calls `countyBlock`. |
 
 ## Status rules
 

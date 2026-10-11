@@ -1,8 +1,10 @@
 // Pure assembly of the staff 433-A view (D-14): every line, its status and competing proposals.
 import { isApplicable } from '../../../shared/questions'
 import { missingFinancialColumns, missingQuestionIds } from '../engine/intake-workflow'
-import type { FinancialsCase, ProposalRow } from './db'
+import type { CountyBlock } from './county'
+import type { CaseEmployer, FinancialsCase, ProposalRow } from './db'
 import { LINES, type LineMeta, SECTIONS, type SectionId } from './lines'
+import { completeMonthsWindow } from './propose/window'
 
 export interface ProposalView {
   id: string
@@ -28,6 +30,9 @@ export interface LineView extends LineMeta {
 export interface FinancialsView {
   case: { id: string; logics_case_id: number | null; first_name: string | null; last_name: string | null }
   settings: { window_months: 3 | 6; spouse_employer_ids: string[] }
+  window: { start: string; end: string; months: 3 | 6 }
+  county: CountyBlock
+  employers: Array<CaseEmployer & { person: 'taxpayer' | 'spouse' }>
   standards_version: { effective_date: string; source_url: string } | null
   required: { confirmed: number; total: number; missing: string[] }
   sections: Array<{ id: SectionId; title: string; lines: LineView[] }>
@@ -88,6 +93,9 @@ export function buildFinancialsView(input: {
   proposals: ProposalRow[]
   staffNames: Record<string, string>
   standardsVersion: { effective_date: string; source_url: string } | null
+  county: CountyBlock
+  employers: CaseEmployer[]
+  now: Date
 }): FinancialsView {
   const row = input.row ?? {}
   const byColumn = new Map<string, ProposalRow[]>()
@@ -100,9 +108,16 @@ export function buildFinancialsView(input: {
   const required = LINES.filter((x) => x.required)
   const lines = LINES.map((meta) => lineView(meta, row, byColumn.get(meta.column ?? '') ?? [], input.staffNames))
   const { id, logics_case_id, first_name, last_name } = input.caseRow
+  const settings = settingsOf(input.caseRow.financials_settings)
   return {
     case: { id, logics_case_id, first_name, last_name },
-    settings: settingsOf(input.caseRow.financials_settings),
+    settings,
+    window: completeMonthsWindow(input.now, settings.window_months),
+    county: input.county,
+    employers: input.employers.map((e) => ({
+      ...e,
+      person: settings.spouse_employer_ids.includes(e.employer_id) ? 'spouse' : 'taxpayer',
+    })),
     standards_version: input.standardsVersion,
     required: {
       confirmed: required.filter((x) => !missingSet.has(x.column as string)).length,

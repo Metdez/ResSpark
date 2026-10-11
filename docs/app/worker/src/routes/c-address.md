@@ -19,6 +19,8 @@ Needs `X-Requested-With: ResSpark` (`requireClientHeader`, else 403 `bad_origin`
 
 Then `confirmAddress`. Token mapping: `link_inactive` → 401 `no_session`, `item_not_found` → 404, `item_approved` → 409 `item_approved`, `bad_address` → 400.
 
+After a successful confirmation, the route enqueues the propose job (Phase 7 D-07). It reads the session's case with `sessionRequest(env, requestId, firmId)`, because the cookie carries no case id, and sends `{ type: 'financials_propose', ref: <case id>, reason: 'address_confirmed' }` to `JOBS`. Everything is inside a `try`. A failure logs `financials.enqueue_failed { reason }` (system actor, request-scoped, best effort) and never changes the client's response. Staff can still press Refresh.
+
 Response 200: `{ address: { line1, line2, city, state_code, zip5, zip4 }, verified, dpv, needs_unit, item_status, request_status }`. `needs_unit` is true for DPV `D` (unit missing) or `S` (unit not recognized). County, FIPS, and RDI are staff-only facts and are never returned.
 
 ## Error codes
@@ -43,6 +45,6 @@ No street text, request URL, or header is logged; the logger records only the ro
 `app/worker/src/routes/c-address.test.ts` (unit, `worker-node`, no network). `db/case-address` and `db/documents` are mocked, `clientSession` sets a fixed session (link `L1`, request `R1`), `requireClientHeader` stays real, and `fetch` is stubbed per test. `beforeEach` resets the in-memory rate window.
 
 - Suggest: `q='16'` → 400; no keys → 503 `provider_not_configured`; fixture → 200 with two suggestions; provider 500 → 502 `provider_error`; 15 suggests plus 15 manual POSTs pass and the 31st call → 429 `rate_limited` (one shared window).
-- Confirm: no `X-Requested-With` → 403 `bad_origin`; another request's item → 404; an `upload` item → 409 `item_kind_mismatch`; smarty `zipcode '1234'` → 400; smarty with no keys → 503; manual with no keys → 200 and `confirmAddress` gets `source 'manual'`, `verified false`, null county, FIPS, RDI, DPV, and `line2 null` for `unit ''`; manual `state 'XX'` → 400; US Street `[]` → 422 `address_unverifiable` with no write; `street_d.json` → `needs_unit: true`, `verified: false`; `street_y.json` → verified and no `county`/`rdi` text in the body; US Street 401 → 502; RPC `item_approved` → 409; RPC `link_inactive` → 401 `no_session`; an unknown `source` → 400.
+- Confirm: no `X-Requested-With` → 403 `bad_origin`; another request's item → 404; an `upload` item → 409 `item_kind_mismatch`; smarty `zipcode '1234'` → 400; smarty with no keys → 503; manual with no keys → 200 and `confirmAddress` gets `source 'manual'`, `verified false`, null county, FIPS, RDI, DPV, and `line2 null` for `unit ''`; manual `state 'XX'` → 400; US Street `[]` → 422 `address_unverifiable` with no write; `street_d.json` → `needs_unit: true`, `verified: false`; `street_y.json` → verified and no `county`/`rdi` text in the body; US Street 401 → 502; RPC `item_approved` → 409; RPC `link_inactive` → 401 `no_session`; an unknown `source` → 400; a confirmation sends `financials_propose` for the session's case (`sessionRequest` called with `R1`, `F1`); a throwing `JOBS.send` still answers 200.
 
 The live counterpart is `app/worker/test/address-live.test.ts`.

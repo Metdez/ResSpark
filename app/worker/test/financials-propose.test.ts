@@ -3,6 +3,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import { createAdminClient } from '../src/db/client'
 import { countyBlock, lookupCountyFips } from '../src/financials/county'
 import { runFinancialsPropose } from '../src/financials/propose/run'
+import { app } from '../src/index'
 import { queue, type Job } from '../src/jobs/index'
 import { seedFinancialCase, TEST_FIRM, type FinancialFixture } from './fixtures/financials'
 
@@ -11,6 +12,18 @@ import { seedFinancialCase, TEST_FIRM, type FinancialFixture } from './fixtures/
 const { SUPABASE_URL, SUPABASE_SECRET_KEY } = process.env
 const live = Boolean(SUPABASE_URL && SUPABASE_SECRET_KEY)
 if (!live) process.stderr.write('financials propose suite skipped: missing SUPABASE_URL or SUPABASE_SECRET_KEY\n')
+
+const STAFF_ID = '00000000-0000-0000-0000-0000000000a7'
+vi.mock('../src/middleware/staff-auth', async () => {
+  const { createMiddleware } = await import('hono/factory')
+  const { TEST_FIRM: firmId } = await import('./fixtures/financials')
+  return {
+    staffAuth: createMiddleware(async (c, next) => {
+      c.set('staff', { userId: STAFF_ID, firmId, role: 'admin', displayName: 'Test agent' })
+      await next()
+    }),
+  }
+})
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- loose row JSON in assertions only
 type Json = Record<string, any>
@@ -23,7 +36,7 @@ describe.skipIf(!live)('financials_propose (live)', () => {
   const fixtures: FinancialFixture[] = []
 
   // A case whose client confirmed a USPS (Smarty) address with this FIPS.
-  const seedConfirmed = async (fips: string, countyName: string, state = 'CA', opts: { logicsCaseId?: number } = {}) => {
+  const seedConfirmed = async (fips: string, countyName: string, state = 'CA', opts: Parameters<typeof seedFinancialCase>[1] = {}) => {
     const fx = await seedFinancialCase(env, opts)
     fixtures.push(fx)
     const { error } = await db
@@ -122,5 +135,63 @@ describe.skipIf(!live)('financials_propose (live)', () => {
       reliability: 'C',
       method: 'smarty_county_name_not_in_irs_table',
     })
+  })
+
+  it('staff refresh saves the window and spouse employers, enqueues the job; GET shows county, window and employers', async () => {
+    const fx = await seedConfirmed('06037', 'Los Angeles', 'CA', { withRequest: { items: [{ kind: 'payroll_connect', label: 'Connect your payroll' }] } })
+    const conn = (
+      await db
+        .from('connections')
+        .insert({
+          firm_id: fx.firmId,
+          case_id: fx.caseId,
+          request_id: fx.requestId,
+          request_item_id: fx.itemIds['Connect your payroll'],
+          provider: 'truv',
+          kind: 'payroll',
+          status: 'done',
+          data: { employers: [
+            { employer_id: 'emp_1', link_id: 'l1', company_name: 'Acme Corp', status: 'done' },
+            { employer_id: 'emp_2', link_id: 'l2', company_name: 'Beta LLC', status: 'done' },
+          ] },
+        })
+        .select('id')
+        .single()
+    ).data!
+    try {
+      const send = vi.fn(async () => {})
+      const appEnv = { ...env, JOBS: { send } } as unknown as Env
+      const res = await app.request(
+        `/api/admin/cases/${fx.caseId}/financials/refresh`,
+        { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ window_months: 6, spouse_employer_ids: ['emp_2', 'emp_2'] }) },
+        appEnv
+      )
+      expect(res.status).toBe(202)
+      expect(await res.json()).toEqual({ queued: true, settings: { window_months: 6, spouse_employer_ids: ['emp_2'] } })
+      expect(send).toHaveBeenCalledWith({ type: 'financials_propose', ref: fx.caseId, reason: 'refresh' })
+      const saved = (await db.from('cases').select('financials_settings').eq('id', fx.caseId).single()).data!
+      expect(saved.financials_settings).toEqual({ window_months: 6, spouse_employer_ids: ['emp_2'] })
+      const event = (await db.from('events').select('actor_id, payload').eq('case_id', fx.caseId).eq('action', 'financials.refresh_requested')).data!
+      expect(event).toEqual([{ actor_id: STAFF_ID, payload: { window_months: 6, spouse_employers: 1 } }])
+
+      await runFinancialsPropose(env, fx.caseId, NOW)
+      const view = (await (await app.request(`/api/admin/cases/${fx.caseId}/financials`, {}, appEnv)).json()) as Json
+      expect(view.county).toMatchObject({ status: 'confirmed_address', irs_county: 'Los Angeles County', county_fips: '06037', smarty_county: 'Los Angeles' })
+      expect(view.window.months).toBe(6)
+      expect(view.employers).toEqual([
+        { employer_id: 'emp_1', connection_id: conn.id, company_name: 'Acme Corp', status: 'done', person: 'taxpayer' },
+        { employer_id: 'emp_2', connection_id: conn.id, company_name: 'Beta LLC', status: 'done', person: 'spouse' },
+      ])
+    } finally {
+      await db.from('connections').delete().eq('id', conn.id)
+    }
+  })
+
+  it('without any address the county block is waiting_for_address', async () => {
+    const fx = await seedFinancialCase(env)
+    fixtures.push(fx)
+    const view = (await (await app.request(`/api/admin/cases/${fx.caseId}/financials`, {}, env)).json()) as Json
+    expect(view.county).toMatchObject({ status: 'waiting_for_address', irs_county: null })
+    expect(view.employers).toEqual([])
   })
 })

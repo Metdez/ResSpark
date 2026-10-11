@@ -128,3 +128,26 @@ describe('foreign or missing cases', () => {
     expect(getCaseForFinancials).not.toHaveBeenCalled()
   })
 })
+
+describe('POST /cases/:id/financials/refresh', () => {
+  const refresh = (body: unknown) =>
+    app.request(`/api/admin/cases/${C1}/financials/refresh`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }, ENV)
+
+  it.each([
+    [{ window_months: 4 }],
+    [{ window_months: '6' }],
+    [{ spouse_employer_ids: 'emp_1' }],
+    [{ spouse_employer_ids: [7] }],
+    [{ spouse_employer_ids: [''] }],
+    [{ spouse_employer_ids: ['x'.repeat(101)] }],
+    [{ spouse_employer_ids: Array.from({ length: 21 }, (_, i) => `e${i}`) }],
+  ])('%j is 400 before any read', async (body) => {
+    const res = await refresh(body)
+    expect(res.status).toBe(400)
+    expect(getCaseForFinancials).not.toHaveBeenCalled()
+  })
+
+  it('a foreign case is 404', async () => {
+    expect((await refresh({ window_months: 6 })).status).toBe(404)
+  })
+})

@@ -13,3 +13,6 @@ This module holds the reads and the single insert behind the 433-A admin routes.
 | `staffDisplayNames(env, firmId, ids)` | `staff_profiles.display_name` by user id, limited to the firm. It skips the query when `ids` is empty. |
 | `insertDeterminationRun(env, run)` | Inserts one `determination_runs` row and returns it. Runs are insert-only (D-15, T-07-19). Nothing in the Worker updates or deletes them. |
 | `getLatestRun(env, firmId, caseId)` | The newest run for the case within the firm, or `null`. |
+| `saveFinancialsSettings(env, firmId, caseId, settings)` | Writes `cases.financials_settings` with an update filtered by **both** `firm_id` and `id` (T-07-24). A failure throws `settings_update_failed`. |
+| `CaseEmployer` | `{ employer_id, connection_id, company_name, status }`. |
+| `listCaseEmployers(env, firmId, caseId)` | The case's payroll `connections` (firm-scoped, status not `removed`, oldest first), flattened to their `data.employers[]` (Phase 4 Plan 03). Entries without a string `employer_id` are skipped. `company_name` is `null` when it is absent, and `status` is `unknown` when it is absent. |
