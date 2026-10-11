@@ -3,6 +3,7 @@ import { Copy } from 'lucide-react'
 import { toast } from 'sonner'
 import { ApiError } from '@/lib/api'
 import { GENERIC_ERROR } from '@/lib/handle-server-error'
+import { pollInterval } from '@/lib/polling'
 import { itemStatusBadge, requestStatusBadge } from '@/lib/status'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -53,6 +54,8 @@ export function RequestPage({ requestId }: { requestId: string }) {
     queryKey: ['request', requestId],
     queryFn: () => getRequest(requestId),
     meta: { errorShown: true },
+    // the header badge follows client uploads too, not only staff decisions
+    refetchInterval: pollInterval,
   })
   const send = useMutation({
     mutationFn: (v: { email: string; phone: string; keep_flagged: boolean }) =>

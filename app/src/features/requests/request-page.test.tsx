@@ -1,6 +1,7 @@
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { pollInterval } from '@/lib/polling'
 import { toast } from 'sonner'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { RequestPage } from './request-page'
@@ -68,6 +69,7 @@ let replies: Record<string, Reply>
 let fetchMock: ReturnType<typeof vi.fn>
 let root: Root | undefined
 let container: HTMLDivElement | undefined
+let client: QueryClient
 const writeText = vi.fn().mockResolvedValue(undefined)
 
 const tick = () =>
@@ -102,7 +104,7 @@ async function render(detail: Reply) {
       disconnect() {}
     }
   )
-  const client = new QueryClient({
+  client = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   })
   container = document.createElement('div')
@@ -189,6 +191,12 @@ describe('RequestPage', () => {
     expect(byLabel('Client email').value).toBe('jordan.rivera@example.com')
     expect(byLabel('Client phone').value).toBe('(555) 010-0001')
     expect(button('Send link')?.disabled).toBe(false)
+  })
+
+  it('polls the detail query so the header badge follows client uploads', async () => {
+    await render({ status: 200, body: DRAFT })
+    const q = client.getQueryCache().find({ queryKey: ['request', 'r1'] })!
+    expect((q.options as { refetchInterval?: unknown }).refetchInterval).toBe(pollInterval)
   })
 
   it('offers the did-you-mean fix for a typo domain and blocks Send link', async () => {
