@@ -59,18 +59,18 @@ Requirements for the first release. Each maps to a roadmap phase. The Oct 12 202
 
 ### Bank Connection
 
-- [ ] **BANK-01**: Client can connect a bank via Plaid Hosted Link opened from the portal step; a fresh link token is created per tap with `transactions.days_requested` of at least 200 and Statements requested where the bank supports it
+- [x] **BANK-01**: Client can connect a bank via Plaid Hosted Link opened from the portal step; a fresh link token is created per tap with `transactions.days_requested` of at least 200 and Statements requested where the bank supports it
 - [x] **BANK-02**: After connection the system exchanges the public token, stores the access token encrypted, syncs 6 months of transactions, and downloads every available monthly statement PDF into the case
 - [x] **BANK-03**: Each connected account shows statement status by month (available, not supported by this bank, uploaded manually) and offers manual statement upload as a first-class fallback
-- [ ] **BANK-04**: Bank data is retrieved through a `BankProvider` interface with declared capabilities so a second provider can be enabled by configuration; Plaid is the first implementation
-- [ ] **BANK-05**: Client sees and accepts a consent screen stating what will be pulled and why (tax paperwork preparation) before Plaid opens, and the consent is logged
+- [x] **BANK-04**: Bank data is retrieved through a `BankProvider` interface with declared capabilities so a second provider can be enabled by configuration; Plaid is the first implementation
+- [x] **BANK-05**: Client sees and accepts a consent screen stating what will be pulled and why (tax paperwork preparation) before Plaid opens, and the consent is logged
 - [x] **BANK-06**: Plaid Items are removed after a configurable window (default 30 days) so per-Item billing stops
 
 ### Payroll Connection
 
-- [ ] **PAY-01**: Client can connect payroll via a Truv order (income and employment) opened from the portal step, and can add more than one employer in the same order
+- [x] **PAY-01**: Client can connect payroll via a Truv order (income and employment) opened from the portal step, and can add more than one employer in the same order
 - [x] **PAY-02**: After completion the system retrieves the income and employment report, pay stubs, and W-2s into the case, attributed to each employer
-- [ ] **PAY-03**: A client who cannot find their employer or provider can upload pay stubs and W-2s manually in the same step
+- [x] **PAY-03**: A client who cannot find their employer or provider can upload pay stubs and W-2s manually in the same step
 - [x] **PAY-04**: Truv order status (pending, connected, done, error) is reflected in the client step and the admin status
 
 ### Address
@@ -196,15 +196,15 @@ Which phases cover which requirements. Updated during roadmap creation.
 | STAT-02 | Phase 3 | Complete |
 | STAT-03 | Phase 3 | Complete |
 | STAT-04 | Phase 3 | Complete |
-| BANK-01 | Phase 4 | Pending |
+| BANK-01 | Phase 4 | Complete |
 | BANK-02 | Phase 4 | Complete |
 | BANK-03 | Phase 4 | Complete |
-| BANK-04 | Phase 4 | Pending |
-| BANK-05 | Phase 4 | Pending |
+| BANK-04 | Phase 4 | Complete |
+| BANK-05 | Phase 4 | Complete |
 | BANK-06 | Phase 4 | Complete |
-| PAY-01 | Phase 4 | Pending |
+| PAY-01 | Phase 4 | Complete |
 | PAY-02 | Phase 4 | Complete |
-| PAY-03 | Phase 4 | Pending |
+| PAY-03 | Phase 4 | Complete |
 | PAY-04 | Phase 4 | Complete |
 | ADDR-01 | Phase 6 | Pending |
 | ADDR-02 | Phase 7 | Pending |
