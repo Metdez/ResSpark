@@ -1,0 +1,13 @@
+# Copy to app/.dev.vars (git-ignored). pnpm -C app secrets:provision and staff:create fill it.
+SUPABASE_URL=
+SUPABASE_SECRET_KEY=
+CLIENT_LINK_HMAC_KEY=
+SUPABASE_PUBLISHABLE_KEY=
+DEMO_STAFF_EMAIL=
+DEMO_STAFF_PASSWORD=
+# STAFF_PASSWORD__<email with @ and . as _>=   one per created staff user
+# Reserved for later phases:
+# RESEND_API_KEY=
+# MAIL_FROM=
+# TRUV_CLIENT_ID=
+# TRUV_SECRET=

@@ -39,4 +39,8 @@ seq 501 > "$tmp/bad/b.ts"
 node app/scripts/check-file-sizes.mjs --root "$tmp/ok" || fail "a 500-line file was rejected"
 ! node app/scripts/check-file-sizes.mjs --root "$tmp/bad" 2>/dev/null || fail "a 501-line file was accepted"
 
+# (h) PLAT-03: the secret key never reaches the client bundle (publishable and secret share the sb_ prefix)
+test -d app/dist/client || { echo "FAIL: run pnpm -C app build before hygiene-check"; exit 1; }
+! grep -rq "sb_secret_" app/dist/client || { echo "FAIL: secret key in client bundle"; exit 1; }
+
 echo "hygiene ok"

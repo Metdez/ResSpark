@@ -13,7 +13,8 @@ Bash gate that proves PLAT-06 on a checkout: secrets and build output are git-ig
 | 26-28 | (e) Asserts `app/package.json` declares `"node": ">=22.12"` and `.npmrc` starts a line with `engine-strict=true`. |
 | 30-31 | (f) Runs the 500-line gate over `app/`. |
 | 33-40 | (g) Boundary self-test: creates a `mktemp -d` directory (removed by the `trap` on exit, including on failure), writes a 500-line `ok/a.ts` and a 501-line `bad/b.ts` with `seq`, and asserts the gate accepts the first directory and rejects the second. |
-| 42 | Prints `hygiene ok`. |
+| 42-44 | (h) PLAT-03 bundle gate (Plan 05): fails with `FAIL: run pnpm -C app build before hygiene-check` if `app/dist/client` is missing, and with `FAIL: secret key in client bundle` if any file under it contains `sb_secret_`. The publishable and secret keys share the `sb_` prefix, so only the `sb_secret_` string is searched. Build first: `pnpm -C app build && bash app/scripts/hygiene-check.sh`. |
+| 46 | Prints `hygiene ok`. |
 
 ## Notes
 
