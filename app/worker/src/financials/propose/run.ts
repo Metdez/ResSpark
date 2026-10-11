@@ -10,6 +10,7 @@ import { type ProposalInput, type ProposalSource, upsertProposals } from '../rpc
 import { settingsOf } from '../view'
 import { proposeAddress } from './address'
 import { proposeLogics } from './logics'
+import { proposePayroll } from './payroll'
 import { completeMonthsWindow } from './window'
 
 export const GENERATOR_VERSION = 'p7-1'
@@ -29,8 +30,8 @@ export interface ProposeContext {
 // null = could not run (old rows kept); [] = ran and found nothing (old rows of the source superseded).
 export type Proposer = (ctx: ProposeContext) => Promise<{ source: ProposalSource; proposals: ProposalInput[] } | null>
 
-// Keyed by a name for results and logs; order is run order. Plan 07 adds bank and payroll.
-export const PROPOSERS: Record<string, Proposer> = { address: proposeAddress, logics: proposeLogics }
+// Keyed by a name for results and logs; order is run order.
+export const PROPOSERS: Record<string, Proposer> = { address: proposeAddress, logics: proposeLogics, payroll: proposePayroll }
 
 type SourceResult = { inserted: number; kept: number; superseded: number } | 'skipped' | 'failed'
 

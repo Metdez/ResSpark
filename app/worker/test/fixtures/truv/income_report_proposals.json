@@ -1,0 +1,90 @@
+{
+  "employers": [
+    {
+      "employer_id": "emp_1",
+      "link_id": "link_acme_p",
+      "company_name": "Acme Inc",
+      "status": "done",
+      "fetched_at": "2026-10-01T00:00:00Z",
+      "report": {
+        "id": "rep_acme_p",
+        "employments": [
+          {
+            "id": "empl_acme_p",
+            "company": { "name": "Acme Inc" },
+            "pay_frequency": "BW",
+            "statements": [
+              {
+                "pay_date": "2026-09-18", "check_number": "3003", "gross_pay": "2650.00", "net_pay": "1708.27",
+                "deductions": [
+                  { "category": "federal", "name": "Federal Income Tax", "amount": "310.00" },
+                  { "category": "socialsec", "name": "Social Security", "amount": "164.30" },
+                  { "category": "medicare", "name": "Medicare", "amount": "38.43" },
+                  { "category": "benefit", "name": "Medical PPO", "amount": "120.00" },
+                  { "category": "benefit", "name": "Basic Life", "amount": "8.00" },
+                  { "category": "retirement", "name": "401k", "amount": "100.00" },
+                  { "category": "garnishment", "name": "Child Support Order", "amount": "200.00" }
+                ]
+              },
+              {
+                "pay_date": "2026-08-21", "check_number": "3002", "gross_pay": "2650.00", "net_pay": "1708.27",
+                "deductions": [
+                  { "category": "federal", "name": "Federal Income Tax", "amount": "310.00" },
+                  { "category": "socialsec", "name": "Social Security", "amount": "164.30" },
+                  { "category": "medicare", "name": "Medicare", "amount": "38.43" },
+                  { "category": "benefit", "name": "Medical PPO", "amount": "120.00" },
+                  { "category": "benefit", "name": "Basic Life", "amount": "8.00" },
+                  { "category": "retirement", "name": "401k", "amount": "100.00" },
+                  { "category": "garnishment", "name": "Child Support Order", "amount": "200.00" }
+                ]
+              },
+              {
+                "pay_date": "2026-07-24", "check_number": "3001", "gross_pay": "2650.00", "net_pay": "1708.27",
+                "deductions": [
+                  { "category": "federal", "name": "Federal Income Tax", "amount": "310.00" },
+                  { "category": "socialsec", "name": "Social Security", "amount": "164.30" },
+                  { "category": "medicare", "name": "Medicare", "amount": "38.43" },
+                  { "category": "benefit", "name": "Medical PPO", "amount": "120.00" },
+                  { "category": "benefit", "name": "Basic Life", "amount": "8.00" },
+                  { "category": "retirement", "name": "401k", "amount": "100.00" },
+                  { "category": "garnishment", "name": "Child Support Order", "amount": "200.00" }
+                ]
+              },
+              {
+                "pay_date": "2026-06-30", "check_number": "3000", "gross_pay": "9999.00", "net_pay": "7000.00",
+                "deductions": [{ "category": "federal", "name": "Federal Income Tax", "amount": "999.00" }]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "employer_id": "emp_2",
+      "link_id": "link_beta_p",
+      "company_name": "Beta LLC",
+      "status": "done",
+      "fetched_at": "2026-10-01T00:00:00Z",
+      "report": {
+        "id": "rep_beta_p",
+        "employments": [
+          {
+            "id": "empl_beta_p",
+            "company": { "name": "Beta LLC" },
+            "pay_frequency": "SM",
+            "statements": [
+              {
+                "pay_date": "2026-09-15", "check_number": null, "gross_pay": "1800.00", "net_pay": "1650.00",
+                "deductions": [{ "category": "federal", "name": "Federal Income Tax", "amount": "150.00" }]
+              },
+              {
+                "pay_date": "2026-08-31", "gross_pay": "1800.00", "net_pay": "1650.00",
+                "deductions": [{ "category": "federal", "name": "Federal Income Tax", "amount": "150.00" }]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}
