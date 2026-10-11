@@ -199,6 +199,14 @@ describe('POST /api/admin/lookup (live mode)', () => {
     expect(await errorCode(res)).toBe('logics_unauthorized')
   })
 
+  it('is 502 logics_forbidden when the key lacks a scope (Logics answers 403)', async () => {
+    vi.mocked(getIntegration).mockResolvedValue(await testedRow())
+    logicsResponse = async () => new Response('{"Message":"Access denied. Missing required scope: case.read"}', { status: 403 })
+    const res = await lookup({ type: 'email', value: 'a@example.com' }, { mode: 'live' })
+    expect(res.status).toBe(502)
+    expect(await errorCode(res)).toBe('logics_forbidden')
+  })
+
   it('is 502 logics_unreachable when the network fails twice', async () => {
     vi.mocked(getIntegration).mockResolvedValue(await testedRow())
     logicsResponse = async () => {

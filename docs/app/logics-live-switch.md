@@ -1,5 +1,7 @@
 # Switching Logics pushes from fake to live
 
+> **Status 2026-10-11:** `LOGICS_MODE` is `live` at the user's request, so lookups, confirms and send-time re-reads use the firm's tested Logics credentials. Writes are still refused: `LOGICS_WRITE_ENABLED` is `"false"` and `LOGICS_TEST_CASE_IDS` is empty, so steps 3–5 and 8–9 below are still to do before any document is pushed. A firm without tested credentials now sees `Logics is not configured` instead of the built-in sample cases.
+
 > **USER ACTION.** Nothing in this runbook is done by a code change or by Claude. The repo ships with `LOGICS_MODE=fake` and `LOGICS_WRITE_ENABLED=false` in `app/wrangler.jsonc`; flipping them is a deliberate human step, after Andrew (ValorTax / Logics admin) confirms the scopes and the test cases (Phase 5 D-10, Pitfall C1).
 
 ## What fake mode does today

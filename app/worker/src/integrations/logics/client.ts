@@ -5,8 +5,10 @@ import {
   type LogicsWriteClient,
 } from './write-types'
 
-// Logics API client (D-02). Every lookup parameter travels as an HTTP header, never a query
-// string. Read errors carry a kind and status only: no URL, header, credential, or body text.
+// Logics API client (D-02). Read errors carry a kind and status only: no URL, header, credential,
+// or body text. The live tenant differs from the vendor docs (probed 2026-10-11): GET parameters go
+// on the query string, the envelope is capitalized (`Data`, `Success`), and a Find with no match
+// answers 404 "Resource not found!".
 // The two writes (Phase 5, D-07) never throw: they return sent | failed | unknown.
 
 export interface LogicsFindRow {
@@ -78,24 +80,36 @@ interface Envelope {
   data?: unknown
 }
 
+// Accepts the documented lowercase envelope and the live tenant's capitalized one.
+export function normalizeEnvelope(v: unknown): unknown {
+  if (typeof v !== 'object' || v === null || Array.isArray(v)) return v
+  const o = v as Record<string, unknown>
+  return { ...o, Success: o.Success ?? o.success, data: o.data !== undefined ? o.data : o.Data }
+}
+
 export function createLogicsClient(creds: LogicsCreds, fetchImpl: typeof fetch = fetch): LogicsClient {
   const authHeader = 'Basic ' + Buffer.from(creds.apiKey + ':' + creds.secretToken).toString('base64')
 
-  const send = (path: string, headers: Record<string, string>) =>
-    fetchImpl(new URL(path, creds.baseUrl).toString(), {
+  // Logics reads GET parameters from the query string only. The documented header form is ignored
+  // (400 "Email is required.") or unrouted (404 on CaseInfo); probed against the tenant 2026-10-11.
+  const send = (path: string, params: Record<string, string>) => {
+    const url = new URL(path, creds.baseUrl)
+    for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v)
+    return fetchImpl(url.toString(), {
       method: 'GET',
-      headers: { authorization: authHeader, accept: 'application/json', ...headers },
+      headers: { authorization: authHeader, accept: 'application/json' },
       signal: AbortSignal.timeout(3000),
     })
+  }
 
-  const call = async (path: string, headers: Record<string, string>): Promise<Envelope> => {
+  const call = async (path: string, params: Record<string, string>): Promise<Envelope> => {
     let res: Response
     try {
-      res = await send(path, headers)
+      res = await send(path, params)
     } catch {
       // Network failure or timeout: Logics reads are the only retried calls, and only once.
       try {
-        res = await send(path, headers)
+        res = await send(path, params)
       } catch {
         throw new LogicsError('network')
       }
@@ -104,14 +118,18 @@ export function createLogicsClient(creds: LogicsCreds, fetchImpl: typeof fetch =
     if (res.status === 403) throw new LogicsError('forbidden', 403)
     if (!res.ok) throw new LogicsError('upstream', res.status)
     try {
-      return ((await res.json()) ?? {}) as Envelope
+      return (normalizeEnvelope(await res.json()) ?? {}) as Envelope
     } catch {
       throw new LogicsError('invalid_response', res.status)
     }
   }
 
-  const find = async (path: string, headers: Record<string, string>) => {
-    const body = await call(path, headers)
+  const find = async (path: string, params: Record<string, string>) => {
+    // A Find with no match is a 404 on the live tenant, not an empty list.
+    const body = await call(path, params).catch((e: unknown) => {
+      if (e instanceof LogicsError && e.status === 404) return {} as Envelope
+      throw e
+    })
     return Array.isArray(body.data) && body.Success !== false ? (body.data as LogicsFindRow[]) : []
   }
 
@@ -140,7 +158,7 @@ export function createLogicsClient(creds: LogicsCreds, fetchImpl: typeof fetch =
     }
     const early = writeStatus(res.status)
     if (early) return { early }
-    return { body: (await res.json().catch(() => null)) as unknown }
+    return { body: normalizeEnvelope(await res.json().catch(() => null)) }
   }
 
   return {
@@ -183,7 +201,7 @@ export function createLogicsClient(creds: LogicsCreds, fetchImpl: typeof fetch =
         return { kind: 'failed', status: 0 }
       }
       if (!res.ok) return { kind: 'failed', status: res.status }
-      const body = (await res.json().catch(() => null)) as Envelope | null
+      const body = normalizeEnvelope(await res.json().catch(() => null)) as Envelope | null
       const rows = Array.isArray(body?.data) ? body.data : body?.data ? [body.data] : []
       const types = rows
         .map((r) => (r && typeof r === 'object' ? (r as Record<string, unknown>).ActivityType : null))

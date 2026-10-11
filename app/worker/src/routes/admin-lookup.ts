@@ -22,9 +22,9 @@ const badRequest = () => new HTTPException(400, { message: 'bad_request' })
 export function toHttp(e: unknown): unknown {
   if (e instanceof LogicsError) {
     if (e.kind === 'not_configured') return new HTTPException(409, { message: 'logics_not_configured' })
-    if (e.kind === 'unauthorized' || e.kind === 'forbidden') {
-      return new HTTPException(502, { message: 'logics_unauthorized' })
-    }
+    if (e.kind === 'unauthorized') return new HTTPException(502, { message: 'logics_unauthorized' })
+    // 403: the key authenticated but lacks a scope (Logics: "Missing required scope: case.read").
+    if (e.kind === 'forbidden') return new HTTPException(502, { message: 'logics_forbidden' })
     return new HTTPException(502, { message: 'logics_unreachable' })
   }
   if (e instanceof Error && INPUT_ERRORS.includes(e.message)) return new HTTPException(400, { message: e.message })

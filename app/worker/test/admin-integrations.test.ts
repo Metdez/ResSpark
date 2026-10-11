@@ -233,8 +233,7 @@ describe('POST /api/admin/integrations/logics/test', () => {
     expect(JSON.stringify(event.payload)).not.toContain('@')
     // Always the live client, even with LOGICS_MODE=fake.
     expect(outbound).toHaveLength(1)
-    expect(outbound[0].url).toBe(`${DEFAULT_LOGICS_BASE_URL}Find/FindCaseByEmail`)
-    expect(outbound[0].headers.email).toBe('zack@resspark.test')
+    expect(outbound[0].url).toBe(`${DEFAULT_LOGICS_BASE_URL}Find/FindCaseByEmail?email=zack%40resspark.test`)
   })
 
   it('records failure on a 401', async () => {

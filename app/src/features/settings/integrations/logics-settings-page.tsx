@@ -37,7 +37,13 @@ function testCopy(r: TestResult) {
       failed: false,
       title: `Connected — Logics accepted the credentials on ${formatDate(r.tested_at)}.`,
     }
-  if (r.status === 401 || r.status === 403)
+  if (r.status === 403)
+    return {
+      failed: true,
+      title: 'Logics accepted the key, but it is missing a permission',
+      body: 'The key cannot read cases (case.read). In Logics, open Security → API Key and give this key case.read (plus case.write and activity.write before pushing documents), then click Test connection again.',
+    }
+  if (r.status === 401)
     return {
       failed: true,
       title: 'Logics rejected the credentials',

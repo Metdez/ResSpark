@@ -76,7 +76,7 @@ describe('guards', () => {
 })
 
 describe('logicsErrorCopy', () => {
-  it('has two-part copy for the three Logics failures and nothing else', () => {
+  it('has two-part copy for the four Logics failures and nothing else', () => {
     expect(logicsErrorCopy('logics_not_configured')?.title).toBe(
       'Logics is not configured'
     )
@@ -84,6 +84,7 @@ describe('logicsErrorCopy', () => {
     expect(logicsErrorCopy('logics_unauthorized')?.title).toBe(
       'Logics rejected the credentials'
     )
+    expect(logicsErrorCopy('logics_forbidden')?.body).toContain('case.read')
     expect(logicsErrorCopy('internal')).toBeUndefined()
   })
 })

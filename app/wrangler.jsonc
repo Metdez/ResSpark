@@ -15,8 +15,9 @@
     "APP_ENV": "sandbox",
     "LOGICS_WRITE_ENABLED": "false",
     "LOGICS_TEST_CASE_IDS": "",
-    // "fake" serves fixture cases (C1); "live" after Settings → Integrations → Test connection succeeds
-    "LOGICS_MODE": "fake",
+    // "fake" serves fixture cases (C1); "live" after Settings → Integrations → Test connection succeeds.
+    // Live since 2026-10-11 for reads (user request); writes stay refused while LOGICS_WRITE_ENABLED is "false".
+    "LOGICS_MODE": "live",
     // Cloudflare Email Service sender. Empty = email off ("not configured"). Set it to an address on a
     // domain onboarded in Compute > Email Service > Email Sending, e.g. "notifications@yourfirm.com".
     "EMAIL_FROM": "",

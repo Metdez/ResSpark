@@ -124,14 +124,23 @@ describe('createActivity', () => {
   })
 })
 
+describe('capitalized envelope (live tenant)', () => {
+  it('counts Success/Data as proof for both writes', async () => {
+    const docClient = setup(json({ Success: true, Data: { CaseDocumentID: 128346 }, Message: 'ok' })).client
+    await expect(docClient.createCaseDocument(doc())).resolves.toEqual({ kind: 'sent', logicsDocumentId: 128346 })
+    const { client } = setup(json({ Success: true, Data: { ActivityID: 9164821 }, Message: 'ok' }))
+    const note = { caseId: 900001, activityType: 'General', subject: 'Documents uploaded via ResSpark', comment: 'x' }
+    await expect(client.createActivity(note)).resolves.toEqual({ kind: 'sent', activityId: 9164821 })
+  })
+})
+
 describe('listActivities', () => {
-  it('GETs CaseActivity/Activity with a CaseID header and reads a single-object data', async () => {
+  it('GETs CaseActivity/Activity with CaseID on the query string and reads a single-object data', async () => {
     const { client, fetchStub } = setup(json({ Success: true, data: { ActivityID: 1, ActivityType: 'General' } }))
     await expect(client.listActivities(900001)).resolves.toEqual({ activityTypes: ['General'] })
     const [url, init] = callOf(fetchStub)
-    expect(url).toBe(BASE + 'CaseActivity/Activity')
+    expect(url).toBe(BASE + 'CaseActivity/Activity?CaseID=900001')
     expect(init.method).toBe('GET')
-    expect(new Headers(init.headers).get('CaseID')).toBe('900001')
   })
 
   it('dedupes, sorts and drops empty types from an array data', async () => {

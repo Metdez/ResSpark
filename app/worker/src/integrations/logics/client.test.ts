@@ -23,40 +23,46 @@ const headersOf = (fetchStub: ReturnType<typeof vi.fn>, call = 0) =>
   new Headers((fetchStub.mock.calls[call][1] as RequestInit).headers)
 
 describe('createLogicsClient', () => {
-  it('findByPhone sends GET with Basic auth and a phone header, no query string', async () => {
+  // Logics reads GET parameters from the query string only (the documented headers are ignored).
+  it('findByPhone sends GET with Basic auth and the phone on the query string', async () => {
     const { client, fetchStub } = setup(ok({ Success: true, data: [row] }))
     await expect(client.findByPhone('1211212121')).resolves.toEqual([row])
     expect(fetchStub).toHaveBeenCalledTimes(1)
     const [url, init] = fetchStub.mock.calls[0] as [string, RequestInit]
-    expect(url).toBe(BASE + 'Find/FindCaseByPhone')
-    expect(url).not.toContain('?')
+    expect(url).toBe(BASE + 'Find/FindCaseByPhone?phone=1211212121')
     expect(init.method).toBe('GET')
     const h = headersOf(fetchStub)
     expect(h.get('authorization')).toBe(AUTH)
-    expect(h.get('phone')).toBe('1211212121')
+    expect(h.get('phone')).toBeNull()
   })
 
-  it('findByEmail calls Find/FindCaseByEmail with an email header', async () => {
+  it('findByEmail calls Find/FindCaseByEmail with the email URL-encoded', async () => {
     const { client, fetchStub } = setup(ok({ Success: true, data: [row] }))
-    await client.findByEmail('a@example.com')
-    expect(fetchStub.mock.calls[0][0]).toBe(BASE + 'Find/FindCaseByEmail')
-    expect(headersOf(fetchStub).get('email')).toBe('a@example.com')
+    await client.findByEmail('a+b@example.com')
+    expect(fetchStub.mock.calls[0][0]).toBe(BASE + 'Find/FindCaseByEmail?email=a%2Bb%40example.com')
   })
 
-  it('findByLastNameAndPhone calls Find/FindCase with lastName and phone headers', async () => {
+  it('findByLastNameAndPhone calls Find/FindCase with lastName and phone', async () => {
     const { client, fetchStub } = setup(ok({ Success: true, data: [row] }))
     await client.findByLastNameAndPhone('Joe', '1211212121')
-    expect(fetchStub.mock.calls[0][0]).toBe(BASE + 'Find/FindCase')
-    const h = headersOf(fetchStub)
-    expect(h.get('lastName')).toBe('Joe')
-    expect(h.get('phone')).toBe('1211212121')
+    expect(fetchStub.mock.calls[0][0]).toBe(BASE + 'Find/FindCase?lastName=Joe&phone=1211212121')
   })
 
-  it('caseInfo calls Case/CaseInfo with a CaseID header and returns the data object', async () => {
+  it('caseInfo calls Case/CaseInfo with CaseID and returns the data object', async () => {
     const { client, fetchStub } = setup(ok({ Success: true, data: row }))
     await expect(client.caseInfo(344624)).resolves.toEqual(row)
-    expect(fetchStub.mock.calls[0][0]).toBe(BASE + 'Case/CaseInfo')
-    expect(headersOf(fetchStub).get('CaseID')).toBe('344624')
+    expect(fetchStub.mock.calls[0][0]).toBe(BASE + 'Case/CaseInfo?CaseID=344624')
+  })
+
+  it('reads the capitalized live envelope (Data, Success) for Find and CaseInfo', async () => {
+    const { client } = setup(ok({ Data: [row], Success: true, Message: 'Data retrieved successfully.' }), ok({ Data: row, Success: true }))
+    await expect(client.findByEmail('a@example.com')).resolves.toEqual([row])
+    await expect(client.caseInfo(344624)).resolves.toEqual(row)
+  })
+
+  it('treats a Find 404 ("Resource not found!") as no match, not an outage', async () => {
+    const { client } = setup(new Response('{"Data":null,"Success":false,"Message":"Resource not found!"}', { status: 404 }))
+    await expect(client.findByEmail('nobody@example.com')).resolves.toEqual([])
   })
 
   it('Find returns [] when data is null or Success is false', async () => {

@@ -160,6 +160,16 @@ describe('LogicsSettingsPage', () => {
     expect(button('Testing…')?.disabled).toBe(true)
   })
 
+  it('explains a key that authenticates but lacks case.read (403)', async () => {
+    const { el } = await render(
+      SAVED,
+      testReply({ ok: false, status: 403, tested_at: '2026-10-10T16:00:00Z' })
+    )
+    await click(button('Test connection')!)
+    await waitFor(() => el.textContent!.includes('it is missing a permission'))
+    expect(el.textContent).toContain('give this key case.read')
+  })
+
   it('explains rejected credentials', async () => {
     const { el } = await render(
       SAVED,

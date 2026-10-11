@@ -133,6 +133,13 @@ const LOGICS_COPY = new Map<string, { title: string; body: string }>([
       body: 'Ask your admin to re-enter the API key and secret token in Settings → Integrations.',
     },
   ],
+  [
+    'logics_forbidden',
+    {
+      title: 'The Logics key is missing a permission',
+      body: 'Logics accepted the key but it cannot read cases (case.read). In Logics, open Security → API Key and give this key case.read, then run Test connection again.',
+    },
+  ],
 ])
 
 export const logicsErrorCopy = (code: string) => LOGICS_COPY.get(code)

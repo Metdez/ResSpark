@@ -89,7 +89,7 @@ describe('resolveLogicsClient', () => {
       expect(mode).toBe('live')
       await client.findByEmail('a@example.com')
       const [url, init] = fetchStub.mock.calls[0] as [string, RequestInit]
-      expect(url).toBe(BASE + 'Find/FindCaseByEmail')
+      expect(url).toBe(BASE + 'Find/FindCaseByEmail?email=a%40example.com')
       expect(new Headers(init.headers).get('authorization')).toBe('Basic ' + Buffer.from('K:S').toString('base64'))
     } finally {
       vi.unstubAllGlobals()

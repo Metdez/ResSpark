@@ -15,7 +15,7 @@ The SPA side of the lookup and confirm routes from Plan 02-03: types, the lookup
 | `json(body)` | `POST` init with a JSON body. |
 | `lookup(input)` | `POST /api/admin/lookup` with `{ type, value, last_name? }`. |
 | `confirmCase(id, searchType)` | `POST /api/admin/cases/{id}/confirm` with `{ search_type }`. Only the search type is sent; the Worker re-reads the case from Logics by id (C8). |
-| `LOGICS_COPY`, `logicsErrorCopy(code)` | Two-part copy for `logics_not_configured`, `logics_unreachable`, `logics_unauthorized` (LOOK-05, UI-SPEC error convention). A `Map`, so codes like `toString` never match a prototype key. `requests-api.ts` re-exports it for the send screen: one source. |
+| `LOGICS_COPY`, `logicsErrorCopy(code)` | Two-part copy for `logics_not_configured`, `logics_unreachable`, `logics_unauthorized` and `logics_forbidden` (LOOK-05, UI-SPEC error convention). `logics_forbidden` tells the admin the key is missing the `case.read` permission and where to add it in Logics (Security → API Key). A `Map`, so codes like `toString` never match a prototype key. `requests-api.ts` re-exports it for the send screen: one source. |
 
 ## Tests
 

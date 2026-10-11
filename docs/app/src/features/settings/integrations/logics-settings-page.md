@@ -5,7 +5,7 @@
 | Part | What it does |
 |------|--------------|
 | `KEY` | `LOGICS_KEY` from the api module, `['integrations', 'logics']`. |
-| `testCopy(result)` | Success: `Connected — Logics accepted the credentials on {Oct 10, 2026}.` Status 401/403: `Logics rejected the credentials` / `Check the API key and secret token and save again.` Anything else (no status, or another HTTP status): `Couldn't reach Logics` / `Check the base URL and try again.` |
+| `testCopy(result)` | Success: `Connected — Logics accepted the credentials on {Oct 10, 2026}.` Status 403 (the key authenticated but lacks a scope): `Logics accepted the key, but it is missing a permission` / how to give the key `case.read` (plus `case.write` and `activity.write` before pushing) under Security → API Key in Logics. Status 401: `Logics rejected the credentials` / `Check the API key and secret token and save again.` Anything else (no status, or another HTTP status): `Couldn't reach Logics` / `Check the base URL and try again.` |
 | `StatusLines` | `Key ending in ••••{hint} · Updated {date}` when configured, else `No credentials saved`; then the muted `Last test: passed {date}`, `failed {date}`, or `never`. |
 | `isAdmin` | `useSession().data?.role === 'admin'`. The Worker's `requireAdmin` is the real gate; this only shapes the UI. |
 | Status query | `useQuery(KEY, getLogicsStatus)` with `meta: { errorShown: true }`, so the app-wide handler adds no toast (a 401 still signs out). Pending: three `Skeleton` bars. Error: a destructive `Alert` with the generic staff copy. |
@@ -33,6 +33,6 @@
 - `Saving…` while the PUT is pending;
 - a save PUTs `{ api_key, secret_token }` (no `base_url`), then shows `Key ending in ••••1234` and `Updated Oct 10, 2026`, clears both inputs, enables `Test connection`, and the typed secret is nowhere in the DOM;
 - a typed base URL is sent, and `invalid_base_url` shows `Enter an https:// address.` with `aria-invalid`;
-- `Test connection` posts `/test` and shows the success sentence; `Testing…` while pending; 401 shows the rejected copy; `null` shows the unreachable copy;
+- `Test connection` posts `/test` and shows the success sentence; `Testing…` while pending; 403 shows the missing-permission copy; 401 shows the rejected copy; `null` shows the unreachable copy;
 - the status's last test renders `Last test: failed Oct 9, 2026`;
 - as staff: the hint shows, inputs are disabled, no buttons, and the admin-only line renders.
