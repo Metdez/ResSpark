@@ -78,6 +78,8 @@ export async function seedFinancialCase(
       must(await db.from('financial_proposals').delete().eq('case_id', caseId).select('id'), 'delete proposals')
       must(await db.from('case_financial_data').delete().eq('case_id', caseId).select('case_id'), 'delete row')
       must(await db.from('determination_runs').delete().eq('case_id', caseId).select('id'), 'delete runs')
+      must(await db.from('logics_pushes').delete().eq('case_id', caseId).select('id'), 'delete pushes')
+      must(await db.from('logics_push_batches').delete().eq('case_id', caseId).select('id'), 'delete batches')
       must(await db.from('documents').delete().eq('case_id', caseId).select('id'), 'delete documents')
       if (requestId) {
         must(await db.from('request_items').delete().eq('request_id', requestId).select('id'), 'delete items')

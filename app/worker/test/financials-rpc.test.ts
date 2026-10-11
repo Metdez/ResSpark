@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { createAdminClient } from '../src/db/client'
+import { createBatch } from '../src/db/logics-pushes'
 import { decideValue, FinancialRpcError, upsertProposals, type ProposalInput } from '../src/financials/rpc'
 import { seedFinancialCase, type FinancialFixture } from './fixtures/financials'
 
@@ -190,5 +191,35 @@ describe.skipIf(!live)('financial proposals and decisions (live)', () => {
     expect((await proposals(fx.caseId, 'household_size')).filter((r) => r.status === 'proposed')).toHaveLength(1)
     // Both runs replaced or kept; neither raised 23505, and superseded rows are kept as history.
     expect((await proposals(fx.caseId, 'household_size')).some((r) => r.status === 'superseded')).toBe(true)
+  })
+
+  it('push eligibility: a worksheet_433a with no item is pushable for its own case only (D-16)', async () => {
+    const fx = await seedFinancialCase(env, {
+      logicsCaseId: 900_000_000 + Math.floor(Math.random() * 99_999_999),
+      withRequest: { items: [{ kind: 'upload', label: 'Pay stubs' }] },
+    })
+    fixtures.push(fx)
+    const doc = async (type: string, itemId: string | null) => {
+      const id = crypto.randomUUID()
+      const res = await db.from('documents').insert({
+        id, case_id: fx.caseId, request_item_id: itemId, storage_key: `test/financials/${id}.pdf`,
+        original_filename: 'worksheet.pdf', mime_type: 'application/pdf', size_bytes: 10, sha256: 'a'.repeat(64),
+        status: 'ready', document_type: type,
+      })
+      if (res.error) throw new Error(res.error.message)
+      return id
+    }
+    const push = (documentId: string) =>
+      createBatch(env, {
+        firmId: fx.firmId, requestId: fx.requestId!, actorId: ACTOR, agentDisplayName: 'Test', mode: 'fake',
+        fileCategoryId: null, activityType: 'General', pushAgain: [],
+        items: [{ documentId, fingerprint: crypto.randomUUID(), fileName: 'worksheet.pdf' }],
+      })
+    const worksheet = await doc('worksheet_433a', null)
+    expect((await push(worksheet)).pushIds).toHaveLength(1)
+    const unapproved = await doc('pay_stub', fx.itemIds['Pay stubs'])
+    await expect(push(unapproved)).rejects.toThrow('not_pushable')
+    const loose = await doc('pay_stub', null)
+    await expect(push(loose)).rejects.toThrow('not_pushable')
   })
 })

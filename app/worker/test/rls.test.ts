@@ -18,7 +18,9 @@ const key =
 const BASELINE_TABLE_COUNT = 15
 // 15 baseline tables (src/schemas/database_schema.sql) + 5 from 0002 + 5 from 0003 + the 0004 view
 // + 7 from 0005 (connections, connection_secrets, bank_accounts, bank_statement_months,
-// bank_transactions, webhook_events, consents) + 2 from 0006 (logics_push_batches, logics_pushes), sorted.
+// bank_transactions, webhook_events, consents) + 2 from 0006 (logics_push_batches, logics_pushes)
+// + 5 from 0008 (county_fips_map, financial_proposals, plaid_category_map, standards_versions,
+// truv_deduction_map), sorted.
 const TABLES = [
   'app_migrations',
   'bank_accounts',
@@ -31,11 +33,13 @@ const TABLES = [
   'connection_secrets',
   'connections',
   'consents',
+  'county_fips_map',
   'county_suffixes',
   'determination_runs',
   'document_extractions',
   'documents',
   'events',
+  'financial_proposals',
   'firm_integrations',
   'firms',
   'health_care_standards',
@@ -44,16 +48,19 @@ const TABLES = [
   'logics_pushes',
   'msa_county_standards',
   'national_standards',
+  'plaid_category_map',
   'question_definitions',
   'request_dashboard_v',
   'request_items',
   'request_templates',
   'requests',
   'staff_profiles',
+  'standards_versions',
   'state_aliases',
   'state_region_standards',
   'transportation_operating_standards',
   'transportation_ownership_standards',
+  'truv_deduction_map',
   'webhook_events',
 ]
 
@@ -119,6 +126,24 @@ describe.skipIf(!url || !key)('anon is denied on every public table', () => {
         p_actor_id: null,
         p_contact_email: null,
         p_contact_phone_e164: null,
+      }),
+    })
+    expect([401, 404]).toContain(res.status)
+  })
+
+  it('rpc financial_value_decide is not callable by anon', async () => {
+    const res = await fetch(`${url}/rest/v1/rpc/financial_value_decide`, {
+      method: 'POST',
+      headers: { apikey: key!, 'content-type': 'application/json' },
+      body: JSON.stringify({
+        p_firm_id: null,
+        p_case_id: null,
+        p_column: null,
+        p_action: null,
+        p_value: null,
+        p_proposal_id: null,
+        p_note: null,
+        p_actor_id: null,
       }),
     })
     expect([401, 404]).toContain(res.status)

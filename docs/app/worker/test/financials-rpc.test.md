@@ -19,7 +19,8 @@ Run: `pnpm -C app run test:live:file worker/test/financials-rpc.test.ts` (also p
 | per-vehicle list | `[10000, 5000.5]` → `vehicle_market_value_total` 15000.5 and the event carries `derived_from: per_vehicle_list`. |
 | upsert rules | Same payload → kept; changed value → superseded + inserted; a run without a column supersedes it; `scopeColumns` limits that; after accept the same value is kept, not re-proposed. |
 | upsert guards and concurrency | JSON null → `bad_value`; source `staff` → `bad_source`; two concurrent upserts (`Promise.all`) both resolve and leave one `proposed` row. |
+| push eligibility (D-16, open question 3) | Through Phase 5's `createBatch`: a ready `worksheet_433a` document with no request item is queued for its own case's request; a document whose item is not approved, or any other document with no item, is refused with `not_pushable`. |
 
 ## Result (2026-10-11, live project `zvkphuikjpwoauqdimcf`)
 
-7 passed, 0 failed.
+8 passed, 0 failed. The Phase 5 push suites (`logics-rpc.test.ts`, `logics-push.test.ts`) stay green (19 passed) against the replaced `logics_push_create_batch`.
