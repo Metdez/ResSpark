@@ -29,6 +29,7 @@ Run from the repo root. Every script that needs a secret loads it with `dotenv -
 - **deploy** — `pnpm -C app run deploy`: builds and runs `wrangler deploy` with `CLOUDFLARE_API_TOKEN` loaded from the root env file. Deploy refuses to run if a name in `secrets.required` is missing on the Worker.
 - **smoke** — `pnpm -C app run smoke https://resspark.zh-a16.workers.dev`: post-deploy proof without credentials (`/admin`, `/api/config`, the 404s, `/c/` pages and headers, the `/api/c` 401s).
 - **smoke:auth** — `pnpm -C app run smoke:auth https://resspark.zh-a16.workers.dev --auth`: adds the staff and client-link checks. Add `--client-flow` for the Phase 2 acceptance run: lookup, confirm, create, send, open the link, Start, heartbeat, revoke, and the dead link, on fixture case 900003 (see `docs/app/scripts/smoke.md`).
+- **smoke:connect** — `pnpm -C app run smoke:connect https://resspark.zh-a16.workers.dev`: the Phase 4 acceptance run. It is `--auth --connect-flow`: the client flow plus item views, consent, both start routes (503 `provider_not_configured` without keys, 200 with keys), `/c/return` (302 and CSP), and the staff connections list. It ends `ok connect-flow complete (keys: payroll yes|no, bank yes|no)`. See `docs/app/scripts/smoke-connect.md`.
 - **db:migrate** — `pnpm -C app run db:migrate` (or `node app/scripts/db-migrate.mjs`): applies pending `supabase/migrations/*.sql` in order and records them in `public.app_migrations`. `--status`, `--dry-run`, and `--query "<sql>"` are also accepted.
 - **secrets:provision** — `pnpm -C app run secrets:provision`: sets the five required Worker secrets over stdin and appends missing keys to `app/.dev.vars`. Re-runs keep the existing `CLIENT_LINK_HMAC_KEY`, `INTEGRATION_ENC_KEY`, and `TOKEN_ENC_KEY_1`.
 - **secrets:provider** — `pnpm -C app run secrets:provider plaid` (or `truv`): prompts for that provider's two vendor keys with echo off (or reads them line by line from piped stdin) and sets them on the Worker. See § USER ACTION REQUIRED (Phase 4).
@@ -119,6 +120,33 @@ Phase 2 works in fixture mode today. These items need the user (or Andrew at Val
    - What `CaseInfo` returns for an unknown case id (`app/worker/src/integrations/logics/client.ts`). The code currently treats the undocumented answer as "not found".
    - Which phone format the `phone` lookup header accepts (`app/worker/src/integrations/logics/lookup.ts`). The code currently retries in the documented format.
 
+## Demo script (Phase 4)
+
+Use Sandbox vendor keys and synthetic fixture cases only. Never point the demo at a production Plaid or Truv environment or at real client data before Phase 8. `PLAID_ENV` is `sandbox` in `app/wrangler.jsonc`. The Truv environment is set by which Access Secret is installed.
+
+With keys (see § USER ACTION REQUIRED (Phase 4)):
+
+1. Open https://resspark.zh-a16.workers.dev/admin and sign in as the demo admin.
+2. Open an existing request built from the `Standard resolution packet`, or create one with steps 2-6 of § Demo script (Phase 2). Copy the client link.
+3. Open the link in a phone-sized private window and tap `Start`.
+4. Tap `View` on `Connect your payroll`, then `Connect payroll`, then `I agree`.
+5. In Truv Bridge, search for an employer and sign in with `multiple.employments` / `goodpassword`. Wait for `COMPLETED`. The sheet lists two employers.
+6. In admin, open the request page. The `Payroll` card reads `Done` and links the pay stubs and W-2s. The same files appear under the item in the review panel.
+7. On the phone, tap `View` on `Connect your bank`, then `Connect bank`, then `I agree`.
+8. Hosted Link opens. Pick First Platypus Bank, sign in with `user_good` / `pass_good`, and enter code `1234`.
+9. The phone returns to the portal and shows `Checking your connection…`, then the step list.
+10. In admin, the `Bank` card first reads `Syncing (bank is sending history)`. Within a few minutes it reads `Done`, the statement grid shows `Statement` cells for First Platypus Bank, and the transactions table fills in.
+11. Click `Refresh` on the card. It re-reads the bank and shows the same result.
+
+Without keys, the same request still demos. With `TRUV_CLIENT_ID` unset, the payroll sheet leads with `Upload pay stubs instead`. With the Plaid keys unset, the bank sheet leads with its upload fallback. Uploaded files land in the review panel as in Phase 3.
+
+The no-click version is `pnpm -C app run smoke:connect https://resspark.zh-a16.workers.dev`. Its last line records the mode it ran in.
+
+Runbooks:
+
+- [Truv webhook endpoint health and re-enable](runbooks/truv-webhook-endpoint.md)
+- [Plaid and Truv sandbox rehearsal checklist](runbooks/plaid-sandbox-rehearsal.md). Run it once before the demo.
+
 ## USER ACTION REQUIRED (Phase 4)
 
 Phase 4 deploys and runs without any vendor key: payroll and bank steps show the manual-upload fallback. To turn on the live connections (Sandbox keys are the demo path):
@@ -127,13 +155,19 @@ Phase 4 deploys and runs without any vendor key: payroll and bank steps show the
 2. **Plaid Dashboard.**
    - Developers → API → Allowed redirect URIs: add `https://resspark.zh-a16.workers.dev/c/return`.
    - Link → Link customization: create a Sandbox customization whose use case reads "Prepare IRS tax paperwork (Form 433-A) for review by your tax-resolution firm", so the data-sharing screen matches the consent text.
+   - Statements product access: on the first real bank connection, check that the statement grid shows `Statement` cells and not `Not supported` for First Platypus Bank. Plaid teams created in 2023 or earlier must request Statements access first (RESEARCH Open Question 5).
 3. **Truv Dashboard.**
    - Development → Web Hooks: register `https://resspark.zh-a16.workers.dev/api/webhooks/truv` for Sandbox, subscribed to `task-status-updated` and `order-status-updated`.
    - Orders settings: set order expiry to at least 14 days (the default is 72 h).
    - Optional: create a template "ResSpark payroll" (income; payroll + docs data sources) and put its id in `TRUV_TEMPLATE_ID` in `app/wrangler.jsonc`, then redeploy.
 4. **Sandbox demo logins.**
-   - Plaid: `user_good` / `pass_good`.
+   - Plaid: `user_good` / `pass_good`, with 2FA code `1234`.
    - Truv: `goodlogin` / `goodpassword`, or `multiple.employments` / `goodpassword` for several employers.
+5. **Check the secrets.** `pnpm -C app wrangler secret list` prints names only. It must list the Phase 4 names `TOKEN_ENC_KEY_1`, `PLAID_CLIENT_ID`, `PLAID_SECRET`, `TRUV_CLIENT_ID` and `TRUV_SECRET`, next to the Phase 1 names. As of 2026-10-11 only `TOKEN_ENC_KEY_1` is set, so the Worker runs in no-keys mode.
+6. **Rehearse.** Run [the sandbox rehearsal checklist](runbooks/plaid-sandbox-rehearsal.md) and fill in its Observed and Pass columns. It records the one real Plaid-signed `SESSION_FINISHED` webhook that the fixtures cannot produce.
+7. **Sandbox only until Phase 8.** Do not install Plaid Production or Truv Production keys before the Phase 8 go-live review.
+
+If payroll connections stop advancing, see [Truv webhook endpoint](runbooks/truv-webhook-endpoint.md).
 
 ## Workers plan notes
 
