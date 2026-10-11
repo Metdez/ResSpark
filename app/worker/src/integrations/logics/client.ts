@@ -1,5 +1,13 @@
-// Read-only Logics API client (D-02). Every lookup parameter travels as an HTTP header, never a
-// query string. Errors carry a kind and status only: no URL, header, credential, or body text.
+import {
+  isActivityCreated,
+  isCaseDocumentCreated,
+  LOGICS_MAX_PART_BYTES,
+  type LogicsWriteClient,
+} from './write-types'
+
+// Logics API client (D-02). Every lookup parameter travels as an HTTP header, never a query
+// string. Read errors carry a kind and status only: no URL, header, credential, or body text.
+// The two writes (Phase 5, D-07) never throw: they return sent | failed | unknown.
 
 export interface LogicsFindRow {
   CaseID: number
@@ -58,7 +66,7 @@ export interface LogicsCreds {
   secretToken: string
 }
 
-export interface LogicsClient {
+export interface LogicsClient extends LogicsWriteClient {
   findByPhone(phone: string): Promise<LogicsFindRow[]>
   findByEmail(email: string): Promise<LogicsFindRow[]>
   findByLastNameAndPhone(lastName: string, phone: string): Promise<LogicsFindRow[]>
@@ -107,7 +115,81 @@ export function createLogicsClient(creds: LogicsCreds, fetchImpl: typeof fetch =
     return Array.isArray(body.data) && body.Success !== false ? (body.data as LogicsFindRow[]) : []
   }
 
+  // 05-RESEARCH Q1 status table, shared by both writes. null = 2xx, parse the body.
+  const writeStatus = (status: number) => {
+    if (status === 401) return { kind: 'failed' as const, status, code: 'logics_auth' }
+    if (status === 403) return { kind: 'failed' as const, status, code: 'logics_scope' }
+    if (status >= 500) return { kind: 'unknown' as const, code: 'logics_5xx' }
+    if (status >= 400) return { kind: 'failed' as const, status, code: `logics_rejected_${status}` }
+    return null
+  }
+
+  // Writes are never retried here: any throw after dispatch is `unknown` (PUSH-04). The body is
+  // parsed only through the zod guards and then dropped.
+  const write = async (path: string, init: { headers: Record<string, string>; body: BodyInit }) => {
+    let res: Response
+    try {
+      res = await fetchImpl(new URL(path, creds.baseUrl).toString(), {
+        method: 'POST',
+        headers: { authorization: authHeader, accept: 'application/json', ...init.headers },
+        body: init.body,
+        signal: AbortSignal.timeout(60_000),
+      })
+    } catch {
+      return { early: { kind: 'unknown' as const, code: 'logics_no_response' } }
+    }
+    const early = writeStatus(res.status)
+    if (early) return { early }
+    return { body: (await res.json().catch(() => null)) as unknown }
+  }
+
   return {
+    async createCaseDocument(p) {
+      if (p.bytes.byteLength > LOGICS_MAX_PART_BYTES) return { kind: 'failed', status: 0, code: 'size_gate' }
+      // No content-type header: the runtime writes the multipart boundary.
+      const body = new FormData()
+      body.append('CaseID', String(p.caseId))
+      body.append('Comment', p.comment)
+      if (p.fileCategoryId !== undefined) body.append('FileCategoryID', String(p.fileCategoryId))
+      body.append('File', new File([p.bytes as Uint8Array<ArrayBuffer>], p.fileName, { type: 'application/pdf' }), p.fileName)
+      const r = await write('Documents/CaseDocument', { headers: {}, body })
+      if (r.early) return r.early
+      return isCaseDocumentCreated(r.body)
+        ? { kind: 'sent', logicsDocumentId: r.body.data.CaseDocumentID }
+        : { kind: 'unknown', code: 'logics_unparsed_200' }
+    },
+    async createActivity(p) {
+      const body = JSON.stringify({
+        CaseID: p.caseId,
+        ActivityType: p.activityType,
+        Subject: p.subject,
+        Comment: p.comment,
+        Popup: false,
+        Pin: false,
+      })
+      const r = await write('CaseActivity/Activity', { headers: { 'content-type': 'application/json' }, body })
+      if (r.early) return r.early
+      return isActivityCreated(r.body)
+        ? { kind: 'sent', activityId: r.body.data.ActivityID }
+        : { kind: 'unknown', code: 'logics_unparsed_200' }
+    },
+    // D-08: the distinct ActivityType values seen on a case, so staff can pick one that exists.
+    // `data` is a single object in the vendor example although the text says it is a list.
+    async listActivities(caseId) {
+      let res: Response
+      try {
+        res = await send('CaseActivity/Activity', { CaseID: String(caseId) })
+      } catch {
+        return { kind: 'failed', status: 0 }
+      }
+      if (!res.ok) return { kind: 'failed', status: res.status }
+      const body = (await res.json().catch(() => null)) as Envelope | null
+      const rows = Array.isArray(body?.data) ? body.data : body?.data ? [body.data] : []
+      const types = rows
+        .map((r) => (r && typeof r === 'object' ? (r as Record<string, unknown>).ActivityType : null))
+        .filter((t): t is string => typeof t === 'string' && t.trim() !== '')
+      return { activityTypes: [...new Set(types)].sort() }
+    },
     findByPhone: (phone) => find('Find/FindCaseByPhone', { phone }),
     findByEmail: (email) => find('Find/FindCaseByEmail', { email }),
     findByLastNameAndPhone: (lastName, phone) => find('Find/FindCase', { lastName, phone }),

@@ -6,6 +6,7 @@ import { detectLookupType, fetchCaseSummary, lookupCases } from './lookup'
 const fake = createFakeLogicsClient()
 
 const stubClient = (findByPhone: LogicsClient['findByPhone']): LogicsClient => ({
+  ...fake, // write methods (Phase 5); lookups never call them
   findByPhone: vi.fn(findByPhone),
   findByEmail: vi.fn(async () => []),
   findByLastNameAndPhone: vi.fn(async () => []),

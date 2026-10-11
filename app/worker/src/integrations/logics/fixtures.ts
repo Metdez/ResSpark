@@ -1,4 +1,5 @@
 import type { LogicsCaseInfoRow, LogicsClient, LogicsFindRow } from './client'
+import { LOGICS_MAX_PART_BYTES, type FakeWriteOptions } from './write-types'
 
 // Synthetic cases for LOGICS_MODE=fake (C1): example.com emails and 555-010-xxxx phones only.
 // 900001 and 900002 share a phone in different formats, which exercises the multi-match path.
@@ -72,9 +73,32 @@ const hasPhone = (row: LogicsFindRow, phone: string) => {
   return want !== '' && [row.CellPhone, row.HomePhone, row.WorkPhone].some((p) => digits(p) === want)
 }
 
-// Same four operations and response shapes as the live client; no network, no delay.
-export function createFakeLogicsClient(): LogicsClient {
+const FAKE_FAILURES = {
+  unknown: { kind: 'unknown', code: 'logics_no_response' },
+  auth: { kind: 'failed', status: 401, code: 'logics_auth' },
+  scope: { kind: 'failed', status: 403, code: 'logics_scope' },
+  rejected: { kind: 'failed', status: 400, code: 'logics_rejected_400' },
+} as const
+
+const randomId = (base: number, span: number) => base + Math.floor(Math.random() * span)
+
+// Same operations and response shapes as the live client; never calls fetch (D-10). Reads are
+// instant; writes wait `delayMs` (default 300 ms) and return synthetic ids, or the injected
+// `outcome` so tests drive every ledger branch without an env switch.
+export function createFakeLogicsClient(opts: FakeWriteOptions = {}): LogicsClient {
+  const outcome = opts.outcome ?? 'sent'
+  const pause = () => new Promise((resolve) => setTimeout(resolve, opts.delayMs ?? 300))
   return {
+    async createCaseDocument(p) {
+      if (p.bytes.byteLength > LOGICS_MAX_PART_BYTES) return { kind: 'failed', status: 0, code: 'size_gate' }
+      await pause()
+      return outcome === 'sent' ? { kind: 'sent', logicsDocumentId: randomId(100_000, 900_000) } : FAKE_FAILURES[outcome]
+    },
+    async createActivity() {
+      await pause()
+      return outcome === 'sent' ? { kind: 'sent', activityId: randomId(9_000_000, 900_000) } : FAKE_FAILURES[outcome]
+    },
+    listActivities: async () => ({ activityTypes: ['General', 'Document sent'] }),
     findByPhone: async (phone) => FAKE_CASES.filter((r) => hasPhone(r, phone)),
     findByEmail: async (email) =>
       FAKE_CASES.filter((r) => r.Email?.toLowerCase() === email.trim().toLowerCase()),
