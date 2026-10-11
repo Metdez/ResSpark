@@ -1,16 +1,18 @@
-// Deployed full-stack check: node app/scripts/smoke.mjs <baseUrl> [--auth] [--client-flow] [--connect-flow]
+// Deployed full-stack check: node app/scripts/smoke.mjs <baseUrl> [--auth] [--client-flow] [--connect-flow] [--esign-flow]
 // Prints `ok <name>` or `FAIL <name>: <reason>` per check; exits 1 if any check fails.
 import { connectFlow } from './smoke-connect.mjs'
+import { esignFlow } from './smoke-esign.mjs'
 
 const args = process.argv.slice(2)
 const baseUrl = args.find((a) => !a.startsWith('--'))
 if (!baseUrl) {
-  console.error('usage: node app/scripts/smoke.mjs <baseUrl> [--auth] [--client-flow] [--connect-flow]')
+  console.error('usage: node app/scripts/smoke.mjs <baseUrl> [--auth] [--client-flow] [--connect-flow] [--esign-flow]')
   process.exit(1)
 }
 const base = baseUrl.replace(/\/$/, '')
 const withConnectFlow = args.includes('--connect-flow')
-const withClientFlow = args.includes('--client-flow') || withConnectFlow
+const withEsignFlow = args.includes('--esign-flow')
+const withClientFlow = args.includes('--client-flow') || withConnectFlow || withEsignFlow
 const withAuth = args.includes('--auth') || withClientFlow
 
 const isObject = (v) => typeof v === 'object' && v !== null && !Array.isArray(v)
@@ -287,6 +289,13 @@ const checks = [
     },
   },
   {
+    name: 'webhooks docuseal 401',
+    run: async () => {
+      const res = await fetch(`${base}/api/webhooks/docuseal`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' })
+      await expectJson(res, 401, (b) => isObject(b.error) && b.error.code === 'invalid_signature')
+    },
+  },
+  {
     name: 'webhooks unknown 404',
     run: async () =>
       expectJson(await fetch(`${base}/api/webhooks/nope`, { method: 'POST', body: '{}' }), 404, isNotFoundEnvelope),
@@ -450,6 +459,9 @@ async function clientFlow() {
     const connectMode = withConnectFlow
       ? await connectFlow({ base, client, staffHeaders: headers, steps: opened.steps, requestId })
       : null
+    const esignMode = withEsignFlow
+      ? await esignFlow({ base, client, staffHeaders: headers, steps: opened.steps, requestId, url })
+      : null
     await admin('POST', `/requests/${requestId}/revoke`)
     ok('revoke 401')
     const revoked = await client('/state')
@@ -461,6 +473,7 @@ async function clientFlow() {
     ok('complete')
     console.log(`ok client-flow complete request ${requestId}`)
     if (connectMode) console.log(`ok connect-flow complete (${connectMode})`)
+    if (esignMode) console.log(`ok esign-flow complete (${esignMode})`)
     return true
   } catch (error) {
     if (error?.reported) return false

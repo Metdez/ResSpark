@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs'
 
 // The SPA and Worker share this wording version; reading it here keeps the smoke in step with it.
 const consentSource = readFileSync(new URL('../src/lib/consent-text.ts', import.meta.url), 'utf8')
-const consentVersion = (kind) => {
+export const consentVersion = (kind) => {
   const match = consentSource.match(new RegExp(`${kind}: \\{\\s*version: '([^']+)'`))
   if (!match) throw new Error(`no ${kind} version in consent-text.ts`)
   return match[1]

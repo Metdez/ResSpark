@@ -16,7 +16,7 @@ The app's npm manifest (pnpm workspace member `app`; the lockfile is `pnpm-lock.
 | `test:live`, `test:live:file`, `test:rls`, `test:requests` | Opt-in tests against live services, with env files loaded by `dotenv-cli` |
 | `check` | file-size check, golden-fixture check, `tsc -b`, ESLint, `pnpm test` |
 | `cf-typegen`, `wrangler`, `deploy:raw`, `deploy`, `deploy:snapshot` | Wrangler types and deploys; `deploy:snapshot` deploys the last commit from a clean worktree (see `scripts/deploy-snapshot.md`) |
-| `smoke`, `smoke:auth` | Deployed smoke checks |
+| `smoke`, `smoke:auth`, `smoke:connect`, `smoke:esign` | Deployed smoke checks; `smoke:connect` and `smoke:esign` load the env files and pass `--auth --connect-flow` or `--auth --esign-flow` (see `scripts/smoke.md`) |
 | `db:migrate`, `questions:reconcile`, `secrets:*`, `staff:create`, `auth:config-push`, `spike` | Operational scripts under `scripts/` |
 
 ## Dependencies added in Phase 6 Plan 06

@@ -7,7 +7,7 @@ Run it with `pnpm -C app run smoke:connect <baseUrl>`. That package script loads
 | Lines | What it does |
 |-------|--------------|
 | 1-4 | Header comment and the `node:fs` import. |
-| 6-12 | Reads `app/src/lib/consent-text.ts` as text. `consentVersion(kind)` pulls `version` for `payroll_data` or `bank_data` out of it with a regex. The smoke always sends the same wording version that the Worker checks, so a wording change does not need a matching smoke edit. Without that, the route would answer 409 `consent_text_stale`. |
+| 6-12 | Reads `app/src/lib/consent-text.ts` as text. `consentVersion(kind)` (exported; `smoke-esign.mjs` uses it for `esign`) pulls `version` for `payroll_data`, `bank_data` or `esign` out of it with a regex. The smoke always sends the same wording version that the Worker checks, so a wording change does not need a matching smoke edit. Without that, the route would answer 409 `consent_text_stale`. |
 | 15-25 | `connectFlow({ base, client, staffHeaders, steps, requestId })`. `client` is `clientFlow`'s cookie-carrying `/api/c` fetch, `staffHeaders` is the bearer header set, and `steps` comes from `GET /api/c/state`. `ok(line, next)` prints `ok connect-flow <line>` and moves `step`. `json(res, status)` asserts the status and parses the body. |
 | 26-28 | Finds the `payroll_connect` and `bank_connect` item ids among the state steps. |
 | 29-38 | `GET /api/c/items/<item>/connection` → 200 for each item. Prints `ok connect-flow <kind> provider configured: yes|no` from `provider.configured`. For bank, it also requires `provider.id === 'plaid'` and `capabilities.statementPdfs === true`. |
