@@ -1,8 +1,8 @@
 ---
 phase: 03-uploads-review-live-status
-verified: 2026-10-11T15:02:58Z
-status: gaps_found
-score: 4/7 must-haves verified
+verified: 2026-10-11T15:45:00Z
+status: human_needed
+score: 6/7 must-haves verified
 covered_files:
   - .planning/phases/03-uploads-review-live-status/03-01-PLAN.md
   - .planning/phases/03-uploads-review-live-status/03-01-SUMMARY.md
@@ -18,6 +18,8 @@ covered_files:
   - .planning/phases/03-uploads-review-live-status/03-06-SUMMARY.md
   - .planning/phases/03-uploads-review-live-status/03-07-PLAN.md
   - .planning/phases/03-uploads-review-live-status/03-07-SUMMARY.md
+  - app/src/features/client-portal/portal-api.ts
+  - app/src/features/client-portal/portal-page.tsx
   - app/src/features/client-portal/step-list.tsx
   - app/src/features/dashboard/request-table.tsx
   - app/src/features/dashboard/use-requests.ts
@@ -25,9 +27,11 @@ covered_files:
   - app/src/features/review/mirror-card.tsx
   - app/src/features/review/review-panel.tsx
   - app/src/features/review/use-review.ts
+  - app/src/features/timeline/api.ts
   - app/src/features/timeline/labels.ts
   - app/src/features/timeline/timeline.tsx
   - app/src/features/uploads/accept.ts
+  - app/src/features/uploads/copy.ts
   - app/src/features/uploads/preprocess.ts
   - app/src/features/uploads/transport.ts
   - app/src/features/uploads/upload-sheet.tsx
@@ -43,38 +47,19 @@ covered_files:
   - app/worker/src/routes/c-uploads.ts
   - app/worker/src/storage/case-documents.ts
   - supabase/migrations/0004_uploads_review.sql
-covered_digest: "v3:sha256:3a30e69dcfed84749f39503e880b8adcda68685cfca094819e7c0a1f51ee81f7"
+covered_digest: "v3:sha256:b0a5d51a878136483b0b9a113368de1d2fc921ab65e70ab201fceec91a045e68"
 behavior_unverified: 1
 overrides_applied: 0
-gaps:
-  - truth: "Timeline paging: exactly 50 events renders Load older and the next page starts strictly before the last created_at with no duplicate or skipped row (03-05 must-have, STAT-04 edge set)"
-    status: failed
-    reason: "listCaseEvents pages on created_at alone (q.lt('created_at', before)), and admin-events.ts rewrites the cursor through new Date(t).toISOString(), truncating Postgres microseconds to milliseconds. Rows that share the boundary row's created_at, or fall in the same millisecond, are skipped on Load older. Live data already has same-timestamp groups (up to 3 events per case share one created_at) and 4 cases with more than 50 events."
-    artifacts:
-      - path: "app/worker/src/db/review.ts"
-        issue: "listCaseEvents: cursor is created_at only (accepted shortcut comment on the function)"
-      - path: "app/worker/src/routes/admin-events.ts"
-        issue: "before is re-serialized with toISOString() (ms precision); next_before carries no id tiebreak"
-    missing:
-      - "Opaque compound cursor: next_before = `${created_at}|${id}` of the last row; the route splits it, validates the timestamp with Date.parse but passes the raw string (no toISOString), and validates the id as an integer"
-      - "listCaseEvents(before, beforeId): replace q.lt('created_at', before) with q.or(`created_at.lt.\"${before}\",and(created_at.eq.\"${before}\",id.lt.${beforeId})`)"
-      - "Unit test in admin-events.test.ts: the cursor round-trips with microseconds and an id; a row sharing the edge timestamp with a lower id is requested on the next page. The SPA (timeline/api.ts) passes next_before verbatim, so it needs no change."
-  - truth: "Staff can see which step the client is on and the last error the client hit (ROADMAP SC4, STAT-03)"
-    status: partial
-    reason: "The step mirror works, but client_sessions.last_error only ever receives the two portal-page codes (state_failed, start_failed). Every upload-sheet error (unsupported_type, empty, file_too_large, bad_file_type, heic_failed, upload_incomplete, too_many_files, network) is shown to the client and never reaches the heartbeat, so the mirror's 'Last error' stays blank for the errors a client actually hits in this phase. 03-02 deliberately scoped last_error to the Phase 2 code set, so this may be intentional; see the override suggestion in the report."
-    artifacts:
-      - path: "app/src/features/uploads/upload-sheet.tsx"
-        issue: "fail() shows the error locally only; no callback out of the sheet"
-      - path: "app/src/features/client-portal/portal-page.tsx"
-        issue: "useHeartbeat lastError is derived only from state.isError / begin.isError"
-      - path: "app/src/features/client-portal/portal-api.ts"
-        issue: "HeartbeatBody.last_error typed as 'state_failed' | 'start_failed' only"
-    missing:
-      - "upload-sheet.tsx: optional prop onError?: (code: string) => void, called from fail(key, code)"
-      - "step-list.tsx: accept onUploadError and pass it to <UploadSheet onError=…>"
-      - "portal-page.tsx: const [uploadError, setUploadError] = useState<string>(); lastError = state.isError ? 'state_failed' : begin.isError ? 'start_failed' : uploadError (useHeartbeat already re-sends when lastError changes)"
-      - "portal-api.ts: widen HeartbeatBody['last_error'] to the fixed upload code set (still no free text; the Worker already accepts up to 200 chars)"
-      - "mirror-card.tsx (optional): staff wording for the upload codes in HEARTBEAT_ERROR_COPY; the underscore-to-space fallback already renders them"
+re_verification:
+  previous_status: gaps_found
+  previous_score: 4/7
+  gaps_closed:
+    - "Timeline paging: exactly 50 events renders Load older and the next page starts strictly before the last created_at with no duplicate or skipped row (03-05 must-have, STAT-04 edge set)"
+    - "Staff can see which step the client is on and the last error the client hit (ROADMAP SC4, STAT-03)"
+    - "Warning: request-page header badge did not poll (STAT-02)"
+  gaps_remaining: []
+  regressions: []
+advisory: []
 behavior_unverified_items:
   - truth: "An interrupted upload resumes after a reload (ROADMAP SC1, UPL-01)"
     test: "On a phone, start a large PDF upload on a live client link, reload mid-upload, reopen the item and pick the same file"
@@ -91,16 +76,19 @@ human_verification:
     expected: "Upload continues from its offset and completes once"
     why_human: "Live TUS resume never exercised by a test"
   - test: "Staff review: open the request page for that upload, click Preview and Download on each file, reject one item with a preset note, then approve the rest"
-    expected: "Preview opens a new tab inline (PDF/JPEG/PNG), Download saves under the original name, the client's step shows 'Needs attention' and the sheet shows 'Your agent asked for a new copy: <note>' with 'Upload again' within 10 s; after re-upload and approval of the last required item the badge reads Complete without a reload"
+    expected: "Preview opens a new tab inline (PDF/JPEG/PNG), Download saves under the original name, the client's step shows 'Needs attention' and the sheet shows 'Your agent asked for a new copy: <note>' with 'Upload again' within 10 s; after re-upload and approval of the last required item both the header badge and the panel badge read Complete without a reload"
     why_human: "Signed-URL tabs, popup blockers and the cross-device loop need a signed-in browser plus a phone"
   - test: "Dashboard live update: open /admin in one tab and the request page in another; approve the last required item; then hide the /admin tab for 30 s"
     expected: "The /admin row flips to Complete within 5-10 s with no reload; the Network tab shows no /api/admin/requests calls while hidden and one on return; a status filter survives reload"
     why_human: "Visibility-paused polling and real timing are browser behavior"
-  - test: "Mirror and timeline: with the client on the upload step, watch the request page; then leave the client idle 11 minutes"
-    expected: "'Client is on: upload — last seen …' within 10 s; 'Client may be stuck' after 10 minutes; timeline shows lookup, send, open, upload, approve, reject in order with Staff/Client badges"
-    why_human: "Real heartbeat cadence and wall-clock thresholds"
+  - test: "Mirror and timeline: with the client on the upload step, watch the request page; have the client pick a .txt in the upload sheet; then leave the client idle 11 minutes"
+    expected: "'Client is on: upload — last seen …' within 10 s; after the .txt pick the mirror's last error reads 'Upload refused: not a PDF or photo' within 10 s; 'Client may be stuck' after 10 minutes; timeline shows lookup, send, open, upload, approve, reject in order with Staff/Client badges"
+    why_human: "Real heartbeat cadence, deployed Worker storage of the new codes, and wall-clock thresholds"
+  - test: "Post-deploy Load older on a case with more than 50 events (e.g. case 00000000-0000-0000-0000-0000000000e1, 269 events): open its request page timeline and click Load older until it disappears"
+    expected: "269 distinct events in strict newest-first order, no duplicates, no 400 from /api/admin/cases/:id/events; the Network tab shows before=<created_at>|<id> with microseconds"
+    why_human: "The compound or() filter is proven by the route unit test and by an equivalent read-only SQL check on live data, but PostgREST parsing of the quoted microsecond timestamp has not run against the deployed Worker (no read-only live test exists; review-live.test.ts seeds rows and uses a null cursor)"
   - test: "Review the 17 judgment-tier prohibitions in 03-01..03-07 (bytes never through the Worker, no third-party/LLM send, approve only via item_approve, additive-only 0004, no Realtime, no second badge, no inline signed-URL render, no forbidden imports in features/uploads, test-firm-only fixtures, strict denial assertions)"
-    expected: "Human confirms; LLM-judge verdict (non-authoritative): all 17 held on the code read in this verification"
+    expected: "Human confirms; LLM-judge verdict (non-authoritative): all 17 held on the code read in this verification and still hold after the gap-closure commits"
     why_human: "unverified-prohibition — human review recommended (judgment tier, no enforcement test)"
 ---
 
@@ -109,8 +97,8 @@ human_verification:
 **Phase Goal:** As a ValorTax case manager, I want to review what clients upload from their phones and watch status update live, so that I can approve or reject each item without chasing anyone.
 **Mode:** mvp (user story validated by `user-story.validate`: true)
 **Verified:** 2026-10-11T15:02:58Z
-**Status:** gaps_found
-**Re-verification:** No (initial verification)
+**Status:** human_needed (re-verified 2026-10-11; the initial run below found gaps_found)
+**Re-verification:** Yes. See "Re-verification (2026-10-11)" at the end; the sections below are the initial verification.
 
 Phase 3 is judged on its committed code only. `git status` shows no uncommitted changes under `app/`, `supabase/` or `docs/` from Phase 3. One untracked file (`app/src/features/review/address-card.tsx`) appeared during the run; it belongs to another executor and was ignored.
 
@@ -323,3 +311,47 @@ Both blocking gaps and the header-badge warning are fixed, with tests. Live beha
 Whole-tree gate after the three commits: `pnpm -C app run check` passed (107 files passed, 20 skipped; 1372 tests passed, 175 skipped). The orchestrator handles the deploy. The companion docs were updated in the same commits.
 
 Still open (out of scope here): the D-06 wording decision and the human checks listed above, including the live TUS resume.
+
+## Re-verification (2026-10-11)
+
+**Status:** human_needed. **Score:** 6/7 truths verified (1 present, behavior-unverified: live TUS resume). Both gaps are closed and the header-badge warning is fixed. No regressions.
+
+Judged on committed code at `fc1d9e6`. Every Phase 3 file is identical in the working tree and at HEAD. The only modified tracked file is `app/worker/src/routes/c-connections.test.ts`, which belongs to Phase 4. The untracked `connect/`, `review/connections/` and `financials/` folders belong to other executors. No HEAD file imports them.
+
+### Gap results
+
+| # | Truth | Before | Now | Evidence |
+|---|---|---|---|---|
+| 6 | Load older at a 50-row edge skips and repeats nothing (03-05, STAT-04) | ✗ FAILED | ✓ VERIFIED | **Route** (`admin-events.ts` at HEAD): `next_before` is `` `${last.created_at}\|${last.id}` ``, the raw PostgREST string. `parseCursor` requires exactly two parts, a strict timestamptz regex plus `Date.parse`, and a 1-18 digit id. Anything else returns 400 before any query. There is no `toISOString` left.<br>**Query** (`db/review.ts`): `listCaseEvents` uses `q.or(beforeFilter(before))`, which is `created_at.lt."ts",and(created_at.eq."ts",id.lt.id)`, ordered `created_at desc, id desc`.<br>**SPA**: `timeline/api.ts` sends the cursor with `encodeURIComponent`, so `+` and `\|` survive the trip.<br>**Tests**: `admin-events.test.ts` round-trips a microsecond cursor and pins the tie filter. 5 malformed cursors return 400 with no query.<br>**Live data** (read-only SQL with the same predicate): for all 4 cases over 50 events (269, 178, 159, 162 events), 50 rows plus the rows after the cursor equals the total, so no row is skipped. |
+| 4 | Staff see the client's step and the last error the client hit (SC4, STAT-03) | ✗ FAILED (partial) | ✓ VERIFIED | **Sheet**: every `UploadSheet` error path (accept refusal, size or empty after preprocess, mint, TUS, complete) goes through `fail()`, which calls `onError?.(uploadErrorCode(code))`.<br>**Codes**: `uploadErrorCode` maps unknown codes to `upload_failed`, so no free text is sent.<br>**Wiring**: `StepList` passes `onUploadError` to the sheet. `PortalPage` keeps the code in `uploadError` state and feeds `useHeartbeat` `lastError` in priority order (`state_failed`, then `start_failed`, then the upload code). The heartbeat effect depends on `lastError`, so it sends at once.<br>**Worker**: `client-portal.ts` stores `optionalText(last_error, 200)`, and `getLatestClientSession` returns it to `/review`.<br>**Staff copy**: `MirrorCard` has wording for all 10 upload codes.<br>**Tests**: `portal-page.test.tsx` picks a `.txt` in the real sheet and sees a heartbeat with `last_error: 'unsupported_type'`. `upload-sheet.test.tsx` and `mirror-card.test.tsx` cover the code mapping and the staff wording. |
+| — | Warning: the header badge does not poll (STAT-02) | ⚠️ | fixed | `request-page.tsx` `['request', id]` now has `refetchInterval: pollInterval`, which pauses when the tab is hidden. `request-page.test.tsx` asserts the option. |
+
+### Regression check
+
+| Check | Result |
+|---|---|
+| Phase 3 worker unit tests: `vitest run --project worker-node` on admin-events, c-uploads, case-documents, admin-review, dashboard, admin-requests | 5 files, 63/63 passed |
+| Phase 3 web tests: `vitest run --project web` on uploads, mirror-card, review-panel, timeline, dashboard, portal-page, step-list, request-page, lib | 27 files, 237/237 passed |
+| Commits since the first verification that touch Phase 3 files | Only the 3 fix commits plus `a2c1882` and `ff63eae` (06-03: an address card on the review panel and the `address.confirmed` timeline label). Both are additive, and the tests above include them. |
+| Debt markers (`TBD\|FIXME\|XXX`) in the files the fixes changed | none |
+| File sizes of the files the fixes changed | all ≤ 371 lines |
+| Companion docs for the files the fixes changed | updated in the same commits (`admin-events.md`, `admin-events.test.md`, `review.md`, `upload-sheet.md`, `copy.md`, `portal-page.md`, `step-list.md`, `portal-api.md`, `mirror-card.md`, `request-page.md`) |
+
+No live PostgREST check was run. The only live suite that touches `listCaseEvents` is `review-live.test.ts`, which seeds rows and only uses a null cursor, so it is neither read-only nor a cursor test. The cursor round trip against the deployed Worker is listed as a post-deploy human check.
+
+### Still open (not gaps)
+
+- Truth 1b: the live TUS resume after a reload. This is behavior-unverified and routed to a human.
+- The D-06 wording decision.
+- The browser and phone checks in `human_verification`.
+- The 17 judgment-tier prohibitions. The LLM verdict still holds after the fixes.
+- Earlier warnings, unchanged:
+  - `createUploadingDocument` writes `in_progress` with no `request_apply_status`, which is tied to D-06.
+  - A finished TUS upload whose `complete` never ran leaves an orphaned `uploading` row.
+  - 9 Phase 3 test files have no companion doc.
+- ℹ️ New info:
+  - `request-page.tsx` renders the full-page "Couldn't load this request" whenever `detail.isError`. Now that the page polls every 5 s, a Worker outage that lasts through the 3 prod retries replaces the page until the next successful poll. Before, this only happened on a window-focus refetch. A fix would be `if (detail.isError && !detail.data)`, but it is not required for the goal.
+  - The mirror's `last_error` stays on the latest upload code until the client reloads, even after a successful retry. That matches "the last error the client hit".
+
+_Re-verified: 2026-10-11T15:45:00Z_
+_Verifier: Claude (gsd-verifier)_
