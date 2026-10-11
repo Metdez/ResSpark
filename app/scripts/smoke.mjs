@@ -62,9 +62,9 @@ function expectPrivacyHeaders(res) {
 const invalidLink = () => fetch(`${base}/c/not-a-valid-token`, { redirect: 'manual' })
 
 // --auth: seeds a probe link through the 0003 RPCs (same fixture case as requests-live.test.ts),
-// mints its token with CLIENT_LINK_HMAC_KEY, exchanges it on the deployed Worker, then deletes
-// the probe request (cascading the link). The token is never printed.
-async function linkExchange() {
+// mints its token with CLIENT_LINK_HMAC_KEY, runs `body({ db, link, token })`, then deletes the
+// probe request (cascading the link and its client_sessions row). The token is never printed.
+async function withProbeLink(body) {
   if (!env.SUPABASE_URL || !env.SUPABASE_SECRET_KEY || !env.CLIENT_LINK_HMAC_KEY) {
     throw new Error('missing SUPABASE_URL / SUPABASE_SECRET_KEY / CLIENT_LINK_HMAC_KEY in env')
   }
@@ -98,7 +98,14 @@ async function linkExchange() {
     const mac = createHmac('sha256', Buffer.from(env.CLIENT_LINK_HMAC_KEY, 'utf8'))
       .update(Buffer.concat([id, version]))
       .digest()
-    const token = Buffer.concat([id, mac]).toString('base64url')
+    await body({ db, link, token: Buffer.concat([id, mac]).toString('base64url') })
+  } finally {
+    await db.from('requests').delete().eq('id', requestId)
+  }
+}
+
+const linkExchange = () =>
+  withProbeLink(async ({ db, link, token }) => {
     const res = await fetch(`${base}/c/${token}`, { redirect: 'manual' })
     if (res.status !== 302) throw new Error(`status ${res.status}, expected 302`)
     if (res.headers.get('location') !== '/c/') throw new Error('location is not /c/')
@@ -110,10 +117,41 @@ async function linkExchange() {
     expectPrivacyHeaders(res)
     const { data: row } = await db.from('client_links').select('opened_at').eq('id', link.link_id).single()
     if (!row || row.opened_at !== null) throw new Error('opened_at was written')
-  } finally {
-    await db.from('requests').delete().eq('id', requestId)
-  }
-}
+  })
+
+// Plan 02-07, --auth: exchange a probe link for the cookie, then drive /api/c/state, /start (twice)
+// and /heartbeat on the deployed Worker and check the rows they wrote. The cookie is never printed.
+const clientPortal = () =>
+  withProbeLink(async ({ db, link, token }) => {
+    const exchanged = await fetch(`${base}/c/${token}`, { redirect: 'manual' })
+    const cookie = (exchanged.headers.get('set-cookie') ?? '').split(';')[0]
+    if (!cookie.startsWith('rs_client=')) throw new Error('no rs_client cookie')
+    const call = (path, method = 'GET', body) =>
+      fetch(`${base}/api/c${path}`, {
+        method,
+        headers: { cookie, 'x-requested-with': 'ResSpark', 'content-type': 'application/json' },
+        body: body && JSON.stringify(body),
+      })
+    const stateRes = await call('/state')
+    expectPrivacyHeaders(stateRes)
+    await expectJson(stateRes, 200, (b) =>
+      b.firm_name === 'ValorTax' && b.opened_at === null && b.steps.length === 1 && !('request_id' in b)
+    )
+    const opened = await linkRow(db, link.link_id)
+    if (opened.opened_at !== null) throw new Error('GET /api/c/state marked the link opened')
+    const first = await (await call('/start', 'POST')).json()
+    const second = await (await call('/start', 'POST')).json()
+    if (typeof first.opened_at !== 'string' || second.opened_at !== first.opened_at) {
+      throw new Error('start is not idempotent')
+    }
+    if ((await linkRow(db, link.link_id)).opened_at === null) throw new Error('start did not set opened_at')
+    const beat = await call('/heartbeat', 'POST', { last_step: 'smoke', user_agent_class: 'desktop' })
+    await expectJson(beat, 200, (b) => b.ok === true)
+    const { data: session } = await db.from('client_sessions').select('last_step').eq('link_id', link.link_id).single()
+    if (session?.last_step !== 'smoke') throw new Error('heartbeat row missing')
+  })
+const linkRow = async (db, id) =>
+  (await db.from('client_links').select('opened_at').eq('id', id).single()).data ?? {}
 
 // Plan 02-04, --auth, fake mode only: confirm fixture 900001, create a "Documents only" draft, send
 // it to the fixture contact, open the returned URL, record a copy, try email, then delete the
@@ -222,6 +260,7 @@ const checks = [
     },
   },
   { name: 'auth /c/ exchange', auth: true, run: linkExchange },
+  { name: 'auth /api/c portal', auth: true, run: clientPortal },
   {
     name: 'auth signed_in',
     auth: true,
