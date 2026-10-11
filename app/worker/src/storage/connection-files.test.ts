@@ -66,6 +66,10 @@ describe('employerSlug / providerObjectPath', () => {
     expect(path).toBe('firm/F/case/C/item/I/payroll/acme-inc-emp_1/paystub-2026-09-15-1001.pdf')
     expect(providerObjectPath({ firm_id: 'F', case_id: 'C', request_item_id: 'I', kind: 'payroll', group: '../x', name: '../../y.pdf' })).not.toContain('..')
   })
+  it('builds the signature layout under the DocuSeal submission id', () => {
+    const path = providerObjectPath({ firm_id: 'F', case_id: 'C', request_item_id: 'I', kind: 'signature', group: '4001', name: 'audit-log.pdf' })
+    expect(path).toBe('firm/F/case/C/item/I/signature/4001/audit-log.pdf')
+  })
 })
 
 describe('storeProviderFile', () => {

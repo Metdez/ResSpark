@@ -22,4 +22,4 @@ Stores provider-fetched files (Truv, Plaid statements, and DocuSeal signed PDFs 
 
 ## Tests
 
-`connection-files.test.ts` (admin client mocked): slugs, the long-name rule, the path layout without `..`, an existing row (no upload, loader not called), non-PDF bytes declared as PDF, a fresh path (upload options and the inserted row), and the concurrent-writer case.
+`connection-files.test.ts` (admin client mocked): slugs, the long-name rule, the payroll path layout without `..`, the signature layout (`firm/F/case/C/item/I/signature/4001/audit-log.pdf`), an existing row (no upload, loader not called), non-PDF bytes declared as PDF, a fresh path (upload options and the inserted row), and the concurrent-writer case.
