@@ -126,12 +126,12 @@ Plans:
   4. Plaid and Truv webhooks are signature-verified on the raw body, stored once per event, and acknowledged within a second, then processed with retries and a dead-letter queue; a missed or out-of-order webhook never leaves a request stuck or moves a step from done back to pending, because a cron reconciler and a staff Refresh button re-read provider state (WEBH-01, WEBH-02, WEBH-03)
   5. Bank data flows through a `BankProvider` interface with declared capabilities so a second provider is a configuration change, and Plaid Items older than the configured window (default 30 days) are removed so per-Item billing stops (BANK-04, BANK-06)
 
-**Plans:** 2/7 plans executed
+**Plans:** 3/7 plans executed
 
 Plans:
 - [x] 04-01-PLAN.md — [BLOCKING, Wave 1] Migration 0005 (`connections`, `connection_secrets`, `bank_accounts`, `bank_statement_months`, `bank_transactions`, `webhook_events`, `consents`, `status_rank`, `connection_set_status`, `connection_record_event`) + generic `/api/webhooks/:provider` with Truv HMAC and Plaid ES256 adapters + queue consumer/DLQ + `reconcileConnection` payroll branch, proven live with a signed Truv fixture (WEBH-01, WEBH-03, PAY-04, BANK-04)
 - [x] 04-02-PLAN.md — [Wave 2] 15-minute reconciler + daily removal dispatch in `scheduled()`, staff routes (connections per request, Refresh, 3/6-month transactions), `wrangler.jsonc` queue/cron/vars/`TOKEN_ENC_KEY_1`, `secrets:provider` stdin prompts, redeploy + webhook smoke checks (WEBH-02, PAY-04, BANK-03, BANK-06)
-- [ ] 04-03-PLAN.md — [Wave 3] Consents + client connection routes (`/items/:id/connection`, `/consents`, `/connections/:kind/start`, `/connections/:id/reconcile`), Truv order creation with multi-employer reuse, income report + documents → Storage + `documents` per employer, CSP for `/c/*` (PAY-01, PAY-02, PAY-03, PAY-04, BANK-05)
+- [x] 04-03-PLAN.md — [Wave 3] Consents + client connection routes (`/items/:id/connection`, `/consents`, `/connections/:kind/start`, `/connections/:id/reconcile`), Truv order creation with multi-employer reuse, income report + documents → Storage + `documents` per employer, CSP for `/c/*` (PAY-01, PAY-02, PAY-03, PAY-04, BANK-05)
 - [ ] 04-04-PLAN.md — [Wave 4] Plaid behind `BankProvider`: Hosted Link per tap, single-use `/c/return`, SESSION_FINISHED/`link/token/get` → exchange → AES-GCM vault, `/transactions/sync`, statements → Storage + month cells, manual attribution, `ITEM_LOGIN_REQUIRED`, daily `/item/remove` (BANK-01, BANK-02, BANK-03, BANK-04, BANK-06, WEBH-02)
 - [ ] 04-05-PLAN.md — [Wave 5] Client portal: consent sheets, payroll sheet with Truv Bridge + add-another-employer, bank sheet with Hosted Link + accounts × months upload buttons, `/c/return` polling page, Phase 3 upload sheet as the fallback in both (PAY-01, PAY-03, PAY-04, BANK-01, BANK-03, BANK-04, BANK-05)
 - [ ] 04-06-PLAN.md — [Wave 5] Staff: connection cards with Refresh, statement grid (last 3 / months 4–6), transactions table with money formatting, payroll panel with document links (PAY-02, PAY-04, BANK-02, BANK-03, WEBH-02)
@@ -153,12 +153,12 @@ Plans:
   3. A file over 6 MB is converted to PDF or split into parts of at most 5.5 MiB, or flagged "needs manual compression" before the click; nothing over 6 MB is ever sent (PUSH-02)
   4. When Logics gives no clear answer, the file shows "unknown" and the UI asks staff to decide (check Logics, mark sent, or retry); a push is never blindly retried, so Logics never receives duplicate documents (PUSH-04)
 
-**Plans:** 3/5 plans executed
+**Plans:** 4/5 plans executed
 
 Plans:
 - [x] 05-01-PLAN.md — Tracer: ledger migration 0006 + RPCs, Logics write client (live + fake), `logics_push` queue handler with ack-after-dispatch, one activity note per batch, admin routes (create/ledger/resolve), proven live in fake mode
 - [x] 05-02-PLAN.md — PUSH-02 normalization modules: `@cantoo/pdf-lib@2.11.1`, generated fixtures, greedy splitter, image→PDF, `normalizeForLogics`
-- [ ] 05-03-PLAN.md — Consumer expansion: normalization in the job, parts stored under `logics/`, sibling rows, cron sweeper + DLQ rule, D-08 firm settings and ActivityType listing
+- [x] 05-03-PLAN.md — Consumer expansion: normalization in the job, parts stored under `logics/`, sibling rows, cron sweeper + DLQ rule, D-08 firm settings and ActivityType listing
 - [x] 05-04-PLAN.md — Staff UI: push card with multi-select, computed plan, ledger chips + Simulated badge, confirmation sheet, two-action `unknown` resolution dialog, fake-mode banner
 - [ ] 05-05-PLAN.md — Settings page push fields, `LOGICS_MODE=live` runbook (USER ACTION), smoke mode check, phase gate + fake-mode demo rehearsal
 
@@ -270,8 +270,8 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 1. Foundation & Staff Sign-In | 8/8 | In Progress | - |
 | 2. Find the Client & Send the Link | 8/8 | In Progress | - |
 | 3. Uploads, Review & Live Status | 7/7 | In Progress | - |
-| 4. Connect Payroll & Bank | 2/7 | In Progress | - |
-| 5. Push to Logics | 3/5 | In Progress | - |
+| 4. Connect Payroll & Bank | 3/7 | In Progress | - |
+| 5. Push to Logics | 4/5 | In Progress | - |
 | 6. Address & E-Sign | 0/TBD | Not started | - |
 | 7. 433-A Pre-Population | 1/12 | In Progress | - |
 | 8. Reminders, Teller & Production Readiness | 0/12 | Not started | - |
