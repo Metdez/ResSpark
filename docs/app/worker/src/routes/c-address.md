@@ -37,3 +37,12 @@ Response 200: `{ address: { line1, line2, city, state_code, zip5, zip4 }, verifi
 | 503 | `provider_not_configured` | Smarty keys absent (suggest and `smarty` POST only) |
 
 No street text, request URL, or header is logged; the logger records only the route and `errorCode`.
+
+## Tests
+
+`app/worker/src/routes/c-address.test.ts` (unit, `worker-node`, no network). `db/case-address` and `db/documents` are mocked, `clientSession` sets a fixed session (link `L1`, request `R1`), `requireClientHeader` stays real, and `fetch` is stubbed per test. `beforeEach` resets the in-memory rate window.
+
+- Suggest: `q='16'` → 400; no keys → 503 `provider_not_configured`; fixture → 200 with two suggestions; provider 500 → 502 `provider_error`; 15 suggests plus 15 manual POSTs pass and the 31st call → 429 `rate_limited` (one shared window).
+- Confirm: no `X-Requested-With` → 403 `bad_origin`; another request's item → 404; an `upload` item → 409 `item_kind_mismatch`; smarty `zipcode '1234'` → 400; smarty with no keys → 503; manual with no keys → 200 and `confirmAddress` gets `source 'manual'`, `verified false`, null county, FIPS, RDI, DPV, and `line2 null` for `unit ''`; manual `state 'XX'` → 400; US Street `[]` → 422 `address_unverifiable` with no write; `street_d.json` → `needs_unit: true`, `verified: false`; `street_y.json` → verified and no `county`/`rdi` text in the body; US Street 401 → 502; RPC `item_approved` → 409; RPC `link_inactive` → 401 `no_session`; an unknown `source` → 400.
+
+The live counterpart is `app/worker/test/address-live.test.ts`.

@@ -42,3 +42,16 @@ Smarty returns only non-blank fields, so every absent or blank value becomes `nu
 
 ## Types
 `AddressSuggestion`, `StreetInput`, and `VerifiedAddress` are the contracts that `routes/c-address.ts` and `db/case-address.ts` use.
+
+## Tests
+
+`app/worker/src/integrations/smarty/client.test.ts` (unit, `worker-node`; `fetch` is stubbed with `vi.stubGlobal`, fixtures come from `worker/test/fixtures/smarty/`):
+
+- `fixture`, `respondWith(status, body)`, `sentUrl`, `rejection`: read a fixture, answer every fetch with one response, read the sent URL, and assert a rejection is a `ProviderError`.
+- `search` of 40 characters is sent as exactly 32; `prefer_geolocation=none`, `max_results=5`, and the Basic header are sent.
+- `selected` is passed through when given and absent otherwise.
+- A body without `suggestions` → `[]`; an extra `source` field is dropped; the `autocomplete_units.json` unit list maps to three secondaries.
+- `mapStreetCandidate(street_y[0])` → the full `VerifiedAddress` (`zip4 1351`); blank `rdi` → `null`; blank `dpv_match_code` → `null`; no `metadata` → county fields `null`.
+- `verifyStreet` sends the component fields with `candidates=1` and `match=invalid`, and `street_empty.json` → `null`.
+- 401 → `http_401`, not transient; 503 → transient; a thrown fetch → `network`, transient.
+- `smartyConfigured` is false when either secret is empty.

@@ -23,6 +23,7 @@ describe.skipIf(!live)('address step (live; needs SUPABASE_URL, SUPABASE_SECRET_
   } as unknown as Env
   let db: SupabaseClient
   let fx: PortalFixture
+  let other: PortalFixture
   let cookie = ''
   const stub = stubVendorFetch([
     {
@@ -47,15 +48,35 @@ describe.skipIf(!live)('address step (live; needs SUPABASE_URL, SUPABASE_SECRET_
   const confirmedEvents = async () =>
     (await db.from('events').select('payload').eq('request_id', fx.requestId).eq('action', 'address.confirmed').order('id')).data!
 
+  // Direct RPC call, for the guards the route never lets through.
+  const rpcConfirm = async (itemId: string, linkId: string, address: Record<string, unknown>) =>
+    db.rpc('case_confirm_address', { p_item_id: itemId, p_link_id: linkId, p_address: address })
+  const SMARTY = {
+    source: 'smarty',
+    verified: true,
+    line1: '1600 Amphitheatre Pkwy',
+    line2: '',
+    city: 'Mountain View',
+    state_code: 'CA',
+    zip5: '94043',
+    zip4: '1351',
+    county_name: 'Santa Clara',
+    county_fips: '06085',
+    rdi: 'Commercial',
+    dpv: 'Y',
+  }
+
   beforeAll(async () => {
     db = createAdminClient(env)
     fx = await seedPortalItems(env, { kinds: ['address'] })
+    other = await seedPortalItems(env, { kinds: ['address'] })
     cookie = await fx.cookie()
   })
 
   afterAll(async () => {
     stub.restore()
     if (fx) await fx.cleanup()
+    if (other) await other.cleanup()
   })
 
   it('suggest proxies Smarty server-side with a Basic header and returns six-key suggestions', async () => {
@@ -119,5 +140,73 @@ describe.skipIf(!live)('address step (live; needs SUPABASE_URL, SUPABASE_SECRET_
     expect(events).toHaveLength(1)
     expect(Object.keys(events[0].payload as object).sort()).toEqual(['county_fips', 'rdi', 'source', 'verified'])
     expect(JSON.stringify(events[0].payload)).not.toMatch(/Amphitheatre|94043/)
+  })
+
+  it("stores a smarty payload's blank line2 as NULL, not ''", async () => {
+    const { error } = await rpcConfirm(fx.items.address!, fx.linkId, SMARTY)
+    expect(error).toBeNull()
+    expect((await caseRow()).address_line2).toBeNull()
+  })
+
+  it('a manual re-confirm while submitted replaces the address, unverified with no county, and logs again', async () => {
+    const before = (await confirmedEvents()).length
+    const res = await post(`/api/c/items/${fx.items.address}/address`, {
+      source: 'manual',
+      street: '12 Main St',
+      unit: 'Apt 4',
+      city: 'Austin',
+      state: 'TX',
+      zip5: '78701',
+    })
+    expect(res.status).toBe(200)
+    expect(await res.json()).toMatchObject({ verified: false, dpv: null, item_status: 'submitted' })
+    expect(await caseRow()).toMatchObject({
+      address_line1: '12 Main St',
+      address_line2: 'Apt 4',
+      zip4: null,
+      county_name: null,
+      county_fips: null,
+      address_rdi: null,
+      address_dpv: null,
+      address_verified: false,
+      address_source: 'manual',
+    })
+    const events = await confirmedEvents()
+    expect(events).toHaveLength(before + 1)
+    expect(events.at(-1)!.payload).toEqual({ source: 'manual', verified: false, county_fips: null, rdi: null })
+  })
+
+  it('refuses a manual payload carrying a county FIPS (bad_address)', async () => {
+    const { error } = await rpcConfirm(fx.items.address!, fx.linkId, { ...SMARTY, source: 'manual', verified: false, county_name: '', rdi: '', dpv: '' })
+    expect(error?.message).toContain('bad_address')
+  })
+
+  it("refuses another link's item (item_not_found)", async () => {
+    const { error } = await rpcConfirm(fx.items.address!, other.linkId, SMARTY)
+    expect(error?.message).toContain('item_not_found')
+  })
+
+  it('refuses a revoked link (link_inactive)', async () => {
+    await db.from('client_links').update({ revoked_at: new Date().toISOString() }).eq('id', other.linkId)
+    const { error } = await rpcConfirm(other.items.address!, other.linkId, SMARTY)
+    expect(error?.message).toContain('link_inactive')
+  })
+
+  it('freezes an approved address (409 item_approved, case unchanged)', async () => {
+    const approved = await db.rpc('item_approve', { p_item_id: fx.items.address, p_firm_id: fx.firmId, p_actor_id: 'test:address-live' })
+    expect(approved.error).toBeNull()
+    const before = await caseRow()
+    const res = await post(`/api/c/items/${fx.items.address}/address`, {
+      source: 'manual',
+      street: '99 Other Rd',
+      city: 'Dallas',
+      state: 'TX',
+      zip5: '75201',
+    })
+    expect(res.status).toBe(409)
+    expect(((await res.json()) as { error: { code: string } }).error.code).toBe('item_approved')
+    const { error } = await rpcConfirm(fx.items.address!, fx.linkId, SMARTY)
+    expect(error?.message).toContain('item_approved')
+    expect(await caseRow()).toEqual(before)
   })
 })
