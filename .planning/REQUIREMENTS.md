@@ -87,9 +87,9 @@ Requirements for the first release. Each maps to a roadmap phase. The Oct 12 202
 
 ### Logics Push
 
-- [ ] **PUSH-01**: Staff can select approved items and push them to the Logics case as Case Documents with a comment and a configurable FileCategoryID; a local ledger records queued, sending, sent, failed, or unknown per file
+- [x] **PUSH-01**: Staff can select approved items and push them to the Logics case as Case Documents with a comment and a configurable FileCategoryID; a local ledger records queued, sending, sent, failed, or unknown per file
 - [x] **PUSH-02**: Files over 6 MB are normalized before push (images to PDF, PDFs split into parts of at most 5.5 MiB) or flagged "needs manual compression"; nothing over 6 MB is ever sent
-- [ ] **PUSH-03**: One activity note per push batch is written to the Logics case naming the agent and the documents uploaded
+- [x] **PUSH-03**: One activity note per push batch is written to the Logics case naming the agent and the documents uploaded
 - [x] **PUSH-04**: Pushes are never blindly retried; an `unknown` result requires a staff decision in the UI so Logics never receives duplicate documents
 
 ### Webhooks & Reconciliation
@@ -212,9 +212,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SIGN-02 | Phase 6 | Pending |
 | SIGN-03 | Phase 6 | Pending |
 | SIGN-04 | Phase 6 | Pending |
-| PUSH-01 | Phase 5 | Pending |
+| PUSH-01 | Phase 5 | Complete |
 | PUSH-02 | Phase 5 | Complete |
-| PUSH-03 | Phase 5 | Pending |
+| PUSH-03 | Phase 5 | Complete |
 | PUSH-04 | Phase 5 | Complete |
 | WEBH-01 | Phase 4 | Pending |
 | WEBH-02 | Phase 4 | Pending |
