@@ -11,7 +11,7 @@ vi.mock('@tanstack/react-query', async (orig) => ({
 vi.mock('./api', () => ({ fetchRequests: vi.fn() }))
 
 // useQuery is mocked, so the hook is a plain function call here.
-const options = () => vi.mocked(useQuery).mock.calls.at(-1)![0]
+const options = () => vi.mocked(useQuery).mock.lastCall![0]
 
 describe('useRequests', () => {
   afterEach(() => vi.clearAllMocks())

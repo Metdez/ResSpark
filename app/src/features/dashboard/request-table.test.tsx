@@ -189,10 +189,10 @@ describe('dashboard RequestTable and Filters', () => {
     expect(button('All', el)?.getAttribute('aria-pressed')).toBe('false')
 
     await click(button('Complete', el)!)
-    const call = navigate.mock.calls.at(-1)![0]
+    const call = navigate.mock.lastCall![0]
     expect(call.search({ q: 'ann' })).toEqual({ q: 'ann', status: 'complete' })
     await click(button('All', el)!)
-    expect(navigate.mock.calls.at(-1)![0].search({ status: 'sent' })).toEqual({
+    expect(navigate.mock.lastCall![0].search({ status: 'sent' })).toEqual({
       status: undefined,
     })
   })

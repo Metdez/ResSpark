@@ -18,7 +18,7 @@ export const STATUS_CHIPS: Array<{
 
 export function Filters() {
   const search = useSearch({ from: '/admin/_shell/' })
-  const navigate = useNavigate({ from: '/admin/_shell/' })
+  const navigate = useNavigate({ from: '/admin/' })
   // shortcut: the box is not re-synced when q changes via back/forward; add a sync effect if staff report it.
   const [text, setText] = useState(search.q ?? '')
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined)
