@@ -30,6 +30,7 @@ export interface ReviewRequest {
   id: string
   case_id: string
   status: string
+  opened_at: string | null
 }
 
 export interface ClientSessionView {
@@ -83,6 +84,7 @@ export const isReviewResponse = (v: unknown): v is ReviewResponse =>
   str(v.request.id) &&
   str(v.request.case_id) &&
   str(v.request.status) &&
+  strOrNull(v.request.opened_at) &&
   Array.isArray(v.items) &&
   v.items.every(isItem) &&
   (v.client_session === null || isSession(v.client_session))

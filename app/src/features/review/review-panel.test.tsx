@@ -42,7 +42,7 @@ const item = (over: Partial<api.ReviewItem>): api.ReviewItem => ({
   ...over,
 })
 const REVIEW: ReviewResponse = {
-  request: { id: 'r1', case_id: 'c1', status: 'waiting_on_staff' },
+  request: { id: 'r1', case_id: 'c1', status: 'waiting_on_staff', opened_at: '2026-10-11T07:00:00Z' },
   items: [
     item({ id: 'i1', position: 1, label: 'Bank statements', documents: [doc('d1'), doc('d2')] }),
     item({ id: 'i2', position: 2, label: 'Pay stubs', status: 'pending' }),
