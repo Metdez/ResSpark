@@ -44,7 +44,9 @@ describe.skipIf(!url || !key)('anon is denied on every public table', () => {
   beforeAll(() => {
     const schema = readFileSync(
       fileURLToPath(
+        // .href: the Workers and Node URL types clash under tsc.
         new URL('../../../src/schemas/database_schema.sql', import.meta.url)
+          .href
       ),
       'utf8'
     )
