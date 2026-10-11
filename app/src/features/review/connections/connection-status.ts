@@ -38,6 +38,17 @@ export function cellBadge(status: string): Badge {
   return CELLS[status] ?? CELLS.missing
 }
 
+const EMPLOYER: Record<string, Badge> = {
+  pending: { tone: 'neutral', label: 'Waiting for client' },
+  connected: { tone: 'info', label: 'Connected' },
+  done: { tone: 'success', label: 'Done' },
+  error: { tone: 'destructive', label: 'Needs attention' },
+}
+
+export function employerBadge(status: string): Badge {
+  return EMPLOYER[status] ?? { tone: 'neutral', label: status }
+}
+
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`
 
 export function employerCounts(e: { pay_stubs: number; w2s: number; income_reports: number }): string {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { cellBadge, connectionBadge, employerCounts, transactionsLine } from './connection-status'
+import { cellBadge, connectionBadge, employerBadge, employerCounts, transactionsLine } from './connection-status'
 
 describe('connectionBadge', () => {
   it.each([
@@ -41,4 +41,13 @@ describe('employerCounts', () => {
     expect(employerCounts({ pay_stubs: 2, w2s: 1, income_reports: 1 })).toBe('2 pay stubs · 1 W-2 · 1 income report'))
   it('omits zeros', () => expect(employerCounts({ pay_stubs: 1, w2s: 0, income_reports: 0 })).toBe('1 pay stub'))
   it('empty', () => expect(employerCounts({ pay_stubs: 0, w2s: 0, income_reports: 0 })).toBe('No documents yet'))
+})
+
+describe('employerBadge', () => {
+  it.each([
+    ['pending', 'neutral', 'Waiting for client'],
+    ['connected', 'info', 'Connected'],
+    ['done', 'success', 'Done'],
+    ['error', 'destructive', 'Needs attention'],
+  ])('%s', (status, tone, label) => expect(employerBadge(status)).toEqual({ tone, label }))
 })

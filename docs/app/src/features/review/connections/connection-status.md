@@ -42,6 +42,18 @@ One statement-grid cell.
 | `pending` | neutral | Checking |
 | unknown | warning | Missing |
 
+## `employerBadge(status)`
+
+One employer inside a payroll connection.
+
+| Employer status | Tone | Label |
+|-----------------|------|-------|
+| `pending` | neutral | Waiting for client |
+| `connected` | info | Connected |
+| `done` | success | Done |
+| `error` | destructive | Needs attention |
+| unknown | neutral | the raw status |
+
 ## `employerCounts(e)`
 
 Joins the non-zero counts with ` · `, singular or plural: `2 pay stubs · 1 W-2 · 1 income report`, `1 pay stub`. All three zero gives `No documents yet`. `plural(n, one, many)` is the private helper.

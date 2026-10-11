@@ -8,6 +8,9 @@ import { Card, CardContent } from '@/components/ui/card'
 import { StatusBadge } from '@/components/status-badge'
 import type { ConnectionSummary } from './api'
 import { connectionBadge, transactionsLine } from './connection-status'
+import { PayrollPanel } from './payroll-panel'
+import { StatementGrid } from './statement-grid'
+import { TransactionsTable } from './transactions-table'
 import { useRefreshConnection } from './use-connections'
 
 const KIND = { bank: 'Bank', payroll: 'Payroll' } as const
@@ -63,9 +66,13 @@ export function ConnectionCard({ connection: c, requestId }: { connection: Conne
           )}
         </p>
         {c.kind === 'bank' ? (
-          <p className='text-sm'>{transactionsLine(c.transactions.count, c.transactions.update_status)}</p>
+          <>
+            <StatementGrid accounts={c.accounts} />
+            <p className='text-sm'>{transactionsLine(c.transactions.count, c.transactions.update_status)}</p>
+            <TransactionsTable connectionId={c.id} />
+          </>
         ) : (
-          <p className='text-sm'>{c.employers.map((e) => e.company_name ?? 'Employer').join(', ')}</p>
+          <PayrollPanel employers={c.employers} />
         )}
       </CardContent>
     </Card>
