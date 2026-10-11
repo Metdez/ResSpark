@@ -2,17 +2,17 @@
 gsd_state_version: "1.0"
 current_phase: 2
 current_phase_name: Find the Client & Send the Link
-status: executing
-stopped_at: Completed 02-06-PLAN.md
-last_updated: "2026-10-11T08:26:58.828Z"
+status: verifying
+stopped_at: Completed 02-08-PLAN.md
+last_updated: "2026-10-11T09:15:24.185Z"
 last_activity: 2026-10-11
 last_activity_desc: Phase 2 execution started
-state_head: 1237a56a8cbbaeca216c2b890a99e7ebba13cdd8
+state_head: ffdb784477723e0c34afc2b79d1f652248b831cb
 progress:
   total_phases: 8
   completed_phases: 0
   total_plans: 67
-  completed_plans: 17
+  completed_plans: 20
   percent: 0
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-10-10)
 
 Phase: 2 (Find the Client & Send the Link) — EXECUTING
 Plan: 8 of 8
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-10-11 — Phase 2 execution started
 
 Progress: [░░░░░░░░░░] 0%
@@ -70,6 +70,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 02 P05 | 29 min | 3 tasks | 38 files |
 | Phase 02 P07 | 20 min | 2 tasks | 14 files |
 | Phase 02 P06 | 27 min | 3 tasks | 27 files |
+| Phase 02 P08 | 41 min | 3 tasks | 40 files |
 
 ## Accumulated Context
 
@@ -126,6 +127,8 @@ Recent decisions affecting current work:
 - [Phase 02]: Request page prefers the stored link once it exists so regenerate/revoke refetches show current state
 - [Phase 02]: Saving Logics credentials replaces the cached status with the PUT answer instead of refetching
 - [Phase 02]: Populated requests list follows dense-table rules with count-aware caption; filters/sorting/polling stay Phase 3 (assumption for Phase 3 to confirm)
+- [Phase 02]: 02-08: app-wide error toast fires only on /admin; queries that render their own error set meta.errorShown and pass only a 401
+- [Phase 02]: 02-08: client heartbeat runs from state load with last_step intro/list/step kind; PORT-04 saved progress is server-side status and opened_at
 
 ### Pending Todos
 
@@ -154,6 +157,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-10-11T08:26:29.065Z
-Stopped at: Completed 02-06-PLAN.md
+Last session: 2026-10-11T09:15:23.978Z
+Stopped at: Completed 02-08-PLAN.md
 Resume file: None

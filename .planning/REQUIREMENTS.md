@@ -36,12 +36,12 @@ Requirements for the first release. Each maps to a roadmap phase. The Oct 12 202
 
 ### Client Portal
 
-- [ ] **PORT-01**: Client opens the link on a phone with no account, password, or app and sees the firm name, the agent's name, and what is being requested
-- [ ] **PORT-02**: The first page load exchanges the token for an HttpOnly cookie and strips the token from the URL; opening the link does not mark the request "opened" until the client taps Start
-- [ ] **PORT-03**: Client sees a step list (connect bank, connect payroll, confirm address, upload documents, sign) with done and not-done state and can complete steps in any order
-- [ ] **PORT-04**: Progress is saved per step, so closing the tab and reopening the link resumes where the client left off
-- [ ] **PORT-05**: Portal pages are mobile-first, meet WCAG 2.2 AA basics (44 px targets, contrast, labels), send no-referrer, no-store, and noindex headers, and load no analytics or session replay
-- [ ] **PORT-06**: Expired or revoked links show an "ask your agent for a new link" page, and token guessing is rate-limited per IP
+- [x] **PORT-01**: Client opens the link on a phone with no account, password, or app and sees the firm name, the agent's name, and what is being requested
+- [x] **PORT-02**: The first page load exchanges the token for an HttpOnly cookie and strips the token from the URL; opening the link does not mark the request "opened" until the client taps Start
+- [x] **PORT-03**: Client sees a step list (connect bank, connect payroll, confirm address, upload documents, sign) with done and not-done state and can complete steps in any order
+- [x] **PORT-04**: Progress is saved per step, so closing the tab and reopening the link resumes where the client left off
+- [x] **PORT-05**: Portal pages are mobile-first, meet WCAG 2.2 AA basics (44 px targets, contrast, labels), send no-referrer, no-store, and noindex headers, and load no analytics or session replay
+- [x] **PORT-06**: Expired or revoked links show an "ask your agent for a new link" page, and token guessing is rate-limited per IP
 
 ### Uploads & Review
 
@@ -182,12 +182,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | REQ-03 | Phase 2 | Complete |
 | REQ-04 | Phase 2 | Complete |
 | REQ-05 | Phase 2 | Complete |
-| PORT-01 | Phase 2 | Pending |
-| PORT-02 | Phase 2 | Pending |
-| PORT-03 | Phase 2 | Pending |
-| PORT-04 | Phase 2 | Pending |
-| PORT-05 | Phase 2 | Pending |
-| PORT-06 | Phase 2 | Pending |
+| PORT-01 | Phase 2 | Complete |
+| PORT-02 | Phase 2 | Complete |
+| PORT-03 | Phase 2 | Complete |
+| PORT-04 | Phase 2 | Complete |
+| PORT-05 | Phase 2 | Complete |
+| PORT-06 | Phase 2 | Complete |
 | UPL-01 | Phase 3 | Pending |
 | UPL-02 | Phase 3 | Pending |
 | UPL-03 | Phase 3 | Pending |
