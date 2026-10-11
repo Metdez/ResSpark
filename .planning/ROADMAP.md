@@ -239,7 +239,22 @@ Plans:
   4. Staff sign-in requires MFA, a WISP evidence pack (access log, encryption, retention, incident runbook) can be produced, and documents and provider connections past the retention window (default 2 years) are purged while the audit record stays (PROD-02, PROD-03)
   5. Plaid and Truv production access is configured with a consistent use-case statement, consent screen, and privacy policy, and AI document classification runs only on redacted text with zero-data-retention parameters and produces suggestions that staff must confirm (PROD-01, PROD-04)
 
-**Plans**: TBD
+**Plans:** 12 plans
+
+Plans:
+- [ ] 08-01-PLAN.md — [BLOCKING, Wave 1] Migration 0010 (Phase 8 columns, progress trigger, stuck view columns, reminder/gate/AI RPCs) + firm settings API + reminders tracer: cron → due → claim → Resend once → `reminder.sent` (REM-01)
+- [ ] 08-02-PLAN.md — [Wave 1, checkpoints] Teller sandbox spike from a deployed throwaway Worker: mTLS binding, signature variant, amount sign, fixtures, enrollment revoked (REM-03)
+- [ ] 08-03-PLAN.md — [Wave 1] One use-of-data statement: `docs/compliance/*`, consent re-consent bump, public `/privacy`, production checklist (PROD-01, PROD-02 docs)
+- [ ] 08-04-PLAN.md — [Wave 2] Stuck-client badge/chip/sidebar count/mirror line + request card: reminders line and Stop switch, Identity check switch, data kept until (REM-02, REM-01, REM-04, PROD-03)
+- [ ] 08-05-PLAN.md — [Wave 2] Identity gate: send-time digests from Logics DOB, `/api/c/verify` reserve-then-verify lockout, global `/api/c/*` guard, client gate screen, fake-case DOB (REM-04)
+- [ ] 08-06-PLAN.md — [Wave 2] Retention purge: 0011 RPCs, vendor removal first, Storage API deletes, tombstones, PII cleared, audit kept, admin retention card; ships disabled (PROD-03)
+- [ ] 08-07-PLAN.md — [Wave 2] AI classification: deterministic first, 3-pass redaction with fail-closed residue, OpenRouter ZDR + `require_parameters`, staff Accept/Dismiss chip, AI card (PROD-04)
+- [ ] 08-08-PLAN.md — [Wave 2] Teller Worker path: `tellerProvider`, firm-setting choice, start nonce variant, `teller-complete` signature check, mTLS sync, not-supported months, certificate binding (REM-03)
+- [ ] 08-09-PLAN.md — [Wave 3] Staff MFA: `aal2` on every admin API, enroll/verify screens, `mfa_required` routing, TOTP helper, demo enrollment and reset scripts (PROD-02)
+- [ ] 08-10-PLAN.md — [Wave 3] Teller webhooks (stripped payloads), daily removal, Teller Connect in the bank step + CSP, Settings bank provider switch (REM-03)
+- [ ] 08-11-PLAN.md — [Wave 4] WISP evidence pack (Markdown + escaped CSV) on Settings → Security, plus Settings → Client links (PROD-02 and the firm settings UI)
+- [ ] 08-12-PLAN.md — [Wave 5, checkpoint] Deploy after the demo, smoke for MFA/gate/statement/Teller/evidence, retention go/no-go (blocking human), USER ACTION recap (all)
+
 **Scope notes**: Teller via the mTLS binding (assume no statement PDFs); Plaid compliance framed as tax preparation and tax paperwork help; legal scoping (IRC 7216, FTC Safeguards, TCPA) needs counsel; reminders are email only, there is no own SMS in v1.
 **UI hint**: yes
 **Research hint**: yes
@@ -258,4 +273,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 5. Push to Logics | 1/5 | In Progress | - |
 | 6. Address & E-Sign | 0/TBD | Not started | - |
 | 7. 433-A Pre-Population | 0/TBD | Not started | - |
-| 8. Reminders, Teller & Production Readiness | 0/TBD | Not started | - |
+| 8. Reminders, Teller & Production Readiness | 0/12 | Not started | - |
