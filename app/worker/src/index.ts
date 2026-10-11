@@ -11,6 +11,7 @@ import { type StaffCtx } from './middleware/staff-auth'
 import { adminConnectionsRoute } from './routes/admin-connections'
 import { adminEsignRoute } from './routes/admin-esign'
 import { adminEventsRoute } from './routes/admin-events'
+import { adminFinancialsRoute } from './routes/admin-financials'
 import { adminIntegrationsRoute } from './routes/admin-integrations'
 import { adminLogicsPushRoute } from './routes/admin-logics-push'
 import { adminLookupRoute } from './routes/admin-lookup'
@@ -68,6 +69,7 @@ app.route('/api/admin', adminEventsRoute)
 app.route('/api/admin', adminLogicsPushRoute)
 app.route('/api/admin', adminConnectionsRoute)
 app.route('/api/admin', adminEsignRoute)
+app.route('/api/admin', adminFinancialsRoute)
 // Last of the /api/admin mounts: its '*' staffAuth would otherwise run again on sibling admin routes.
 app.route('/api/admin', adminLookupRoute)
 // /c/return must win over /c/:token: Hono matches in registration order.
