@@ -1,0 +1,21 @@
+{
+  "id": "rep_acme",
+  "status": "done",
+  "access_token": "at_fixture_never_stored",
+  "pdf_report": "https://files.truv.test/acme/report.pdf",
+  "employments": [
+    {
+      "id": "empl_acme",
+      "company": { "name": "Acme Inc", "ein": "12-3456789" },
+      "job_title": "Analyst",
+      "income": "52000.00",
+      "statements": [
+        { "pay_date": "2026-09-15", "check_number": "1001", "gross_pay": "2000.00", "net_pay": "1500.00", "file": "https://files.truv.test/acme/stub-0915.pdf", "md5sum": "de1a4717a439971406ee206790713d6a" },
+        { "pay_date": "2026-08-31", "check_number": null, "gross_pay": "2000.00", "net_pay": "1500.00", "file": "https://files.truv.test/acme/stub-0831.pdf", "md5sum": "de1a4717a439971406ee206790713d6a" }
+      ],
+      "w2s": [
+        { "year": 2025, "wages": "48000.00", "file": "https://files.truv.test/acme/w2-2025.pdf", "md5sum": "de1a4717a439971406ee206790713d6a" }
+      ]
+    }
+  ]
+}

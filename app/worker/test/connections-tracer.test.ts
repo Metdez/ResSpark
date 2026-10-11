@@ -74,6 +74,9 @@ describe.skipIf(!live)('connections tracer (live; needs SUPABASE_URL, SUPABASE_S
         method: 'GET',
         respond: () => new Response(order, { headers: { 'content-type': 'application/json' } }),
       },
+      // Plan 04-03 fetches completed employers' reports; empty ones keep this test about status
+      { host: 'prod.truv.com', path: /^\/v1\/links\/[^/]+\/income\/report\/$/, respond: () => Response.json({ employments: [] }) },
+      { host: 'prod.truv.com', path: /^\/v1\/links\/[^/]+\/documents\/$/, respond: () => Response.json([]) },
     ])
   })
 
@@ -117,8 +120,9 @@ describe.skipIf(!live)('connections tracer (live; needs SUPABASE_URL, SUPABASE_S
     expect(ack).toHaveBeenCalledTimes(1)
     expect(retry).not.toHaveBeenCalled()
 
-    expect(vendor!.calls).toHaveLength(1)
-    const call = vendor!.calls[0]
+    const orderCalls = vendor!.calls.filter((r) => r.url.includes('/v1/orders/'))
+    expect(orderCalls).toHaveLength(1)
+    const call = orderCalls[0]
     expect(call.method).toBe('GET')
     expect(call.url).toBe('https://prod.truv.com/v1/orders/ord_fixture_1/')
     expect(call.headers.get('X-Access-Client-Id')).toBe('test-client')

@@ -14,3 +14,5 @@ The Phase 4 tracer, live against the Supabase project with only the Truv API stu
 2. The identical bytes again → 200 `{ ok: true, duplicate: true }`, still one job and one row.
 3. `queue()` with the recorded job → `ack` once, no `retry`; exactly one stubbed `GET` carrying `X-Access-Client-Id` and `X-Access-Secret`; connection `done` with `completed_at` and `last_webhook_at`, employers `Acme Inc` and `Beta LLC` both `done`; item `submitted`; request `waiting_on_staff`; one `connection.done` event whose payload has `connection_id` and no `access_token`, `bridge_token`, `webhook_sign`; ledger row `done` with `processed_at`.
 4. A body signed with the wrong secret → 401 `invalid_signature`, no ledger row, exactly one `webhook.rejected` event for the test firm since the suite started, payload exactly `{ provider: 'truv' }`, no job.
+
+Since Plan 04-03 the payroll reconcile also reads each completed employer income report and document list. The tracer stubs both with empty bodies (`{ employments: [] }` and `[]`) so it stays a status test, and counts only the `GET /v1/orders/` calls.

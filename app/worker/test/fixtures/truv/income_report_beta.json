@@ -1,0 +1,14 @@
+{
+  "id": "rep_beta",
+  "status": "done",
+  "employments": [
+    {
+      "id": "empl_beta",
+      "company": { "name": "Beta LLC" },
+      "statements": [
+        { "pay_date": "2026-09-30", "check_number": "77", "gross_pay": "900.00", "net_pay": "800.00", "file": "https://files.truv.test/beta/stub-0930.pdf", "md5sum": "de1a4717a439971406ee206790713d6a" }
+      ],
+      "w2s": []
+    }
+  ]
+}

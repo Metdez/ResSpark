@@ -1,0 +1,4 @@
+[
+  { "id": "doc_1099", "type": "F1099", "subtype": "NEC", "file": "https://files.truv.test/acme/1099.pdf", "filename": "1099-NEC 2025.pdf", "mimetype": "application/pdf", "created_at": "2026-10-01T12:00:00Z" },
+  { "id": "doc_dup", "type": "PAYSTUB", "file": "https://files.truv.test/acme/stub-0915.pdf", "filename": null, "mimetype": "application/pdf", "created_at": "2026-10-01T12:00:00Z" }
+]
