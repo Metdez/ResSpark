@@ -120,8 +120,8 @@ const byLabel = (label: string) => {
   )
   return container!.querySelector<HTMLInputElement>('#' + el!.htmlFor)!
 }
-const button = (text: string) =>
-  [...container!.querySelectorAll('button')].find(
+const button = (text: string, scope: ParentNode = container!) =>
+  [...scope.querySelectorAll('button')].find(
     (b) => b.textContent?.trim() === text
   ) as HTMLButtonElement | undefined
 
@@ -310,6 +310,32 @@ describe('RequestPage', () => {
     )
     expect(el.textContent).not.toContain('Send the link')
     expect(button('Send link')).toBeUndefined()
+  })
+
+  it('mounts the link actions inside the Client link card', async () => {
+    await render({ status: 200, body: SENT })
+    const card = button('Copy link')!.closest('[data-slot="card"]')!
+    expect(card.textContent).toContain('Client link')
+    expect(button('Email link', card)).toBeDefined()
+    expect(button('Revoke link', card)).toBeDefined()
+    // Copy link stays the only primary (default-variant) button on the page
+    expect(button('Email link')!.className).toContain('border')
+  })
+
+  it('replaces the link with the revoked line once revoked', async () => {
+    const el = await render({
+      status: 200,
+      body: {
+        ...SENT,
+        status: 'revoked',
+        link: { ...SENT.link, url: null, revoked_at: '2026-10-11T09:00:00Z' },
+      },
+    })
+    expect(el.textContent).toContain('Revoked')
+    expect(el.textContent).toContain('This link was revoked.')
+    expect(button('Copy link')).toBeUndefined()
+    expect(button('Revoke link')).toBeUndefined()
+    expect(el.querySelector('input[readonly]')).toBeNull()
   })
 
   it('shows three skeleton rows and no form while loading', async () => {
