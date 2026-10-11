@@ -11,13 +11,13 @@ Splits one PDF into parts that are each at most `targetBytes`, keeping page orde
 | 21-27 | If `isEncrypted`, retry with the empty password. Owner-password-only files open this way; a user-password file throws → `pdf_encrypted`. |
 | 28-29 | A file over the gate with zero pages would otherwise produce zero parts (nothing sent but no error), so it is reported as `pdf_unparseable`. |
 | 31-32 | The `shortcut:` note: the algorithm saves once per page. Upgrade to a byte-ratio estimate plus one verification save if a real upload takes over 20 s. |
-| 33-35 | State: finished `parts` (bytes only — no `PDFDocument` is kept after its part is final), the `part` being filled, and `lastGood`, the most recent save of `part` that fit. |
-| 36-43 | Greedy accumulation: copy page `i` into `part`, save with `objectsPerTick: Infinity` (no yielding; the consumer has no UI to keep responsive), and if the save fits, remember it and continue. |
-| 44 | Overshoot with nothing saved yet means page `i` alone is too big → `pdf_page_too_large`, `page: i + 1`. |
-| 46-54 | Overshoot after at least one good save: emit `lastGood` as a finished part, start a fresh document with page `i` alone, save it, and if even that is over the gate → `pdf_page_too_large`. Otherwise it becomes the new `lastGood`. |
-| 56 | Emit the final part. |
-| 58-60 | Invariant: re-check every part against the gate and throw `split_invariant` if one is over. The loop already guarantees this, so it is a thrown bug, never a result — an oversize part is never returned. |
-| 61 | Return the parts in page order. |
+| 33-36 | State: finished `parts` (bytes only — no `PDFDocument` is kept after its part is final), the `part` being filled, and `lastGood`, the most recent save of `part` that fit. Every part document is created with `updateMetadata: false`, so pdf-lib writes no `Producer`/`Creator`/`CreationDate`/`ModDate` stamped with the current clock: the same source always splits into byte-identical parts, which the stored-part sha256 re-check in `ensureNormalized` relies on when an interrupted job re-runs. |
+| 37-44 | Greedy accumulation: copy page `i` into `part`, save with `objectsPerTick: Infinity` (no yielding; the consumer has no UI to keep responsive), and if the save fits, remember it and continue. |
+| 45 | Overshoot with nothing saved yet means page `i` alone is too big → `pdf_page_too_large`, `page: i + 1`. |
+| 47-55 | Overshoot after at least one good save: emit `lastGood` as a finished part, start a fresh document with page `i` alone, save it, and if even that is over the gate → `pdf_page_too_large`. Otherwise it becomes the new `lastGood`. |
+| 57 | Emit the final part. |
+| 59-61 | Invariant: re-check every part against the gate and throw `split_invariant` if one is over. The loop already guarantees this, so it is a thrown bug, never a result — an oversize part is never returned. |
+| 62 | Return the parts in page order. |
 
 ## Notes
 

@@ -31,7 +31,8 @@ export async function splitPdf(
   // shortcut: one save() per page (O(pages x part size)); switch to a byte-ratio
   // estimate with a final verification save if a real upload takes over 20 s.
   const parts: Uint8Array[] = []
-  let part = await PDFDocument.create()
+  // updateMetadata: false keeps the clock (CreationDate/ModDate) out of the bytes, so a re-run reproduces each part's sha256.
+  let part = await PDFDocument.create({ updateMetadata: false })
   let lastGood: Uint8Array | null = null
   for (let i = 0; i < src.getPageCount(); i++) {
     const [page] = await part.copyPages(src, [i])
@@ -44,7 +45,7 @@ export async function splitPdf(
     if (!lastGood) return { error: 'pdf_page_too_large', page: i + 1 }
 
     parts.push(lastGood)
-    part = await PDFDocument.create()
+    part = await PDFDocument.create({ updateMetadata: false })
     const [restart] = await part.copyPages(src, [i])
     part.addPage(restart)
     saved = await part.save({ objectsPerTick: Infinity })

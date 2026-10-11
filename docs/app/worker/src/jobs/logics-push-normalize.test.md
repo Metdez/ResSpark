@@ -4,7 +4,7 @@ Unit tests for `ensureNormalized`. `uploadPart` / `downloadPart` and `addParts` 
 
 - A 1-page ~2 KB PDF → one part named `stmt.pdf`, one upload to `…/logics/d/part-0.pdf`, `addParts` with `partCount 1` and one entry, no messages.
 - A 12-page ~720 KB PDF at `targetBytes 200_000` → N ≥ 3 parts, uploads to `part-0..part-(N-1)`, fingerprints equal `fingerprintHex('c', sha, k)`, every part ≤ 200,000 bytes, one message per sibling id, part 0 returned as `stmt (part 1 of N).pdf`.
-- Two runs on the same job → identical `addParts` arguments (paths, sizes, hashes).
+- Two runs on the same job → identical `addParts` arguments (paths, sizes, hashes). Only `Date` is faked (`vi.useFakeTimers({ toFake: ['Date'] })`) and the clock is set five minutes later for the second run, as an interrupted job's retry would be; real timers are restored in `finally`. Before the `updateMetadata: false` fix in `split-pdf.ts` this failed whenever the two runs straddled a second boundary (pdf-lib stamped `CreationDate`/`ModDate`), which showed up as a flake in busy full runs. 20 s timeout for the two 12-page splits.
 - A job with `part_storage_path` set → `downloadPart(that path)`, returned as is; no upload, `addParts` or message.
 - A stored part with the wrong hash → `part_hash_mismatch`, not manual.
 - `TINY_JPEG` named `id.jpg` → one part `id.pdf`.

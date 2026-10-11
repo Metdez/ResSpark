@@ -80,8 +80,16 @@ describe('ensureNormalized', () => {
 
   it('is deterministic: a re-run stores the same paths and hashes and calls addParts identically', async () => {
     source(big)
-    await ensureNormalized(ENV, jobFor(big), { targetBytes: 200_000 })
-    await ensureNormalized(ENV, jobFor(big), { targetBytes: 200_000 })
+    // The re-run lands in a later second, as an interrupted job's retry would.
+    vi.useFakeTimers({ toFake: ['Date'] })
+    try {
+      vi.setSystemTime(new Date('2026-10-11T12:00:00Z'))
+      await ensureNormalized(ENV, jobFor(big), { targetBytes: 200_000 })
+      vi.setSystemTime(new Date('2026-10-11T12:05:00Z'))
+      await ensureNormalized(ENV, jobFor(big), { targetBytes: 200_000 })
+    } finally {
+      vi.useRealTimers()
+    }
     const [first, second] = vi.mocked(addParts).mock.calls.map((c) => c[1])
     expect(second).toEqual(first)
   }, 20_000) // two 12-page splits; slow when the machine is busy

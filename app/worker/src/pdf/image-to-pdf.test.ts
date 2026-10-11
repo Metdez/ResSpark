@@ -1,5 +1,5 @@
 import { PDFDocument } from '@cantoo/pdf-lib'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { imageToPdf, sniffImage } from './image-to-pdf'
 import { HEIC_STUB, TINY_JPEG, TINY_PNG } from './test-fixtures'
 
@@ -31,6 +31,19 @@ describe('imageToPdf', () => {
     expect(doc.getPageCount()).toBe(2)
     for (const page of doc.getPages()) {
       expect(page.getSize()).toEqual({ width: 1, height: 1 })
+    }
+  })
+
+  it('writes the same bytes whatever the clock says', async () => {
+    const make = async (at: string) => {
+      vi.setSystemTime(new Date(at))
+      return imageToPdf([{ bytes: TINY_JPEG, kind: 'jpeg' }])
+    }
+    vi.useFakeTimers({ toFake: ['Date'] })
+    try {
+      expect(await make('2026-10-11T12:05:00Z')).toEqual(await make('2026-10-11T12:00:00Z'))
+    } finally {
+      vi.useRealTimers()
     }
   })
 })

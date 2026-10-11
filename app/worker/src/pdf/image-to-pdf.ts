@@ -19,7 +19,8 @@ export function sniffImage(bytes: Uint8Array): ImageKind | null {
 export async function imageToPdf(
   images: Array<{ bytes: Uint8Array; kind: 'jpeg' | 'png' }>
 ): Promise<Uint8Array> {
-  const doc = await PDFDocument.create()
+  // updateMetadata: false keeps the clock out of the bytes, so a re-run reproduces the stored sha256.
+  const doc = await PDFDocument.create({ updateMetadata: false })
   for (const { bytes, kind } of images) {
     const img =
       kind === 'jpeg' ? await doc.embedJpg(bytes) : await doc.embedPng(bytes)
