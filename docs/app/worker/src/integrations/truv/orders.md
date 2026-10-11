@@ -39,3 +39,5 @@ Truv order types, the reconcile read, and the deterministic order → connection
 - `createOrder(env, p)`: `POST /v1/orders/` with body `{ products: ['income'], first_name, last_name, email?, phone?, external_user_id: requestId, order_number, notification_settings: { suppress_user_notifications: true }, template_id? }`. `email`, `phone` and `template_id` keys are omitted when null. The response must pass `isTruvOrder` and carry a string `bridge_token`, else `ProviderError` `bad_response`. Non-2xx responses are `ProviderError`s from `truvFetch`.
   - Only the `income` product is requested (cost rule, PITFALLS M5).
   - `suppress_user_notifications: true`: Truv never texts or emails the client; ResSpark delivers the link.
+
+Plan 04-03 additions: `phone10` (`+15550100003` gives `5550100003`; a UK number and null give null) and `createOrder` through a stubbed `POST /v1/orders/` (the body omits `template_id`, `email` and `phone` when null and includes them when set; it always has `products: [income]` and `suppress_user_notifications: true`).

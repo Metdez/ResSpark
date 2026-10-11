@@ -1,5 +1,6 @@
-import { describe, expect, it } from 'vitest'
-import { isTruvOrder, mapEmployerStatus, mapOrderStatus, summarizeEmployers, type TruvOrder } from './orders'
+import { afterEach, describe, expect, it } from 'vitest'
+import { stubVendorFetch } from '../../../test/helpers/vendor-fetch'
+import { createOrder, isTruvOrder, mapEmployerStatus, mapOrderStatus, phone10, summarizeEmployers, type TruvOrder } from './orders'
 
 const order = (statuses: string[], over: Partial<TruvOrder> = {}): TruvOrder => ({
   id: 'ord_1',
@@ -66,5 +67,38 @@ describe('isTruvOrder', () => {
     expect(isTruvOrder({ id: 'x' })).toBe(false)
     expect(isTruvOrder({ id: 'x', employers: [{ id: 1 }] })).toBe(false)
     expect(isTruvOrder(null)).toBe(false)
+  })
+})
+
+describe('phone10', () => {
+  it('keeps 10 US digits and drops everything else', () => {
+    expect(phone10('+15550100003')).toBe('5550100003')
+    expect(phone10('+447700900000')).toBeNull()
+    expect(phone10(null)).toBeNull()
+  })
+})
+
+describe('createOrder', () => {
+  let vendor: ReturnType<typeof stubVendorFetch> | undefined
+  afterEach(() => vendor?.restore())
+  const env = { TRUV_CLIENT_ID: 'cid', TRUV_SECRET: 'sec' } as Env
+  const base: Parameters<typeof createOrder>[1] = { requestId: 'R1', orderNumber: 'R1', first: 'A', last: 'B', email: null, phone10: null, templateId: null }
+  const sent = async (p: Parameters<typeof createOrder>[1]) => {
+    vendor = stubVendorFetch([
+      { host: 'prod.truv.com', path: '/v1/orders/', method: 'POST', respond: () => Response.json({ id: 'o', bridge_token: 'bt', employers: [] }, { status: 201 }) },
+    ])
+    await createOrder(env, p)
+    return (await vendor.calls[0].json()) as Record<string, unknown>
+  }
+  it('omits template_id, email and phone when null', async () => {
+    const body = await sent(base)
+    expect(body).not.toHaveProperty('template_id')
+    expect(body).not.toHaveProperty('email')
+    expect(body).not.toHaveProperty('phone')
+    expect(body).toMatchObject({ products: ['income'], notification_settings: { suppress_user_notifications: true } })
+  })
+  it('includes template_id, email and phone when set', async () => {
+    const body = await sent({ ...base, templateId: 'tpl_1', email: 'a@b.test', phone10: '5550100003' })
+    expect(body).toMatchObject({ template_id: 'tpl_1', email: 'a@b.test', phone: '5550100003' })
   })
 })
