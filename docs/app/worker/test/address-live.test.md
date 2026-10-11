@@ -16,3 +16,4 @@ Live proof of ADDR-01's server half against the real Supabase project, with Smar
 6. **item_not_found**: `fx`'s item with `other`'s link is refused.
 7. **link_inactive**: after `other`'s link is revoked, its own item is refused.
 8. **item_approved**: after `item_approve`, the route answers 409 `item_approved`, the RPC raises `item_approved`, and the case row is unchanged.
+9. **Publishable key refused** (T-06-05; skipped when no publishable key is in the env): `anon.rpc('case_confirm_address', …)` returns no data and 401 / `42501`, proving the EXECUTE grant is revoked from anon. It lives here rather than in `phase3-anon.test.ts`, which belongs to Phase 3.

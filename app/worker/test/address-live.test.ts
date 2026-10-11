@@ -1,4 +1,4 @@
-import type { SupabaseClient } from '@supabase/supabase-js'
+import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { createAdminClient } from '../src/db/client'
 import { app } from '../src/index'
@@ -12,6 +12,7 @@ import { stubVendorFetch } from './helpers/vendor-fetch'
 // Run with `pnpm -C app run test:live:file worker/test/address-live.test.ts`.
 const live = liveEnvOrSkip()
 const { SUPABASE_URL, SUPABASE_SECRET_KEY, CLIENT_LINK_HMAC_KEY } = process.env
+const PUBLISHABLE = process.env.SUPABASE_PUBLISHABLE_KEY ?? process.env.VITE_SUPABASE_PUBLISHABLE_KEY
 
 describe.skipIf(!live)('address step (live; needs SUPABASE_URL, SUPABASE_SECRET_KEY, CLIENT_LINK_HMAC_KEY)', () => {
   const env = {
@@ -208,5 +209,13 @@ describe.skipIf(!live)('address step (live; needs SUPABASE_URL, SUPABASE_SECRET_
     const { error } = await rpcConfirm(fx.items.address!, fx.linkId, SMARTY)
     expect(error?.message).toContain('item_approved')
     expect(await caseRow()).toEqual(before)
+  })
+
+  // T-06-05: the publishable key (anon) cannot call the RPC; 401 + 42501 means the grant is revoked.
+  it.skipIf(!PUBLISHABLE)('refuses case_confirm_address with the publishable key', async () => {
+    const anon = createClient(SUPABASE_URL!, PUBLISHABLE!, { auth: { persistSession: false, autoRefreshToken: false } })
+    const res = await anon.rpc('case_confirm_address', { p_item_id: fx.items.address, p_link_id: fx.linkId, p_address: SMARTY })
+    expect(res.data).toBeNull()
+    expect({ status: res.status, code: res.error?.code }).toEqual({ status: 401, code: '42501' })
   })
 })
