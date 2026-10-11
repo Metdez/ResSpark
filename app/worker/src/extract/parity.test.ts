@@ -3,7 +3,8 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import type { Rows } from './fields'
-import { ExtractError, parsePdf, parseTexts } from './parse'
+import { mergeDocuments } from './merge'
+import { ExtractError, parsePdf, parseTexts, type ParsedDocument } from './parse'
 import { pageText } from './pdf-text'
 
 interface Outcome {
@@ -13,7 +14,9 @@ interface Outcome {
 
 interface Golden {
   texts_cases: Array<Outcome & { name: string; texts: string[]; rows: Rows; document_type: string | null }>
+  merge_cases: Array<{ name: string; parts: ParsedDocument[]; expected: Record<string, unknown> }>
   pdfs: Array<Outcome & { path: string; document_type: string | null; page_text: { texts: string[]; rows: Rows } }>
+  packets: Array<{ dir: string; expected: Record<string, unknown> }>
 }
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '../../../../')
@@ -40,5 +43,17 @@ describe('extract parity with src/document_parse.py (golden-extract.json)', () =
     const parsed = parsePdf(bytes, item.document_type, path)
     if (item.error === undefined) expect(await parsed).toEqual(item.expected)
     else await expect(parsed).rejects.toThrow(new Error(item.error))
+  })
+
+  it.each(golden.merge_cases.map((item) => [item.name, item] as const))('merge_documents %s', (_name, item) => {
+    expect(mergeDocuments(item.parts)).toEqual(item.expected)
+  })
+
+  it.each(golden.packets.map((item) => [item.dir, item] as const))('parse_packet %s', async (dir, item) => {
+    // parse_packet reads the folder's PDFs sorted by path; the fixture lists them in that order.
+    const paths = golden.pdfs.map((pdf) => pdf.path).filter((path) => path.startsWith(`${dir}/`))
+    expect(paths.length).toBeGreaterThan(0)
+    const parts = await Promise.all(paths.map((path) => parsePdf(pdfBytes(path), null, path)))
+    expect(mergeDocuments(parts)).toEqual(item.expected)
   })
 })

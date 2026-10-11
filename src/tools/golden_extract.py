@@ -110,14 +110,28 @@ def texts_cases(calls: list) -> list[dict]:
     return cases
 
 
+def merge_cases(calls: list) -> list[dict]:
+    return [
+        {"name": name, "parts": _plain(parts), "expected": _plain(document_parse.merge_documents(copy.deepcopy(parts)))}
+        for name, parts in calls
+    ]
+
+
+def packet_cases() -> list[dict]:
+    return [
+        {"dir": folder.relative_to(ROOT).as_posix(), "expected": _plain(document_parse.parse_packet(folder))}
+        for folder in sorted(path for path in (ROOT / "examples").iterdir() if path.is_dir())
+    ]
+
+
 def build_extract_payload() -> dict:
-    text_calls, _merge_calls = _test_calls()
+    text_calls, merge_calls = _test_calls()
     pdfs = [pdf_case(path) for path in sorted((ROOT / "examples").glob("*/*.pdf"))]
     return {
         "python": f"{sys.version_info.major}.{sys.version_info.minor}",
         "generated_by": "src/tools/export_golden_fixtures.py (src/tools/golden_extract.py)",
         "texts_cases": texts_cases(text_calls),
-        "merge_cases": [],
+        "merge_cases": merge_cases(merge_calls),
         "pdfs": pdfs,
-        "packets": [],
+        "packets": packet_cases(),
     }
