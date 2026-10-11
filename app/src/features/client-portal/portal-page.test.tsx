@@ -255,4 +255,41 @@ describe('PortalPage', () => {
       'View Upload your ID'
     )
   })
+
+  it('sends heartbeats: list when opened, the step kind on View', async () => {
+    const { fetchMock } = await render(okState({ opened_at: OPENED }))
+    await waitFor(() => rows().length === 5)
+    const sent = () =>
+      fetchMock.mock.calls
+        .filter(([p]) => p === '/api/c/heartbeat')
+        .map(
+          ([, init]) => JSON.parse(String((init as RequestInit).body)).last_step
+        )
+    expect(sent()).toEqual(['list'])
+    await click(button('View', rows()[0])!)
+    await waitFor(() => sent().length === 2)
+    expect(sent()[1]).toBe('bank_connect')
+  })
+
+  it('sends intro as the step before Start', async () => {
+    const { fetchMock } = await render(okState())
+    await waitFor(() => !!button('Start'))
+    const call = fetchMock.mock.calls.find(([p]) => p === '/api/c/heartbeat')!
+    expect(JSON.parse(String((call[1] as RequestInit).body)).last_step).toBe(
+      'intro'
+    )
+  })
+
+  it('sends no heartbeat without a session', async () => {
+    const { fetchMock } = await render({
+      'GET /api/c/state': {
+        status: 401,
+        body: { error: { code: 'no_session' } },
+      },
+    })
+    await waitFor(() => text().includes("This link isn't active"))
+    expect(fetchMock.mock.calls.some(([p]) => p === '/api/c/heartbeat')).toBe(
+      false
+    )
+  })
 })

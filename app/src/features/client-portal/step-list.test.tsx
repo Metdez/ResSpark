@@ -1,4 +1,3 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   button,
   cleanup,
@@ -6,6 +5,7 @@ import {
   renderWithQuery,
   waitFor,
 } from '@/test-utils/query-render'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { PortalStep } from './portal-api'
 import { StepList } from './step-list'
 

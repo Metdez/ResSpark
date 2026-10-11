@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -7,6 +8,7 @@ import { ClientShell } from '@/features/client-link/client-shell'
 import { InvalidLinkPage } from '@/features/client-link/invalid-link-page'
 import { getState, PortalError, start, type PortalState } from './portal-api'
 import { StepList } from './step-list'
+import { useHeartbeat } from './use-heartbeat'
 
 const KEY = ['portal', 'state']
 const APP_NAME = import.meta.env.VITE_APP_NAME ?? 'ResSpark'
@@ -33,8 +35,21 @@ export function PortalPage() {
     },
   })
 
-  if (noSession(state.error) || noSession(begin.error))
-    return <InvalidLinkPage />
+  const [viewed, setViewed] = useState<string>()
+  const lost = noSession(state.error) || noSession(begin.error)
+  const opened = Boolean(state.data?.opened_at)
+  // a revoke turns the next refetch into a 401, which stops the heartbeat with the page
+  useHeartbeat({
+    enabled: Boolean(state.data) && !lost,
+    lastStep: opened ? (viewed ?? 'list') : 'intro',
+    lastError: state.isError
+      ? 'state_failed'
+      : begin.isError
+        ? 'start_failed'
+        : undefined,
+  })
+
+  if (lost) return <InvalidLinkPage />
 
   const data = state.data
   if (!data)
@@ -89,7 +104,7 @@ export function PortalPage() {
           <h2 className='mb-2 text-xl leading-tight font-semibold'>
             Your steps
           </h2>
-          <StepList steps={data.steps} />
+          <StepList steps={data.steps} onView={(s) => setViewed(s.kind)} />
         </>
       )}
     </ClientShell>
