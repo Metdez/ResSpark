@@ -65,6 +65,12 @@ SOFTWARE.
 - `@cantoo/pdf-lib` 2.11.1 (MIT), <https://github.com/cantoo-scribe/pdf-lib>, a maintained fork of
   Hopding/pdf-lib. Used by `worker/src/pdf/` to split PDFs and wrap JPEG/PNG images before they
   are pushed to Logics (Phase 5, PUSH-02). Its license ships in `node_modules/@cantoo/pdf-lib/LICENSE.md`.
+- `heic2any` 0.0.4 (MIT), <https://github.com/alexcorvi/heic2any>. Converts iPhone HEIC photos to
+  JPEG in the client upload step (Phase 3, UPL-02). Loaded with a dynamic `import()` only when a
+  HEIC file is picked, so it stays out of the `/c/*` entry chunk.
+- `tus-js-client` 4.3.1 (MIT), <https://github.com/tus/tus-js-client>. Resumable uploads from the
+  client upload step to Supabase Storage (Phase 3, UPL-01). Loaded with a dynamic `import()`.
+  Both verified with `pnpm view <pkg>@<ver> version license` on 2026-10-11.
 
 ## Visual references (no code copied)
 

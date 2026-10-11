@@ -51,7 +51,8 @@ const TARGET = {
   document_id: 'D1',
   path: 'firm/case/item/D1.jpg',
   token: 'tok-1',
-  signed_url: 'https://ref.supabase.co/storage/v1/object/upload/sign/case-documents/x?token=tok-1',
+  signed_url:
+    'https://ref.supabase.co/storage/v1/object/upload/sign/case-documents/x?token=tok-1',
 }
 const blob = new Blob(['hello'])
 
@@ -106,16 +107,25 @@ describe('pending-upload map', () => {
 
 // A scripted XMLHttpRequest: each send() takes the next outcome (an HTTP status or a network error).
 function stubXhr(outcomes: Array<number | 'error'>) {
-  const sent: Array<{ method: string; url: string; headers: Record<string, string> }> = []
+  const sent: Array<{
+    method: string
+    url: string
+    headers: Record<string, string>
+  }> = []
   vi.stubGlobal(
     'XMLHttpRequest',
     class {
       status = 0
-      upload: { onprogress?: (e: { loaded: number; total: number }) => void } = {}
+      upload: { onprogress?: (e: { loaded: number; total: number }) => void } =
+        {}
       onload?: () => void
       onerror?: () => void
       onabort?: () => void
-      private req = { method: '', url: '', headers: {} as Record<string, string> }
+      private req = {
+        method: '',
+        url: '',
+        headers: {} as Record<string, string>,
+      }
       open(method: string, url: string) {
         this.req.method = method
         this.req.url = url
@@ -225,9 +235,9 @@ describe('uploadBlob over TUS', () => {
       contentType: 'image/jpeg',
       cacheControl: '3600',
     })
-    await expect(
-      (o.fingerprint as () => Promise<string>)()
-    ).resolves.toBe('rs-D1')
+    await expect((o.fingerprint as () => Promise<string>)()).resolves.toBe(
+      'rs-D1'
+    )
     expect(progress).toHaveBeenCalledWith(0.75)
     expect(tusState.calls).toEqual(['find', 'start'])
   })
