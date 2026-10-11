@@ -5,7 +5,10 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import { createAdminClient } from '../src/db/client'
 import { fingerprintHex } from '../src/db/logics-pushes'
 import { app } from '../src/index'
+import { createFakeLogicsClient } from '../src/integrations/logics/fixtures'
 import { handleLogicsPushPart, type LogicsPushJob } from '../src/jobs/logics-push'
+import { makeMultiPagePdf } from '../src/pdf/test-fixtures'
+import { BUCKET } from '../src/storage/case-documents'
 import { seedPushRequest, TEST_STAFF_UUID, type PushFixture } from './fixtures/logics-push'
 import { TEST_FIRM_ID } from './fixtures/request'
 
@@ -145,5 +148,77 @@ describe.skipIf(!SUPABASE_URL || !SUPABASE_SECRET_KEY)('logics push tracer (live
     expect(msg.retry).not.toHaveBeenCalled()
     expect((await row(pushId)).attempts).toBe(1)
     expect(await events('logics.push_sending')).toHaveLength(1)
+  })
+})
+
+// PUSH-02 live: a ~720 KB 12-page PDF split at a 200,000-byte test target into stored parts,
+// sibling rows and messages, every part sent through the fake client, one activity note.
+describe.skipIf(!SUPABASE_URL || !SUPABASE_SECRET_KEY)('logics push multipart (live, fake mode)', () => {
+  const sent: LogicsPushJob[] = []
+  const env = {
+    SUPABASE_URL,
+    SUPABASE_SECRET_KEY,
+    APP_ENV: 'sandbox',
+    LOGICS_MODE: 'fake',
+    LOGICS_WRITE_ENABLED: 'true',
+    LOGICS_TEST_CASE_IDS: '900001',
+    JOBS: { send: async (m: LogicsPushJob) => void sent.push(m) },
+  } as unknown as Env
+  const fake = createFakeLogicsClient({ delayMs: 0 })
+  const createActivity = vi.spyOn(fake, 'createActivity')
+  const opts = { targetBytes: 200_000, clientFactory: () => fake }
+  let db: SupabaseClient
+  let fx: PushFixture
+  let prefix = ''
+
+  beforeAll(async () => {
+    db = createAdminClient(env)
+    fx = await seedPushRequest(db, { logicsCaseId: 900001, docs: [{ name: 'statement.pdf', bytes: await makeMultiPagePdf(12, 60_000) }] })
+    prefix = `firm/${TEST_FIRM_ID}/case/${fx.case_id}/logics/${fx.document_ids[0]}`
+  })
+
+  afterAll(async () => {
+    if (!fx) return
+    const { data } = await db.storage.from(BUCKET).list(prefix)
+    if (data?.length) await db.storage.from(BUCKET).remove(data.map((o) => `${prefix}/${o.name}`))
+    await fx.cleanup()
+  })
+
+  it('normalizes into stored, hashed parts and sends every part once', async () => {
+    const res = await app.request(
+      `/api/admin/requests/${fx.request_id}/logics-push`,
+      { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ document_ids: fx.document_ids }) },
+      env
+    )
+    expect(res.status).toBe(202)
+    const start = Date.now()
+    for (let i = 0; i < sent.length; i++) {
+      const msg = { body: sent[i], ack: vi.fn(), retry: vi.fn(), attempts: 1 } as unknown as Message<LogicsPushJob>
+      await handleLogicsPushPart(msg, env, opts)
+      expect(msg.ack).toHaveBeenCalledTimes(1)
+      expect(msg.retry).not.toHaveBeenCalled()
+    }
+    const wall = Date.now() - start
+
+    const rows = (await db.from('logics_pushes').select('*').eq('document_id', fx.document_ids[0]).order('part_index')).data!
+    const n = rows.length
+    expect(n).toBeGreaterThanOrEqual(3)
+    expect(sent).toHaveLength(n)
+    for (const [k, r] of rows.entries()) {
+      expect(r).toMatchObject({ state: 'sent', part_index: k, part_count: n, part_storage_path: `${prefix}/part-${k}.pdf` })
+      expect(r.part_bytes).toBeLessThanOrEqual(200_000)
+    }
+    expect(new Set(rows.map((r) => r.part_sha256)).size).toBe(n)
+    expect(rows.every((r) => r.part_storage_path.includes('/logics/'))).toBe(true)
+
+    const { data: objects } = await db.storage.from(BUCKET).list(prefix)
+    expect(objects?.map((o) => o.name).sort()).toEqual(rows.map((_, k) => `part-${k}.pdf`).sort())
+
+    expect(createActivity).toHaveBeenCalledTimes(1)
+    const comment = createActivity.mock.calls[0][0].comment
+    for (let k = 1; k <= n; k++) expect(comment).toContain(`(part ${k} of ${n})`)
+    expect(comment).toContain('(part 1 of ')
+    process.stdout.write(`multipart: ${n} parts, bytes ${rows.map((r) => r.part_bytes).join('/')}, consumer wall ${wall} ms
+`)
   })
 })

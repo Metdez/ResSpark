@@ -1,19 +1,20 @@
-import { createAdminClient } from '../db/client'
 import { getIntegration } from '../db/integrations'
 import { claimPush, getPushForJob, transitionPush, type PushJob, type PushRow } from '../db/logics-pushes'
 import type { LogicsClient } from '../integrations/logics/client'
 import { liveClientFromRow } from '../integrations/logics/config'
 import { createFakeLogicsClient } from '../integrations/logics/fixtures'
 import { logicsWriteGuard } from '../integrations/logics/write-guard'
-import { LOGICS_MAX_PART_BYTES, type DocResult, type LogicsWriteClient } from '../integrations/logics/write-types'
-import { BUCKET } from '../storage/case-documents'
+import type { DocResult, LogicsWriteClient } from '../integrations/logics/write-types'
 import { finalizeBatchIfDone } from './logics-push-finalize'
+import { ensureNormalized, type NormalizedPart } from './logics-push-normalize'
 
 export type LogicsPushJob = { type: 'logics_push'; provider: 'logics'; ref: string }
 
-type Part = { fileName: string; bytes: Uint8Array }
-type Ready = { client: LogicsClient; part: Part }
-type Refused = { code: string; detail: string; noteClient: Pick<LogicsWriteClient, 'createActivity'> }
+// Test seams only: a smaller split target and an injected fake client. Production passes nothing.
+export type PushOptions = { targetBytes?: number; clientFactory?: () => LogicsClient }
+
+type Ready = { client: LogicsClient; part: NormalizedPart }
+type Refused = { code: string; detail: string; manual?: boolean; noteClient: Pick<LogicsWriteClient, 'createActivity'> }
 
 // D-07 wording verbatim.
 export function buildDocumentComment(job: Pick<PushJob, 'agent_display_name' | 'file_name' | 'part_index' | 'part_count'>): string {
@@ -29,34 +30,9 @@ const refusedNote = (code: string): Pick<LogicsWriteClient, 'createActivity'> =>
 
 const tokenOf = (e: unknown) => (e instanceof Error && /^[a-z_]+$/.test(e.message) ? e.message : 'internal')
 
-async function sha256hex(bytes: Uint8Array): Promise<string> {
-  const digest = await crypto.subtle.digest('SHA-256', bytes as Uint8Array<ArrayBuffer>)
-  return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('')
-}
-
-// shortcut: pass-through only (a stored PDF under the gate, no stored parts); everything else is
-// failed `normalization_pending` until Plan 03 swaps this for normalizeForLogics.
-async function ensureNormalized(env: Env, job: PushJob): Promise<Part | { code: string; detail: string }> {
-  if (
-    job.part_storage_path !== null ||
-    job.source_mime !== 'application/pdf' ||
-    job.source_bytes === null ||
-    job.source_bytes > LOGICS_MAX_PART_BYTES
-  ) {
-    return { code: 'normalization_pending', detail: 'This file needs splitting or conversion before it can be sent' }
-  }
-  const { data, error } = await createAdminClient(env).storage.from(BUCKET).download(job.storage_key)
-  if (error || !data) return { code: 'source_read_failed', detail: 'The stored file could not be read' }
-  const bytes = new Uint8Array(await data.arrayBuffer())
-  if ((await sha256hex(bytes)) !== job.source_sha256) {
-    return { code: 'source_hash_mismatch', detail: 'The stored file does not match its upload hash' }
-  }
-  return { fileName: job.file_name, bytes }
-}
-
 // Every check that must pass before a byte goes to Logics (D-10, C1): the guard runs here as well
 // as in the route, in both modes; fake mode never reads credentials.
-async function prepare(env: Env, job: PushJob): Promise<Ready | Refused> {
+async function prepare(env: Env, job: PushJob, opts: PushOptions): Promise<Ready | Refused> {
   try {
     logicsWriteGuard(env, String(job.logics_case_id))
   } catch {
@@ -68,7 +44,7 @@ async function prepare(env: Env, job: PushJob): Promise<Ready | Refused> {
   }
   let client: LogicsClient
   if (mode === 'fake') {
-    client = createFakeLogicsClient()
+    client = opts.clientFactory?.() ?? createFakeLogicsClient()
   } else {
     const row = await getIntegration(env, job.firm_id, 'logics')
     const usable = row && row.api_key_ciphertext && row.secret_ciphertext && row.last_test_ok === true
@@ -78,14 +54,14 @@ async function prepare(env: Env, job: PushJob): Promise<Ready | Refused> {
     }
     client = live
   }
-  const part = await ensureNormalized(env, job)
-  return 'code' in part ? { ...part, noteClient: client } : { client, part }
+  const result = await ensureNormalized(env, job, opts)
+  return result.ok ? { client, part: result.part } : { code: result.code, detail: result.detail, manual: result.manual, noteClient: client }
 }
 
 // Claim -> guard -> dispatch -> ack -> transition -> finalize (05-RESEARCH Code Example 4).
 // The only retry is a refused claim (nothing was sent). Once createCaseDocument has started, the
 // message is acked no matter what; the outcome lives in the ledger (D-03, PUSH-04).
-export async function handleLogicsPushPart(msg: Message<LogicsPushJob>, env: Env): Promise<void> {
+export async function handleLogicsPushPart(msg: Message<LogicsPushJob>, env: Env, opts: PushOptions = {}): Promise<void> {
   let row: PushRow | null = null
   let retry = false
   try {
@@ -106,14 +82,22 @@ export async function handleLogicsPushPart(msg: Message<LogicsPushJob>, env: Env
   try {
     job = await getPushForJob(env, row.id)
     if (!job) throw new Error('push_missing')
-    ready = await prepare(env, job)
+    ready = await prepare(env, job, opts)
   } catch (e) {
     ready = { code: tokenOf(e), detail: 'Could not prepare the file', noteClient: refusedNote(tokenOf(e)) }
   }
 
   if ('code' in ready) {
-    await transitionPush(env, { pushId: row.id, from: 'sending', to: 'failed', errorCode: ready.code, errorDetail: ready.detail })
+    // A pre-dispatch failure after the claim is never retried: staff re-send from the UI (D-03).
     msg.ack()
+    await transitionPush(env, {
+      pushId: row.id,
+      from: 'sending',
+      to: 'failed',
+      errorCode: ready.code,
+      errorDetail: ready.detail,
+      needsManual: ready.manual ?? false,
+    })
     await finalizeBatchIfDone(env, row.batch_id, ready.noteClient)
     return
   }
@@ -129,6 +113,8 @@ export async function handleLogicsPushPart(msg: Message<LogicsPushJob>, env: Env
       fileName: part.fileName,
       bytes: part.bytes,
     })
+  } catch {
+    outcome = { kind: 'unknown', code: 'logics_no_response' } // a runtime throw mid-dispatch: it may have reached Logics
   } finally {
     msg.ack()
   }
