@@ -27,7 +27,8 @@
     "questions:reconcile": "node scripts/reconcile-questions.mjs",
     "secrets:provision": "dotenv -e ../.env -e ../src/frontend/.env -- node scripts/provision-secrets.mjs",
     "staff:create": "dotenv -e .dev.vars -- node scripts/create-staff.mjs",
-    "auth:config-push": "node scripts/supabase-config-push.mjs"
+    "auth:config-push": "node scripts/supabase-config-push.mjs",
+    "spike": "dotenv -e .dev.vars -- node"
   },
   "dependencies": {
     "@cantoo/pdf-lib": "2.11.1",
