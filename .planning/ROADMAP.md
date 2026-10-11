@@ -71,11 +71,11 @@ Plans:
   4. A client opens the link on a phone with no account, password, or app and sees the firm name, the agent's name, and a simple step list (connect bank, connect payroll, confirm address, upload documents, sign) with done and not-done state; the request counts as "opened" only after the client taps Start, closing and reopening the link resumes where they left off, and an expired or revoked link says "ask your agent for a new link" (PORT-01, PORT-02, PORT-03, PORT-04, PORT-06)
   5. Portal pages are mobile-first with 44 px targets and readable contrast, send no-referrer, no-store, and noindex headers, load no analytics or session replay, and repeated token guessing is rate-limited per IP (PORT-05, PORT-06)
 
-**Plans:** 8 plans
+**Plans:** 1/8 plans executed
 
 Plans:
 - [ ] 02-01-PLAN.md — [BLOCKING] Migration `0003_requests` (firm_integrations, templates, requests, items, client_sessions, cases columns, six RPCs, RLS) applied + live RPC lifecycle proof (LOOK-04, LOOK-05, REQ-01, REQ-03, PORT-02, PORT-04)
-- [ ] 02-02-PLAN.md — Logics read module: header-auth fetch client, defensive mapper, fixture client, lookup with phone normalization + retry; shared `contact.ts` validation; AES-GCM credential crypto + fake/live resolver (LOOK-01..03, LOOK-05, REQ-02)
+- [x] 02-02-PLAN.md — Logics read module: header-auth fetch client, defensive mapper, fixture client, lookup with phone normalization + retry; shared `contact.ts` validation; AES-GCM credential crypto + fake/live resolver (LOOK-01..03, LOOK-05, REQ-02)
 - [ ] 02-03-PLAN.md — Worker admin routes: lookup + confirm (CaseInfo re-fetch → `case_confirm_logics`), Logics credentials GET/PUT/test; `INTEGRATION_ENC_KEY`, `LOGICS_MODE=fake`, `RESEND_FROM`; deploy + smoke (LOOK-01, LOOK-02, LOOK-04, LOOK-05)
 - [ ] 02-04-PLAN.md — Worker request routes: templates, create, send (contact gate + Logics re-fetch + `request_send` + minted URL), regenerate/revoke, Resend email, consent, link-copied (REQ-01..05, LOOK-04)
 - [ ] 02-05-PLAN.md — SPA staff flow: request page (send + copy link), builder, Find a client with confirm cards; status badge palette; sidebar entry (LOOK-01..03, REQ-01..03)
@@ -153,11 +153,11 @@ Plans:
   3. A file over 6 MB is converted to PDF or split into parts of at most 5.5 MiB, or flagged "needs manual compression" before the click; nothing over 6 MB is ever sent (PUSH-02)
   4. When Logics gives no clear answer, the file shows "unknown" and the UI asks staff to decide (check Logics, mark sent, or retry); a push is never blindly retried, so Logics never receives duplicate documents (PUSH-04)
 
-**Plans:** 5 plans
+**Plans:** 1/5 plans executed
 
 Plans:
 - [ ] 05-01-PLAN.md — Tracer: ledger migration 0006 + RPCs, Logics write client (live + fake), `logics_push` queue handler with ack-after-dispatch, one activity note per batch, admin routes (create/ledger/resolve), proven live in fake mode
-- [ ] 05-02-PLAN.md — PUSH-02 normalization modules: `@cantoo/pdf-lib@2.11.1`, generated fixtures, greedy splitter, image→PDF, `normalizeForLogics`
+- [x] 05-02-PLAN.md — PUSH-02 normalization modules: `@cantoo/pdf-lib@2.11.1`, generated fixtures, greedy splitter, image→PDF, `normalizeForLogics`
 - [ ] 05-03-PLAN.md — Consumer expansion: normalization in the job, parts stored under `logics/`, sibling rows, cron sweeper + DLQ rule, D-08 firm settings and ActivityType listing
 - [ ] 05-04-PLAN.md — Staff UI: push card with multi-select, computed plan, ledger chips + Simulated badge, confirmation sheet, two-action `unknown` resolution dialog, fake-mode banner
 - [ ] 05-05-PLAN.md — Settings page push fields, `LOGICS_MODE=live` runbook (USER ACTION), smoke mode check, phase gate + fake-mode demo rehearsal
@@ -227,10 +227,10 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation & Staff Sign-In | 4/8 | In Progress | - |
-| 2. Find the Client & Send the Link | 0/8 | Planned | - |
+| 2. Find the Client & Send the Link | 1/8 | In Progress | - |
 | 3. Uploads, Review & Live Status | 0/TBD | Not started | - |
 | 4. Connect Payroll & Bank | 0/TBD | Not started | - |
-| 5. Push to Logics | 0/TBD | Not started | - |
+| 5. Push to Logics | 1/5 | In Progress | - |
 | 6. Address & E-Sign | 0/TBD | Not started | - |
 | 7. 433-A Pre-Population | 0/TBD | Not started | - |
 | 8. Reminders, Teller & Production Readiness | 0/TBD | Not started | - |
