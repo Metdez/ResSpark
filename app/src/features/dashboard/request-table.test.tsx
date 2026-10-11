@@ -111,7 +111,9 @@ describe('dashboard RequestTable and Filters', () => {
     const el = await render()
     expect(el.querySelectorAll('thead th').length).toBe(8)
     expect(bodyRows(el)).toHaveLength(3)
-    expect(el.querySelectorAll('[data-slot="skeleton"]').length).toBeGreaterThan(0)
+    expect(
+      el.querySelectorAll('[data-slot="skeleton"]').length
+    ).toBeGreaterThan(0)
   })
 
   it('shows the empty block with a lookup CTA when there are no requests', async () => {
@@ -146,11 +148,13 @@ describe('dashboard RequestTable and Filters', () => {
       'Opened',
       'Last activity',
       'Agent',
-      '',
+      'Actions',
     ])
     const [a, b] = bodyRows(el)
     expect(a.querySelector('a')?.textContent).toBe('Sam Lee')
-    expect(a.querySelector('a')?.getAttribute('href')).toBe('/admin/requests/r2')
+    expect(a.querySelector('a')?.getAttribute('href')).toBe(
+      '/admin/requests/r2'
+    )
     expect(a.textContent).toContain(requestStatusBadge('in_progress').label)
     expect(b.textContent).toContain(requestStatusBadge('sent').label)
     expect(a.textContent).not.toContain('Overdue')
