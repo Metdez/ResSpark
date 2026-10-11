@@ -257,3 +257,12 @@ None.
 
 _Re-verified: 2026-10-11T19:10:00Z_
 _Verifier: Claude (gsd-verifier)_
+
+## Follow-up fix (2026-10-11): multi-employer client view
+
+Closes the Info finding on `latestConnectionForItem` and the client item view (commit `d42d03e`).
+
+- For `payroll_connect` items, `GET /api/c/items/:itemId/connection` now reads every payroll order on the item (`payrollItemSummaries` in `worker/src/db/connections-ops.ts`) and merges them with `mergePayrollViews` (`worker/src/routes/c-connections.ts`). The response shape is unchanged: no document ids, timestamps, external ids or tokens. Bank items still use the latest connection.
+- Each employer keeps its own status and counts. The overall status is `connected`/`syncing` if any order is still delivering, else `done` if any order is done, else the newest status. A finished employer is never hidden by a newer pending or expired order, and "Finishing up…" shows only when no order is done. When another order is done, an expired or removed order keeps only its done employers.
+- The sheet keeps polling while a done view lists an employer that is still in progress (`use-item-connection.ts`). "Add another employer" and the upload fallback stay available.
+- Tests: `c-connections.test.ts` covers a done order with employer A plus a newer pending order (both shown, status done), an expired second order (A still shown, not stuck, no error code), the single-order shape, and the merge rules. `payroll-step.test.tsx` covers the merged sheet and the polling rule. `pnpm -C app run check` passed.
