@@ -11,7 +11,8 @@ const dir = join(root, '.claude', 'worktrees', 'deploy-snapshot')
 const win = process.platform === 'win32'
 
 function run(cmd, args, cwd) {
-  const r = spawnSync(cmd, args, { cwd, stdio: 'inherit', shell: win })
+  // shell only for pnpm (a .cmd on Windows); git gets the space-containing path unsplit
+  const r = spawnSync(cmd, args, { cwd, stdio: 'inherit', shell: win && cmd === 'pnpm' })
   if (r.status !== 0) throw new Error(`${cmd} ${args.join(' ')} failed (${r.status})`)
 }
 

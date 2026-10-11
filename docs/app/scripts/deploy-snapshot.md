@@ -21,12 +21,12 @@ The `deploy:snapshot` script in `app/package.json` loads the repo-root env file 
 | 1–4 | Header comment: why the script deploys a commit and how it gets its env. |
 | 5–7 | Node built-ins only: `spawnSync`, `existsSync`/`rmSync`, path helpers. |
 | 9–11 | `root` is the repo root; the snapshot lives at `.claude/worktrees/deploy-snapshot` (git-ignored). `win` switches Windows-specific behaviour. |
-| 13–16 | `run()` spawns a command with inherited stdio (and a shell on Windows so `pnpm.cmd` resolves) and throws on a non-zero exit. |
-| 18–26 | `remove()` deletes any old snapshot: `git worktree remove --force`, then `cmd /c rmdir /s /q` on Windows (it does not follow pnpm's `node_modules` junctions into the shared store) or `rmSync` elsewhere, then `git worktree prune`. |
-| 28–29 | Prints the short commit id being deployed. |
-| 30 | Removes any leftover snapshot from a failed earlier run. |
-| 31–36 | Adds a detached worktree at `HEAD`, installs dependencies from the frozen root lockfile, type-checks with `tsc -b`, then runs `deploy:raw` (`vite build && wrangler deploy`) inside the snapshot. |
-| 37–39 | Always removes the snapshot, whether the deploy succeeded or failed. |
+| 13–17 | `run()` spawns a command with inherited stdio and throws on a non-zero exit. Only `pnpm` gets a shell on Windows (it is a `.cmd`); `git` runs without one so the repo path, which contains a space, is not split. |
+| 19–27 | `remove()` deletes any old snapshot: `git worktree remove --force`, then `cmd /c rmdir /s /q` on Windows (it does not follow pnpm's `node_modules` junctions into the shared store) or `rmSync` elsewhere, then `git worktree prune`. |
+| 29–30 | Prints the short commit id being deployed. |
+| 31 | Removes any leftover snapshot from a failed earlier run. |
+| 32–37 | Adds a detached worktree at `HEAD`, installs dependencies from the frozen root lockfile, type-checks with `tsc -b`, then runs `deploy:raw` (`vite build && wrangler deploy`) inside the snapshot. |
+| 38–40 | Always removes the snapshot, whether the deploy succeeded or failed. |
 
 ## Notes
 
