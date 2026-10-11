@@ -17,3 +17,9 @@ Unit tests for the client connection routes (no network). `db/cases`, `db/connec
 | start without `item_id` / with kind `teller` | 400 / 404 |
 | 11 reconciles in a minute | ten 202, then 429 `rate_limited`; `JOBS.send` called 10 times with `{ type: 'reconcile', ref }` |
 | reconcile of another request's connection | 404, `no-store`, nothing sent |
+| manual: ready upload, in-window month | 200 `{ status: 'manual' }`, `setMonthCell(acc, y, m, 'manual', doc)`, event `statement.manual_attributed` |
+| manual: month outside the window | 400, no cell write |
+| manual: cell `available` | 409 `month_available` |
+| manual: document `uploading` | 409 `document_not_ready` |
+| manual: document of another request or item; account not on the connection | 404 |
+| manual: cell already `manual` | 200, the new document id replaces the old one |

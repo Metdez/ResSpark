@@ -3,6 +3,7 @@ import { getWebhookEvent, markWebhookEvent } from '../db/webhook-events'
 import { NonRetryableError, ProviderError } from '../integrations/provider-error'
 import { handleLogicsPushPart, type LogicsPushJob } from './logics-push'
 import { connectionIdForWebhook, reconcileConnection } from './reconcile'
+import { removeItem } from './remove-items'
 
 export { NonRetryableError } from '../integrations/provider-error'
 
@@ -57,7 +58,7 @@ async function runJob(env: Env, job: Job): Promise<void> {
       await reconcileConnection(env, job.ref, { source: 'cron' })
       return
     case 'remove_item':
-      throw new NonRetryableError('job_not_available') // Plan 04 wires Item removal
+      return removeItem(env, job.ref)
     default:
       throw new NonRetryableError('unknown_job')
   }

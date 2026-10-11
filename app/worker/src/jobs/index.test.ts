@@ -4,6 +4,7 @@ import { getWebhookEvent, markWebhookEvent, type WebhookEventRow } from '../db/w
 import { ProviderError } from '../integrations/provider-error'
 import { NonRetryableError, queue, retryDelaySeconds, type Job } from './index'
 import { connectionIdForWebhook, reconcileConnection } from './reconcile'
+import { removeItem } from './remove-items'
 
 vi.mock('../db/webhook-events', () => ({ getWebhookEvent: vi.fn(), markWebhookEvent: vi.fn() }))
 vi.mock('../db/connections', () => ({
@@ -12,6 +13,7 @@ vi.mock('../db/connections', () => ({
   updateConnection: vi.fn(),
 }))
 vi.mock('./reconcile', () => ({ reconcileConnection: vi.fn(), connectionIdForWebhook: vi.fn() }))
+vi.mock('./remove-items', () => ({ removeItem: vi.fn() }))
 
 const env = {} as Env
 const MAIN = 'resspark-jobs'
@@ -133,10 +135,17 @@ describe('queue consumer', () => {
     expect(m.retry).not.toHaveBeenCalled()
   })
 
-  it('acks remove_item as not available until Plan 04 wires it', async () => {
+  it('remove_item calls removeItem and acks', async () => {
     const m = await run(MAIN, { type: 'remove_item', ref: 'C9' })
-    expect(recordConnectionEvent).toHaveBeenCalledWith(env, 'C9', 'job.failed', { type: 'remove_item', code: 'job_not_available' })
+    expect(removeItem).toHaveBeenCalledWith(env, 'C9')
     expect(m.ack).toHaveBeenCalledTimes(1)
+  })
+
+  it('remove_item retries on a transient ProviderError', async () => {
+    vi.mocked(removeItem).mockRejectedValueOnce(new ProviderError('plaid', 503, 'http_503', true))
+    const m = await run(MAIN, { type: 'remove_item', ref: 'C9' })
+    expect(m.retry).toHaveBeenCalledTimes(1)
+    expect(m.ack).not.toHaveBeenCalled()
   })
 
   it('logs only job, attempt and error_code', async () => {

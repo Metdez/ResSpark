@@ -1,18 +1,21 @@
 import { createMiddleware } from 'hono/factory'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { findConnectionAccount, getAccountCells, setMonthCell } from '../db/bank'
 import { getCase } from '../db/cases'
-import { getConnection, type ConnectionRow } from '../db/connections'
+import { getConnection, recordConnectionEvent, type ConnectionRow } from '../db/connections'
 import { latestItemSummary } from '../db/connections-ops'
 import { hasConsent, recordConsent } from '../db/consents'
-import { findSessionItem, sessionRequest, type ItemRow } from '../db/documents'
+import { findSessionDocument, findSessionItem, sessionRequest, type DocumentRow, type ItemRow } from '../db/documents'
 import { app } from '../index'
 import { startBank } from '../integrations/bank/start'
 import { ProviderError } from '../integrations/provider-error'
 import { startPayroll } from '../integrations/truv/start'
 import { _resetRateLimitForTests } from '../middleware/link-rate-limit'
+import { targetMonths } from '../../../src/lib/statement-months'
 
 // Unit tests for the client connection routes: no network. Every db module and startPayroll are
 // mocked; requireClientHeader stays real; clientSession sets a fixed session (request R1).
+vi.mock('../db/bank')
 vi.mock('../db/cases')
 vi.mock('../db/connections')
 vi.mock('../db/connections-ops')
@@ -165,5 +168,60 @@ describe('POST /api/c/connections/:id/reconcile', () => {
     expect(res.status).toBe(404)
     expect(res.headers.get('cache-control')).toBe('no-store')
     expect(send).not.toHaveBeenCalled()
+  })
+})
+
+describe('POST /api/c/connections/:id/statements/manual', () => {
+  const DOC = '44444444-4444-4444-8444-444444444444'
+  const ACC = '55555555-5555-4555-8555-555555555555'
+  const [m] = targetMonths(new Date(), 6)
+  const body = (over: Record<string, unknown> = {}) => ({ document_id: DOC, bank_account_id: ACC, year: m.year, month: m.month, ...over })
+  const bankConn = { id: CONN, request_id: 'R1', request_item_id: ITEM, kind: 'bank' } as ConnectionRow
+  const doc = (over: Partial<DocumentRow> = {}) => ({ id: DOC, request_item_id: ITEM, status: 'ready', ...over }) as DocumentRow
+  const manual = (b = body()) => call('POST', `/api/c/connections/${CONN}/statements/manual`, b)
+  beforeEach(() => {
+    vi.mocked(getConnection).mockResolvedValue(bankConn)
+    vi.mocked(findSessionDocument).mockResolvedValue(doc())
+    vi.mocked(findConnectionAccount).mockResolvedValue({ id: ACC })
+    vi.mocked(getAccountCells).mockResolvedValue([])
+  })
+
+  it('attributes a ready upload to an in-window month', async () => {
+    const res = await manual()
+    expect(res.status).toBe(200)
+    expect(await res.json()).toEqual({ status: 'manual' })
+    expect(setMonthCell).toHaveBeenCalledWith(expect.anything(), ACC, m.year, m.month, 'manual', DOC)
+    expect(vi.mocked(recordConnectionEvent).mock.calls[0][2]).toBe('statement.manual_attributed')
+  })
+  it('a month outside the window is 400', async () => {
+    const res = await manual(body({ year: m.year - 2 }))
+    expect(res.status).toBe(400)
+    expect(setMonthCell).not.toHaveBeenCalled()
+  })
+  it('a month already available from the bank is 409 month_available', async () => {
+    vi.mocked(getAccountCells).mockResolvedValue([{ ...m, status: 'available', document_id: 'x' }])
+    const res = await manual()
+    expect(res.status).toBe(409)
+    expect((await code(res)).code).toBe('month_available')
+  })
+  it('an upload still uploading is 409 document_not_ready', async () => {
+    vi.mocked(findSessionDocument).mockResolvedValue(doc({ status: 'uploading' }))
+    expect((await code(await manual())).code).toBe('document_not_ready')
+  })
+  it('a document from another request or item is 404', async () => {
+    vi.mocked(findSessionDocument).mockResolvedValue(null)
+    expect((await manual()).status).toBe(404)
+    vi.mocked(findSessionDocument).mockResolvedValue(doc({ request_item_id: 'other' }))
+    expect((await manual()).status).toBe(404)
+  })
+  it('an account not on the connection is 404', async () => {
+    vi.mocked(findConnectionAccount).mockResolvedValue(null)
+    expect((await manual()).status).toBe(404)
+  })
+  it('a second attribution to the same cell replaces the document and stays manual', async () => {
+    vi.mocked(getAccountCells).mockResolvedValue([{ ...m, status: 'manual', document_id: 'old' }])
+    const res = await manual()
+    expect(res.status).toBe(200)
+    expect(setMonthCell).toHaveBeenCalledWith(expect.anything(), ACC, m.year, m.month, 'manual', DOC)
   })
 })

@@ -1,11 +1,13 @@
 import { Hono, type Context, type MiddlewareHandler } from 'hono'
 import type { ContentfulStatusCode } from 'hono/utils/http-status'
 import { CONSENT_TEXT, consentKindForItem, type ConsentKind } from '../../../src/lib/consent-text'
+import { isInWindow } from '../../../src/lib/statement-months'
 import { getCase } from '../db/cases'
-import { getConnection, type ConnectionStatus, type ProviderId } from '../db/connections'
+import { findConnectionAccount, getAccountCells, setMonthCell } from '../db/bank'
+import { getConnection, recordConnectionEvent, type ConnectionStatus, type ProviderId } from '../db/connections'
 import { latestItemSummary, type ConnectionSummary, type MonthCell } from '../db/connections-ops'
 import { hasConsent, recordConsent } from '../db/consents'
-import { findSessionItem, sessionRequest, type ItemRow } from '../db/documents'
+import { findSessionDocument, findSessionItem, sessionRequest, type ItemRow } from '../db/documents'
 import { logEvent } from '../db/events'
 import { PROVIDER_CAPABILITIES } from '../integrations/bank/provider'
 import { startBank } from '../integrations/bank/start'
@@ -169,4 +171,33 @@ export const cConnectionsRoute = new Hono<Env_>()
     if (!conn || conn.request_id !== client.requestId) return notFound(c)
     await c.env.JOBS.send({ type: 'reconcile', ref: conn.id })
     return c.json({ queued: true }, 202)
+  })
+  // D-10 / BANK-03: a client-uploaded statement fills one account-month cell (T-04-22: every id is
+  // scoped to the session's request, the connection and the item; uniform 404s).
+  .post('/connections/:id/statements/manual', session_, requireClientHeader, async (c) => {
+    const body: unknown = await c.req.json().catch(() => null)
+    if (!isObject(body)) return badRequest(c)
+    const { document_id, bank_account_id, year, month } = body
+    if (typeof document_id !== 'string' || !UUID.test(document_id)) return badRequest(c)
+    if (typeof bank_account_id !== 'string' || !UUID.test(bank_account_id)) return badRequest(c)
+    if (!Number.isInteger(year) || !Number.isInteger(month) || (month as number) < 1 || (month as number) > 12) return badRequest(c)
+    const cell = { year: year as number, month: month as number }
+    const client = c.var.client
+    const id = c.req.param('id')
+    const conn = UUID.test(id) ? await getConnection(c.env, id) : null
+    if (!conn || conn.request_id !== client.requestId || conn.kind !== 'bank') return notFound(c)
+    const doc = await findSessionDocument(c.env, { request_id: client.requestId }, document_id)
+    if (!doc || doc.request_item_id !== conn.request_item_id) return notFound(c)
+    if (doc.status !== 'ready') return fail(c, 409, 'document_not_ready', 'That upload is not finished yet.')
+    const account = await findConnectionAccount(c.env, conn.id, bank_account_id)
+    if (!account) return notFound(c)
+    if (!isInWindow(cell, new Date())) return badRequest(c)
+    const current = (await getAccountCells(c.env, account.id)).find((m) => m.year === cell.year && m.month === cell.month)
+    if (current?.status === 'available') return fail(c, 409, 'month_available', 'That month already came from your bank.')
+    await setMonthCell(c.env, account.id, cell.year, cell.month, 'manual', document_id)
+    await recordConnectionEvent(c.env, conn.id, 'statement.manual_attributed', { bank_account_id, ...cell, document_id }, {
+      type: 'client',
+      id: `link:${client.linkId}`,
+    })
+    return c.json({ status: 'manual' })
   })

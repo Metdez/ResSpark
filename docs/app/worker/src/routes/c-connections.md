@@ -48,6 +48,23 @@ The consent gate runs before any vendor call in the same request (T-04-13). The 
 
 `allowInWindow('rc:<link id>', 10, 60 s)` first (429 `rate_limited` on the 11th call in a minute, T-04-17). Then `getConnection`; a non-uuid id, a missing row, or a row whose `request_id` is not the session's is 404. Otherwise `env.JOBS.send({ type: 'reconcile', ref })` and 202 `{ queued: true }`. The route never changes status: the job reads the provider (D-04, D-05).
 
+### `POST /connections/:id/statements/manual` (header required, Plan 04-04)
+
+Body `{ document_id, bank_account_id, year, month }`. Attributes a document the client uploaded on the same item to one account-month cell (D-10, BANK-03).
+
+| Order | Check | Result |
+|-------|-------|--------|
+| 1 | body not an object; ids not uuids; `year` not an integer; `month` not 1..12 | 400 `bad_request` |
+| 2 | connection missing, on another request, or not `bank` | 404 |
+| 3 | `findSessionDocument` (request-scoped) misses, or the document is on another item | 404 |
+| 4 | document not `ready` | 409 `document_not_ready` |
+| 5 | `findConnectionAccount`: the account is not on this connection | 404 |
+| 6 | the month is not in `targetMonths(now, 6)` (`isInWindow`) | 400 `bad_request` |
+| 7 | the cell is `available` (the bank supplied it) | 409 `month_available` |
+| 8 | otherwise | `setMonthCell(..., 'manual', document_id)` (upsert, so it creates a missing cell and a second attribution replaces the document), logs `statement.manual_attributed` with `{ bank_account_id, year, month, document_id }` under `link:<linkId>`, 200 `{ status: 'manual' }` |
+
+All not-found cases answer the same 404 so a client cannot probe other ids (T-04-22).
+
 ## Tests
 
 - `app/worker/test/payroll-start.test.ts` (live): the full cookie → consent → start → reuse → view → reconcile → CSP path.
