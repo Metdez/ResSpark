@@ -40,7 +40,8 @@ node app/scripts/check-file-sizes.mjs --root "$tmp/ok" || fail "a 500-line file 
 ! node app/scripts/check-file-sizes.mjs --root "$tmp/bad" 2>/dev/null || fail "a 501-line file was accepted"
 
 # (h) PLAT-03: the secret key never reaches the client bundle (publishable and secret share the sb_ prefix)
+# Matches key material only: supabase-js itself ships the bare literal `sb_secret_` in a prefix check.
 test -d app/dist/client || { echo "FAIL: run pnpm -C app build before hygiene-check"; exit 1; }
-! grep -rq "sb_secret_" app/dist/client || { echo "FAIL: secret key in client bundle"; exit 1; }
+! grep -rqE "sb_secret_[A-Za-z0-9_-]{16,}" app/dist/client || { echo "FAIL: secret key in client bundle"; exit 1; }
 
 echo "hygiene ok"
