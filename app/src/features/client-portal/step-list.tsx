@@ -8,11 +8,14 @@ import type { UploadErrorCode } from '@/features/uploads/copy'
 import { UploadSheet } from '@/features/uploads/upload-sheet'
 import { AddressSheet } from './address/address-sheet'
 import { ComingNextSheet } from './coming-next-sheet'
+import { BankStep } from './connect/bank-step'
+import { PayrollStep } from './connect/payroll-step'
 import type { PortalStep } from './portal-api'
 import { STEP_DESCRIPTIONS } from './step-copy'
 
 interface StepListProps {
   steps: PortalStep[]
+  firmName: string
   onView?: (step: PortalStep) => void
   onUploadError?: (code: UploadErrorCode) => void
 }
@@ -20,6 +23,7 @@ interface StepListProps {
 // D-11: one column of 44 px rows in position order; View opens the step (upload) or Coming next.
 export function StepList({
   steps,
+  firmName,
   onView = () => {},
   onUploadError,
 }: StepListProps) {
@@ -96,6 +100,10 @@ export function StepList({
         />
       ) : viewing?.kind === 'address' ? (
         <AddressSheet step={viewing} open onClose={() => setViewing(null)} />
+      ) : viewing?.kind === 'payroll_connect' ? (
+        <PayrollStep step={viewing} firmName={firmName} open onClose={() => setViewing(null)} />
+      ) : viewing?.kind === 'bank_connect' ? (
+        <BankStep step={viewing} firmName={firmName} open onClose={() => setViewing(null)} />
       ) : (
         <ComingNextSheet step={viewing} onClose={() => setViewing(null)} />
       )}

@@ -108,6 +108,7 @@ export function PortalPage() {
           </h2>
           <StepList
             steps={data.steps}
+            firmName={data.firm_name}
             onView={(s) => setViewed(s.kind)}
             onUploadError={setUploadError}
           />

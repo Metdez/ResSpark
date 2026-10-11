@@ -1,6 +1,6 @@
 # `app/src/features/client-portal/step-list.tsx`
 
-`StepList({ steps, onView, onUploadError })`: the client's checklist (D-11, PORT-03).
+`StepList({ steps, firmName, onView, onUploadError })`: the client's checklist (D-11, PORT-03).
 
 - **Empty:** a centered block with the Lucide `Inbox` icon (48 px), heading "Nothing to do yet", and "Your agent hasn't added any steps yet. You can close this page."
 - **Order:** a sorted copy by `position`. The Worker already sorts; this is defensive and never mutates the prop.
@@ -15,8 +15,18 @@
 ## Tests
 
 - `portal-page.test.tsx`: row height, label size, chips, View size, order, same-kind rows, empty state, and no text below 16 px.
-- `step-list.test.tsx`: `View` opens the Coming next sheet with the step label, the copy, and a 44 px Close, and calls `onView` with the step; the vendored icon close is hidden; Close hides the sheet (on the bank step, since upload steps no longer open Coming next). With `UploadSheet` mocked to a stub: `View` on the upload step renders the stub with its label and no Coming next text; `View` on the bank step opens Coming next and no stub.
+- `step-list.test.tsx`: `View` opens the Coming next sheet with the step label, the copy, and a 44 px Close, and calls `onView` with the step; the vendored icon close is hidden; Close hides the sheet (on an `intake` step, since upload, address, and connect steps have their own sheets). With `UploadSheet` mocked to a stub: `View` on the upload step renders the stub with its label and no Coming next text; `View` on the `intake` step opens Coming next and no stub.
 
 ## Address step (Plan 06-03)
 
 `viewing.kind === 'address'` renders `<AddressSheet step={viewing} open onClose={() => setViewing(null)} />` from `./address/address-sheet`. The sheet itself invalidates `['portal','state']` when a save succeeds, so the close handler only clears `viewing`. All other kinds are unchanged: `upload` opens `UploadSheet`, everything else opens `ComingNextSheet`. The test file mocks the sheet and checks that View on an address step opens a dialog titled with the step label.
+
+## Connect steps (Plan 04-05)
+
+`firmName` (required) is the firm name from `/api/c/state`; `PortalPage` passes `data.firm_name`. It reaches the consent sheets ("{firm} receives this information...").
+
+- `viewing.kind === 'payroll_connect'` renders `<PayrollStep step={viewing} firmName={firmName} open onClose={() => setViewing(null)} />` from `./connect/payroll-step`.
+- `viewing.kind === 'bank_connect'` renders `<BankStep ... />` from `./connect/bank-step` with the same props.
+- `intake` and `signature` (until its own sheet lands) still open `ComingNextSheet`.
+
+Tests: the Coming next cases now use an `intake` step ("Answer a few questions"), since bank steps open the bank sheet. New cases: View on the payroll step opens the real payroll sheet (answered by a `GET /api/c/items/s4/connection` reply) showing `Connect payroll` and no Coming next; View on the bank step shows `Upload statements instead`; an `intake` step still opens Coming next.

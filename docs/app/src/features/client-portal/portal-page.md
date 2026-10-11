@@ -19,7 +19,7 @@
    - loading: three 16 px `Skeleton` bars (`aria-busy`).
    A refetch error while data is cached keeps showing the data.
 3. **Unopened** (`opened_at === null`): heading "{agent} at {firm} needs a few things from you" (or "{firm} needs ..." without an agent), "It takes a few minutes. You can stop and come back any time from the same link.", and one full-width `Button size='xl'` "Start" (the only accent element). While pending it reads "Starting…" with a spinning `Loader2` and is disabled.
-4. **Opened:** heading "Your steps" and `StepList`, whose `onView` records the viewed step kind for the heartbeat. Reopening the link later lands here directly, because `opened_at` is saved on the server (PORT-04).
+4. **Opened:** heading "Your steps" and `StepList` (given `firmName={data.firm_name}` for the connect steps' consent sheets), whose `onView` records the viewed step kind for the heartbeat. Reopening the link later lands here directly, because `opened_at` is saved on the server (PORT-04).
 
 `ClientShell` owns the firm heading (`truncate` + `title`), the "Your agent: {name}" line, `document.title`, and the robots `noindex` meta. Names render as React text, so they are escaped.
 
