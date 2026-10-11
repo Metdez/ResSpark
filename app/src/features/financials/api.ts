@@ -199,6 +199,30 @@ export const latestEvaluation = (caseId: string) => api(`${base(caseId)}/evaluat
 export const exportWorksheet = (caseId: string, runId: string) =>
   api(`${base(caseId)}/evaluations/${encodeURIComponent(runId)}/worksheet`, post(), isWorksheetExport)
 
+// SPA mirror of app/worker/src/financials/extract-proposals.ts (Plan 12).
+export type ExtractReason = 'no_template' | 'missing_fields' | 'unreadable' | 'too_large' | 'not_pdf'
+export interface ExtractResult {
+  documents: number
+  parsed: number
+  failed: Array<{ document_id: string; name: string; reason: 'no_template' | 'missing_fields' | 'unreadable' }>
+  skipped: Array<{ document_id: string; name: string; reason: 'too_large' | 'not_pdf' }>
+  proposals: { inserted: number; kept: number; superseded: number }
+}
+const isFiles = (v: unknown, reasons: readonly unknown[]) =>
+  Array.isArray(v) && v.every((f) => isObject(f) && str(f.document_id) && str(f.name) && reasons.includes(f.reason))
+export const isExtractResult = (v: unknown): v is ExtractResult =>
+  isObject(v) &&
+  num(v.documents) &&
+  num(v.parsed) &&
+  isFiles(v.failed, ['no_template', 'missing_fields', 'unreadable']) &&
+  isFiles(v.skipped, ['too_large', 'not_pdf']) &&
+  isObject(v.proposals) &&
+  num(v.proposals.inserted) &&
+  num(v.proposals.kept) &&
+  num(v.proposals.superseded)
+
+export const extractValues = (caseId: string) => api(`${base(caseId)}/financials/extract`, post(), isExtractResult)
+
 // SPA mirror of app/worker/src/financials/evidence.ts (Plan 10). Amounts are the server's; the SPA only formats them.
 export interface BankTxnView {
   id: string

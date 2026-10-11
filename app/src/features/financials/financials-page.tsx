@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { CountyBlock, FinancialsView } from './api'
 import { EvidenceSheet, type EvidenceTarget } from './evidence-sheet'
+import { ExtractButton } from './extract-button'
 import { FinancialsHeader } from './financials-header'
 import { RecommendationRail } from './recommendation-rail'
 import { SectionTable } from './section-table'
@@ -122,7 +123,7 @@ export function FinancialsPage({ caseId }: { caseId: string }) {
   return (
     <>
       <Title>{name ? `433-A worksheet for ${name}` : '433-A worksheet'}</Title>
-      <FinancialsHeader caseId={caseId} view={view} />
+      <FinancialsHeader caseId={caseId} view={view} actions={<ExtractButton caseId={caseId} />} />
       <div className='grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start'>
         <div className='grid gap-4'>
           {view.sections.map((section) => (

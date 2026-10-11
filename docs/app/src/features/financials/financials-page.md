@@ -12,7 +12,7 @@
 | Queries | `useFinancials(caseId)` (polled every 5 s) and `useLatestEvaluation(caseId)` (the run that feeds the expense columns). |
 | Pending | The title and three `Skeleton` rows. |
 | Error | The title and a destructive `Alert`: `Couldn't load the 433-A worksheet`, the generic staff copy, and the muted error code. |
-| Header | `FinancialsHeader`. |
+| Header | `FinancialsHeader`, with `ExtractButton` (Plan 12, `extract-button.tsx`) in its `actions` slot. |
 | Layout | A two-column grid on large screens, `lg:grid-cols-[minmax(0,1fr)_360px]`: the sections on the left, an `aside` labelled `Recommendation` on the right holding `RecommendationRail` (sticky on large screens; see `recommendation-rail.md`). A `div`, not a second `main`: the route's `Main` is the page landmark. |
 | Sections | One `SectionTable` per view section, in the Worker's order (D-14 form order), each given the latest run. The Household section gets `CountyRow` and the Employment section gets `Employers` above its table. |
 

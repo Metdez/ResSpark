@@ -28,6 +28,9 @@ They mirror the Worker modules; keep them in sync when those change.
 | `isEvaluationResponse` | `determination` needs a valid run; the other two outcomes need `run: null`; `information_needed` needs labelled missing items and string flags. |
 | `isEvidenceView` | A string `column` and `label`; `kind: 'none'` needs nothing else; every other kind needs a `proposal_id` string and its own fields (see the per-kind checks in the code: `bank` needs the window, months with numeric subtotals and transactions with id, date, numeric amount and account label, a numeric average, a boolean `truncated` and a `cross_check` that is `null` or a label and a number; `balances` needs accounts with id, label, a numeric or null balance and a string or null as-of, and a numeric total; `payroll` needs stubs, numeric formula rows, the method and the cross-check; `intake`, `logics`, `address`, `staff` and `document` need their own string fields). Every link (`document_url`, a document's `url`) must be `null` or start with `https://`, so nothing else reaches an `href`. An unknown kind fails. |
 | `isLatest`, `isDecided`, `isQueued`, `isWorksheetExport` (private) | The shapes of the latest-run, decide, refresh (202) and export responses. |
+| `ExtractReason`, `ExtractResult` | Mirror of the Worker's `ExtractResult` (Plan 12, `worker/src/financials/extract-proposals.ts`): document and parsed counts, `failed` and `skipped` files (`document_id`, `name`, a fixed reason code) and the proposal counts `inserted`, `kept`, `superseded`. |
+| `isFiles` (private) | An array of `{ document_id, name, reason }` whose reason is one of the given codes. |
+| `isExtractResult` | Numeric counts, `failed` with `no_template`/`missing_fields`/`unreadable`, `skipped` with `too_large`/`not_pdf`, and three numeric proposal counts. An unknown reason fails. |
 
 ## Functions
 
@@ -41,8 +44,9 @@ All go through `api()` from `lib/api.ts` (Bearer staff token, `{ error: { code, 
 | `runEvaluation(caseId)` | `POST /api/admin/cases/:id/evaluations` |
 | `latestEvaluation(caseId)` | `GET /api/admin/cases/:id/evaluations/latest` |
 | `exportWorksheet(caseId, runId)` | `POST /api/admin/cases/:id/evaluations/:runId/worksheet` |
+| `extractValues(caseId)` | `POST /api/admin/cases/:id/financials/extract` (Plan 12), checked by `isExtractResult` |
 | `getEvidence(caseId, column, proposalId?)` | `GET /api/admin/cases/:id/financials/:column/evidence`, with `?proposal_id=` only when a proposal id is given |
 
 ## Tests
 
-`api.test.ts` (`web` project; `fetch` stubbed, `@/lib/supabase` mocked): the view GET path; a body without `sections` rejects with `invalid_response`; `decide` POSTs the action body to the column route; the evaluation guard accepts the three outcomes and rejects a determination without a run; the view guard rejects an unknown line kind.
+`api.test.ts` (`web` project; `fetch` stubbed, `@/lib/supabase` mocked): the view GET path; a body without `sections` rejects with `invalid_response`; `decide` POSTs the action body to the column route; the evaluation guard accepts the three outcomes and rejects a determination without a run; the view guard rejects an unknown line kind. `isExtractResult` is covered in `extract-button.test.tsx`.
