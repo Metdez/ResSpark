@@ -55,6 +55,10 @@ describe('client-link pages', () => {
 
   it('adds a robots noindex meta tag', async () => {
     await render(<InvalidLinkPage />)
-    expect(document.head.querySelector('meta[name="robots"]')?.getAttribute('content')).toBe('noindex')
+    expect(
+      document.head
+        .querySelector('meta[name="robots"]')
+        ?.getAttribute('content')
+    ).toBe('noindex')
   })
 })

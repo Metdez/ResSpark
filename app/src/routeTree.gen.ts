@@ -10,6 +10,8 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AdminRouteRouteImport } from './routes/admin/route'
+import { Route as CIndexRouteImport } from './routes/c/index'
+import { Route as CTokenRouteImport } from './routes/c/$token'
 import { Route as AdminSignInRouteImport } from './routes/admin/sign-in'
 import { Route as AdminShellRouteRouteImport } from './routes/admin/_shell/route'
 import { Route as AdminShellIndexRouteImport } from './routes/admin/_shell/index'
@@ -19,6 +21,16 @@ import { Route as AdminShellSettingsAppearanceRouteImport } from './routes/admin
 const AdminRouteRoute = AdminRouteRouteImport.update({
   id: '/admin',
   path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CIndexRoute = CIndexRouteImport.update({
+  id: '/c/',
+  path: '/c/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CTokenRoute = CTokenRouteImport.update({
+  id: '/c/$token',
+  path: '/c/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminSignInRoute = AdminSignInRouteImport.update({
@@ -50,6 +62,8 @@ const AdminShellSettingsAppearanceRoute =
 export interface FileRoutesByFullPath {
   '/admin': typeof AdminShellRouteRouteWithChildren
   '/admin/sign-in': typeof AdminSignInRoute
+  '/c/$token': typeof CTokenRoute
+  '/c/': typeof CIndexRoute
   '/admin/settings': typeof AdminShellSettingsRouteRouteWithChildren
   '/admin/': typeof AdminShellIndexRoute
   '/admin/settings/appearance': typeof AdminShellSettingsAppearanceRoute
@@ -57,6 +71,8 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/admin': typeof AdminShellIndexRoute
   '/admin/sign-in': typeof AdminSignInRoute
+  '/c/$token': typeof CTokenRoute
+  '/c': typeof CIndexRoute
   '/admin/settings': typeof AdminShellSettingsRouteRouteWithChildren
   '/admin/settings/appearance': typeof AdminShellSettingsAppearanceRoute
 }
@@ -65,6 +81,8 @@ export interface FileRoutesById {
   '/admin': typeof AdminRouteRouteWithChildren
   '/admin/_shell': typeof AdminShellRouteRouteWithChildren
   '/admin/sign-in': typeof AdminSignInRoute
+  '/c/$token': typeof CTokenRoute
+  '/c/': typeof CIndexRoute
   '/admin/_shell/settings': typeof AdminShellSettingsRouteRouteWithChildren
   '/admin/_shell/': typeof AdminShellIndexRoute
   '/admin/_shell/settings/appearance': typeof AdminShellSettingsAppearanceRoute
@@ -74,6 +92,8 @@ export interface FileRouteTypes {
   fullPaths:
     | '/admin'
     | '/admin/sign-in'
+    | '/c/$token'
+    | '/c/'
     | '/admin/settings'
     | '/admin/'
     | '/admin/settings/appearance'
@@ -81,6 +101,8 @@ export interface FileRouteTypes {
   to:
     | '/admin'
     | '/admin/sign-in'
+    | '/c/$token'
+    | '/c'
     | '/admin/settings'
     | '/admin/settings/appearance'
   id:
@@ -88,6 +110,8 @@ export interface FileRouteTypes {
     | '/admin'
     | '/admin/_shell'
     | '/admin/sign-in'
+    | '/c/$token'
+    | '/c/'
     | '/admin/_shell/settings'
     | '/admin/_shell/'
     | '/admin/_shell/settings/appearance'
@@ -95,6 +119,8 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   AdminRouteRoute: typeof AdminRouteRouteWithChildren
+  CTokenRoute: typeof CTokenRoute
+  CIndexRoute: typeof CIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -104,6 +130,20 @@ declare module '@tanstack/react-router' {
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AdminRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/c/': {
+      id: '/c/'
+      path: '/c'
+      fullPath: '/c/'
+      preLoaderRoute: typeof CIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/c/$token': {
+      id: '/c/$token'
+      path: '/c/$token'
+      fullPath: '/c/$token'
+      preLoaderRoute: typeof CTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/sign-in': {
@@ -188,6 +228,8 @@ const AdminRouteRouteWithChildren = AdminRouteRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   AdminRouteRoute: AdminRouteRouteWithChildren,
+  CTokenRoute: CTokenRoute,
+  CIndexRoute: CIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

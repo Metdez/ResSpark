@@ -110,7 +110,6 @@ Regenerate the table with the classification used in Plan 01-02: walk `app/` (sk
 | `src/lib/cookies.ts` | `e16c87f` |
 | `src/lib/show-submitted-data.tsx` | `e16c87f` |
 | `src/lib/utils.ts` | `e16c87f` |
-| `src/routes/__root.tsx` | `e16c87f` |
 | `src/stores/auth-store.test.ts` | `e16c87f` |
 | `src/stores/auth-store.ts` | `e16c87f` |
 | `src/tanstack-table.d.ts` | `e16c87f` |
