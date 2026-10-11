@@ -2,11 +2,14 @@
 import { createAdminClient } from '../../db/client'
 import { logEvent } from '../../db/events'
 import { ProviderError, NonRetryableError } from '../../integrations/provider-error'
-import { LogicsError, type LogicsCaseInfoRow } from '../../integrations/logics/client'
+import { getIntegration } from '../../db/integrations'
+import { LogicsError, type LogicsCaseInfoRow, type LogicsClient } from '../../integrations/logics/client'
+import { resolveLogicsClient } from '../../integrations/logics/config'
 import { ADDRESS_COLUMNS } from '../county'
 import { type ProposalInput, type ProposalSource, upsertProposals } from '../rpc'
 import { settingsOf } from '../view'
 import { proposeAddress } from './address'
+import { proposeLogics } from './logics'
 import { completeMonthsWindow } from './window'
 
 export const GENERATOR_VERSION = 'p7-1'
@@ -27,7 +30,7 @@ export interface ProposeContext {
 export type Proposer = (ctx: ProposeContext) => Promise<{ source: ProposalSource; proposals: ProposalInput[] } | null>
 
 // Keyed by a name for results and logs; order is run order. Plan 07 adds bank and payroll.
-export const PROPOSERS: Record<string, Proposer> = { address: proposeAddress }
+export const PROPOSERS: Record<string, Proposer> = { address: proposeAddress, logics: proposeLogics }
 
 type SourceResult = { inserted: number; kept: number; superseded: number } | 'skipped' | 'failed'
 
@@ -42,9 +45,17 @@ const codeOf = (e: unknown) => {
   return e instanceof Error && /^[a-z_]+$/.test(e.message) ? e.message : 'internal'
 }
 
-async function readCaseInfo(_env: Env, _firmId: string, logicsCaseId: number | null): Promise<LogicsCaseInfoRow | null> {
+// Re-read at job time (Phase 2 C8/M6): the row is held in memory for this run only.
+async function readCaseInfo(env: Env, firmId: string, logicsCaseId: number | null): Promise<LogicsCaseInfoRow | null> {
   if (logicsCaseId === null) return null
-  return null // Task 2 reads Logics CaseInfo.
+  let client: LogicsClient
+  try {
+    ;({ client } = await resolveLogicsClient(env, await getIntegration(env, firmId, 'logics')))
+  } catch (e) {
+    if (e instanceof LogicsError && e.kind === 'not_configured') return null
+    throw e
+  }
+  return client.caseInfo(logicsCaseId)
 }
 
 export async function runFinancialsPropose(env: Env, caseId: string, now: Date = new Date()): Promise<Record<string, SourceResult>> {

@@ -66,6 +66,12 @@ export const FAKE_CASES: LogicsFindRow[] = [
   },
 ]
 
+// CaseInfo-only fields (Logics_API_Documentation CaseInfo): never in find* rows, so the Phase 2
+// lookup summaries stay unchanged. Synthetic values for the Phase 7 Logics proposer.
+export const FAKE_CASE_INFO_EXTRAS: Record<number, Record<string, string>> = {
+  900001: { DOB: '07/24/1980', MaritalStatus: 'Married', TaxLiability: '$18,450.00', Address: '100 Congress Ave', AptNo: '' },
+}
+
 const digits = (v: unknown) => (typeof v === 'string' ? v.replace(/\D/g, '') : '')
 
 const hasPhone = (row: LogicsFindRow, phone: string) => {
@@ -111,7 +117,7 @@ export function createFakeLogicsClient(opts: FakeWriteOptions = {}): LogicsClien
       if (!row) return null
       // Reshape to the CaseInfo contract: `Status` instead of `StatusID`, no `CreatedDate`.
       const { StatusID, CreatedDate: _created, ...rest } = row
-      return { ...rest, Status: StatusID } as LogicsCaseInfoRow
+      return { ...rest, ...FAKE_CASE_INFO_EXTRAS[caseId], Status: StatusID } as LogicsCaseInfoRow
     },
   }
 }
