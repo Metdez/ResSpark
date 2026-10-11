@@ -16,6 +16,7 @@ import sys
 SRC = Path(__file__).resolve().parents[1]
 ROOT = SRC.parent
 OUT = ROOT / "app" / "worker" / "test" / "fixtures" / "engine" / "golden.json"
+EXTRACT_OUT = OUT.with_name("golden-extract.json")
 sys.path[:0] = [str(SRC), str(SRC / "tests")]
 
 from case_api import _NEXT, _PATHS, _screenable  # noqa: E402
@@ -26,6 +27,7 @@ from intake_workflow import (  # noqa: E402
 )
 from questions import QUESTIONS  # noqa: E402
 from test_intake_workflow import FakeStandardsRepository, canonical_zero_row  # noqa: E402
+from golden_extract import build_extract_payload  # noqa: E402  (patches the LLM and .env off on import)
 
 
 INT_COLUMNS = (
@@ -425,17 +427,18 @@ def main(args: list[str]) -> int:
     if args not in ([], ["--check"]):
         print("usage: export_golden_fixtures.py [--check]", file=sys.stderr)
         return 2
-    text = render(build_payload())
+    outputs = ((OUT, render(build_payload())), (EXTRACT_OUT, render(build_extract_payload())))
     if args == ["--check"]:
         # Parsed compare: a CRLF checkout of the same JSON is still fresh.
-        fresh = OUT.exists() and json.loads(OUT.read_text(encoding="utf-8")) == json.loads(text)
-        if not fresh:
-            print("golden.json is stale: run python src/tools/export_golden_fixtures.py", file=sys.stderr)
-            return 1
-        return 0
-    OUT.parent.mkdir(parents=True, exist_ok=True)
-    OUT.write_text(text, encoding="utf-8", newline="\n")
-    print(f"Wrote {OUT.relative_to(ROOT).as_posix()}")
+        stale = [out for out, text in outputs
+                 if not (out.exists() and json.loads(out.read_text(encoding="utf-8")) == json.loads(text))]
+        for out in stale:
+            print(f"{out.name} is stale: run python src/tools/export_golden_fixtures.py", file=sys.stderr)
+        return 1 if stale else 0
+    for out, text in outputs:
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(text, encoding="utf-8", newline="\n")
+        print(f"Wrote {out.relative_to(ROOT).as_posix()}")
     return 0
 
 

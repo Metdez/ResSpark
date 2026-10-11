@@ -5,16 +5,16 @@ The oracle exporter (D-03, FORM-01). The Python engine in `src/` is the source o
 Stdlib only. Run from the repo root (or anywhere; paths come from `__file__`):
 
 ```powershell
-python src/tools/export_golden_fixtures.py          # write golden.json
-python src/tools/export_golden_fixtures.py --check  # exit 1 if golden.json is stale
+python src/tools/export_golden_fixtures.py          # write golden.json and golden-extract.json
+python src/tools/export_golden_fixtures.py --check  # exit 1 if either file is stale
 ```
 
 ## Parts, in file order
 
 | Part | What it does |
 |------|--------------|
-| `SRC`, `ROOT`, `OUT`, `sys.path` | Resolve `src/`, the repo root and the output path from the script location, then put `src/` and `src/tests/` first on the import path so the real modules and the test fake are imported. |
-| imports | `_NEXT`/`_PATHS`/`_screenable` from `case_api`; `calculate_allowable_expenses`/`calculate_net_realizable_equity` from `determination`; `FinancialData`; `INITIAL_QUESTION_IDS`, `REQUIRED_FINANCIAL_COLUMNS`, `evaluate_case`, `financial_data_from_case_row`, `validate_answer` from `intake_workflow`; `QUESTIONS`; and `FakeStandardsRepository`/`canonical_zero_row` from `src/tests/test_intake_workflow.py`. Imported, never copied, so fixture data cannot drift from the tests (RESEARCH Pattern 2). |
+| `SRC`, `ROOT`, `OUT`, `EXTRACT_OUT`, `sys.path` | Resolve `src/`, the repo root, the engine output path and the extract output path (`golden-extract.json` beside `golden.json`) from the script location, then put `src/` and `src/tests/` first on the import path so the real modules and the test fake are imported. |
+| imports | `_NEXT`/`_PATHS`/`_screenable` from `case_api`; `calculate_allowable_expenses`/`calculate_net_realizable_equity` from `determination`; `FinancialData`; `INITIAL_QUESTION_IDS`, `REQUIRED_FINANCIAL_COLUMNS`, `evaluate_case`, `financial_data_from_case_row`, `validate_answer` from `intake_workflow`; `QUESTIONS`; `FakeStandardsRepository`/`canonical_zero_row` from `src/tests/test_intake_workflow.py`; and `build_extract_payload` from `src/tools/golden_extract.py` (Plan 07-11), whose import replaces `document_parse._load_env` and `_llm_json` before anything parses, so neither output can read `.env` or call OpenRouter. Imported, never copied, so fixture data cannot drift from the tests (RESEARCH Pattern 2). |
 | `INT_COLUMNS`, `QUESTION_ONLY_COLUMNS`, `VALIDATION_SAMPLES`, path constants | The integer columns; the five question ids that are not `FinancialData` fields (`pay_frequency` and four `has_*` flags); the answer samples `True, 1, 2.5, "weekly", None`; and the path strings the coverage check names. |
 | `Recorder` | Wraps a repository; every method call appends `{method, args, value}` in order and returns the inner value. The TS replay fake consumes this sequence and throws on anything else, which proves the port makes the same lookups in the same order (for example, `transportation_area` only when there is a vehicle, both health-care ages every time). |
 | `_require(condition, message)` | Raises `ValueError`; used instead of `assert` so the checks also run under `python -O`. |
@@ -32,15 +32,17 @@ python src/tools/export_golden_fixtures.py --check  # exit 1 if golden.json is s
 | `standards_samples()` | A descriptive snapshot of what the fake returns (national 1-8, health 30/64/65, ownership and operating 0-3, housing). The tests replay recorded calls, not this table. |
 | `build_payload()` | Builds all cases (existing, grid, boundary, other), checks coverage, and returns the top-level object: `python` (major.minor), `generated_by`, `questions` (id, prompt, Python type name), `initial_question_ids`, sorted `required_financial_columns`, `paths` (`_PATHS` as lists), `next`, `validations`, `standards`, `cases`. |
 | `render(payload)` | `json.dumps(indent=2, ensure_ascii=False)` plus a trailing newline. Insertion order is deterministic, so two runs write byte-identical files. |
-| `main(args)` | **Version guard first:** if `sum([0.1] * 10) == 1.0` the interpreter uses compensated summation (Python 3.12+), which changes last-bit float totals; the script exits 1 with "Golden fixtures need left-to-right float sum (Python <= 3.11); the TS engine mirrors that." Any argument other than a single `--check` prints the usage and exits 2. Without arguments it writes the file with LF line endings. With `--check` it builds the payload in memory and compares it, parsed, with the file on disk (a parsed compare survives a CRLF checkout); a missing or different file prints "golden.json is stale: run python src/tools/export_golden_fixtures.py" and exits 1. |
+| `main(args)` | **Version guard first:** if `sum([0.1] * 10) == 1.0` the interpreter uses compensated summation (Python 3.12+), which changes last-bit float totals; the script exits 1 with "Golden fixtures need left-to-right float sum (Python <= 3.11); the TS engine mirrors that." Any argument other than a single `--check` prints the usage and exits 2. It builds both payloads (`outputs`: engine then extract). Without arguments it writes each file with LF line endings and prints `Wrote <path>`. With `--check` it compares each payload, parsed, with its file on disk (a parsed compare survives a CRLF checkout); every missing or different file prints "<name> is stale: run python src/tools/export_golden_fixtures.py" and the script exits 1. |
 
 ## Fixture contents (as generated with Python 3.11)
 
 165 cases: 14 existing-test cases, 69 `grid_*`, 18 `boundary_*`, 1 `pay_frequency_not_applicable` and 63 `null_*` (58 required columns + 5 question-only). There are 140 validations. All seven paths appear: Simple Payment Plan 34, Non-Simple 22, manual equity 15, CNC 9, Offer in Compromise 9, blocked 5, manual payment 4. Each determination carries its full `calculation_trace`, so the file is about 103,000 lines. That is generated data and not subject to the 500-line code limit.
 
+`golden-extract.json` (document extractors) is described in `docs/src/tools/golden_extract.md`.
+
 ## How freshness is enforced
 
-`app/package.json` runs `python ../src/tools/export_golden_fixtures.py --check` inside `pnpm check`, right after the file-size gate (cwd is `app/`; the script resolves its own paths from `__file__`). A Python change that alters any output, or a hand edit of `golden.json`, fails `pnpm check` until the fixture is regenerated. `parity.test.ts` then compares the TS engine against the regenerated file with `toEqual` (threat T-07-01).
+`app/package.json` runs `python ../src/tools/export_golden_fixtures.py --check` inside `pnpm check`, right after the file-size gate (cwd is `app/`; the script resolves its own paths from `__file__`). A Python change that alters any output, or a hand edit of `golden.json` or `golden-extract.json`, fails `pnpm check` until the fixture is regenerated. `parity.test.ts` then compares the TS engine against the regenerated file with `toEqual` (threat T-07-01).
 
 `app/package.json` also defines `test:live:file` (`dotenv` with the same env files as `test:live`, then `vitest run --project worker-node`), so later plans run one live file with `pnpm -C app test:live:file worker/test/<file>` without naming env files on the command line.
 

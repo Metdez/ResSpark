@@ -1,0 +1,312 @@
+{
+  "python": "3.11",
+  "generated_by": "src/tools/export_golden_fixtures.py (src/tools/golden_extract.py)",
+  "texts_cases": [],
+  "merge_cases": [],
+  "pdfs": [
+    {
+      "path": "examples/01_marcus_delgado_CNC/01_IRS_Account_Transcript.pdf",
+      "document_type": null,
+      "page_text": {
+        "texts": [
+          "Department of the Treasury  Internal Revenue Service",
+          "Account Transcript",
+          "This Product Contains Sensitive Taxpayer Data (FICTIONAL / TEST DATA ONLY)",
+          "Taxpayer Name:",
+          "Marcus A. Delgado",
+          "SSN Provided:",
+          "XXX-XX-4471",
+          "Address:",
+          "4417 Bellaire Blvd, Apt 214, Houston, TX 77036",
+          "Filing Status:",
+          "Single",
+          "Tax Period(s):",
+          "2022, 2023, 2024",
+          "Collection Statute Expiration Date",
+          "(CSED):",
+          "05/12/2033",
+          "Request Date:",
+          "09-26-2026",
+          "Response Date:",
+          "09-26-2026",
+          "Tax Period: 2022",
+          "Code",
+          "Explanation of Transaction",
+          "Cycle",
+          "Amount",
+          "150",
+          "Return filed & tax assessed",
+          "20230512",
+          "$8,200.00",
+          "276",
+          "Failure to pay penalty",
+          "20230512",
+          "$1,640.00",
+          "196",
+          "Interest charged",
+          "20230512",
+          "$980.00",
+          "Tax Period: 2023",
+          "Code",
+          "Explanation of Transaction",
+          "Cycle",
+          "Amount",
+          "150",
+          "Return filed & tax assessed",
+          "20240509",
+          "$11,400.00",
+          "276",
+          "Failure to pay penalty",
+          "20240509",
+          "$2,280.00",
+          "196",
+          "Interest charged",
+          "20240509",
+          "$1,150.00",
+          "Tax Period: 2024",
+          "Code",
+          "Explanation of Transaction",
+          "Cycle",
+          "Amount",
+          "150",
+          "Return filed & tax assessed",
+          "20250515",
+          "$24,900.00",
+          "276",
+          "Failure to pay penalty",
+          "20250515",
+          "$4,980.00",
+          "196",
+          "Interest charged",
+          "20250515",
+          "$4,470.00",
+          "ACCOUNT BALANCE (all periods, incl. penalties & interest): $60,000.00",
+          "This transcript was generated for internal testing purposes only. Fictional taxpayer, fictional balances. Not an official IRS document."
+        ],
+        "rows": [
+          [
+            61.0,
+            [
+              [
+                6.0,
+                "Code"
+              ],
+              [
+                49.2,
+                "Explanation of Transaction"
+              ],
+              [
+                308.4,
+                "Cycle"
+              ],
+              [
+                420.032,
+                "Amount"
+              ],
+              [
+                6.0,
+                "Code"
+              ],
+              [
+                49.2,
+                "Explanation of Transaction"
+              ],
+              [
+                308.4,
+                "Cycle"
+              ],
+              [
+                420.032,
+                "Amount"
+              ],
+              [
+                6.0,
+                "Code"
+              ],
+              [
+                49.2,
+                "Explanation of Transaction"
+              ],
+              [
+                308.4,
+                "Cycle"
+              ],
+              [
+                420.032,
+                "Amount"
+              ]
+            ]
+          ],
+          [
+            43.0,
+            [
+              [
+                6.0,
+                "150"
+              ],
+              [
+                49.2,
+                "Return filed & tax assessed"
+              ],
+              [
+                308.4,
+                "20230512"
+              ],
+              [
+                412.016,
+                "$8,200.00"
+              ],
+              [
+                6.0,
+                "150"
+              ],
+              [
+                49.2,
+                "Return filed & tax assessed"
+              ],
+              [
+                308.4,
+                "20240509"
+              ],
+              [
+                407.568,
+                "$11,400.00"
+              ],
+              [
+                6.0,
+                "150"
+              ],
+              [
+                49.2,
+                "Return filed & tax assessed"
+              ],
+              [
+                308.4,
+                "20250515"
+              ],
+              [
+                407.568,
+                "$24,900.00"
+              ]
+            ]
+          ],
+          [
+            25.0,
+            [
+              [
+                6.0,
+                "276"
+              ],
+              [
+                49.2,
+                "Failure to pay penalty"
+              ],
+              [
+                308.4,
+                "20230512"
+              ],
+              [
+                412.016,
+                "$1,640.00"
+              ],
+              [
+                6.0,
+                "276"
+              ],
+              [
+                49.2,
+                "Failure to pay penalty"
+              ],
+              [
+                308.4,
+                "20240509"
+              ],
+              [
+                412.016,
+                "$2,280.00"
+              ],
+              [
+                6.0,
+                "276"
+              ],
+              [
+                49.2,
+                "Failure to pay penalty"
+              ],
+              [
+                308.4,
+                "20250515"
+              ],
+              [
+                412.016,
+                "$4,980.00"
+              ]
+            ]
+          ],
+          [
+            7.0,
+            [
+              [
+                6.0,
+                "196"
+              ],
+              [
+                49.2,
+                "Interest charged"
+              ],
+              [
+                308.4,
+                "20230512"
+              ],
+              [
+                418.688,
+                "$980.00"
+              ],
+              [
+                6.0,
+                "196"
+              ],
+              [
+                49.2,
+                "Interest charged"
+              ],
+              [
+                308.4,
+                "20240509"
+              ],
+              [
+                412.016,
+                "$1,150.00"
+              ],
+              [
+                6.0,
+                "196"
+              ],
+              [
+                49.2,
+                "Interest charged"
+              ],
+              [
+                308.4,
+                "20250515"
+              ],
+              [
+                412.016,
+                "$4,470.00"
+              ]
+            ]
+          ]
+        ]
+      },
+      "expected": {
+        "_kind": "account",
+        "filing_status_married": false,
+        "state_of_residence": "TX",
+        "total_tax_owed": 60000.0,
+        "tax_only_balance": 44500.0,
+        "csed_months_remaining": 79
+      }
+    }
+  ],
+  "packets": []
+}
