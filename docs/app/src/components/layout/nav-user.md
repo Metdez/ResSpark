@@ -1,17 +1,19 @@
 # `app/src/components/layout/nav-user.tsx`
 
-Sidebar footer showing the signed-in user with a dropdown (Appearance, Sign out). Forked; the
-Pro/Account/Billing/Notifications items are gone and the component renders nothing without a user.
+Sidebar footer showing the signed-in staff member, with a menu (Appearance, Sign out). Forked; the Pro/Account/Billing/Notifications items are gone, and since Plan 06 the user comes from the Worker-verified session instead of a prop.
 
 | Lines | What it does |
 |-------|--------------|
-| 1-21 | Router `Link`, three Lucide icons, the dialog-state hook, `Avatar`, dropdown-menu and sidebar parts, `SignOutDialog`, the `User` type. |
-| 23-25 | Props: optional `user`. |
-| 27-32 | Reads sidebar mobile state and the dialog open state; returns `null` when there is no user (no fake data before Plan 06 wires the session). |
-| 34-60 | Trigger: avatar, name and email (`truncate` + `title`), chevron. |
-| 61-91 | Dropdown: header repeats avatar/name/email; one item **Appearance** -> `/admin/settings/appearance`; destructive **Sign out** opens the dialog. |
-| 97-102 | The `SignOutDialog` controlled by `open`. |
+| 1-21 | Router `Link`, three Lucide icons, the dialog-state hook, `useStaffLabel`, `Avatar`/`AvatarFallback`, dropdown-menu and sidebar parts, and `SignOutDialog`. |
+| 23-27 | Reads sidebar mobile state and the dialog state, then `useStaffLabel()`: `display_name` from `useSession()` (`GET /api/admin/session`), the email, and the avatar initial. |
+| 29 | Renders nothing until there is at least an email, so no fake data ever shows. |
+| 41-43 | Avatar with the initial (no image; staff photos are not stored). |
+| 44-56 | Display name (Label 600) and email (muted). Both `truncate` in the 256 px sidebar with the full text in `title`. While the session query loads, or if the profile is unavailable, only the email shows. |
+| 60-76 | Dropdown header: avatar, name, and email. `break-all` lets long values wrap instead of truncating. |
+| 78-85 | **Appearance** → `/admin/settings/appearance`. |
+| 87-90 | **Sign out** opens the dialog. It is not styled as destructive: signing out loses nothing. |
+| 96 | The `SignOutDialog`, controlled by `open`. |
 
 ## Notes
 
-- Plan 06 passes the Supabase user (display name from `staff_profiles`, email from the JWT).
+- `app-sidebar.tsx` renders `<NavUser />` with no props.

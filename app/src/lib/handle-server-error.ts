@@ -1,9 +1,23 @@
 import { toast } from 'sonner'
+import { ApiError } from '@/lib/api'
 
 export const GENERIC_ERROR =
   'Something went wrong. Try again, and tell your admin if it keeps happening.'
 
-// shortcut: no API error envelope yet, Plan 03 maps `{ error: { code, message } }` to copy here
-export function handleServerError(error: unknown) {
-  toast.error(error instanceof Error ? error.message : 'Something went wrong')
+// UI-SPEC Error conventions for every query/mutation error. A 401 means the Worker rejected the
+// token: the caller-supplied onSessionEnded signs out and redirects (it owns the router).
+export function handleServerError(error: unknown, onSessionEnded?: () => void) {
+  if (error instanceof ApiError && error.status === 401) {
+    onSessionEnded?.()
+    // fixed id: several queries failing together show one toast
+    toast.error('Your session ended. Sign in again to continue.', { id: 'session-ended' })
+    return
+  }
+  if (error instanceof ApiError && error.status === 403) {
+    toast.error("You don't have access to this.")
+    return
+  }
+  toast.error(GENERIC_ERROR, {
+    description: error instanceof ApiError ? error.code : undefined,
+  })
 }

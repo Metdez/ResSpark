@@ -1,7 +1,8 @@
 import { Link } from '@tanstack/react-router'
 import { ChevronsUpDown, LogOut, Palette } from 'lucide-react'
 import useDialogState from '@/hooks/use-dialog-state'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { useStaffLabel } from '@/lib/session'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,18 +19,14 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar'
 import { SignOutDialog } from '@/components/sign-out-dialog'
-import { type User } from './types'
 
-type NavUserProps = {
-  user?: User
-}
-
-export function NavUser({ user }: NavUserProps) {
+export function NavUser() {
   const { isMobile } = useSidebar()
   const [open, setOpen] = useDialogState()
+  // display_name from useSession(); email only while it loads or if the profile is unavailable
+  const { name, email, initial } = useStaffLabel()
 
-  // Plan 06 passes the signed-in staff user; until then render nothing instead of fake data
-  if (!user) return null
+  if (!name && !email) return null
 
   return (
     <>
@@ -42,15 +39,19 @@ export function NavUser({ user }: NavUserProps) {
                 className='data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground'
               >
                 <Avatar className='h-8 w-8 rounded-lg'>
-                  <AvatarImage src={user.avatar} alt={user.name} />
-                  <AvatarFallback className='rounded-lg'>SN</AvatarFallback>
+                  <AvatarFallback className='rounded-lg'>{initial}</AvatarFallback>
                 </Avatar>
                 <div className='grid flex-1 text-start text-sm leading-tight'>
-                  <span className='truncate font-semibold' title={user.name}>
-                    {user.name}
-                  </span>
-                  <span className='truncate text-xs' title={user.email}>
-                    {user.email}
+                  {name && (
+                    <span className='truncate font-semibold' title={name}>
+                      {name}
+                    </span>
+                  )}
+                  <span
+                    className='truncate text-muted-foreground'
+                    title={email}
+                  >
+                    {email}
                   </span>
                 </div>
                 <ChevronsUpDown className='ms-auto size-4' />
@@ -65,12 +66,11 @@ export function NavUser({ user }: NavUserProps) {
               <DropdownMenuLabel className='p-0 font-normal'>
                 <div className='flex items-center gap-2 px-1 py-1.5 text-start text-sm'>
                   <Avatar className='h-8 w-8 rounded-lg'>
-                    <AvatarImage src={user.avatar} alt={user.name} />
-                    <AvatarFallback className='rounded-lg'>SN</AvatarFallback>
+                    <AvatarFallback className='rounded-lg'>{initial}</AvatarFallback>
                   </Avatar>
-                  <div className='grid flex-1 text-start text-sm leading-tight'>
-                    <span className='truncate font-semibold'>{user.name}</span>
-                    <span className='truncate text-xs'>{user.email}</span>
+                  <div className='grid flex-1 text-start text-sm leading-tight break-all'>
+                    {name && <span className='font-semibold'>{name}</span>}
+                    <span className='text-muted-foreground'>{email}</span>
                   </div>
                 </div>
               </DropdownMenuLabel>
@@ -84,10 +84,7 @@ export function NavUser({ user }: NavUserProps) {
                 </DropdownMenuItem>
               </DropdownMenuGroup>
               <DropdownMenuSeparator />
-              <DropdownMenuItem
-                variant='destructive'
-                onClick={() => setOpen(true)}
-              >
+              <DropdownMenuItem onClick={() => setOpen(true)}>
                 <LogOut />
                 Sign out
               </DropdownMenuItem>

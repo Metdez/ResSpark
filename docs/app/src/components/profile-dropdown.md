@@ -1,18 +1,13 @@
 # `app/src/components/profile-dropdown.tsx`
 
-Header avatar button with the account menu. Forked; only the menu items changed (Profile/Billing/
-Settings/New Team -> Appearance).
+Header avatar button with the account menu (UI-SPEC Copywriting Contract, "Profile dropdown"). Forked; since Plan 06 it shows the signed-in staff member instead of the fork's placeholder user.
 
 | Lines | What it does |
 |-------|--------------|
-| 1-15 | Router `Link`, dialog-state hook, `Avatar`, `Button`, dropdown-menu parts, `SignOutDialog`. |
-| 17-18 | Component and the sign-out dialog open state. |
-| 22-30 | Trigger: 32 px ghost button with the avatar (image + `SN` fallback). |
-| 31-39 | Menu header: display name and email. |
-| 40-45 | One item **Appearance** -> `/admin/settings/appearance`. |
-| 46-53 | Destructive **Sign out** item (shortcut hint) that opens the dialog. |
-| 56-58 | The `SignOutDialog`. |
-
-## Known stub
-
-- Lines 26-27 and 34-36 still show the fork's placeholder avatar path and `satnaing` / `satnaingdev@gmail.com`. Plan 06 replaces them with the signed-in staff user; tracked in the Plan 02 SUMMARY.
+| 1-15 | Router `Link`, the dialog-state hook, `useStaffLabel`, `Avatar`/`AvatarFallback`, `Button`, dropdown-menu parts, and `SignOutDialog`. |
+| 17-19 | The sign-out dialog state and `useStaffLabel()` (display name, email, avatar initial). |
+| 24-34 | Trigger: a 32 px round ghost button with the initial. It is icon-only, so it carries `aria-label="Account menu"`; `title` shows the name (or email) on hover. |
+| 36-44 | Header: `display_name` in the Heading role at 16 px (600) and the email muted below. `break-all` wraps long values instead of truncating. Until the session query resolves, only the email shows. |
+| 46-50 | **Appearance** → `/admin/settings/appearance`. |
+| 52-54 | **Sign out** opens the dialog. Not destructive, and the fork's fake `⇧⌘Q` hint is gone (no such shortcut exists). |
+| 58 | The `SignOutDialog`. |

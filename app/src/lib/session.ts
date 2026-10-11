@@ -25,6 +25,28 @@ export function useSession() {
   })
 }
 
+// What nav-user and the profile menu show: display_name once the session query resolves, the
+// email from the stored Supabase session until then (or when the profile is unavailable).
+export function useStaffLabel(): { name?: string; email?: string; initial: string } {
+  const session = useSession()
+  const stored = useQuery({
+    queryKey: ['auth-email'],
+    queryFn: async () => {
+      try {
+        const { supabase } = await import('@/lib/supabase')
+        const { data } = await supabase.auth.getSession()
+        return data.session?.user.email ?? null
+      } catch {
+        return null
+      }
+    },
+    staleTime: Infinity,
+  })
+  const name = session.data?.display_name || undefined
+  const email = session.data?.email ?? stored.data ?? undefined
+  return { name, email, initial: (name ?? email ?? '?').charAt(0).toUpperCase() }
+}
+
 // Posts signed_out while the token is still valid, then always signs out locally.
 // Never throws: returns the event-post error (or null) so the caller can show a toast.
 // Skips the post when the Worker already rejected the token ('expired').
