@@ -9,7 +9,7 @@ export const PROJECT_REF = "zvkphuikjpwoauqdimcf";
 // so it always runs from a fresh temp dir outside the repo.
 // `--linked --project-ref` resolves the project from the explicit ref: no `supabase link`, no supabase/.temp.
 let workdir;
-function getWorkdir() {
+export function getWorkdir() {
   workdir ??= mkdtempSync(join(tmpdir(), "resspark-supabase-"));
   return workdir;
 }

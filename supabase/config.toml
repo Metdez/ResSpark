@@ -1,0 +1,7 @@
+# Minimal on purpose: `supabase config push` only pushes the properties this file declares.
+# Push with: pnpm -C app auth:config-push
+project_id = "zvkphuikjpwoauqdimcf"
+
+[auth]
+# Staff accounts are created by app/scripts/create-staff.mjs only (D-14).
+enable_signup = false
