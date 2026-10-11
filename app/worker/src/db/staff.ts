@@ -1,3 +1,5 @@
+import { createAdminClient } from './client'
+
 export interface StaffProfile {
   user_id: string
   firm_id: string
@@ -6,8 +8,14 @@ export interface StaffProfile {
 }
 
 export async function getStaffProfile(
-  _env: Pick<Env, 'SUPABASE_URL' | 'SUPABASE_SECRET_KEY'>,
-  _userId: string
+  env: Pick<Env, 'SUPABASE_URL' | 'SUPABASE_SECRET_KEY'>,
+  userId: string
 ): Promise<StaffProfile | null> {
-  throw new Error('not implemented')
+  const { data, error } = await createAdminClient(env)
+    .from('staff_profiles')
+    .select('user_id, firm_id, role, display_name')
+    .eq('user_id', userId)
+    .maybeSingle()
+  if (error) throw new Error('staff_lookup_failed')
+  return data ?? null
 }

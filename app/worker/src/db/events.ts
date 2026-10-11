@@ -1,3 +1,5 @@
+import { createAdminClient } from './client'
+
 export type ActorType = 'staff' | 'client' | 'system' | 'provider'
 
 export interface EventInput {
@@ -10,9 +12,22 @@ export interface EventInput {
   payload?: Record<string, unknown>
 }
 
+// The only event-writing path (D-11): log_event() inserts into the append-only events table.
 export async function logEvent(
-  _env: Pick<Env, 'SUPABASE_URL' | 'SUPABASE_SECRET_KEY'>,
-  _input: EventInput
+  env: Pick<Env, 'SUPABASE_URL' | 'SUPABASE_SECRET_KEY'>,
+  input: EventInput
 ): Promise<number> {
-  throw new Error('not implemented')
+  const admin = createAdminClient(env)
+  const { data, error } = await admin.rpc('log_event', {
+    p_firm_id: input.firm_id,
+    p_case_id: input.case_id ?? null,
+    p_request_id: input.request_id ?? null,
+    p_actor_type: input.actor_type,
+    p_actor_id: input.actor_id ?? null,
+    p_action: input.action,
+    p_payload: input.payload ?? {},
+  })
+  // Postgres message text never leaves this function.
+  if (error) throw new Error('log_event_failed')
+  return Number(data)
 }
