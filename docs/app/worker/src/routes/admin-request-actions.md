@@ -20,7 +20,7 @@ Body `{ email, phone, keep_flagged? }`. The steps run in this order:
 3. `checkContact` runs server-side. An invalid email or phone returns 400 `contact_invalid` with `email_error` and `phone_error`.
 4. The flags are the did-you-mean suggestion and `differs`, which lists `email` and/or `phone` when the value differs from the one Logics holds for the case. If any flag is set and `keep_flagged` is not `true`, the route returns 409 `contact_flagged` with `email_suggestion` and `differs`. One acknowledgement covers both flags, so the UI needs a single "Use this value anyway" control.
 5. It re-reads the case from Logics through fixtures or the live client. A Logics failure maps as in the lookup route: 409 `logics_not_configured`, or 502 `logics_unauthorized` / `logics_unreachable`. A case Logics no longer returns gives 409 `case_changed` with `changed: ['case']`, and any changed field gives 409 `case_changed` with the list. The cached snapshot is never the send-time source (C8, T-02-18).
-6. `sendRequest` stores the validated contact and logs `request.sent` with `{ to_email, to_phone_e164, contact_overridden, logics_case_id }`. `contact_overridden` is true only when staff kept a flagged value. RPC tokens map through `rpcToHttp`, so a request that is no longer a draft returns 409 `request_not_draft`.
+6. `sendRequest` stores the validated contact and logs `request.sent` with `{ to_email, to_phone_e164, contact_overridden, logics_case_id }`. After the link is issued, Send also emails it to that contact through `emailClient` (user decision 2026-10-11) and adds the result as `email` to the answer: `{ ok: true, id }` or `{ ok: false, reason }`. A phone-only contact gets no email and no `email` field. The email never blocks the send: it is best-effort and runs after the link exists. `contact_overridden` is true only when staff kept a flagged value. RPC tokens map through `rpcToHttp`, so a request that is no longer a draft returns 409 `request_not_draft`.
 7. The route returns `{ url, expires_at, version }`, where `url` is minted from the new link row by `linkUrl`.
 
 ## `POST /:id/regenerate`
@@ -41,7 +41,7 @@ Reads no body. It writes one `request.link_copied` event per call, with the staf
 
 ## `POST /:id/email`
 
-Reads only an optional `step` from the JSON body. The recipient is always the request's stored, validated `contact_email`, so a body such as `{ to: "attacker@example.com" }` changes nothing (T-02-20). When the request has no link, a revoked link, or no stored email, the route returns `{ ok: false, reason: "no_link" }` and sends nothing. Otherwise it re-derives the URL with `linkUrl` and calls `sendLinkEmail` with the firm name, the agent display name stored on the request, the URL, and the link expiry. It logs `request.email_sent` with `{ to, message_id }` (the Email Service message id) or `request.email_failed` with `{ to, reason }`, then returns the result with 200 in every case: `{ ok: true, id }`, `not_configured` (no `EMAIL_FROM`, or the sending domain is not onboarded yet), or `send_failed`. The SPA decides the copy, for example "Email not configured, copy the link and send it yourself". The URL never enters the event payload.
+Reads only an optional `step` from the JSON body. The recipient is always the request's stored, validated `contact_email`, so a body such as `{ to: "attacker@example.com" }` changes nothing (T-02-20). When the request has no link, a revoked link, or no stored email, the route returns `{ ok: false, reason: "no_link" }` and sends nothing. Otherwise it re-derives the URL with `linkUrl` and calls `emailClient` (shared with Send) with the firm name, the URL, and the link expiry; `emailClient` adds the agent display name stored on the request, calls `sendLinkEmail`, and logs `request.email_sent` with `{ to, message_id }` (the Email Service message id) or `request.email_failed` with `{ to, reason }`, then returns the result with 200 in every case: `{ ok: true, id }`, `not_configured` (no `EMAIL_FROM`, or the sending domain is not onboarded yet), or `send_failed`. The SPA decides the copy, for example "Email not configured, copy the link and send it yourself". The URL never enters the event payload.
 
 ## Security
 
@@ -63,3 +63,7 @@ item lookup is the whole check, so no separate UUID test is needed. With a valid
 `linkUrl(...) + '?step=' + step`: the client's own ResSpark link, which `GET /c/:token?step=` turns into a
 redirect to that signing step after every link guard (Plan 06-06). Without `step` the Phase 2 behavior is
 unchanged. The step check runs before the `no_link` check.
+
+## `emailClient(c, request, { to, firmName, url, expiresAt })`
+
+The one place a client-link email is sent and recorded, used by `POST /:id/send` and `POST /:id/email`. It calls `sendLinkEmail` with the request's agent display name, then logs `request.email_sent` `{ to, message_id }` or `request.email_failed` `{ to, reason }`. A failed event write is swallowed: the email outcome is already decided, and a lost audit row must not fail a send whose link was already issued. It never throws and returns the `SendResult`.

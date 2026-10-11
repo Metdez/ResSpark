@@ -39,7 +39,7 @@ Resend was the provider until 2026-10-11. This file was `resend.ts`, and it was 
 2. In the Cloudflare dashboard go to **Compute → Email Service → Email Sending → Onboard Domain** and pick that domain. Cloudflare adds the SPF, DKIM, DMARC and bounce records itself.
 3. Set `"EMAIL_FROM"` in `app/wrangler.jsonc` `vars` to an address on that domain (for example `notifications@valortax.com`) and redeploy with `pnpm -C app run deploy:snapshot`.
 
-Until then `EMAIL_FROM` is empty. Every email reports `not_configured`, and staff copy the link instead (Email link button, Settings → Team invite and reset links).
+`EMAIL_FROM` is set to `notifications@resspark.com` (2026-10-11). The domain is approved but not yet registered: the API token can check availability but not buy (403). Until `resspark.com` is registered and onboarded, every send answers `E_SENDER_DOMAIN_NOT_AVAILABLE`, which reports `not_configured`, and staff copy the link instead. Once it is onboarded, email works with no redeploy. Send emails the client automatically; the Email link button re-sends.
 
 ## Tests
 

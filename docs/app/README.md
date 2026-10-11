@@ -62,7 +62,7 @@ Names only. Values live in the places listed and nowhere else. Only the five req
 | `VITE_SUPABASE_PUBLISHABLE_KEY` | `app/.env` (copied from `src/frontend/.env`) | developer copies the file; never printed |
 | `CLOUDFLARE_API_TOKEN` | repo root `.env` | developer; never printed |
 | `EMAIL` | `send_email` binding in `wrangler.jsonc` (Cloudflare Email Service; no key) | built in to Workers Paid |
-| `EMAIL_FROM` | `wrangler.jsonc` var (not a secret), empty by default | set to an address on a domain onboarded in Cloudflare Email Service; empty means email reports `not_configured` |
+| `EMAIL_FROM` | `wrangler.jsonc` var (not a secret), `notifications@resspark.com` | must be on a domain onboarded in Cloudflare Email Service; until resspark.com is onboarded, email reports `not_configured` |
 | `LOGICS_MODE` | `wrangler.jsonc` var (not a secret) | `fake` for the demo; `live` after Test connection succeeds (see § Logics mode) |
 | `TOKEN_ENC_KEY_1` | Worker secret + `app/.dev.vars` (required) | `pnpm -C app secrets:provision` (Phase 4, D-15). It seals Plaid access tokens in `connection_secrets` and is kept if it already exists, because rotating it orphans every stored token. |
 | `PLAID_CLIENT_ID`, `PLAID_SECRET` | optional Worker secrets + `app/.dev.vars` | `pnpm -C app secrets:provider plaid`, entered at the prompt (echo off). Without them, bank `/start` returns `provider_not_configured` and the portal offers manual upload only. |

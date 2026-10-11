@@ -20,6 +20,7 @@ import { Timeline } from '@/features/timeline/timeline'
 import { LogicsPushCard } from '@/features/logics-push/logics-push-card'
 import { RequestLinkActions } from './request-link-actions'
 import {
+  emailCopy,
   formatDate,
   getRequest,
   logicsErrorCopy,
@@ -62,7 +63,13 @@ export function RequestPage({ requestId }: { requestId: string }) {
   const send = useMutation({
     mutationFn: (v: { email: string; phone: string; keep_flagged: boolean }) =>
       sendRequest(requestId, v),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['request', requestId] }),
+    onSuccess: (result, v) => {
+      if (result.email) {
+        const say = result.email.ok ? toast.success : toast.warning
+        say(emailCopy(result.email, v.email))
+      }
+      return qc.invalidateQueries({ queryKey: ['request', requestId] })
+    },
     onError: unlessHandled(
       qc,
       (e) => FORM_CODES.includes(e.code) || !!sendErrorCopy(e)

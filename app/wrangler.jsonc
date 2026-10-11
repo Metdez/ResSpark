@@ -18,9 +18,9 @@
     // "fake" serves fixture cases (C1); "live" after Settings → Integrations → Test connection succeeds.
     // Live since 2026-10-11 for reads (user request); writes stay refused while LOGICS_WRITE_ENABLED is "false".
     "LOGICS_MODE": "live",
-    // Cloudflare Email Service sender. Empty = email off ("not configured"). Set it to an address on a
-    // domain onboarded in Compute > Email Service > Email Sending, e.g. "notifications@yourfirm.com".
-    "EMAIL_FROM": "",
+    // Cloudflare Email Service sender. Empty = email off ("not configured"). It must be on a domain onboarded in
+    // Compute > Email Service > Email Sending; until resspark.com is registered and onboarded, sends report "not configured".
+    "EMAIL_FROM": "notifications@resspark.com",
     // Phase 4 (D-15). Vendor keys are optional secrets, set with `pnpm -C app secrets:provider plaid|truv`
     "PLAID_ENV": "sandbox",
     "TRUV_TEMPLATE_ID": "",

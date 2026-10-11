@@ -46,3 +46,8 @@ Route tests for templates, draft creation, the list, one request, and send. They
 - An RPC `request_not_draft` returns 409. Live mode with no tested credentials returns 409 `logics_not_configured`.
 - `getStaffProfile` is called once per send, which proves the token is verified once although two sub-apps share the prefix.
 - A request outside the firm returns 404.
+
+## Email on Send
+
+- With a fake `EMAIL` binding and `EMAIL_FROM`, Send answers `email: { ok: true, id: 'msg_9' }`, sends one message to the stored contact whose text holds the returned URL, and logs `request.email_sent`.
+- Without a sender, Send still returns the link with `email: { ok: false, reason: 'not_configured' }`.

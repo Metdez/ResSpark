@@ -9,7 +9,7 @@ import { RequestPage } from './request-page'
 vi.mock('@/lib/supabase', () => ({
   supabase: { auth: { getSession: async () => ({ data: { session: null } }) } },
 }))
-vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }))
+vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn(), warning: vi.fn() } }))
 // The page renders a typed router Link; outside a RouterProvider it becomes a plain anchor.
 vi.mock('@tanstack/react-router', () => ({
   Link: ({ to, params, children, className }: { to: string; params: { caseId: string }; children: React.ReactNode; className?: string }) => (
@@ -264,6 +264,22 @@ describe('RequestPage', () => {
     expect(button('Copy link')).toBeDefined()
     expect(el.textContent).toContain('Expires Oct 24, 2026')
     expect(el.textContent).not.toContain('Send the link')
+  })
+
+  it.each([
+    [{ ok: true, id: 'msg_1' }, 'success', 'Email sent to jordan@gmail.com'],
+    [{ ok: false, reason: 'not_configured' }, 'warning', 'Email not configured — copy the link and send it yourself'],
+  ] as const)('tells staff whether Send emailed the link (%o)', async (email, kind, text) => {
+    replies['POST /api/admin/requests/r1/send'] = {
+      status: 200,
+      body: { url: 'https://x/c/tok', expires_at: '2026-10-24T15:00:00Z', version: 1, email },
+    }
+    const el = await render({ status: 200, body: DRAFT })
+    await type(byLabel('Client email'), 'jordan@gmail.com')
+    await click(el.querySelector('[role="checkbox"]')!)
+    await click(button('Send link')!)
+    await vi.waitFor(() => expect(toast[kind]).toHaveBeenCalled(), { timeout: 10_000 })
+    expect(toast[kind]).toHaveBeenCalledWith(text)
   })
 
   it('shows Sending… while the send is in flight', async () => {

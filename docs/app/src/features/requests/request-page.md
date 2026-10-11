@@ -9,7 +9,7 @@
 | `sendErrorCopy(error)` | `case_changed` and the three Logics codes map to alert copy; anything else returns `undefined`. |
 | `Title`, `Heading` | The UI-SPEC Display (24 px / 600, one per page) and Heading (20 px / 600) roles. |
 | Detail query | `useQuery(['request', id], getRequest)` with `meta: { errorShown: true }` and `refetchInterval: pollInterval` (`lib/polling.ts`: 5 s while visible, 30 s after an error), so the header badge follows client uploads without a staff action or reload. |
-| Send mutation | `sendRequest(id, { email, phone, keep_flagged })`. On success it invalidates the detail query. `onError` is `unlessHandled(...)`: form codes and alert codes render here; anything else goes to the app's default handler (401 sign-out, 403, generic toast). |
+| Send mutation | `sendRequest(id, { email, phone, keep_flagged })`. On success it shows the automatic email's result as a toast (`toast.success` "Email sent to …" when it went out, `toast.warning` with the `emailCopy` line when it did not, for example "Email not configured — copy the link and send it yourself") and invalidates the detail query. `onError` is `unlessHandled(...)`: form codes and alert codes render here; anything else goes to the app's default handler (401 sign-out, 403, generic toast). |
 | Pending | Title `Request` plus three `Skeleton` rows; no form. |
 | Error | Title `Request` plus a destructive `Alert` with the generic staff copy and the muted error code. |
 | Header | `Request for {First Last}` (or `Request`), the request `StatusBadge`, the muted `Template: {name}`, and (Plan 07-09) a `433-A worksheet` text link: TanStack `Link` to `/admin/cases/$caseId/433a` with `params={{ caseId: d.case.case_id }}`. See `docs/app/src/features/financials/financials-page.md`. |

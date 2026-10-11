@@ -73,6 +73,8 @@ export interface SendResult {
   url: string
   expires_at: string
   version: number
+  // Send also emails the link; regenerate answers without it.
+  email?: EmailResult
 }
 
 const str = (v: unknown) => typeof v === 'string'

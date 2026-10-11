@@ -1,5 +1,6 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { verifyLinkToken } from '../src/auth/client-link'
+import { logEvent } from '../src/db/events'
 import { getIntegration } from '../src/db/integrations'
 import { listDashboardRequests } from '../src/db/dashboard'
 import { createRequest, getRequest, getTemplates, sendRequest } from '../src/db/requests'
@@ -300,6 +301,23 @@ describe('POST /api/admin/requests/:id/send', () => {
       contact_overridden: false,
       logics_case_id: 900001,
     })
+  })
+
+  it('emails the link to the stored contact on Send and logs request.email_sent', async () => {
+    const email = { send: vi.fn(async (_m: { to: string; text: string }) => ({ messageId: 'msg_9' })) }
+    const res = await send(jordan, { env: { EMAIL: email, EMAIL_FROM: 'notifications@resspark.com' } })
+    const body = (await res.json()) as { url: string; email: unknown }
+    expect(body.email).toEqual({ ok: true, id: 'msg_9' })
+    expect(email.send).toHaveBeenCalledTimes(1)
+    expect(email.send.mock.calls[0][0].to).toBe('jordan.rivera@example.com')
+    expect(email.send.mock.calls[0][0].text).toContain(body.url)
+    expect(logEvent).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ action: 'request.email_sent' }))
+  })
+
+  it('still returns the link when email is not set up, reporting not_configured', async () => {
+    const res = await send(jordan)
+    expect(res.status).toBe(200)
+    expect(((await res.json()) as { email: unknown }).email).toEqual({ ok: false, reason: 'not_configured' })
   })
 
   it('refuses a typo-flagged email with the suggestion', async () => {

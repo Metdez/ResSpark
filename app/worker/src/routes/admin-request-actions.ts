@@ -35,6 +35,23 @@ const staffEvent = (c: Context<AdminApp>, request: RequestRow) => ({
   actor_id: c.var.staff.userId,
 })
 
+// Emails the client link to the stored contact and records the outcome. Best-effort (D-09): never
+// throws, so a failed email or event write cannot undo a link that was already issued.
+async function emailClient(c: Context<AdminApp>, request: RequestRow, input: { to: string; firmName: string; url: string; expiresAt: string }) {
+  const result = await sendLinkEmail(c.env, { ...input, agentName: request.agent_display_name })
+  try {
+    await logEvent(c.env, {
+      ...staffEvent(c, request),
+      ...(result.ok
+        ? { action: 'request.email_sent', payload: { to: input.to, message_id: result.id } }
+        : { action: 'request.email_failed', payload: { to: input.to, reason: result.reason } }),
+    })
+  } catch {
+    // the email outcome is already decided; a lost audit row must not fail the request
+  }
+  return result
+}
+
 // C8 / LOOK-04: the cached case is compared with a fresh CaseInfo read. The phone goes through
 // normalizePhone on the fresh side, exactly as confirm did when it stored cases.phone_e164.
 function changedFields(cached: CaseRow, fresh: LogicsCaseSummary): string[] {
@@ -50,7 +67,7 @@ function changedFields(cached: CaseRow, fresh: LogicsCaseSummary): string[] {
 export const adminRequestActionsRoute = new Hono<AdminApp>()
   .use('*', staffAuth)
   .post('/:id/send', async (c) => {
-    const { request, case: kase } = await loadRequest(c)
+    const { request, case: kase, firm_name } = await loadRequest(c)
     if (!kase || kase.logics_case_id === null) {
       return refuse(c, 409, 'case_changed', { changed: ['logics_case_id'] })
     }
@@ -82,8 +99,9 @@ export const adminRequestActionsRoute = new Hono<AdminApp>()
     const changed = changedFields(kase, fresh)
     if (changed.length > 0) return refuse(c, 409, 'case_changed', { changed })
 
+    let issued: Awaited<ReturnType<typeof sendRequest>>
     try {
-      const issued = await sendRequest(c.env, {
+      issued = await sendRequest(c.env, {
         request_id: request.id,
         firm_id: c.var.staff.firmId,
         actor_id: c.var.staff.userId,
@@ -96,11 +114,16 @@ export const adminRequestActionsRoute = new Hono<AdminApp>()
           logics_case_id: kase.logics_case_id,
         },
       })
-      const url = await linkUrl(c, { id: issued.link_id, version: issued.version, revoked_at: null })
-      return c.json({ url, expires_at: issued.expires_at, version: issued.version })
     } catch (e) {
       throw rpcToHttp(e)
     }
+    const url = await linkUrl(c, { id: issued.link_id, version: issued.version, revoked_at: null })
+    // Send also emails the link (user decision 2026-10-11); the Email link button stays for re-sends.
+    // A phone-only contact gets no email; the link is still copyable.
+    const emailed = check.email && url
+      ? await emailClient(c, request, { to: check.email, firmName: firm_name, url, expiresAt: issued.expires_at })
+      : undefined
+    return c.json({ url, expires_at: issued.expires_at, version: issued.version, email: emailed })
   })
   .post('/:id/regenerate', async (c) => {
     const { request } = await loadRequest(c)
@@ -152,18 +175,11 @@ export const adminRequestActionsRoute = new Hono<AdminApp>()
     const to = request.contact_email
     const url = link && (await linkUrl(c, link))
     if (!link || !url || !to) return c.json({ ok: false, reason: 'no_link' })
-    const result = await sendLinkEmail(c.env, {
+    const result = await emailClient(c, request, {
       to,
       firmName: firm_name,
-      agentName: request.agent_display_name,
       url: step === undefined ? url : `${url}?step=${step}`,
       expiresAt: link.expires_at,
-    })
-    await logEvent(c.env, {
-      ...staffEvent(c, request),
-      ...(result.ok
-        ? { action: 'request.email_sent', payload: { to, message_id: result.id } }
-        : { action: 'request.email_failed', payload: { to, reason: result.reason } }),
     })
     return c.json(result)
   })

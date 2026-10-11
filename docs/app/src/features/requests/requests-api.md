@@ -7,7 +7,7 @@ The SPA side of the request routes from Plan 02-04 and the case read from Plan 0
 | `ItemKind`, `TemplateItem`, `Template` | The template item shape the Worker stores and accepts (`kind`, `label`, `required`, `config`). |
 | `CaseInfo` | `GET /api/admin/cases/:id`: `case_id`, `logics_case_id`, names, `email`, `phone_e164` (each may be `null` when Logics has no value). |
 | `RequestItem`, `RequestLink`, `RequestDetail` | `GET /api/admin/requests/:id`. `link.url` is `null` once the link is revoked. |
-| `SendResult` | `POST .../send` success: `url`, `expires_at`, `version`. |
+| `SendResult` | `POST .../send` success: `url`, `expires_at`, `version`, and `email` (the `EmailResult` of the automatic email; absent for a phone-only contact and on `/regenerate`). |
 | `str`, `strOrNull` | Tiny predicates used by the guards. |
 | `isCaseInfo`, `isItem`, `isLink` | Guards for the nested parts. |
 | `isRequestDetail` | Requires string `id`, `status`, `template_name`, a valid `case`, an `items` array of valid items, and `link` either `null` or valid. |
