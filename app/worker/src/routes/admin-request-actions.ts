@@ -2,7 +2,8 @@ import { Hono, type Context } from 'hono'
 import { checkContact, normalizePhone } from '../../../src/lib/contact'
 import type { CaseRow } from '../db/cases'
 import { getIntegration } from '../db/integrations'
-import { getRequest, sendRequest } from '../db/requests'
+import { logEvent } from '../db/events'
+import { getRequest, regenerateLink, revokeRequest, sendRequest, type RequestRow } from '../db/requests'
 import { resolveLogicsClient } from '../integrations/logics/config'
 import { fetchCaseSummary } from '../integrations/logics/lookup'
 import type { LogicsCaseSummary } from '../integrations/logics/mapper'
@@ -23,6 +24,15 @@ async function loadRequest(c: Context<AdminApp>) {
   if (!found) throw notFound()
   return found
 }
+
+// The actor is always the verified staff user (T-02-24).
+const staffEvent = (c: Context<AdminApp>, request: RequestRow) => ({
+  firm_id: c.var.staff.firmId,
+  case_id: request.case_id,
+  request_id: request.id,
+  actor_type: 'staff' as const,
+  actor_id: c.var.staff.userId,
+})
 
 // C8 / LOOK-04: the cached case is compared with a fresh CaseInfo read. The phone goes through
 // normalizePhone on the fresh side, exactly as confirm did when it stored cases.phone_e164.
@@ -91,4 +101,43 @@ export const adminRequestActionsRoute = new Hono<AdminApp>()
       throw rpcToHttp(e)
     }
   })
-
+  .post('/:id/regenerate', async (c) => {
+    const { request } = await loadRequest(c)
+    const { staff } = c.var
+    try {
+      const issued = await regenerateLink(c.env, { request_id: request.id, firm_id: staff.firmId, actor_id: staff.userId })
+      const url = await linkUrl(c, { id: issued.link_id, version: issued.version, revoked_at: null })
+      return c.json({ url, expires_at: issued.expires_at, version: issued.version })
+    } catch (e) {
+      throw rpcToHttp(e)
+    }
+  })
+  .post('/:id/revoke', async (c) => {
+    const { request } = await loadRequest(c)
+    const { staff } = c.var
+    try {
+      await revokeRequest(c.env, { request_id: request.id, firm_id: staff.firmId, actor_id: staff.userId })
+    } catch (e) {
+      throw rpcToHttp(e)
+    }
+    return c.json({ ok: true })
+  })
+  // Records agreement only: the platform never sends SMS; the agent texts from their own phone (M1).
+  .post('/:id/consent', async (c) => {
+    const { request, case: kase } = await loadRequest(c)
+    const { agreed } = await readBody(c)
+    // Only the literal boolean counts: 'true', 1, or a missing field is not consent.
+    if (!(agreed === true)) throw badRequest()
+    const event_id = await logEvent(c.env, {
+      ...staffEvent(c, request),
+      action: 'consent.sms',
+      payload: { phone_e164: request.contact_phone_e164 ?? kase?.phone_e164 ?? null },
+    })
+    return c.json({ ok: true, event_id })
+  })
+  // D-09: the copy is recorded whether or not email is configured. No body is read.
+  .post('/:id/copied', async (c) => {
+    const { request } = await loadRequest(c)
+    const event_id = await logEvent(c.env, { ...staffEvent(c, request), action: 'request.link_copied', payload: {} })
+    return c.json({ ok: true, event_id })
+  })
