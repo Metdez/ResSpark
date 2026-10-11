@@ -17,7 +17,8 @@ if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
 from document_parse import (
-    _CHAT_URL, _page_text, _parse_classified, classify_upload, merge_documents, parse_texts, parse_packet, parse_uploads,
+    _CHAT_URL, _page_text, _parse_classified, classify_upload, merge_documents, parse_texts,
+    parse_packet, parse_uploads, parse_uploads_with_evidence,
 )
 
 
@@ -55,7 +56,7 @@ def _with_model(content, document_type, texts=None, env=None, payload=None):
 
 class DocumentParseTests(unittest.TestCase):
     def test_example_packets_fill_case_columns(self):
-        marcus = parse_packet(ROOT / "Examples/01_marcus_delgado_CNC")
+        marcus = parse_packet(ROOT / "examples/01_marcus_delgado_CNC")
         self.assertEqual(marcus["total_tax_owed"], 60000.0)
         self.assertEqual(marcus["tax_only_balance"], 44500.0)
         self.assertEqual(marcus["csed_months_remaining"], 79)
@@ -75,7 +76,7 @@ class DocumentParseTests(unittest.TestCase):
         self.assertFalse(marcus["has_unexplained_deposits"])
         self.assertEqual(marcus["unexplained_deposits_monthly"], 0.0)
 
-        whitfield = parse_packet(ROOT / "Examples/02_whitfield_gregory_OIC")
+        whitfield = parse_packet(ROOT / "examples/02_whitfield_gregory_OIC")
         self.assertEqual(whitfield["total_tax_owed"], 82600.0)
         self.assertEqual(whitfield["tax_only_balance"], 60000.0)
         self.assertEqual(whitfield["csed_months_remaining"], 55)
@@ -89,7 +90,7 @@ class DocumentParseTests(unittest.TestCase):
         self.assertEqual(whitfield["cash_and_bank_balances"], 2305.9)
         self.assertFalse(whitfield["has_unexplained_deposits"])
 
-        renata = parse_packet(ROOT / "Examples/03_renata_alves_streamlined_IA")
+        renata = parse_packet(ROOT / "examples/03_renata_alves_streamlined_IA")
         self.assertEqual(renata["total_tax_owed"], 28000.0)
         self.assertEqual(renata["tax_only_balance"], 24000.0)
         self.assertEqual(renata["csed_months_remaining"], 91)
@@ -486,6 +487,33 @@ class DocumentParseTests(unittest.TestCase):
         ], {})
         self.assertIsNone(error)
         self.assertEqual(merge_documents([part])["life_insurance_cash_value"], 5000.0)
+
+    def test_upload_evidence_keeps_only_short_matching_excerpts(self):
+        health = next((ROOT / "examples").rglob("07_Health_Insurance_Statement.pdf"))
+
+        row, errors, evidence = parse_uploads_with_evidence([("health.pdf", health)])
+
+        self.assertEqual(errors, [])
+        self.assertEqual(row["actual_health_insurance_premiums"], 178.0)
+        field = evidence[0]["fields"][0]
+        self.assertEqual(field["key"], "actual_health_insurance_premiums")
+        self.assertIn("Premium", field["snippet"])
+        self.assertLessEqual(len(field["snippet"]), 240)
+        self.assertTrue(field["usedInCanonical"])
+
+        whitfield = ROOT / "examples/02_whitfield_gregory_OIC"
+        _row, _errors, evidence = parse_uploads_with_evidence([
+            ("transcript.pdf", whitfield / "01_IRS_Account_Transcript.pdf"),
+            ("lease.pdf", whitfield / "05_Lease_Statement.pdf"),
+        ])
+        fields = {
+            field["key"]: field["snippet"]
+            for document in evidence
+            for field in document["fields"]
+        }
+        self.assertIn("3315 Olentangy River Rd", fields["state_of_residence"])
+        self.assertNotIn("$1,200.00", fields["state_of_residence"])
+        self.assertEqual(fields["tax_only_balance"].count("$20,000.00"), 3)
 
     def test_unreadable_file_is_named_and_the_rest_are_parsed(self):
         lease = ROOT / "examples/01_marcus_delgado_CNC/05_Lease_Statement.pdf"

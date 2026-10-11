@@ -1,0 +1,13 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "npm --prefix src/frontend run build",
+  "installCommand": "npm --prefix src/frontend ci",
+  "outputDirectory": "src/frontend/dist",
+  "framework": "vite",
+  "functions": {
+    "api/cases.py": {
+      "excludeFiles": "{examples/**,forms/**,planning/**,src/tests/**,src/frontend/**,supabase/**}",
+      "maxDuration": 60
+    }
+  }
+}

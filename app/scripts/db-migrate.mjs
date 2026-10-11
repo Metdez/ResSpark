@@ -35,7 +35,7 @@ if (args.includes("--status")) {
 }
 
 const files = readdirSync(MIGRATIONS_DIR)
-  .filter((file) => file.endsWith(".sql"))
+  .filter((file) => /^\d{4}_.*\.sql$/.test(file)) // only NNNN_ files; timestamped Supabase CLI migrations from main are not ours to apply
   .sort();
 const pending = files.filter((file) => !applied.has(file.slice(0, -4)));
 

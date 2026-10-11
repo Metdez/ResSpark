@@ -9,6 +9,8 @@ export interface DocumentUploadScreenOptions {
 }
 
 const acceptedDocumentTypes = ".pdf,.jpg,.jpeg,.png,.tif,.tiff,.heic";
+const plaidLogo = new URL("../../assets/Plaidpng.png", import.meta.url).href;
+const gustoLogo = new URL("../../assets/Gusto_logo.png", import.meta.url).href;
 
 const documentNameRules: Array<[string, RegExp]> = [
   ["bankruptcy", /bankruptcy|petition|case.status/i],
@@ -96,6 +98,16 @@ export function renderDocumentUpload(root: HTMLElement, options: DocumentUploadS
         <p class="eyebrow">Supporting documents</p>
         <h1 id="documents-title" tabindex="-1">Upload the documents that apply to you.</h1>
         <p class="help-text">Your answers determine this list. Required items are marked. You can select more than one file for each item.</p>
+        <section class="account-connections" aria-label="Connect financial accounts">
+          <div class="connection-option">
+            <img src="${plaidLogo}" alt="" aria-hidden="true">
+            <strong>Connect your bank account with Plaid</strong>
+          </div>
+          <div class="connection-option">
+            <img src="${gustoLogo}" alt="" aria-hidden="true">
+            <strong>Connect to payroll with Gusto</strong>
+          </div>
+        </section>
         <section class="quick-upload" role="button" tabindex="0" aria-labelledby="quick-upload-title" aria-describedby="quick-upload-help">
           <div>
             <p class="quick-upload-kicker">Upload anytime</p>

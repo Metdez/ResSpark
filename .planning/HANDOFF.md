@@ -35,3 +35,8 @@ Ready to run in parallel next session: **03-05, 04-03, 05-03, 05-04** (check fil
 - Decision: should a request with some items approved read "In progress" instead of "Opened"? (locked D-06 says Opened.)
 - Commit or discard the uncommitted edits in `src/frontend/` before Plan 07-08 removes that folder.
 - Fix "32 questions" → 28 in `CLAUDE.md` and `.claude/CLAUDE.md`.
+
+## Follow-up from the 2026-10-11 merge of origin/main
+
+- **Re-port the 433-A engine (redo 07-01 as gap closure).** origin/main changed `src/determination.py` and its tests (v2 determination, OIC calculator wording). Regenerating `golden.json` against the merged Python gives 95 parity failures, so `golden.json` was kept at the pre-merge oracle and `pnpm -C app run check` now fails only at the golden-freshness step until the TypeScript engine is re-ported.
+- origin/main also brought `vercel.json`, `api/cases.py`, `src/logics.py`, timestamped Supabase CLI migrations, and a root npm lockfile. The lockfile was dropped (pnpm root only); `app/scripts/db-migrate.mjs` now applies only `NNNN_*.sql` files so the timestamped migrations are never run against the live project; `supabase/config.toml` kept the minimal pushed version; `.gitignore` did not take main's `.planning/` ignore.

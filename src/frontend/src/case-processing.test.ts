@@ -19,9 +19,15 @@ describe("case processing API", () => {
         nextStep: "Professional review.",
         requirements: [],
         reviewNotes: [],
+        monthlyIncome: 0,
+        monthlyExpenses: 0,
+        netDisposableIncome: 0,
+        netRealizableEquity: 0,
+        suggestedOfferOrPayment: 0,
       },
       documents: [],
       financialSections: [],
+      sourceOfTruth: { fieldSections: [], calculationSections: [], documentEvidence: [] },
     };
     const fetch = vi.fn().mockResolvedValue({ ok: true, json: async () => result });
     vi.stubGlobal("fetch", fetch);

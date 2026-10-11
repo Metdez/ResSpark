@@ -173,9 +173,10 @@ CREATE FUNCTION canonical_state_name(input_state TEXT)
 RETURNS TEXT
 LANGUAGE SQL
 STABLE
+SET search_path = ''
 AS $$
     SELECT COALESCE(
-        (SELECT canonical_state FROM state_aliases WHERE alias = LOWER(BTRIM(input_state))),
+        (SELECT canonical_state FROM public.state_aliases WHERE alias = LOWER(BTRIM(input_state))),
         BTRIM(input_state)
     );
 $$;
@@ -184,13 +185,14 @@ CREATE FUNCTION normalize_county_name(input_county TEXT)
 RETURNS TEXT
 LANGUAGE SQL
 STABLE
+SET search_path = ''
 AS $$
     WITH input_value AS (SELECT LOWER(BTRIM(input_county)) AS county)
     SELECT COALESCE(
         (
             SELECT BTRIM(LEFT(input_value.county, CHAR_LENGTH(input_value.county) - CHAR_LENGTH(suffix)))
             FROM input_value
-            JOIN county_suffixes ON input_value.county LIKE '%' || suffix
+            JOIN public.county_suffixes ON input_value.county LIKE '%' || suffix
             ORDER BY CHAR_LENGTH(suffix) DESC
             LIMIT 1
         ),
@@ -298,5 +300,29 @@ CREATE TABLE determination_runs (
 CREATE INDEX documents_case_id_idx ON documents(case_id);
 CREATE INDEX document_extractions_document_id_idx ON document_extractions(document_id);
 CREATE INDEX determination_runs_case_id_idx ON determination_runs(case_id, created_at DESC);
+
+-- Supabase exposes the public schema through its Data API. These tables contain
+-- taxpayer financial facts or server-only IRS lookup data, so browser roles get
+-- no direct access. The backend connects with a dedicated, least-privilege role.
+ALTER TABLE cases ENABLE ROW LEVEL SECURITY;
+ALTER TABLE question_definitions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE case_financial_data ENABLE ROW LEVEL SECURITY;
+ALTER TABLE state_aliases ENABLE ROW LEVEL SECURITY;
+ALTER TABLE county_suffixes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE housing_utilities_standards ENABLE ROW LEVEL SECURITY;
+ALTER TABLE msa_county_standards ENABLE ROW LEVEL SECURITY;
+ALTER TABLE state_region_standards ENABLE ROW LEVEL SECURITY;
+ALTER TABLE national_standards ENABLE ROW LEVEL SECURITY;
+ALTER TABLE health_care_standards ENABLE ROW LEVEL SECURITY;
+ALTER TABLE transportation_ownership_standards ENABLE ROW LEVEL SECURITY;
+ALTER TABLE transportation_operating_standards ENABLE ROW LEVEL SECURITY;
+ALTER TABLE documents ENABLE ROW LEVEL SECURITY;
+ALTER TABLE document_extractions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE determination_runs ENABLE ROW LEVEL SECURITY;
+
+REVOKE ALL ON ALL TABLES IN SCHEMA public FROM anon, authenticated;
+REVOKE ALL ON ALL SEQUENCES IN SCHEMA public FROM anon, authenticated;
+REVOKE EXECUTE ON FUNCTION canonical_state_name(TEXT) FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION normalize_county_name(TEXT) FROM PUBLIC, anon, authenticated;
 
 COMMIT;

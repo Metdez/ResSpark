@@ -1,0 +1,11 @@
+.env
+.env.*
+.planning/
+examples/
+forms/
+planning/
+supabase/
+src/schemas/
+src/tests/
+**/__pycache__/
+src/frontend/dist/
