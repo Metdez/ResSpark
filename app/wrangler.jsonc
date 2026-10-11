@@ -18,18 +18,25 @@
     // "fake" serves fixture cases (C1); "live" after Settings → Integrations → Test connection succeeds
     "LOGICS_MODE": "fake",
     // Resend delivers only to the account owner until a domain is verified (D-09)
-    "RESEND_FROM": "onboarding@resend.dev"
+    "RESEND_FROM": "onboarding@resend.dev",
+    // Phase 4 (D-15). Vendor keys are optional secrets, set with `pnpm -C app secrets:provider plaid|truv`
+    "PLAID_ENV": "sandbox",
+    "TRUV_TEMPLATE_ID": "",
+    "PLAID_REMOVE_AFTER_DAYS": "30",
+    "BANK_PROVIDER": "plaid"
   },
-  // Deploy fails if any of these is not set on the Worker (D-07); values come from provision-secrets.mjs
+  // Deploy fails if any of these is not set on the Worker (D-07); values come from provision-secrets.mjs.
+  // PLAID_* and TRUV_* stay out on purpose: without them the portal falls back to manual upload (D-15).
   "secrets": {
-    "required": ["SUPABASE_URL", "SUPABASE_SECRET_KEY", "CLIENT_LINK_HMAC_KEY", "INTEGRATION_ENC_KEY"]
+    "required": ["SUPABASE_URL", "SUPABASE_SECRET_KEY", "CLIENT_LINK_HMAC_KEY", "INTEGRATION_ENC_KEY", "TOKEN_ENC_KEY_1"]
   },
   // Per-ip throttle on /c/:token guessing (D-18); link-rate-limit.ts falls back to memory without it
   "ratelimits": [
     { "name": "LINK_RATE_LIMITER", "namespace_id": "1001", "simple": { "limit": 20, "period": 60 } }
   ],
   "triggers": {
-    "crons": ["*/15 * * * *"]
+    // 15-minute reconciler and the 03:00 UTC Item-removal step (cron.ts branches on controller.cron)
+    "crons": ["*/15 * * * *", "0 3 * * *"]
   },
   "queues": {
     "producers": [{ "queue": "resspark-jobs", "binding": "JOBS" }],
@@ -37,9 +44,16 @@
       {
         "queue": "resspark-jobs",
         "max_batch_size": 1,
-        "max_retries": 8,
+        "max_retries": 5,
+        "retry_delay": 60,
         "dead_letter_queue": "resspark-jobs-dlq",
         "max_concurrency": 3
+      },
+      // Records dead-lettered jobs (jobs/index.ts DLQ branch); never retried
+      {
+        "queue": "resspark-jobs-dlq",
+        "max_batch_size": 10,
+        "max_retries": 0
       }
     ]
   },

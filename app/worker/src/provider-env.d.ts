@@ -3,7 +3,6 @@
 interface Env {
   PLAID_CLIENT_ID?: string
   PLAID_SECRET?: string
-  PLAID_ENV?: string
   TRUV_CLIENT_ID?: string
   TRUV_SECRET?: string
 }

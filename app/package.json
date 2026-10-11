@@ -29,6 +29,7 @@
     "db:migrate": "node scripts/db-migrate.mjs",
     "questions:reconcile": "node scripts/reconcile-questions.mjs",
     "secrets:provision": "dotenv -e ../.env -e ../src/frontend/.env -- node scripts/provision-secrets.mjs",
+    "secrets:provider": "dotenv -e ../.env -e ../src/frontend/.env -- node scripts/provision-secrets.mjs --provider",
     "staff:create": "dotenv -e .dev.vars -- node scripts/create-staff.mjs",
     "auth:config-push": "node scripts/supabase-config-push.mjs",
     "spike": "dotenv -e .dev.vars -- node"

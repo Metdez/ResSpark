@@ -270,6 +270,26 @@ const checks = [
       await expectJson(res, 401, (b) => isObject(b.error) && b.error.code === 'no_session')
     },
   },
+  // --- Plan 04-02: webhook route and staff connections without credentials ---
+  {
+    name: 'webhooks truv 401',
+    run: async () => {
+      const res = await fetch(`${base}/api/webhooks/truv`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' })
+      await expectJson(res, 401, (b) => isObject(b.error) && b.error.code === 'invalid_signature')
+    },
+  },
+  {
+    name: 'webhooks unknown 404',
+    run: async () =>
+      expectJson(await fetch(`${base}/api/webhooks/nope`, { method: 'POST', body: '{}' }), 404, isNotFoundEnvelope),
+  },
+  {
+    name: 'admin connections 401',
+    run: async () => {
+      const res = await fetch(`${base}/api/admin/requests/00000000-0000-0000-0000-000000000000/connections`)
+      await expectJson(res, 401, (b) => isObject(b.error) && b.error.code === 'unauthorized')
+    },
+  },
   { name: 'auth /c/ exchange', auth: true, run: linkExchange },
   { name: 'auth /api/c portal', auth: true, run: clientPortal },
   {

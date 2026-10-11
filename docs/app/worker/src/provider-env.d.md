@@ -1,6 +1,6 @@
 # `app/worker/src/provider-env.d.ts`
 
-Global declaration merge onto the Wrangler-generated `Env` interface: `PLAID_CLIENT_ID`, `PLAID_SECRET`, `PLAID_ENV`, `TRUV_CLIENT_ID`, `TRUV_SECRET`, all optional strings.
+Global declaration merge onto the Wrangler-generated `Env` interface: `PLAID_CLIENT_ID`, `PLAID_SECRET`, `TRUV_CLIENT_ID`, `TRUV_SECRET`, all optional strings. `PLAID_ENV` was removed in Plan 04-02: it is now a `wrangler.jsonc` var (`"sandbox"`), so `cf-typegen` emits it as a required `string`.
 
 These are optional Worker secrets (D-15): they are deliberately not in `wrangler.jsonc` `secrets.required`, so the Worker deploys and serves the manual-upload fallback before the vendor keys exist, and `wrangler types` does not emit them. Adapters read them as possibly `undefined` (`truvConfigured`, `plaidAdapter.configured`).
 

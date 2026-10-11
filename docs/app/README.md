@@ -30,7 +30,8 @@ Run from the repo root. Every script that needs a secret loads it with `dotenv -
 - **smoke** — `pnpm -C app run smoke https://resspark.zh-a16.workers.dev`: post-deploy proof without credentials (`/admin`, `/api/config`, the 404s, `/c/` pages and headers, the `/api/c` 401s).
 - **smoke:auth** — `pnpm -C app run smoke:auth https://resspark.zh-a16.workers.dev --auth`: adds the staff and client-link checks. Add `--client-flow` for the Phase 2 acceptance run: lookup, confirm, create, send, open the link, Start, heartbeat, revoke, and the dead link, on fixture case 900003 (see `docs/app/scripts/smoke.md`).
 - **db:migrate** — `pnpm -C app run db:migrate` (or `node app/scripts/db-migrate.mjs`): applies pending `supabase/migrations/*.sql` in order and records them in `public.app_migrations`. `--status`, `--dry-run`, and `--query "<sql>"` are also accepted.
-- **secrets:provision** — `pnpm -C app run secrets:provision`: sets the three Worker secrets over stdin and appends missing keys to `app/.dev.vars`. Re-runs keep the existing `CLIENT_LINK_HMAC_KEY`.
+- **secrets:provision** — `pnpm -C app run secrets:provision`: sets the five required Worker secrets over stdin and appends missing keys to `app/.dev.vars`. Re-runs keep the existing `CLIENT_LINK_HMAC_KEY`, `INTEGRATION_ENC_KEY`, and `TOKEN_ENC_KEY_1`.
+- **secrets:provider** — `pnpm -C app run secrets:provider plaid` (or `truv`): prompts for that provider's two vendor keys with echo off (or reads them line by line from piped stdin) and sets them on the Worker. See § USER ACTION REQUIRED (Phase 4).
 - **staff:create** — `pnpm -C app run staff:create --email <e> --name <n> [--role staff|admin]`: creates a staff user with `app_metadata` claims and a `staff_profiles` row.
 - **auth:config-push** — `pnpm -C app run auth:config-push`: pushes tracked `supabase/config.toml` (public sign-up off) to the live project.
 - **questions:reconcile** — `pnpm -C app run questions:reconcile`: diffs `src/questions.py` ids against `question_definitions` (see Question contract).
@@ -44,7 +45,7 @@ Run from the repo root. Every script that needs a secret loads it with `dotenv -
 
 ## Secrets
 
-Names only. Values live in the places listed and nowhere else. Only the first four are in `app/wrangler.jsonc` `secrets.required`; optional and reserved names are deliberately left out so deploys stay green until a key exists.
+Names only. Values live in the places listed and nowhere else. Only the five required keys (`SUPABASE_URL`, `SUPABASE_SECRET_KEY`, `CLIENT_LINK_HMAC_KEY`, `INTEGRATION_ENC_KEY`, `TOKEN_ENC_KEY_1`) are in `app/wrangler.jsonc` `secrets.required`. Optional and vendor names are deliberately left out so deploys stay green until a key exists.
 
 | Name | Where it lives | Set by |
 |------|----------------|--------|
@@ -61,10 +62,12 @@ Names only. Values live in the places listed and nowhere else. Only the first fo
 | `RESEND_API_KEY` | optional Worker secret — not set until the user creates a Resend key | `pnpm -C app wrangler secret put RESEND_API_KEY` |
 | `RESEND_FROM` | `wrangler.jsonc` var (not a secret), default `onboarding@resend.dev` | Resend delivers that sender only to the account owner until a domain is verified (D-09) |
 | `LOGICS_MODE` | `wrangler.jsonc` var (not a secret) | `fake` for the demo; `live` after Test connection succeeds (see § Logics mode) |
-| `TRUV_CLIENT_ID` | reserved — not set in Phase 1 | Phase 4 (payroll, spike e); `pnpm -C app wrangler secret put TRUV_CLIENT_ID` |
-| `TRUV_SECRET` | reserved — not set in Phase 1 | Phase 4 (payroll, spike e); `pnpm -C app wrangler secret put TRUV_SECRET` |
+| `TOKEN_ENC_KEY_1` | Worker secret + `app/.dev.vars` (required) | `pnpm -C app secrets:provision` (Phase 4, D-15). It seals Plaid access tokens in `connection_secrets` and is kept if it already exists, because rotating it orphans every stored token. |
+| `PLAID_CLIENT_ID`, `PLAID_SECRET` | optional Worker secrets + `app/.dev.vars` | `pnpm -C app secrets:provider plaid`, entered at the prompt (echo off). Without them, bank `/start` returns `provider_not_configured` and the portal offers manual upload only. |
+| `TRUV_CLIENT_ID`, `TRUV_SECRET` | optional Worker secrets + `app/.dev.vars` | `pnpm -C app secrets:provider truv`, entered at the prompt. `TRUV_SECRET` is also the webhook signing key. Without them, payroll `/start` returns `provider_not_configured`. |
+| `PLAID_ENV`, `TRUV_TEMPLATE_ID`, `PLAID_REMOVE_AFTER_DAYS`, `BANK_PROVIDER` | `wrangler.jsonc` vars (not secrets) | `sandbox`, `""`, `30`, `plaid` (Phase 4, D-15) |
 
-`app/.dev.vars.example` lists every name above that belongs in `app/.dev.vars`, with the reserved ones commented out.
+`app/.dev.vars.example` lists every name above that belongs in `app/.dev.vars`, with empty values.
 
 Logics credentials are no longer environment secrets: each firm's API key and secret token are entered in Settings → Integrations and stored encrypted in `firm_integrations` (D-01), so the old `LOGICS_API_KEY` / `LOGICS_SECRET_TOKEN` names are gone.
 
@@ -110,11 +113,27 @@ Phase 2 works in fixture mode today. These items need the user (or Andrew at Val
    - What `CaseInfo` returns for an unknown case id (`app/worker/src/integrations/logics/client.ts`). The code currently treats the undocumented answer as "not found".
    - Which phone format the `phone` lookup header accepts (`app/worker/src/integrations/logics/lookup.ts`). The code currently retries in the documented format.
 
+## USER ACTION REQUIRED (Phase 4)
+
+Phase 4 deploys and runs without any vendor key: payroll and bank steps show the manual-upload fallback. To turn on the live connections (Sandbox keys are the demo path):
+
+1. **Keys.** Run `pnpm -C app secrets:provider plaid` and paste the Plaid Sandbox Client ID and Secret (Plaid Dashboard → Developers → Keys). Run `pnpm -C app secrets:provider truv` and paste the Truv Sandbox Client ID and Access Secret (Truv Dashboard → Development → Keys). The prompts do not echo. Values go only to the Worker and the git-ignored `app/.dev.vars`. Leave a prompt empty to skip that key.
+2. **Plaid Dashboard.**
+   - Developers → API → Allowed redirect URIs: add `https://resspark.zh-a16.workers.dev/c/return`.
+   - Link → Link customization: create a Sandbox customization whose use case reads "Prepare IRS tax paperwork (Form 433-A) for review by your tax-resolution firm", so the data-sharing screen matches the consent text.
+3. **Truv Dashboard.**
+   - Development → Web Hooks: register `https://resspark.zh-a16.workers.dev/api/webhooks/truv` for Sandbox, subscribed to `task-status-updated` and `order-status-updated`.
+   - Orders settings: set order expiry to at least 14 days (the default is 72 h).
+   - Optional: create a template "ResSpark payroll" (income; payroll + docs data sources) and put its id in `TRUV_TEMPLATE_ID` in `app/wrangler.jsonc`, then redeploy.
+4. **Sandbox demo logins.**
+   - Plaid: `user_good` / `pass_good`.
+   - Truv: `goodlogin` / `goodpassword`, or `multiple.employments` / `goodpassword` for several employers.
+
 ## Workers plan notes
 
 - The Cloudflare account is on **Workers Paid** as of 2026-10-10 (verified via the subscriptions API, CONTEXT D-06 update).
 - Limits that apply: 30 s CPU per invocation, 1,000 subrequests per invocation.
-- Queues and cron are available. Plan 03 created `resspark-jobs` and its dead-letter queue `resspark-jobs-dlq`, with the `JOBS` producer and consumer bound to `resspark`, and a `*/15 * * * *` cron trigger.
+- Queues and cron are available. Plan 03 created `resspark-jobs` and its dead-letter queue `resspark-jobs-dlq`, with the `JOBS` producer and consumer bound to `resspark`, and a `*/15 * * * *` cron trigger. Plan 04-02 set the consumer to `max_retries: 5` / `retry_delay: 60`, added a consumer on `resspark-jobs-dlq`, and added the daily `0 3 * * *` trigger (`worker/src/cron.ts`).
 - Cloudflare Email Sending is available on this plan but needs a sending domain on Cloudflare DNS, which the firm does not have yet. Phase 2 sends email through Resend over `fetch` (spike d).
 - Platform invocation logs are off (`observability.logs.invocation_logs: false`) so URLs carrying client-link tokens are never logged; the Worker's allowlisted logger is the only log sink.
 

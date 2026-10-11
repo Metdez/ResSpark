@@ -7,8 +7,12 @@ SUPABASE_PUBLISHABLE_KEY=
 DEMO_STAFF_EMAIL=
 DEMO_STAFF_PASSWORD=
 # STAFF_PASSWORD__<email with @ and . as _>=   one per created staff user
+TOKEN_ENC_KEY_1=
+# Phase 4 vendor keys (optional): pnpm -C app secrets:provider plaid|truv fills them
+PLAID_CLIENT_ID=
+PLAID_SECRET=
+TRUV_CLIENT_ID=
+TRUV_SECRET=
 # Reserved for later phases:
 # RESEND_API_KEY=
 # RESEND_FROM=   a wrangler.jsonc var in production; set here only to override locally
-# TRUV_CLIENT_ID=
-# TRUV_SECRET=
