@@ -5,6 +5,7 @@ import { secureHeaders } from 'hono/secure-headers'
 import { logger } from './log/logger'
 import { type StaffCtx } from './middleware/staff-auth'
 import { adminSessionRoute } from './routes/admin-session'
+import { clientLinkRoute } from './routes/client-link'
 import { configRoute } from './routes/config'
 
 export const app = new Hono<{
@@ -36,6 +37,7 @@ app.onError((err, c) => {
 
 app.route('/api/config', configRoute)
 app.route('/api/admin/session', adminSessionRoute)
+app.route('/c', clientLinkRoute)
 
 app.notFound(async (c) => {
   // path read for routing only, never logged
