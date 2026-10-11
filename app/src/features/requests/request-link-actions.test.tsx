@@ -1,4 +1,3 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   button,
   cleanup,
@@ -8,6 +7,7 @@ import {
   waitFor,
   type Reply,
 } from '@/test-utils/query-render'
+import { afterEach, describe, expect, it, vi, type Mock } from 'vitest'
 import { RequestLinkActions } from './request-link-actions'
 import type { RequestDetail } from './requests-api'
 
@@ -47,13 +47,13 @@ const SENT: RequestDetail = {
 const P = '/api/admin/requests/r1'
 const CONSENT_LABEL =
   'Client agreed on this call to receive a text at (•••) •••-0001'
-let onChanged: ReturnType<typeof vi.fn>
+let onChanged: Mock<() => void>
 
 async function render(
   replies: Record<string, Reply> = {},
   request: RequestDetail = SENT
 ) {
-  onChanged = vi.fn()
+  onChanged = vi.fn<() => void>()
   return renderWithQuery(
     <RequestLinkActions request={request} onChanged={onChanged} />,
     replies

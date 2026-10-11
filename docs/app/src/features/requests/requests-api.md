@@ -16,6 +16,9 @@ The SPA side of the request routes from Plan 02-04 and the case read from Plan 0
 | `isCreated` | `{ request_id }` from `POST /api/admin/requests`. |
 | `json(body)` | `POST` init with a JSON body. |
 | `getRequest`, `getTemplates`, `getCase`, `createRequest`, `sendRequest`, `markCopied` | One-line callers, each `api(path, init, guard)`. `markCopied` posts `/copied` so the Worker logs `request.link_copied` (D-09). |
+| `EmailResult`, `isEmailResult` | `POST .../email` always answers 200: `{ ok: true, id }` or `{ ok: false, reason: 'not_configured' \| 'send_failed' \| 'no_link' }` (D-09). The guard only requires a boolean `ok`. |
+| `emailLink`, `regenerateLink`, `revokeLink`, `recordConsent` | Plan 02-06 callers for `/email`, `/regenerate` (returns a `SendResult`), `/revoke` (`{ ok: true }`), and `/consent` (posts `{ agreed: true }`, the only body the Worker accepts). |
+| `RequestListRow`, `isRequestList`, `listRequests()` | `GET /api/admin/requests`: `{ requests: [{ id, status, client_name, sent_at, expires_at, created_at }] }`, newest first; `sent_at` and `expires_at` may be `null`. |
 | `SendErrorExtras`, `sendErrorExtras(err)` | Reads the extra fields of a 400/409 send refusal from `ApiError.body`: `email_error`, `phone_error`, `email_suggestion` (strings), `differs` (only `email`/`phone` survive), `changed` (strings). Returns `{}` when there is no body. |
 | `logicsErrorCopy` (re-export) | The Logics two-part copy, defined once in `features/lookup/lookup-api.ts` and re-exported here for the send screen. |
 | `unlessHandled(qc, handled)` | Builds a mutation `onError`. Errors the screen renders itself (inline or in an `Alert`) stop there. Everything else is passed to the app-wide default handler from `main.tsx`, so 401 still signs out, 403 still toasts, and unknown codes still get the generic toast. Needed because a mutation's own `onError` replaces the default one. |

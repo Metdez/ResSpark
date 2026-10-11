@@ -14,10 +14,9 @@
 | Error | Title `Request` plus a destructive `Alert` with the generic staff copy and the muted error code. |
 | Header | `Request for {First Last}` (or `Request`), the request `StatusBadge`, and the muted `Template: {name}`. |
 | Send card | Only while `status === 'draft'` and before a send succeeds: Heading `Send the link`, the send alert when there is one, and `RequestContactForm`. Editing a field resets the mutation, which clears the old refusal. |
-| `link` | The fresh `send.data`, else the stored link when it has a URL (a revoked link has none). |
-| Plan 06 slot | A comment marks where `RequestLinkActions` (email, regenerate, revoke, SMS consent) mounts. Not implemented here. |
-| Revoked | The muted line `This link was revoked.` |
-| `LinkCard` | Heading `Client link`, a read-only input holding the URL (focus selects all), the primary `Copy link` button, and `Expires {Oct 24, 2026}` with the ISO timestamp in `title`. Copy writes to the clipboard, toasts `Link copied`, and fire-and-forgets `markCopied` (`POST /copied`, D-09). A clipboard failure toasts `Couldn't copy the link` / `Select the link and copy it yourself.` instead. |
+| `link` | The stored link once it exists (so a regenerate refetch shows the new URL and expiry); `null` when the stored link is revoked (no URL); before the post-send refetch, the fresh `send.data`. |
+| Client link card | Rendered when there is a link or the request is revoked. Heading `Client link`, then `LinkRow`, or the muted line `This link was revoked.` in its place. Below, once the request is past `draft`, `RequestLinkActions` (email, regenerate, revoke, SMS consent) with `onChanged` refetching the detail query. |
+| `LinkRow` | A read-only input holding the URL (focus selects all), the primary `Copy link` button, and `Expires {Oct 24, 2026}` with the ISO timestamp in `title`. Copy writes to the clipboard, toasts `Link copied`, and fire-and-forgets `markCopied` (`POST /copied`, D-09). A clipboard failure toasts `Couldn't copy the link` / `Select the link and copy it yourself.` instead. |
 | `ItemsCard` | Heading `Items`, one row per item sorted by `position`: label, muted `Required`/`Optional`, and the staff item badge. |
 
 ## Notes
@@ -39,4 +38,6 @@
 - 400 `contact_invalid` shows the server's email error under the field (`aria-invalid`, `aria-describedby`);
 - 409 `logics_not_configured` shows its alert;
 - a sent request shows the link card and no form;
+- the link actions (`Email link`, `Revoke link`) sit inside the `Client link` card, and `Email link` is an outline button (Copy link stays the only primary);
+- a revoked request shows `Revoked`, `This link was revoked.`, and no URL, `Copy link`, or `Revoke link`;
 - loading shows three skeletons and no input.

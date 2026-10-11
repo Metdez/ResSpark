@@ -2,8 +2,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Copy } from 'lucide-react'
 import { toast } from 'sonner'
 import { ApiError } from '@/lib/api'
-import { itemStatusBadge, requestStatusBadge } from '@/lib/status'
 import { GENERIC_ERROR } from '@/lib/handle-server-error'
+import { itemStatusBadge, requestStatusBadge } from '@/lib/status'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { StatusBadge } from '@/components/status-badge'
 import { RequestContactForm } from './request-contact-form'
+import { RequestLinkActions } from './request-link-actions'
 import {
   formatDate,
   getRequest,
@@ -90,7 +91,12 @@ export function RequestPage({ requestId }: { requestId: string }) {
 
   const d = detail.data
   const name = [d.case.first_name, d.case.last_name].filter(Boolean).join(' ')
-  const link = send.data ?? (d.link?.url ? { ...d.link, url: d.link.url } : null)
+  // The stored link wins once it exists (regenerate/revoke refetch it); a revoked link has no URL.
+  const link = d.link
+    ? d.link.url
+      ? { ...d.link, url: d.link.url }
+      : null
+    : (send.data ?? null)
   const alert = sendErrorCopy(send.error)
   const extras =
     send.error instanceof ApiError && FORM_CODES.includes(send.error.code)
@@ -134,13 +140,29 @@ export function RequestPage({ requestId }: { requestId: string }) {
           </Card>
         )}
 
-        {link && (
-          <LinkCard requestId={requestId} url={link.url} expiresAt={link.expires_at} />
-        )}
-        {/* Plan 06 mounts <RequestLinkActions /> here: email, regenerate, revoke, SMS consent. */}
-
-        {d.status === 'revoked' && (
-          <p className='text-sm text-muted-foreground'>This link was revoked.</p>
+        {(link || d.status === 'revoked') && (
+          <Card>
+            <CardContent>
+              <Heading>Client link</Heading>
+              {link ? (
+                <LinkRow
+                  requestId={requestId}
+                  url={link.url}
+                  expiresAt={link.expires_at}
+                />
+              ) : (
+                <p className='text-sm text-muted-foreground'>
+                  This link was revoked.
+                </p>
+              )}
+              {d.status !== 'draft' && (
+                <RequestLinkActions
+                  request={d}
+                  onChanged={() => void detail.refetch()}
+                />
+              )}
+            </CardContent>
+          </Card>
         )}
 
         <ItemsCard items={d.items} />
@@ -149,7 +171,7 @@ export function RequestPage({ requestId }: { requestId: string }) {
   )
 }
 
-function LinkCard({
+function LinkRow({
   requestId,
   url,
   expiresAt,
@@ -173,26 +195,23 @@ function LinkCard({
   }
 
   return (
-    <Card>
-      <CardContent>
-        <Heading>Client link</Heading>
-        <div className='flex flex-col gap-2 sm:flex-row'>
-          <Input
-            readOnly
-            value={url}
-            aria-label='Client link'
-            onFocus={(e) => e.currentTarget.select()}
-          />
-          <Button type='button' className='h-10' onClick={copy}>
-            <Copy className='size-4' />
-            Copy link
-          </Button>
-        </div>
-        <p className='mt-2 text-sm text-muted-foreground' title={expiresAt}>
-          Expires {formatDate(expiresAt)}
-        </p>
-      </CardContent>
-    </Card>
+    <>
+      <div className='flex flex-col gap-2 sm:flex-row'>
+        <Input
+          readOnly
+          value={url}
+          aria-label='Client link'
+          onFocus={(e) => e.currentTarget.select()}
+        />
+        <Button type='button' className='h-10' onClick={copy}>
+          <Copy className='size-4' />
+          Copy link
+        </Button>
+      </div>
+      <p className='mt-2 text-sm text-muted-foreground' title={expiresAt}>
+        Expires {formatDate(expiresAt)}
+      </p>
+    </>
   )
 }
 

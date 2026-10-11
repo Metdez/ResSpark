@@ -170,6 +170,56 @@ export const sendRequest = (
 export const markCopied = (id: string) =>
   api(`/api/admin/requests/${id}/copied`, json({}), isOk)
 
+// D-09: the email route always answers 200 with a truthful result; ok:false is not an error.
+export interface EmailResult {
+  ok: boolean
+  id?: string
+  reason?: 'not_configured' | 'send_failed' | 'no_link'
+}
+export const isEmailResult = (v: unknown): v is EmailResult =>
+  isObject(v) && typeof v.ok === 'boolean'
+
+export const emailLink = (id: string) =>
+  api(`/api/admin/requests/${id}/email`, json({}), isEmailResult)
+
+export const regenerateLink = (id: string) =>
+  api(`/api/admin/requests/${id}/regenerate`, json({}), isSendResult)
+
+export const revokeLink = (id: string) =>
+  api(`/api/admin/requests/${id}/revoke`, json({}), isOk)
+
+export const recordConsent = (id: string) =>
+  api(`/api/admin/requests/${id}/consent`, json({ agreed: true }), isOk)
+
+export interface RequestListRow {
+  id: string
+  status: string
+  client_name: string
+  sent_at: string | null
+  expires_at: string | null
+  created_at: string
+}
+
+export const isRequestList = (
+  v: unknown
+): v is { requests: RequestListRow[] } =>
+  isObject(v) &&
+  Array.isArray(v.requests) &&
+  v.requests.every(
+    (r) =>
+      isObject(r) &&
+      str(r.id) &&
+      str(r.status) &&
+      str(r.client_name) &&
+      strOrNull(r.sent_at) &&
+      strOrNull(r.expires_at) &&
+      str(r.created_at)
+  )
+
+export function listRequests() {
+  return api('/api/admin/requests', {}, isRequestList)
+}
+
 export interface SendErrorExtras {
   email_error?: string
   phone_error?: string
@@ -210,7 +260,12 @@ export const unlessHandled =
     context: MutationFunctionContext
   ) => {
     if (error instanceof ApiError && handled(error)) return
-    qc.getDefaultOptions().mutations?.onError?.(error, variables, result, context)
+    qc.getDefaultOptions().mutations?.onError?.(
+      error,
+      variables,
+      result,
+      context
+    )
   }
 
 // UI-SPEC date format (`Oct 24, 2026`) in the viewer's time zone; callers put the raw value in `title`.

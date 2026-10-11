@@ -165,7 +165,9 @@ describe('RequestPage', () => {
 
   it('renders a draft: title, badge, items in position order, prefilled contact', async () => {
     const el = await render({ status: 200, body: DRAFT })
-    expect(el.querySelector('h1')?.textContent).toBe('Request for Jordan Rivera')
+    expect(el.querySelector('h1')?.textContent).toBe(
+      'Request for Jordan Rivera'
+    )
     expect(el.textContent).toContain('Draft')
     const rows = [...el.querySelectorAll('[data-item-row]')]
     expect(
@@ -270,9 +272,7 @@ describe('RequestPage', () => {
     expect(el.querySelector('[role="alert"]')?.textContent).toContain(
       'This case changed in Logics'
     )
-    expect(el.textContent).toContain(
-      'Look the client up again before sending.'
-    )
+    expect(el.textContent).toContain('Look the client up again before sending.')
     expect(el.textContent).not.toContain('Client link')
   })
 
@@ -288,7 +288,9 @@ describe('RequestPage', () => {
     await click(button('Send link')!)
     const email = byLabel('Client email')
     expect(email.getAttribute('aria-invalid')).toBe('true')
-    const hint = document.getElementById(email.getAttribute('aria-describedby')!)
+    const hint = document.getElementById(
+      email.getAttribute('aria-describedby')!
+    )
     expect(hint?.textContent).toBe('Check this email.')
   })
 
