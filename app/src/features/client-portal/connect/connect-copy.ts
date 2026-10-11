@@ -19,6 +19,8 @@ export const CONNECT_COPY = {
       "Connect the bank you use most. We'll gather up to 6 months of transactions; you'll add the statements yourself below.",
     notAvailable: "Connecting this bank isn't available yet. Upload your statements instead.",
     notConfigured: "Your agent's bank connection isn't set up yet. Upload your statements instead.",
+    opening: 'Opening your bank…',
+    accountFallback: 'Account',
     checking: 'Checking your connection…',
     syncing: 'Bank connected. Your bank is sending the history — this can take a few minutes.',
     done: 'Done. Your agent has what they need.',

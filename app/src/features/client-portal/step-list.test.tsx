@@ -131,7 +131,9 @@ describe('StepList connect steps', () => {
   })
 
   it('View on the bank step opens the bank sheet with the upload fallback', async () => {
-    await renderWithQuery(<StepList firmName='ValorTax' steps={[...STEPS, bank]} />, {})
+    await renderWithQuery(<StepList firmName='ValorTax' steps={[...STEPS, bank]} />, {
+      'GET /api/c/items/s5/connection': CONNECTION,
+    })
     await click(viewOf('Connect your bank'))
     await waitFor(() => button('Upload statements instead') !== undefined)
     expect(text()).not.toContain('Coming next')

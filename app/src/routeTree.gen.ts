@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AdminRouteRouteImport } from './routes/admin/route'
 import { Route as CIndexRouteImport } from './routes/c/index'
+import { Route as CReturnRouteImport } from './routes/c/return'
 import { Route as CTokenRouteImport } from './routes/c/$token'
 import { Route as AdminSignInRouteImport } from './routes/admin/sign-in'
 import { Route as AdminShellRouteRouteImport } from './routes/admin/_shell/route'
@@ -31,6 +32,11 @@ const AdminRouteRoute = AdminRouteRouteImport.update({
 const CIndexRoute = CIndexRouteImport.update({
   id: '/c/',
   path: '/c/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CReturnRoute = CReturnRouteImport.update({
+  id: '/c/return',
+  path: '/c/return',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CTokenRoute = CTokenRouteImport.update({
@@ -95,6 +101,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminShellRouteRouteWithChildren
   '/admin/sign-in': typeof AdminSignInRoute
   '/c/$token': typeof CTokenRoute
+  '/c/return': typeof CReturnRoute
   '/c/': typeof CIndexRoute
   '/admin/settings': typeof AdminShellSettingsRouteRouteWithChildren
   '/admin/lookup': typeof AdminShellLookupRoute
@@ -109,6 +116,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminShellIndexRoute
   '/admin/sign-in': typeof AdminSignInRoute
   '/c/$token': typeof CTokenRoute
+  '/c/return': typeof CReturnRoute
   '/c': typeof CIndexRoute
   '/admin/settings': typeof AdminShellSettingsRouteRouteWithChildren
   '/admin/lookup': typeof AdminShellLookupRoute
@@ -124,6 +132,7 @@ export interface FileRoutesById {
   '/admin/_shell': typeof AdminShellRouteRouteWithChildren
   '/admin/sign-in': typeof AdminSignInRoute
   '/c/$token': typeof CTokenRoute
+  '/c/return': typeof CReturnRoute
   '/c/': typeof CIndexRoute
   '/admin/_shell/settings': typeof AdminShellSettingsRouteRouteWithChildren
   '/admin/_shell/lookup': typeof AdminShellLookupRoute
@@ -140,6 +149,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/admin/sign-in'
     | '/c/$token'
+    | '/c/return'
     | '/c/'
     | '/admin/settings'
     | '/admin/lookup'
@@ -154,6 +164,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/admin/sign-in'
     | '/c/$token'
+    | '/c/return'
     | '/c'
     | '/admin/settings'
     | '/admin/lookup'
@@ -168,6 +179,7 @@ export interface FileRouteTypes {
     | '/admin/_shell'
     | '/admin/sign-in'
     | '/c/$token'
+    | '/c/return'
     | '/c/'
     | '/admin/_shell/settings'
     | '/admin/_shell/lookup'
@@ -182,6 +194,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   AdminRouteRoute: typeof AdminRouteRouteWithChildren
   CTokenRoute: typeof CTokenRoute
+  CReturnRoute: typeof CReturnRoute
   CIndexRoute: typeof CIndexRoute
 }
 
@@ -199,6 +212,13 @@ declare module '@tanstack/react-router' {
       path: '/c'
       fullPath: '/c/'
       preLoaderRoute: typeof CIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/c/return': {
+      id: '/c/return'
+      path: '/c/return'
+      fullPath: '/c/return'
+      preLoaderRoute: typeof CReturnRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/c/$token': {
@@ -336,6 +356,7 @@ const AdminRouteRouteWithChildren = AdminRouteRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   AdminRouteRoute: AdminRouteRouteWithChildren,
   CTokenRoute: CTokenRoute,
+  CReturnRoute: CReturnRoute,
   CIndexRoute: CIndexRoute,
 }
 export const routeTree = rootRouteImport
