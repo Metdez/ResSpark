@@ -1,4 +1,4 @@
-import type { NormAccount, NormTransaction } from '../integrations/bank/provider'
+import type { NormAccount, NormBalance, NormTransaction } from '../integrations/bank/provider'
 import { createAdminClient } from './client'
 
 type DbEnv = Pick<Env, 'SUPABASE_URL' | 'SUPABASE_SECRET_KEY'>
@@ -56,6 +56,22 @@ export async function upsertAccounts(env: DbEnv, connectionId: string, accounts:
     .select('id, external_account_id')
   if (error) throw new Error('account_upsert_failed')
   return Object.fromEntries((data as Array<{ id: string; external_account_id: string }>).map((r) => [r.external_account_id, r.id]))
+}
+
+// One update per account (a connection has a handful); unknown accounts are ignored. Returns rows updated.
+export async function updateAccountBalances(env: DbEnv, connectionId: string, balances: NormBalance[]): Promise<number> {
+  let updated = 0
+  for (const b of balances) {
+    const { data, error } = await createAdminClient(env)
+      .from('bank_accounts')
+      .update({ balance_current: b.current, balance_available: b.available, balance_as_of: b.as_of })
+      .eq('connection_id', connectionId)
+      .eq('external_account_id', b.external_account_id)
+      .select('id')
+    if (error) throw new Error('balance_update_failed')
+    updated += data.length
+  }
+  return updated
 }
 
 export async function listConnectionAccounts(env: DbEnv, connectionId: string): Promise<Array<{ id: string }>> {

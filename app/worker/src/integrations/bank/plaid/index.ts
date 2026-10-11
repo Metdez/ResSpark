@@ -1,4 +1,5 @@
 import { PROVIDER_CAPABILITIES, type BankProvider } from '../provider'
+import { getAccountBalances } from './accounts'
 import { plaidFetch } from './client'
 import { completeSession, createLinkSession } from './link'
 import { downloadStatement, listStatements } from './statements'
@@ -12,6 +13,7 @@ export const plaidProvider: BankProvider = {
   syncTransactions,
   listStatements,
   downloadStatement,
+  accountBalances: getAccountBalances,
   async removeConnection(env, accessToken) {
     await plaidFetch(env, '/item/remove', { access_token: accessToken })
   },

@@ -37,6 +37,13 @@ export interface NormTransaction {
   pending: boolean
 }
 
+export interface NormBalance {
+  external_account_id: string
+  current: number | null
+  available: number | null
+  as_of: string
+}
+
 export type SyncUpdateStatus = 'not_ready' | 'initial' | 'historical'
 
 export interface BankProvider {
@@ -82,4 +89,6 @@ export interface BankProvider {
   }>
   downloadStatement(env: Env, accessToken: string, statementId: string): Promise<{ bytes: ArrayBuffer; sha256: string | null }>
   removeConnection(env: Env, accessToken: string): Promise<void>
+  // Optional so a provider without a balances call (Teller adapter) can omit it.
+  accountBalances?(env: Env, accessToken: string): Promise<NormBalance[]>
 }

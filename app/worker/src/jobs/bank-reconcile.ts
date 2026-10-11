@@ -8,7 +8,7 @@ import {
   type ConnectionRow,
   type ConnectionStatus,
 } from '../db/connections'
-import { deleteTransactions, upsertAccounts, upsertTransactions } from '../db/bank'
+import { deleteTransactions, updateAccountBalances, upsertAccounts, upsertTransactions } from '../db/bank'
 import { bankProvider } from '../integrations/bank/index'
 import { PERMANENT_ITEM_ERRORS } from '../integrations/bank/plaid/client'
 import type { BankProvider } from '../integrations/bank/provider'
@@ -112,6 +112,7 @@ async function syncConnected(
       data = { ...data, transactions_update_status: r.statusRaw, last_sync_at: new Date().toISOString() }
       await updateConnection(env, conn.id, { sync_cursor: r.cursor, data })
       historical = r.status === 'historical'
+      await syncBalances(env, conn.id, provider, accessToken)
     }
     let pending = 0
     if (doStatements) {
@@ -128,5 +129,17 @@ async function syncConnected(
       return { status: res.status, applied: res.applied }
     }
     throw e
+  }
+}
+
+// One /accounts/get per reconcile for cash_and_bank_balances (D-09). Transient and login errors
+// propagate (queue retry / error status); any other vendor refusal is recorded and the sync goes on.
+async function syncBalances(env: Env, connectionId: string, provider: BankProvider, accessToken: string): Promise<void> {
+  if (!provider.accountBalances) return
+  try {
+    await updateAccountBalances(env, connectionId, await provider.accountBalances(env, accessToken))
+  } catch (e) {
+    if (!(e instanceof ProviderError) || e.transient || isPermanent(e.code)) throw e
+    await recordConnectionEvent(env, connectionId, 'connection.balances_failed', { code: e.code })
   }
 }

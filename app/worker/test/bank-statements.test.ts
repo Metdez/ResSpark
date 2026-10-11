@@ -103,6 +103,7 @@ describe.skipIf(!live)('bank statements (live; needs SUPABASE_URL, SUPABASE_SECR
       },
       { host: 'sandbox.plaid.com', path: '/statements/download', respond: () => new Response(PDF, { headers: { 'Plaid-Content-Hash': PDF_SHA } }) },
       { host: 'sandbox.plaid.com', path: '/statements/refresh', respond: () => json({ request_id: 'req_refresh' }) },
+      { host: 'sandbox.plaid.com', path: '/accounts/get', respond: () => json({ accounts: [] }) },
     ])
     conn = await connected(ITEM_IDS[0])
   })
@@ -164,7 +165,7 @@ describe.skipIf(!live)('bank statements (live; needs SUPABASE_URL, SUPABASE_SECR
     const before = vendor.calls.length
     await reconcileConnection(env, conn.id, { source: 'webhook', hint: JSON.parse(fixtureText('plaid/sync_updates_available.json')) })
     const calls = vendor.calls.slice(before)
-    expect(calls.map((c) => new URL(c.url).pathname)).toEqual(['/transactions/sync'])
+    expect(calls.map((c) => new URL(c.url).pathname)).toEqual(['/transactions/sync', '/accounts/get'])
     expect(((await calls[0].json()) as { cursor: string }).cursor).toBe('c3')
   })
 

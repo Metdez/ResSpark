@@ -9,6 +9,7 @@ import { ADDRESS_COLUMNS } from '../county'
 import { type ProposalInput, type ProposalSource, upsertProposals } from '../rpc'
 import { settingsOf } from '../view'
 import { proposeAddress } from './address'
+import { proposeBank } from './bank'
 import { proposeLogics } from './logics'
 import { proposePayroll } from './payroll'
 import { completeMonthsWindow } from './window'
@@ -31,7 +32,7 @@ export interface ProposeContext {
 export type Proposer = (ctx: ProposeContext) => Promise<{ source: ProposalSource; proposals: ProposalInput[] } | null>
 
 // Keyed by a name for results and logs; order is run order.
-export const PROPOSERS: Record<string, Proposer> = { address: proposeAddress, logics: proposeLogics, payroll: proposePayroll }
+export const PROPOSERS: Record<string, Proposer> = { address: proposeAddress, logics: proposeLogics, bank: proposeBank, payroll: proposePayroll }
 
 type SourceResult = { inserted: number; kept: number; superseded: number } | 'skipped' | 'failed'
 

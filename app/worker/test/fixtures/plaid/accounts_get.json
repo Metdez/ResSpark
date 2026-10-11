@@ -1,0 +1,22 @@
+{
+  "accounts": [
+    {
+      "account_id": "acc_checking",
+      "mask": "0000",
+      "name": "Plaid Checking",
+      "type": "depository",
+      "subtype": "checking",
+      "balances": { "available": 1100.5, "current": 1250.75, "iso_currency_code": "USD", "limit": null, "last_updated_datetime": null }
+    },
+    {
+      "account_id": "acc_credit",
+      "mask": "3333",
+      "name": "Plaid Credit Card",
+      "type": "credit",
+      "subtype": "credit card",
+      "balances": { "available": null, "current": 410, "iso_currency_code": "USD", "limit": 2000, "last_updated_datetime": "2026-10-10T08:00:00Z" }
+    }
+  ],
+  "item": { "item_id": "item_fixture" },
+  "request_id": "req_fixture"
+}

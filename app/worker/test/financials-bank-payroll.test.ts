@@ -95,4 +95,54 @@ describe.skipIf(!live)('financials bank and payroll proposals (live)', { timeout
     // Idempotent rerun.
     expect((await runFinancialsPropose(env, fx.caseId, NOW)).payroll).toMatchObject({ inserted: 0, kept: 6 })
   })
+
+  it('a done Plaid connection with complete history proposes SQL-aggregated averages and cash', async () => {
+    const fx = await seed()
+    const conn = await insertConnection(fx, 'bank', { transactions_update_status: 'HISTORICAL_UPDATE_COMPLETE' })
+    const account = (
+      await db
+        .from('bank_accounts')
+        .insert({ connection_id: conn.id, external_account_id: 'acc_0707', name: 'Checking', mask: '0000', type: 'depository', balance_current: 2500 })
+        .select('id')
+        .single()
+    ).data as { id: string }
+    // Plaid sign: positive = money out. Categories here are test data.
+    const tx = (date: string, amount: number, category: string, pending = false) => ({
+      connection_id: conn.id,
+      bank_account_id: account.id,
+      plaid_transaction_id: `tx_0707_${crypto.randomUUID()}`,
+      amount,
+      date,
+      name: category,
+      category_detailed: category,
+      pending,
+    })
+    const months = ['2026-07-10', '2026-08-10', '2026-09-10']
+    const { error } = await db.from('bank_transactions').insert([
+      ...months.map((d) => tx(d, 1500, 'RENT_AND_UTILITIES_RENT')),
+      ...months.map((d) => tx(d, 400, 'LOAN_PAYMENTS_CAR_PAYMENT')),
+      ...months.map((d) => tx(d, -30, 'INCOME_DIVIDENDS')),
+      tx('2026-08-20', 5000, 'TRANSFER_OUT_ACCOUNT_TRANSFER'),
+      tx('2026-09-25', 777, 'RENT_AND_UTILITIES_RENT', true),
+      tx('2026-06-15', 999, 'RENT_AND_UTILITIES_RENT'),
+    ])
+    if (error) throw new Error(error.message)
+
+    const result = await runFinancialsPropose(env, fx.caseId, NOW)
+    expect(result.bank).toMatchObject({ inserted: 4 })
+    const rows = await open(fx.caseId, 'plaid')
+    expect(rows.map((r) => r.canonical_column).sort()).toEqual(
+      ['actual_housing_utilities', 'actual_vehicle_loan_lease', 'cash_and_bank_balances', 'interest_dividends_royalties'].sort()
+    )
+    expect(valueOf(rows, 'actual_housing_utilities')).toMatchObject({ proposed_value: 1500, method: 'sum_outflows_3mo_div_3', window_start: '2026-07-01' })
+    expect(valueOf(rows, 'actual_vehicle_loan_lease')).toMatchObject({ proposed_value: 400 })
+    expect(valueOf(rows, 'interest_dividends_royalties')).toMatchObject({ proposed_value: 30, method: 'sum_inflows_3mo_div_3' })
+    expect(valueOf(rows, 'cash_and_bank_balances')).toMatchObject({ proposed_value: 2500, reliability: 'A', method: 'sum_depository_balance_current' })
+    expect(valueOf(rows, 'cash_and_bank_balances')!.source_refs).toEqual([{ kind: 'bank_account', id: account.id, label: 'Checking ••0000' }])
+
+    // History still loading: the source is skipped and the rows above stay.
+    await db.from('connections').update({ data: { transactions_update_status: 'INITIAL_UPDATE_COMPLETE' } }).eq('id', conn.id)
+    expect((await runFinancialsPropose(env, fx.caseId, NOW)).bank).toBe('skipped')
+    expect(await open(fx.caseId, 'plaid')).toHaveLength(4)
+  })
 })
