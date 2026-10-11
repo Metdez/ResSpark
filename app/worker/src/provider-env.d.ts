@@ -5,4 +5,8 @@ interface Env {
   PLAID_SECRET?: string
   TRUV_CLIENT_ID?: string
   TRUV_SECRET?: string
+  SMARTY_AUTH_ID?: string
+  SMARTY_AUTH_TOKEN?: string
+  DOCUSEAL_API_KEY?: string
+  DOCUSEAL_WEBHOOK_SECRET?: string
 }

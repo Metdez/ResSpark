@@ -1,0 +1,14 @@
+{
+  "building": {
+    "suggestions": [
+      { "street_line": "1042 W Center St", "secondary": "Apt", "city": "Orem", "state": "UT", "zipcode": "84057", "entries": 3 }
+    ]
+  },
+  "units": {
+    "suggestions": [
+      { "street_line": "1042 W Center St", "secondary": "Apt 101", "city": "Orem", "state": "UT", "zipcode": "84057", "entries": 1 },
+      { "street_line": "1042 W Center St", "secondary": "Apt 102", "city": "Orem", "state": "UT", "zipcode": "84057", "entries": 1 },
+      { "street_line": "1042 W Center St", "secondary": "Apt 103", "city": "Orem", "state": "UT", "zipcode": "84057", "entries": 1 }
+    ]
+  }
+}

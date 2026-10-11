@@ -1,4 +1,7 @@
-import type { ProviderId } from '../db/connections'
+import type { ProviderId as ConnectionProvider } from '../db/connections'
+
+// Connection providers plus vendors that never own a connections row (Smarty) or arrive in Phase 6 (DocuSeal).
+export type ProviderId = ConnectionProvider | 'smarty' | 'docuseal'
 
 // A vendor call failed. `transient` decides retry (queue backoff) versus dead-letter.
 export class ProviderError extends Error {

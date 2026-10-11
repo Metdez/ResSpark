@@ -17,6 +17,7 @@ import { adminRequestActionsRoute } from './routes/admin-request-actions'
 import { adminRequestsRoute } from './routes/admin-requests'
 import { adminReviewRoute } from './routes/admin-review'
 import { adminSessionRoute } from './routes/admin-session'
+import { cAddressRoute } from './routes/c-address'
 import { cConnectionsRoute } from './routes/c-connections'
 import { cUploadsRoute } from './routes/c-uploads'
 import { clientLinkRoute } from './routes/client-link'
@@ -68,6 +69,7 @@ app.route('/api/admin', adminLookupRoute)
 app.route('/c', clientLinkRoute)
 app.route('/api/c', clientPortalRoute)
 app.route('/api/c', cUploadsRoute)
+app.route('/api/c', cAddressRoute)
 app.route('/api/c', cConnectionsRoute)
 app.route('/api/webhooks', webhooksRoute)
 

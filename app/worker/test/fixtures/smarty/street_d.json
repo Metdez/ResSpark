@@ -1,0 +1,20 @@
+[
+  {
+    "input_index": 0,
+    "candidate_index": 0,
+    "delivery_line_1": "1042 W Center St",
+    "last_line": "Orem UT 84057-5123",
+    "components": {
+      "primary_number": "1042",
+      "street_predirection": "W",
+      "street_name": "Center",
+      "street_suffix": "St",
+      "city_name": "Orem",
+      "state_abbreviation": "UT",
+      "zipcode": "84057",
+      "plus4_code": "5123"
+    },
+    "metadata": { "zip_type": "Standard", "county_fips": "49049", "county_name": "Utah", "rdi": "Residential" },
+    "analysis": { "dpv_match_code": "D", "dpv_footnotes": "AAN1" }
+  }
+]
