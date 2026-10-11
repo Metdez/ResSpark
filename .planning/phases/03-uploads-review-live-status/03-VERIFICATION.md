@@ -309,3 +309,17 @@ No gap is deferred: no later phase's goal or success criteria cover timeline pag
 
 _Verified: 2026-10-11T15:02:58Z_
 _Verifier: Claude (gsd-verifier)_
+
+## Gap closure (2026-10-11)
+
+Both blocking gaps and the header-badge warning are fixed, with tests. Live behaviour was not re-run, and the frontmatter `status` is left for re-verification.
+
+| Gap | Fix | Commit | Evidence |
+|---|---|---|---|
+| 1. Timeline cursor skips rows (STAT-04, 03-05 truth) | `next_before` is now `"<created_at>\|<id>"` of the last row, using the raw Postgres string. `admin-events.ts` `parseCursor` needs exactly two parts. The timestamp must match a strict timestamptz shape and pass `Date.parse`, and the id must be digits. Anything else gets 400 `bad_request`. There is no `toISOString` any more. `db/review.ts` `listCaseEvents(before: {ts, id})` filters with `or(created_at.lt."ts",and(created_at.eq."ts",id.lt.id))` (`beforeFilter`), ordered `created_at desc, id desc`. The `shortcut:` comment is removed. `features/timeline/api.ts` passes the cursor through untouched and was not changed. | `90d0730` | `admin-events.test.ts` 12/12. It covers: a cursor round-trip with microseconds and an id; a tie at the page edge (the filter requests same-timestamp rows with a lower id); 5 malformed cursors → 400 with no query, including filter syntax inside the timestamp. |
+| 2. Upload errors never reach the mirror (STAT-03, SC4) | `uploads/copy.ts` exports `UploadErrorCode`: the client error keys plus `upload_failed`. `uploadErrorCode()` maps any other code to `upload_failed`, so no free text is sent. `UploadSheet` takes `onError?` and calls it from `fail()`. `StepList` passes `onUploadError` to it. `PortalPage` keeps the latest code in state and sends it as `last_error`, in this order: `state_failed`, then `start_failed`, then the upload code. `HeartbeatBody.last_error` is widened to that set. The Worker heartbeat stores up to 200 chars and has no allowlist, so it needed no change. `MirrorCard` now has staff wording for all 10 upload codes. | `296a027` | `upload-sheet.test.tsx`: `onError` gets `unsupported_type` for a `.txt` and `upload_failed` for an unknown mint code. `portal-page.test.tsx`: after a `.txt` pick in the sheet, a heartbeat carries `last_error: 'unsupported_type'`. `mirror-card.test.tsx`: three upload codes render staff wording. In the scoped run, 13 files / 126 tests passed. |
+| Warning: the header badge never refreshes | `request-page.tsx`: `refetchInterval: pollInterval` on `['request', id]` | `d7b6c88` | `request-page.test.tsx` 16/16. The new test checks that the query's `refetchInterval` is `pollInterval`. |
+
+Whole-tree gate after the three commits: `pnpm -C app run check` passed (107 files passed, 20 skipped; 1372 tests passed, 175 skipped). The orchestrator handles the deploy. The companion docs were updated in the same commits.
+
+Still open (out of scope here): the D-06 wording decision and the human checks listed above, including the live TUS resume.
