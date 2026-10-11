@@ -66,3 +66,54 @@ describe('IntakeStep tracer', () => {
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['portal', 'state'] })
   })
 })
+
+describe('IntakeStep resume, prefill and errors', () => {
+  it('resumes at the first unanswered question', async () => {
+    await open({ 'GET /api/c/intake': state({ filing_status_married: false, household_size: 2, age_taxpayer: 50 }) })
+    expect(question()).toBe('owns_home')
+    expect(text()).toContain('Question 4 of 20')
+  })
+
+  it('Truv prefill preselects Yes with the payroll note, and saves only on Next', async () => {
+    const answers = { filing_status_married: false, household_size: 2, age_taxpayer: 50, owns_home: true }
+    const f = await open({
+      'GET /api/c/intake': state(answers, { is_wage_earner: { value: true, source: 'truv' } }),
+      'PUT /api/c/intake': SAVED,
+    })
+    expect(question()).toBe('is_wage_earner')
+    expect(text()).toContain('We filled this in from your payroll. Tap to change.')
+    expect(button('Yes')!.getAttribute('aria-pressed')).toBe('true')
+    expect(puts(f)).toEqual([])
+    await click(button('Next')!)
+    await waitFor(() => question() === 'is_self_employed')
+    expect(puts(f)).toEqual([{ question_id: 'is_wage_earner', value: true }])
+  })
+
+  it('tapping a different answer hides the prefill note', async () => {
+    await open({ 'GET /api/c/intake': state({}, { filing_status_married: { value: true, source: 'logics' } }) })
+    expect(text()).toContain('We filled this in from your case file. Tap to change.')
+    await click(button('No')!)
+    expect(text()).not.toContain('We filled this in')
+  })
+
+  it('a 400 bad_value shows the error and stays on the question', async () => {
+    await open({
+      'GET /api/c/intake': state(),
+      'PUT /api/c/intake': { status: 400, body: { error: { code: 'bad_value' } } },
+    })
+    await click(button('Yes')!)
+    await click(button('Next')!)
+    await waitFor(() => document.querySelector('[role="alert"]') != null)
+    expect(text()).toContain('Check your answer and try again.')
+    expect(question()).toBe('filing_status_married')
+  })
+
+  it('Back returns to the previous question without saving', async () => {
+    const f = await open({ 'GET /api/c/intake': state({ filing_status_married: false }) })
+    expect(question()).toBe('household_size')
+    await click(button('Back')!)
+    expect(question()).toBe('filing_status_married')
+    expect(button('No')!.getAttribute('aria-pressed')).toBe('true')
+    expect(puts(f)).toEqual([])
+  })
+})

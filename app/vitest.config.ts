@@ -19,7 +19,7 @@ export default defineConfig({
         test: {
           name: 'web',
           environment: 'jsdom',
-          include: ['src/**/*.test.{ts,tsx}'],
+          include: ['src/**/*.test.{ts,tsx}', 'shared/**/*.test.ts'],
           setupFiles: ['./src/test-setup.ts'],
         },
       },
