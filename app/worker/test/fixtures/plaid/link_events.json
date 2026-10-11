@@ -1,0 +1,25 @@
+{
+  "webhook_type": "LINK",
+  "webhook_code": "EVENTS",
+  "link_session_id": "ls_fixture_1",
+  "link_token": "link-sandbox-fixture-1",
+  "events": [
+    {
+      "event_id": "ev_fixture_1",
+      "event_name": "OPEN",
+      "timestamp": "2026-10-10T15:00:00Z",
+      "event_metadata": {
+        "request_id": "req_fixture_1"
+      }
+    },
+    {
+      "event_id": "ev_fixture_2",
+      "event_name": "HANDOFF",
+      "timestamp": "2026-10-10T15:02:00Z",
+      "event_metadata": {
+        "request_id": "req_fixture_2"
+      }
+    }
+  ],
+  "environment": "sandbox"
+}

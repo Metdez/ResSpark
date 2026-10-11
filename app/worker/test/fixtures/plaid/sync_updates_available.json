@@ -1,0 +1,8 @@
+{
+  "webhook_type": "TRANSACTIONS",
+  "webhook_code": "SYNC_UPDATES_AVAILABLE",
+  "item_id": "item_fixture_1",
+  "initial_update_complete": true,
+  "historical_update_complete": true,
+  "environment": "sandbox"
+}

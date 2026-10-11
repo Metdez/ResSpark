@@ -1,0 +1,9 @@
+{
+  "webhook_type": "LINK",
+  "webhook_code": "SESSION_FINISHED",
+  "status": "EXITED",
+  "link_session_id": "ls_fixture_2",
+  "link_token": "link-sandbox-fixture-2",
+  "public_tokens": [],
+  "environment": "sandbox"
+}

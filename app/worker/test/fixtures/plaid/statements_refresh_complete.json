@@ -1,0 +1,7 @@
+{
+  "webhook_type": "STATEMENTS",
+  "webhook_code": "STATEMENTS_REFRESH_COMPLETE",
+  "item_id": "item_fixture_1",
+  "result": "SUCCESS",
+  "environment": "sandbox"
+}
