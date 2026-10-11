@@ -207,7 +207,21 @@ Plans:
   4. IRS standards for the county from the client's confirmed address are applied with no county dropdown, and the engine's recommendation (OIC, installment, CNC, or manual review) is shown with its math; the TypeScript engine matches the Python tests on golden fixtures with no constant changed (FORM-01, FORM-05, ADDR-02)
   5. Staff export the worksheet as a PDF labeled "Not an IRS form" and push it to Logics like any other document (FORM-06)
 
-**Plans**: TBD
+**Plans:** 12 plans
+
+Plans:
+- [ ] 07-01-PLAN.md — [Wave 1] TS engine port (`engine/*`, `app/shared/questions.ts`) proven by Python golden fixtures with recorded standards calls, 60+ grid rows, `pnpm check` freshness gate (FORM-01)
+- [ ] 07-02-PLAN.md — [Wave 1, decision checkpoint] Migration 0008: proposals, mapping/county/standards tables, standards functions + bundle, `financial_value_decide`, proposals upsert, bank aggregate, `intake_submit`, worksheet push eligibility, Connecticut names, template intake item; `financials/rpc.ts` (FORM-04, FORM-05, FORM-06, FORM-07, ADDR-02)
+- [ ] 07-03-PLAN.md — [Wave 2] Generated seed 0009: `county_fips_map` (Census Gazetteer → IRS names), `plaid_category_map` (130 rows), `truv_deduction_map` (FORM-07, ADDR-02)
+- [ ] 07-04-PLAN.md — [Wave 2] Staff financials API: GET view, decide, evaluations with strict `BundleStandardsRepository`, immutable runs (FORM-04, FORM-05)
+- [ ] 07-05-PLAN.md — [Wave 3] `financials_propose` job, address/county and Logics proposers, refresh with 3/6 window and spouse employers, county/employers blocks (ADDR-02, FORM-03, FORM-02)
+- [ ] 07-06-PLAN.md — [Wave 3] Worksheet PDF "Not an IRS form" via pdf-lib, stored as a case document, pushed through the Phase 5 card and ledger (FORM-06)
+- [ ] 07-07-PLAN.md — [Wave 4] Truv payroll and Plaid bank proposers, `/accounts/get` balances, connection-done trigger (FORM-03, FORM-07)
+- [ ] 07-08-PLAN.md — [Wave 4] Client intake step (one question per screen, prefill, resume), live question_definitions parity, removal of `src/frontend/` (FORM-02)
+- [ ] 07-09-PLAN.md — [Wave 4] Staff 433-A view: sections, chips, source badges, decisions, county state, recommendation rail with the math, export (FORM-03, FORM-04, FORM-05, ADDR-02)
+- [ ] 07-10-PLAN.md — [Wave 5] Evidence drill-down Sheet: transactions by month, pay stubs with signed links, intake/Logics/address/staff (FORM-03)
+- [ ] 07-11-PLAN.md — [Wave 5, non-gating] Regex document extractors ported with `_page_text`, golden-extract parity (FORM-03)
+- [ ] 07-12-PLAN.md — [Wave 6, non-gating] Extract values route and button → document proposals (FORM-03)
 **Scope notes**: Mechanical TypeScript port of `src/determination.py` with Python kept as the test oracle; thresholds and formulas unchanged (any change needs an authoritative source and tests); standards through Postgres RPC functions; Plaid-category-to-433-A-line and Truv deduction mappings in SQL tables; interview Nicole and Sandra on the layout before planning; port the `document_parse.py` extractors split under 500 lines.
 **UI hint**: yes
 **Research hint**: yes
