@@ -45,14 +45,14 @@ Requirements for the first release. Each maps to a roadmap phase. The Oct 12 202
 
 ### Uploads & Review
 
-- [ ] **UPL-01**: Client can upload one or more files per requested item by drag-drop, file picker, or camera, with per-file progress and resumable uploads direct to Supabase Storage
-- [ ] **UPL-02**: Uploads are validated by magic bytes (PDF, JPG, PNG, HEIC) and size limits, and images are compressed client-side before upload
+- [x] **UPL-01**: Client can upload one or more files per requested item by drag-drop, file picker, or camera, with per-file progress and resumable uploads direct to Supabase Storage
+- [x] **UPL-02**: Uploads are validated by magic bytes (PDF, JPG, PNG, HEIC) and size limits, and images are compressed client-side before upload
 - [ ] **UPL-03**: Staff see each uploaded item with preview and download via short-lived signed URLs and can approve it or reject it with a note; a rejected item returns to the client's step list with the note visible
 - [ ] **UPL-04**: An item is complete only when staff approve it, and the request is complete when every required item is approved
 
 ### Status & Dashboard
 
-- [ ] **STAT-01**: Admin dashboard lists requests with status (sent, opened, in progress, waiting on staff, complete), age, and overdue flags, sortable and filterable
+- [x] **STAT-01**: Admin dashboard lists requests with status (sent, opened, in progress, waiting on staff, complete), age, and overdue flags, sortable and filterable
 - [ ] **STAT-02**: Request and case status update on the dashboard and case view without a manual reload (polling every 5-10 seconds while the tab is visible)
 - [ ] **STAT-03**: Staff see a mirror of the client's current step and last error, driven by a client heartbeat, so they can guide the client on the phone
 - [ ] **STAT-04**: The case view shows an event timeline (who did what, when) including provider webhook events
@@ -188,11 +188,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PORT-04 | Phase 2 | Complete |
 | PORT-05 | Phase 2 | Complete |
 | PORT-06 | Phase 2 | Complete |
-| UPL-01 | Phase 3 | Pending |
-| UPL-02 | Phase 3 | Pending |
+| UPL-01 | Phase 3 | Complete |
+| UPL-02 | Phase 3 | Complete |
 | UPL-03 | Phase 3 | Pending |
 | UPL-04 | Phase 3 | Pending |
-| STAT-01 | Phase 3 | Pending |
+| STAT-01 | Phase 3 | Complete |
 | STAT-02 | Phase 3 | Pending |
 | STAT-03 | Phase 3 | Pending |
 | STAT-04 | Phase 3 | Pending |
