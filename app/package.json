@@ -17,6 +17,7 @@
     "test:workerd": "vitest run --project workerd",
     "test:live": "dotenv -e .env -e .dev.vars -e ../src/frontend/.env -- vitest run --project worker-node worker/test",
     "test:rls": "dotenv -e ../src/frontend/.env -- vitest run --project worker-node worker/test/rls.test.ts",
+    "test:requests": "dotenv -e .env -e .dev.vars -- vitest run --project worker-node worker/test/requests-live.test.ts",
     "check": "node scripts/check-file-sizes.mjs && tsc -b && eslint . && pnpm test",
     "cf-typegen": "wrangler types --strict-vars=false",
     "wrangler": "dotenv -e ../.env -- wrangler",

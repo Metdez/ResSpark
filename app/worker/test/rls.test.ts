@@ -16,23 +16,28 @@ const key =
   process.env.VITE_SUPABASE_PUBLISHABLE_KEY
 
 const BASELINE_TABLE_COUNT = 15
-// 15 baseline tables (src/schemas/database_schema.sql) + 5 from migration 0002, sorted.
+// 15 baseline tables (src/schemas/database_schema.sql) + 5 from 0002 + 5 from 0003, sorted.
 const TABLES = [
   'app_migrations',
   'case_financial_data',
   'cases',
   'client_links',
+  'client_sessions',
   'county_suffixes',
   'determination_runs',
   'document_extractions',
   'documents',
   'events',
+  'firm_integrations',
   'firms',
   'health_care_standards',
   'housing_utilities_standards',
   'msa_county_standards',
   'national_standards',
   'question_definitions',
+  'request_items',
+  'request_templates',
+  'requests',
   'staff_profiles',
   'state_aliases',
   'state_region_standards',
@@ -78,6 +83,21 @@ describe.skipIf(!url || !key)('anon is denied on every public table', () => {
         p_actor_id: null,
         p_action: null,
         p_payload: null,
+      }),
+    })
+    expect([401, 404]).toContain(res.status)
+  })
+
+  it('rpc request_send is not callable by anon', async () => {
+    const res = await fetch(`${url}/rest/v1/rpc/request_send`, {
+      method: 'POST',
+      headers: { apikey: key!, 'content-type': 'application/json' },
+      body: JSON.stringify({
+        p_request_id: null,
+        p_firm_id: null,
+        p_actor_id: null,
+        p_contact_email: null,
+        p_contact_phone_e164: null,
       }),
     })
     expect([401, 404]).toContain(res.status)
