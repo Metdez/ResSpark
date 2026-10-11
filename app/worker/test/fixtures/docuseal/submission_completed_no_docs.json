@@ -1,0 +1,9 @@
+{
+  "id": 4001,
+  "slug": "fixtureSubmission1",
+  "status": "completed",
+  "audit_log_url": null,
+  "combined_document_url": null,
+  "documents": [],
+  "submitters": [{ "id": 5001, "slug": "fixtureSlug1", "status": "completed", "role": "Client", "external_id": null, "documents": [] }]
+}

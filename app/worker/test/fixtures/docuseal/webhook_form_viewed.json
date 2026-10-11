@@ -1,0 +1,5 @@
+{
+  "event_type": "form.viewed",
+  "timestamp": "2026-10-11T11:55:00Z",
+  "data": { "id": 5001, "submission_id": 4001, "status": "opened" }
+}
