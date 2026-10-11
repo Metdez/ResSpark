@@ -18,10 +18,19 @@ Port of `parse_texts`, `parse_pdf`, `_parse_document` and `_from_kind` in `src/d
 5. Exception kept from Python: for kind `bankruptcy`, `_fields_for` looks the kind up in `_KIND_FIELDS`, which has no `bankruptcy` entry, so Python raises `KeyError: 'bankruptcy'`; the port throws a plain `Error` with that text.
 6. Any other error (a Python `KeyError` or `InvalidOperation`) passes through as a plain `Error`.
 
-## `fromKind` dispatch
+## `READERS` and `fromKind` dispatch
 
 | Kind | Parser | Result |
 |------|--------|--------|
 | `account` | `accountTranscript` (`transcript.ts`) | `_kind: 'account'` plus the account columns |
 | `wage` | `wageTranscript` (`transcript.ts`) | `_kind: 'wage'`, `_employer`, monthly gross |
+| `bank` | `bankStatement` (`bank-statement.ts`), the only one that reads `rows` | `_kind: 'bank'`, `_account`, `_period_end`, `_deposits`, `ending_balance` |
+| `pay_stub` | `payStub` (`pay-stub.ts`) | `_kind: 'pay_stub'` plus stub columns |
+| `lease`, `mortgage`, `utility` | `housing.ts` | each sets its own `_kind` |
+| `auto`, `valuation` | `vehicle.ts` | each sets its own `_kind` |
+| `health`, `retirement`, `life`, `investment` | `accounts.ts` | each sets its own `_kind` |
+| `business` | `business.ts` | `_kind: 'business'` |
+| `bankruptcy` | inline | `{ _kind: 'bankruptcy' }` when any line has text, else `No template matched` |
 | anything else | — | `No template matched` |
+
+`READERS` holds the parsers that only need `texts`; `fromKind` handles the four special cases first.

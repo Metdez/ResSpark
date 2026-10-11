@@ -1,7 +1,545 @@
 {
   "python": "3.11",
   "generated_by": "src/tools/export_golden_fixtures.py (src/tools/golden_extract.py)",
-  "texts_cases": [],
+  "texts_cases": [
+    {
+      "name": "test_general_forms_and_document_type_hints#1",
+      "texts": [
+        "IRS Account Transcript",
+        "Filing Status:",
+        "Single",
+        "Address:",
+        "4417 Bellaire Blvd, Houston, TX 77036",
+        "(CSED):",
+        "05/12/2033",
+        "Request Date:",
+        "09-26-2026",
+        "ACCOUNT BALANCE: $60,000.00",
+        "150",
+        "$44,500.00"
+      ],
+      "rows": [],
+      "document_type": "irs_transcripts",
+      "expected": {
+        "_kind": "account",
+        "filing_status_married": false,
+        "state_of_residence": "TX",
+        "total_tax_owed": 60000.0,
+        "tax_only_balance": 44500.0,
+        "csed_months_remaining": 79
+      }
+    },
+    {
+      "name": "test_general_forms_and_document_type_hints#2",
+      "texts": [
+        "Wage and Income Transcript",
+        "Form W-2 filed by: Acme Payroll LLC",
+        "Box 1",
+        "$31,200.00"
+      ],
+      "rows": [],
+      "document_type": "irs_transcripts",
+      "expected": {
+        "_kind": "wage",
+        "_employer": "Acme Payroll LLC",
+        "gross_wages_taxpayer": 2600.0
+      }
+    },
+    {
+      "name": "test_general_forms_and_document_type_hints#3",
+      "texts": [
+        "Bank Statement",
+        "Account Number:",
+        "****7742",
+        "Ending Balance: $100.00",
+        "01/01/2026 - 01/31/2026"
+      ],
+      "rows": [
+        [
+          400.0,
+          [
+            [
+              72.0,
+              "Date"
+            ],
+            [
+              180.0,
+              "Description"
+            ],
+            [
+              360.0,
+              "Withdrawals"
+            ],
+            [
+              450.0,
+              "Deposits"
+            ],
+            [
+              540.0,
+              "Balance"
+            ]
+          ]
+        ]
+      ],
+      "document_type": null,
+      "expected": {
+        "_kind": "bank",
+        "_account": "****7742",
+        "_period_end": "2026-01-31",
+        "_deposits": [],
+        "ending_balance": 100.0
+      }
+    },
+    {
+      "name": "test_general_forms_and_document_type_hints#4",
+      "texts": [
+        "Acme Payroll LLC",
+        "Pay Stub",
+        "Pay Frequency:",
+        "Every two weeks",
+        "Gross Pay",
+        "$1,200.00"
+      ],
+      "rows": [],
+      "document_type": null,
+      "expected": {
+        "_kind": "pay_stub",
+        "_employer": "Acme Payroll LLC",
+        "pay_frequency": "biweekly",
+        "gross_wages_taxpayer": 2600.0,
+        "actual_current_taxes": 0.0
+      }
+    },
+    {
+      "name": "test_general_forms_and_document_type_hints#5",
+      "texts": [
+        "Acme Payroll LLC",
+        "Pay Stub",
+        "Pay Frequency:",
+        "Twice a month",
+        "Gross Pay",
+        "$2,000.00"
+      ],
+      "rows": [],
+      "document_type": null,
+      "expected": {
+        "_kind": "pay_stub",
+        "_employer": "Acme Payroll LLC",
+        "pay_frequency": "semimonthly",
+        "gross_wages_taxpayer": 4000.0,
+        "actual_current_taxes": 0.0
+      }
+    },
+    {
+      "name": "test_general_forms_and_document_type_hints#6",
+      "texts": [
+        "Lease Statement",
+        "Rent:",
+        "$1,150.00",
+        "Property Address:",
+        "4417 Bellaire Blvd, Houston, TX 77036"
+      ],
+      "rows": [],
+      "document_type": null,
+      "expected": {
+        "_kind": "lease",
+        "actual_housing_utilities": 1150.0,
+        "state_of_residence": "TX",
+        "rents_home": true,
+        "owns_home": false
+      }
+    },
+    {
+      "name": "test_general_forms_and_document_type_hints#7",
+      "texts": [
+        "Mortgage Statement",
+        "PITI:",
+        "$1,850.00",
+        "Principal Balance:",
+        "$261,000.00",
+        "Estimated Market Value:",
+        "$340,000.00",
+        "Property Address:",
+        "8820 SW 112th St, Miami, FL 33176"
+      ],
+      "rows": [],
+      "document_type": null,
+      "expected": {
+        "_kind": "mortgage",
+        "actual_housing_utilities": 1850.0,
+        "real_property_loan_balance": 261000.0,
+        "real_property_market_value": 340000.0,
+        "state_of_residence": "FL",
+        "owns_home": true,
+        "rents_home": false,
+        "has_real_property": true
+      }
+    },
+    {
+      "name": "test_general_forms_and_document_type_hints#8",
+      "texts": [
+        "Health Insurance Statement",
+        "Premium:",
+        "$178.00"
+      ],
+      "rows": [],
+      "document_type": null,
+      "expected": {
+        "_kind": "health",
+        "actual_health_insurance_premiums": 178.0
+      }
+    },
+    {
+      "name": "test_general_forms_and_document_type_hints#9",
+      "texts": [
+        "Case file",
+        "spacer",
+        "spacer",
+        "spacer",
+        "spacer",
+        "spacer",
+        "spacer",
+        "spacer",
+        "spacer",
+        "spacer",
+        "spacer",
+        "spacer",
+        "Rent:",
+        "$900.00",
+        "Property Address:",
+        "1 Main St, Columbus, OH 43215"
+      ],
+      "rows": [],
+      "document_type": "lease_statement",
+      "expected": {
+        "_kind": "lease",
+        "actual_housing_utilities": 900.0,
+        "state_of_residence": "OH",
+        "rents_home": true,
+        "owns_home": false
+      }
+    },
+    {
+      "name": "test_general_forms_and_document_type_hints#10",
+      "texts": [
+        "Case file",
+        "spacer",
+        "spacer",
+        "spacer",
+        "spacer",
+        "spacer",
+        "spacer",
+        "spacer",
+        "spacer",
+        "spacer",
+        "spacer",
+        "spacer",
+        "Monthly Payment:",
+        "$100.00",
+        "Loan Balance:",
+        "$500.00"
+      ],
+      "rows": [],
+      "document_type": "vehicle",
+      "expected": {
+        "_kind": "auto",
+        "actual_vehicle_loan_lease": 100.0,
+        "vehicle_loan_balances": [
+          500.0
+        ],
+        "vehicle_loan_balance_total": 500.0,
+        "vehicle_count": 1
+      }
+    },
+    {
+      "name": "test_general_forms_and_document_type_hints#11",
+      "texts": [
+        "Case file",
+        "spacer",
+        "spacer",
+        "spacer",
+        "spacer",
+        "spacer",
+        "spacer",
+        "spacer",
+        "spacer",
+        "spacer",
+        "spacer",
+        "spacer"
+      ],
+      "rows": [],
+      "document_type": null,
+      "error": "No template matched document"
+    },
+    {
+      "name": "test_general_forms_and_document_type_hints#12",
+      "texts": [
+        "Auto Loan Statement",
+        "Monthly Payment:",
+        "$348.00",
+        "Payoff Balance:",
+        "$9,200.00"
+      ],
+      "rows": [],
+      "document_type": null,
+      "expected": {
+        "_kind": "auto",
+        "actual_vehicle_loan_lease": 348.0,
+        "vehicle_loan_balances": [
+          9200.0
+        ],
+        "vehicle_loan_balance_total": 9200.0,
+        "vehicle_count": 1
+      }
+    },
+    {
+      "name": "test_general_forms_and_document_type_hints#13",
+      "texts": [
+        "Vehicle Loan Statement",
+        "Monthly Payment:",
+        "$200.00",
+        "Loan Balance:",
+        "$4,000.00",
+        "Est. Market Value:",
+        "$8,000.00"
+      ],
+      "rows": [],
+      "document_type": null,
+      "expected": {
+        "_kind": "auto",
+        "actual_vehicle_loan_lease": 200.0,
+        "vehicle_loan_balances": [
+          4000.0
+        ],
+        "vehicle_loan_balance_total": 4000.0,
+        "vehicle_count": 1,
+        "vehicle_market_values": [
+          8000.0
+        ],
+        "vehicle_market_value_total": 8000.0
+      }
+    },
+    {
+      "name": "test_upload_categories_fill_case_columns#1",
+      "texts": [
+        "Wage and Income Transcript",
+        "Form W-2 filed by: Acme Payroll LLC",
+        "Box 1",
+        "$31,200.00"
+      ],
+      "rows": [],
+      "document_type": "pay_stubs",
+      "expected": {
+        "_kind": "wage",
+        "_employer": "Acme Payroll LLC",
+        "gross_wages_taxpayer": 2600.0
+      }
+    },
+    {
+      "name": "test_upload_categories_fill_case_columns#2",
+      "texts": [
+        "Case file",
+        "spacer",
+        "spacer",
+        "spacer",
+        "spacer",
+        "spacer",
+        "spacer",
+        "spacer",
+        "spacer",
+        "spacer",
+        "spacer",
+        "spacer",
+        "Rent:",
+        "$1,000.00",
+        "Property Address:",
+        "1 Main St, Columbus, OH 43215"
+      ],
+      "rows": [],
+      "document_type": "lease",
+      "expected": {
+        "_kind": "lease",
+        "actual_housing_utilities": 1000.0,
+        "state_of_residence": "OH",
+        "rents_home": true,
+        "owns_home": false
+      }
+    },
+    {
+      "name": "test_upload_categories_fill_case_columns#3",
+      "texts": [
+        "Case file",
+        "spacer",
+        "spacer",
+        "spacer",
+        "spacer",
+        "spacer",
+        "spacer",
+        "spacer",
+        "spacer",
+        "spacer",
+        "spacer",
+        "spacer",
+        "Amount Due:",
+        "$150.00"
+      ],
+      "rows": [],
+      "document_type": "housing_utilities",
+      "expected": {
+        "_kind": "utility",
+        "actual_housing_utilities": 150.0
+      }
+    },
+    {
+      "name": "test_upload_categories_fill_case_columns#5",
+      "texts": [
+        "Profit and Loss",
+        "Net Income:",
+        "$2,400.00"
+      ],
+      "rows": [],
+      "document_type": "self_employment",
+      "expected": {
+        "_kind": "business",
+        "net_business_income": 2400.0
+      }
+    },
+    {
+      "name": "test_upload_categories_fill_case_columns#6",
+      "texts": [
+        "Retirement Account Statement",
+        "Account Value:",
+        "$10,000.00",
+        "Loan Balance:",
+        "$1,000.00"
+      ],
+      "rows": [],
+      "document_type": null,
+      "expected": {
+        "_kind": "retirement",
+        "retirement_accounts_market_value": 10000.0,
+        "retirement_accounts_loan_balance": 1000.0
+      }
+    },
+    {
+      "name": "test_upload_categories_fill_case_columns#7",
+      "texts": [
+        "Life Insurance Statement",
+        "Cash Value:",
+        "$5,000.00",
+        "Premium:",
+        "$40.00"
+      ],
+      "rows": [],
+      "document_type": null,
+      "expected": {
+        "_kind": "life",
+        "life_insurance_cash_value": 5000.0
+      }
+    },
+    {
+      "name": "test_upload_categories_fill_case_columns#8",
+      "texts": [
+        "Brokerage Statement",
+        "Net Value:",
+        "$3,200.00"
+      ],
+      "rows": [],
+      "document_type": null,
+      "expected": {
+        "_kind": "investment",
+        "investment_accounts_net": 3200.0
+      }
+    },
+    {
+      "name": "test_upload_categories_fill_case_columns#9",
+      "texts": [
+        "Case file",
+        "spacer",
+        "spacer",
+        "spacer",
+        "spacer",
+        "spacer",
+        "spacer",
+        "spacer",
+        "spacer",
+        "spacer",
+        "spacer",
+        "spacer",
+        "Assessed Value:",
+        "$200,000.00"
+      ],
+      "rows": [],
+      "document_type": "real_property",
+      "expected": {
+        "_kind": "valuation",
+        "real_property_market_value": 200000.0,
+        "has_real_property": true
+      }
+    },
+    {
+      "name": "test_upload_categories_fill_case_columns#10",
+      "texts": [
+        "Case file",
+        "spacer",
+        "spacer",
+        "spacer",
+        "spacer",
+        "spacer",
+        "spacer",
+        "spacer",
+        "spacer",
+        "spacer",
+        "spacer",
+        "spacer",
+        "Market Value:",
+        "$8,000.00"
+      ],
+      "rows": [],
+      "document_type": "vehicle",
+      "expected": {
+        "_kind": "auto",
+        "vehicle_market_values": [
+          8000.0
+        ],
+        "vehicle_market_value_total": 8000.0,
+        "vehicle_count": 1
+      }
+    },
+    {
+      "name": "test_upload_categories_fill_case_columns#11",
+      "texts": [
+        "Auto Loan Statement",
+        "Monthly Payment:",
+        "$348.00",
+        "Payoff Balance:",
+        "$9,200.00"
+      ],
+      "rows": [],
+      "document_type": null,
+      "expected": {
+        "_kind": "auto",
+        "actual_vehicle_loan_lease": 348.0,
+        "vehicle_loan_balances": [
+          9200.0
+        ],
+        "vehicle_loan_balance_total": 9200.0,
+        "vehicle_count": 1
+      }
+    },
+    {
+      "name": "test_upload_categories_fill_case_columns#13",
+      "texts": [
+        "Bankruptcy Petition",
+        "Case status: open"
+      ],
+      "rows": [],
+      "document_type": "bankruptcy",
+      "expected": {
+        "_kind": "bankruptcy"
+      }
+    }
+  ],
   "merge_cases": [],
   "pdfs": [
     {
@@ -305,6 +843,3602 @@
         "total_tax_owed": 60000.0,
         "tax_only_balance": 44500.0,
         "csed_months_remaining": 79
+      }
+    },
+    {
+      "path": "examples/01_marcus_delgado_CNC/02_IRS_Wage_Income_Transcript.pdf",
+      "document_type": null,
+      "page_text": {
+        "texts": [
+          "Department of the Treasury  Internal Revenue Service",
+          "Wage & Income Transcript",
+          "FICTIONAL / TEST DATA ONLY",
+          "Taxpayer Name:",
+          "Marcus A. Delgado",
+          "SSN Provided:",
+          "XXX-XX-4471",
+          "Tax Period:",
+          "2024",
+          "Form W-2  Wage and Tax Statement, filed by: Lonestar Fleet Logistics LLC",
+          "Box 1  Wages, tips, other",
+          "compensation",
+          "$31,200.00",
+          "Box 2  Federal income tax withheld",
+          "$2,184.00",
+          "Box 4  Social security tax withheld",
+          "$1,934.40",
+          "Box 6  Medicare tax withheld",
+          "$452.40",
+          "Box 17  State income tax withheld",
+          "$0.00"
+        ],
+        "rows": []
+      },
+      "expected": {
+        "_kind": "wage",
+        "_employer": "Lonestar Fleet Logistics LLC",
+        "gross_wages_taxpayer": 2600.0
+      }
+    },
+    {
+      "path": "examples/01_marcus_delgado_CNC/03_Bank_Statement_Month1.pdf",
+      "document_type": null,
+      "page_text": {
+        "texts": [
+          "Alamo Community Bank",
+          "Personal Checking Account Statement",
+          "2200 Post Oak Blvd, Houston, TX 77056",
+          "Member FDIC",
+          "Statement Period",
+          "07/01/2026 - 07/31/2026",
+          "Account Holder:",
+          "Marcus A. Delgado",
+          "Account Number:",
+          "****7742",
+          "Account Type:",
+          "Personal Checking",
+          "Beginning Balance:",
+          "$640.12",
+          "Date",
+          "Description",
+          "Withdrawals",
+          "Deposits",
+          "Balance",
+          "07/01/2026",
+          "Payroll Dep - Lonestar Fleet Logistics",
+          "$2,160.00",
+          "$2,800.12",
+          "mid-month",
+          "Bayou City Rentals - Rent",
+          "$1,150.00",
+          "$1,650.12",
+          "mid-month",
+          "Texan Auto Finance - Loan Pmt",
+          "$348.00",
+          "$1,302.12",
+          "mid-month",
+          "H-E-B Grocery",
+          "$210.55",
+          "$1,091.57",
+          "mid-month",
+          "Gulf Coast Health Partners - Premium",
+          "$178.00",
+          "$913.57",
+          "mid-month",
+          "CenterPoint Energy",
+          "$96.40",
+          "$817.17",
+          "mid-month",
+          "Comcast/Xfinity",
+          "$79.99",
+          "$737.18",
+          "mid-month",
+          "ATM Withdrawal",
+          "$120.00",
+          "$617.18",
+          "Ending Balance: $617.18",
+          "This is a simulated bank statement created for software-testing purposes. Alamo Community Bank is a fictional institution."
+        ],
+        "rows": [
+          [
+            151.2,
+            [
+              [
+                6.0,
+                "Date"
+              ],
+              [
+                56.4,
+                "Description"
+              ],
+              [
+                282.729,
+                "Withdrawals"
+              ],
+              [
+                359.658,
+                "Deposits"
+              ],
+              [
+                426.6186,
+                "Balance"
+              ]
+            ]
+          ],
+          [
+            133.2,
+            [
+              [
+                6.0,
+                "07/01/2026"
+              ],
+              [
+                56.4,
+                "Payroll Dep - Lonestar Fleet Logistics"
+              ],
+              [
+                355.3056,
+                "$2,160.00"
+              ],
+              [
+                420.1056,
+                "$2,800.12"
+              ]
+            ]
+          ],
+          [
+            115.2,
+            [
+              [
+                6.0,
+                "mid-month"
+              ],
+              [
+                56.4,
+                "Bayou City Rentals - Rent"
+              ],
+              [
+                290.5056,
+                "$1,150.00"
+              ],
+              [
+                420.1056,
+                "$1,650.12"
+              ]
+            ]
+          ],
+          [
+            97.2,
+            [
+              [
+                6.0,
+                "mid-month"
+              ],
+              [
+                56.4,
+                "Texan Auto Finance - Loan Pmt"
+              ],
+              [
+                297.0108,
+                "$348.00"
+              ],
+              [
+                420.1056,
+                "$1,302.12"
+              ]
+            ]
+          ],
+          [
+            79.2,
+            [
+              [
+                6.0,
+                "mid-month"
+              ],
+              [
+                56.4,
+                "H-E-B Grocery"
+              ],
+              [
+                297.0108,
+                "$210.55"
+              ],
+              [
+                420.1056,
+                "$1,091.57"
+              ]
+            ]
+          ],
+          [
+            61.2,
+            [
+              [
+                6.0,
+                "mid-month"
+              ],
+              [
+                56.4,
+                "Gulf Coast Health Partners - Premium"
+              ],
+              [
+                297.0108,
+                "$178.00"
+              ],
+              [
+                426.6108,
+                "$913.57"
+              ]
+            ]
+          ],
+          [
+            43.2,
+            [
+              [
+                6.0,
+                "mid-month"
+              ],
+              [
+                56.4,
+                "CenterPoint Energy"
+              ],
+              [
+                301.3476,
+                "$96.40"
+              ],
+              [
+                426.6108,
+                "$817.17"
+              ]
+            ]
+          ],
+          [
+            25.2,
+            [
+              [
+                6.0,
+                "mid-month"
+              ],
+              [
+                56.4,
+                "Comcast/Xfinity"
+              ],
+              [
+                301.3476,
+                "$79.99"
+              ],
+              [
+                426.6108,
+                "$737.18"
+              ]
+            ]
+          ],
+          [
+            7.2,
+            [
+              [
+                6.0,
+                "mid-month"
+              ],
+              [
+                56.4,
+                "ATM Withdrawal"
+              ],
+              [
+                297.0108,
+                "$120.00"
+              ],
+              [
+                426.6108,
+                "$617.18"
+              ]
+            ]
+          ]
+        ]
+      },
+      "expected": {
+        "_kind": "bank",
+        "_account": "****7742",
+        "_period_end": "2026-07-31",
+        "_deposits": [
+          [
+            "Payroll Dep - Lonestar Fleet Logistics",
+            2160.0
+          ]
+        ],
+        "ending_balance": 617.18
+      }
+    },
+    {
+      "path": "examples/01_marcus_delgado_CNC/03_Bank_Statement_Month2.pdf",
+      "document_type": null,
+      "page_text": {
+        "texts": [
+          "Alamo Community Bank",
+          "Personal Checking Account Statement",
+          "2200 Post Oak Blvd, Houston, TX 77056",
+          "Member FDIC",
+          "Statement Period",
+          "08/01/2026 - 08/31/2026",
+          "Account Holder:",
+          "Marcus A. Delgado",
+          "Account Number:",
+          "****7742",
+          "Account Type:",
+          "Personal Checking",
+          "Beginning Balance:",
+          "$588.40",
+          "Date",
+          "Description",
+          "Withdrawals",
+          "Deposits",
+          "Balance",
+          "08/01/2026",
+          "Payroll Dep - Lonestar Fleet Logistics",
+          "$2,160.00",
+          "$2,748.40",
+          "mid-month",
+          "Bayou City Rentals - Rent",
+          "$1,150.00",
+          "$1,598.40",
+          "mid-month",
+          "Texan Auto Finance - Loan Pmt",
+          "$348.00",
+          "$1,250.40",
+          "mid-month",
+          "H-E-B Grocery",
+          "$210.55",
+          "$1,039.85",
+          "mid-month",
+          "Gulf Coast Health Partners - Premium",
+          "$178.00",
+          "$861.85",
+          "mid-month",
+          "CenterPoint Energy",
+          "$96.40",
+          "$765.45",
+          "mid-month",
+          "Comcast/Xfinity",
+          "$79.99",
+          "$685.46",
+          "mid-month",
+          "ATM Withdrawal",
+          "$120.00",
+          "$565.46",
+          "Ending Balance: $565.46",
+          "This is a simulated bank statement created for software-testing purposes. Alamo Community Bank is a fictional institution."
+        ],
+        "rows": [
+          [
+            151.2,
+            [
+              [
+                6.0,
+                "Date"
+              ],
+              [
+                56.4,
+                "Description"
+              ],
+              [
+                282.729,
+                "Withdrawals"
+              ],
+              [
+                359.658,
+                "Deposits"
+              ],
+              [
+                426.6186,
+                "Balance"
+              ]
+            ]
+          ],
+          [
+            133.2,
+            [
+              [
+                6.0,
+                "08/01/2026"
+              ],
+              [
+                56.4,
+                "Payroll Dep - Lonestar Fleet Logistics"
+              ],
+              [
+                355.3056,
+                "$2,160.00"
+              ],
+              [
+                420.1056,
+                "$2,748.40"
+              ]
+            ]
+          ],
+          [
+            115.2,
+            [
+              [
+                6.0,
+                "mid-month"
+              ],
+              [
+                56.4,
+                "Bayou City Rentals - Rent"
+              ],
+              [
+                290.5056,
+                "$1,150.00"
+              ],
+              [
+                420.1056,
+                "$1,598.40"
+              ]
+            ]
+          ],
+          [
+            97.2,
+            [
+              [
+                6.0,
+                "mid-month"
+              ],
+              [
+                56.4,
+                "Texan Auto Finance - Loan Pmt"
+              ],
+              [
+                297.0108,
+                "$348.00"
+              ],
+              [
+                420.1056,
+                "$1,250.40"
+              ]
+            ]
+          ],
+          [
+            79.2,
+            [
+              [
+                6.0,
+                "mid-month"
+              ],
+              [
+                56.4,
+                "H-E-B Grocery"
+              ],
+              [
+                297.0108,
+                "$210.55"
+              ],
+              [
+                420.1056,
+                "$1,039.85"
+              ]
+            ]
+          ],
+          [
+            61.2,
+            [
+              [
+                6.0,
+                "mid-month"
+              ],
+              [
+                56.4,
+                "Gulf Coast Health Partners - Premium"
+              ],
+              [
+                297.0108,
+                "$178.00"
+              ],
+              [
+                426.6108,
+                "$861.85"
+              ]
+            ]
+          ],
+          [
+            43.2,
+            [
+              [
+                6.0,
+                "mid-month"
+              ],
+              [
+                56.4,
+                "CenterPoint Energy"
+              ],
+              [
+                301.3476,
+                "$96.40"
+              ],
+              [
+                426.6108,
+                "$765.45"
+              ]
+            ]
+          ],
+          [
+            25.2,
+            [
+              [
+                6.0,
+                "mid-month"
+              ],
+              [
+                56.4,
+                "Comcast/Xfinity"
+              ],
+              [
+                301.3476,
+                "$79.99"
+              ],
+              [
+                426.6108,
+                "$685.46"
+              ]
+            ]
+          ],
+          [
+            7.2,
+            [
+              [
+                6.0,
+                "mid-month"
+              ],
+              [
+                56.4,
+                "ATM Withdrawal"
+              ],
+              [
+                297.0108,
+                "$120.00"
+              ],
+              [
+                426.6108,
+                "$565.46"
+              ]
+            ]
+          ]
+        ]
+      },
+      "expected": {
+        "_kind": "bank",
+        "_account": "****7742",
+        "_period_end": "2026-08-31",
+        "_deposits": [
+          [
+            "Payroll Dep - Lonestar Fleet Logistics",
+            2160.0
+          ]
+        ],
+        "ending_balance": 565.46
+      }
+    },
+    {
+      "path": "examples/01_marcus_delgado_CNC/03_Bank_Statement_Month3.pdf",
+      "document_type": null,
+      "page_text": {
+        "texts": [
+          "Alamo Community Bank",
+          "Personal Checking Account Statement",
+          "2200 Post Oak Blvd, Houston, TX 77056",
+          "Member FDIC",
+          "Statement Period",
+          "09/01/2026 - 09/25/2026",
+          "Account Holder:",
+          "Marcus A. Delgado",
+          "Account Number:",
+          "****7742",
+          "Account Type:",
+          "Personal Checking",
+          "Beginning Balance:",
+          "$601.75",
+          "Date",
+          "Description",
+          "Withdrawals",
+          "Deposits",
+          "Balance",
+          "09/01/2026",
+          "Payroll Dep - Lonestar Fleet Logistics",
+          "$2,160.00",
+          "$2,761.75",
+          "mid-month",
+          "Bayou City Rentals - Rent",
+          "$1,150.00",
+          "$1,611.75",
+          "mid-month",
+          "Texan Auto Finance - Loan Pmt",
+          "$348.00",
+          "$1,263.75",
+          "mid-month",
+          "H-E-B Grocery",
+          "$210.55",
+          "$1,053.20",
+          "mid-month",
+          "Gulf Coast Health Partners - Premium",
+          "$178.00",
+          "$875.20",
+          "mid-month",
+          "CenterPoint Energy",
+          "$96.40",
+          "$778.80",
+          "mid-month",
+          "Comcast/Xfinity",
+          "$79.99",
+          "$698.81",
+          "mid-month",
+          "ATM Withdrawal",
+          "$120.00",
+          "$578.81",
+          "Ending Balance: $578.81",
+          "This is a simulated bank statement created for software-testing purposes. Alamo Community Bank is a fictional institution."
+        ],
+        "rows": [
+          [
+            151.2,
+            [
+              [
+                6.0,
+                "Date"
+              ],
+              [
+                56.4,
+                "Description"
+              ],
+              [
+                282.729,
+                "Withdrawals"
+              ],
+              [
+                359.658,
+                "Deposits"
+              ],
+              [
+                426.6186,
+                "Balance"
+              ]
+            ]
+          ],
+          [
+            133.2,
+            [
+              [
+                6.0,
+                "09/01/2026"
+              ],
+              [
+                56.4,
+                "Payroll Dep - Lonestar Fleet Logistics"
+              ],
+              [
+                355.3056,
+                "$2,160.00"
+              ],
+              [
+                420.1056,
+                "$2,761.75"
+              ]
+            ]
+          ],
+          [
+            115.2,
+            [
+              [
+                6.0,
+                "mid-month"
+              ],
+              [
+                56.4,
+                "Bayou City Rentals - Rent"
+              ],
+              [
+                290.5056,
+                "$1,150.00"
+              ],
+              [
+                420.1056,
+                "$1,611.75"
+              ]
+            ]
+          ],
+          [
+            97.2,
+            [
+              [
+                6.0,
+                "mid-month"
+              ],
+              [
+                56.4,
+                "Texan Auto Finance - Loan Pmt"
+              ],
+              [
+                297.0108,
+                "$348.00"
+              ],
+              [
+                420.1056,
+                "$1,263.75"
+              ]
+            ]
+          ],
+          [
+            79.2,
+            [
+              [
+                6.0,
+                "mid-month"
+              ],
+              [
+                56.4,
+                "H-E-B Grocery"
+              ],
+              [
+                297.0108,
+                "$210.55"
+              ],
+              [
+                420.1056,
+                "$1,053.20"
+              ]
+            ]
+          ],
+          [
+            61.2,
+            [
+              [
+                6.0,
+                "mid-month"
+              ],
+              [
+                56.4,
+                "Gulf Coast Health Partners - Premium"
+              ],
+              [
+                297.0108,
+                "$178.00"
+              ],
+              [
+                426.6108,
+                "$875.20"
+              ]
+            ]
+          ],
+          [
+            43.2,
+            [
+              [
+                6.0,
+                "mid-month"
+              ],
+              [
+                56.4,
+                "CenterPoint Energy"
+              ],
+              [
+                301.3476,
+                "$96.40"
+              ],
+              [
+                426.6108,
+                "$778.80"
+              ]
+            ]
+          ],
+          [
+            25.2,
+            [
+              [
+                6.0,
+                "mid-month"
+              ],
+              [
+                56.4,
+                "Comcast/Xfinity"
+              ],
+              [
+                301.3476,
+                "$79.99"
+              ],
+              [
+                426.6108,
+                "$698.81"
+              ]
+            ]
+          ],
+          [
+            7.2,
+            [
+              [
+                6.0,
+                "mid-month"
+              ],
+              [
+                56.4,
+                "ATM Withdrawal"
+              ],
+              [
+                297.0108,
+                "$120.00"
+              ],
+              [
+                426.6108,
+                "$578.81"
+              ]
+            ]
+          ]
+        ]
+      },
+      "expected": {
+        "_kind": "bank",
+        "_account": "****7742",
+        "_period_end": "2026-09-25",
+        "_deposits": [
+          [
+            "Payroll Dep - Lonestar Fleet Logistics",
+            2160.0
+          ]
+        ],
+        "ending_balance": 578.81
+      }
+    },
+    {
+      "path": "examples/01_marcus_delgado_CNC/04_Pay_Stub.pdf",
+      "document_type": null,
+      "page_text": {
+        "texts": [
+          "Lonestar Fleet Logistics LLC",
+          "Earnings Statement",
+          "8800 Kirby Dr, Houston, TX 77054",
+          "Pay Date",
+          "09/18/2026",
+          "Employee Name:",
+          "Marcus A. Delgado",
+          "SSN:",
+          "XXX-XX-4471",
+          "Pay Period:",
+          "09/01/2026 - 09/15/2026",
+          "Pay Frequency:",
+          "Bi-Weekly",
+          "Earnings/Deductions",
+          "Current",
+          "Year-to-Date",
+          "Regular Gross Pay",
+          "$1,200.00",
+          "$21,600.00",
+          "Federal Income Tax",
+          "$-84.00",
+          "$-1,512.00",
+          "Social Security Tax",
+          "$-74.40",
+          "$-1,339.20",
+          "Medicare Tax",
+          "$-17.40",
+          "$-313.20",
+          "State Income Tax",
+          "$0.00",
+          "$0.00",
+          "Health Insurance (employee share)",
+          "$-45.00",
+          "$-810.00",
+          "NET PAY: $979.20"
+        ],
+        "rows": [
+          [
+            132.5,
+            [
+              [
+                6.0,
+                "Earnings/Deductions"
+              ],
+              [
+                318.461,
+                "Current"
+              ],
+              [
+                413.346,
+                "Year-to-Date"
+              ]
+            ]
+          ],
+          [
+            114.5,
+            [
+              [
+                6.0,
+                "Regular Gross Pay"
+              ],
+              [
+                308.992,
+                "$1,200.00"
+              ],
+              [
+                419.466,
+                "$21,600.00"
+              ]
+            ]
+          ],
+          [
+            78.5,
+            [
+              [
+                6.0,
+                "Federal Income Tax"
+              ],
+              [
+                317.9765,
+                "$-84.00"
+              ],
+              [
+                421.3615,
+                "$-1,512.00"
+              ]
+            ]
+          ],
+          [
+            60.5,
+            [
+              [
+                6.0,
+                "Social Security Tax"
+              ],
+              [
+                317.9765,
+                "$-74.40"
+              ],
+              [
+                421.3615,
+                "$-1,339.20"
+              ]
+            ]
+          ],
+          [
+            42.5,
+            [
+              [
+                6.0,
+                "Medicare Tax"
+              ],
+              [
+                317.9765,
+                "$-17.40"
+              ],
+              [
+                428.4505,
+                "$-313.20"
+              ]
+            ]
+          ],
+          [
+            24.5,
+            [
+              [
+                6.0,
+                "State Income Tax"
+              ],
+              [
+                325.533,
+                "$0.00"
+              ],
+              [
+                440.733,
+                "$0.00"
+              ]
+            ]
+          ],
+          [
+            6.5,
+            [
+              [
+                6.0,
+                "Health Insurance (employee share)"
+              ],
+              [
+                317.9765,
+                "$-45.00"
+              ],
+              [
+                428.4505,
+                "$-810.00"
+              ]
+            ]
+          ]
+        ]
+      },
+      "expected": {
+        "_kind": "pay_stub",
+        "_employer": "Lonestar Fleet Logistics LLC",
+        "pay_frequency": "biweekly",
+        "gross_wages_taxpayer": 2600.0,
+        "actual_current_taxes": 380.9
+      }
+    },
+    {
+      "path": "examples/01_marcus_delgado_CNC/05_Lease_Statement.pdf",
+      "document_type": null,
+      "page_text": {
+        "texts": [
+          "Bayou City Rentals & Management",
+          "Monthly Rent Statement",
+          "3100 Richmond Ave, Houston, TX 77098",
+          "Account Number",
+          "UNIT-4417-214",
+          "Account Holder:",
+          "Marcus A. Delgado",
+          "Property Address:",
+          "4417 Bellaire Blvd, Apt 214, Houston, TX 77036",
+          "Monthly Rent:",
+          "$1,150.00",
+          "Lease Term:",
+          "06/01/2025 - 05/31/2027",
+          "Payment Status:",
+          "Current",
+          "Simulated property management statement for software testing. Bayou City Rentals is a fictional entity."
+        ],
+        "rows": []
+      },
+      "expected": {
+        "_kind": "lease",
+        "actual_housing_utilities": 1150.0,
+        "state_of_residence": "TX",
+        "rents_home": true,
+        "owns_home": false
+      }
+    },
+    {
+      "path": "examples/01_marcus_delgado_CNC/06_Auto_Loan_Statement.pdf",
+      "document_type": null,
+      "page_text": {
+        "texts": [
+          "Texan Auto Finance Co.",
+          "Auto Loan Statement",
+          "9500 Gulf Freeway, Houston, TX 77034",
+          "Account Number",
+          "TAF-88213340",
+          "Account Holder:",
+          "Marcus A. Delgado",
+          "Vehicle:",
+          "2021 Toyota Corolla",
+          "Monthly Payment:",
+          "$348.00",
+          "Remaining Balance:",
+          "$9,200.00",
+          "Payments Remaining:",
+          "27",
+          "Simulated auto lender statement for software testing. Texan Auto Finance Co. is a fictional entity."
+        ],
+        "rows": []
+      },
+      "expected": {
+        "_kind": "auto",
+        "actual_vehicle_loan_lease": 348.0,
+        "vehicle_loan_balances": [
+          9200.0
+        ],
+        "vehicle_loan_balance_total": 9200.0,
+        "vehicle_count": 1
+      }
+    },
+    {
+      "path": "examples/01_marcus_delgado_CNC/07_Health_Insurance_Statement.pdf",
+      "document_type": null,
+      "page_text": {
+        "texts": [
+          "Gulf Coast Health Partners",
+          "Premium Billing Statement",
+          "PO Box 55210, Houston, TX 77255",
+          "Account Number",
+          "GCHP-2216590",
+          "Account Holder:",
+          "Marcus A. Delgado",
+          "Plan:",
+          "Bronze Individual Plan",
+          "Monthly Premium:",
+          "$178.00",
+          "Coverage Period:",
+          "01/01/2026 - 12/31/2026",
+          "Simulated health insurer statement for software testing. Gulf Coast Health Partners is a fictional entity."
+        ],
+        "rows": []
+      },
+      "expected": {
+        "_kind": "health",
+        "actual_health_insurance_premiums": 178.0
+      }
+    },
+    {
+      "path": "examples/02_whitfield_gregory_OIC/01_IRS_Account_Transcript.pdf",
+      "document_type": null,
+      "page_text": {
+        "texts": [
+          "Department of the Treasury  Internal Revenue Service",
+          "Account Transcript",
+          "This Product Contains Sensitive Taxpayer Data (FICTIONAL / TEST DATA ONLY)",
+          "Taxpayer Name:",
+          "Gregory T. Whitfield",
+          "SSN Provided:",
+          "XXX-XX-3390",
+          "Address:",
+          "3315 Olentangy River Rd, Apt 6B, Columbus, OH 43202",
+          "Filing Status:",
+          "Single",
+          "Tax Period(s):",
+          "2021, 2022, 2023",
+          "Collection Statute Expiration Date",
+          "(CSED):",
+          "05/09/2031",
+          "Request Date:",
+          "09-26-2026",
+          "Response Date:",
+          "09-26-2026",
+          "Tax Period: 2021",
+          "Code",
+          "Explanation of Transaction",
+          "Cycle",
+          "Amount",
+          "150",
+          "Return filed & tax assessed",
+          "20220509",
+          "$20,000.00",
+          "276",
+          "Failure to pay penalty",
+          "20220509",
+          "$4,000.00",
+          "196",
+          "Interest charged",
+          "20220509",
+          "$3,500.00",
+          "Tax Period: 2022",
+          "Code",
+          "Explanation of Transaction",
+          "Cycle",
+          "Amount",
+          "150",
+          "Return filed & tax assessed",
+          "20230508",
+          "$20,000.00",
+          "276",
+          "Failure to pay penalty",
+          "20230508",
+          "$4,000.00",
+          "196",
+          "Interest charged",
+          "20230508",
+          "$3,300.00",
+          "Tax Period: 2023",
+          "Code",
+          "Explanation of Transaction",
+          "Cycle",
+          "Amount",
+          "150",
+          "Return filed & tax assessed",
+          "20240513",
+          "$20,000.00",
+          "276",
+          "Failure to pay penalty",
+          "20240513",
+          "$4,000.00",
+          "196",
+          "Interest charged",
+          "20240513",
+          "$3,800.00",
+          "ACCOUNT BALANCE (all periods, incl. penalties & interest): $82,600.00",
+          "This transcript was generated for internal testing purposes only. Fictional taxpayer, fictional balances. Not an official IRS document."
+        ],
+        "rows": [
+          [
+            61.0,
+            [
+              [
+                6.0,
+                "Code"
+              ],
+              [
+                49.2,
+                "Explanation of Transaction"
+              ],
+              [
+                308.4,
+                "Cycle"
+              ],
+              [
+                420.032,
+                "Amount"
+              ],
+              [
+                6.0,
+                "Code"
+              ],
+              [
+                49.2,
+                "Explanation of Transaction"
+              ],
+              [
+                308.4,
+                "Cycle"
+              ],
+              [
+                420.032,
+                "Amount"
+              ],
+              [
+                6.0,
+                "Code"
+              ],
+              [
+                49.2,
+                "Explanation of Transaction"
+              ],
+              [
+                308.4,
+                "Cycle"
+              ],
+              [
+                420.032,
+                "Amount"
+              ]
+            ]
+          ],
+          [
+            43.0,
+            [
+              [
+                6.0,
+                "150"
+              ],
+              [
+                49.2,
+                "Return filed & tax assessed"
+              ],
+              [
+                308.4,
+                "20220509"
+              ],
+              [
+                407.568,
+                "$20,000.00"
+              ],
+              [
+                6.0,
+                "150"
+              ],
+              [
+                49.2,
+                "Return filed & tax assessed"
+              ],
+              [
+                308.4,
+                "20230508"
+              ],
+              [
+                407.568,
+                "$20,000.00"
+              ],
+              [
+                6.0,
+                "150"
+              ],
+              [
+                49.2,
+                "Return filed & tax assessed"
+              ],
+              [
+                308.4,
+                "20240513"
+              ],
+              [
+                407.568,
+                "$20,000.00"
+              ]
+            ]
+          ],
+          [
+            25.0,
+            [
+              [
+                6.0,
+                "276"
+              ],
+              [
+                49.2,
+                "Failure to pay penalty"
+              ],
+              [
+                308.4,
+                "20220509"
+              ],
+              [
+                412.016,
+                "$4,000.00"
+              ],
+              [
+                6.0,
+                "276"
+              ],
+              [
+                49.2,
+                "Failure to pay penalty"
+              ],
+              [
+                308.4,
+                "20230508"
+              ],
+              [
+                412.016,
+                "$4,000.00"
+              ],
+              [
+                6.0,
+                "276"
+              ],
+              [
+                49.2,
+                "Failure to pay penalty"
+              ],
+              [
+                308.4,
+                "20240513"
+              ],
+              [
+                412.016,
+                "$4,000.00"
+              ]
+            ]
+          ],
+          [
+            7.0,
+            [
+              [
+                6.0,
+                "196"
+              ],
+              [
+                49.2,
+                "Interest charged"
+              ],
+              [
+                308.4,
+                "20220509"
+              ],
+              [
+                412.016,
+                "$3,500.00"
+              ],
+              [
+                6.0,
+                "196"
+              ],
+              [
+                49.2,
+                "Interest charged"
+              ],
+              [
+                308.4,
+                "20230508"
+              ],
+              [
+                412.016,
+                "$3,300.00"
+              ],
+              [
+                6.0,
+                "196"
+              ],
+              [
+                49.2,
+                "Interest charged"
+              ],
+              [
+                308.4,
+                "20240513"
+              ],
+              [
+                412.016,
+                "$3,800.00"
+              ]
+            ]
+          ]
+        ]
+      },
+      "expected": {
+        "_kind": "account",
+        "filing_status_married": false,
+        "state_of_residence": "OH",
+        "total_tax_owed": 82600.0,
+        "tax_only_balance": 60000.0,
+        "csed_months_remaining": 55
+      }
+    },
+    {
+      "path": "examples/02_whitfield_gregory_OIC/02_IRS_Wage_Income_Transcript.pdf",
+      "document_type": null,
+      "page_text": {
+        "texts": [
+          "Department of the Treasury  Internal Revenue Service",
+          "Wage & Income Transcript",
+          "FICTIONAL / TEST DATA ONLY",
+          "Taxpayer Name:",
+          "Gregory T. Whitfield",
+          "SSN Provided:",
+          "XXX-XX-3390",
+          "Tax Period:",
+          "2025",
+          "Form W-2  Wage and Tax Statement, filed by: Scioto Ridge Engineering Group",
+          "Box 1  Wages, tips, other",
+          "compensation",
+          "$50,400.00",
+          "Box 2  Federal income tax withheld",
+          "$7,560.00",
+          "Box 4  Social security tax withheld",
+          "$3,124.80",
+          "Box 6  Medicare tax withheld",
+          "$730.80",
+          "Box 17  State income tax withheld",
+          "$1,764.00"
+        ],
+        "rows": []
+      },
+      "expected": {
+        "_kind": "wage",
+        "_employer": "Scioto Ridge Engineering Group",
+        "gross_wages_taxpayer": 4200.0
+      }
+    },
+    {
+      "path": "examples/02_whitfield_gregory_OIC/03_Bank_Statement_Month1.pdf",
+      "document_type": null,
+      "page_text": {
+        "texts": [
+          "Capital City Trust Bank",
+          "Personal Checking Account Statement",
+          "145 E Broad St, Columbus, OH 43215",
+          "Member FDIC",
+          "Statement Period",
+          "07/01/2026 - 07/31/2026",
+          "Account Holder:",
+          "Gregory T. Whitfield",
+          "Account Number:",
+          "****5581",
+          "Account Type:",
+          "Personal Checking",
+          "Beginning Balance:",
+          "$1,180.55",
+          "Date",
+          "Description",
+          "Withdrawals",
+          "Deposits",
+          "Balance",
+          "early",
+          "Payroll Dep - Scioto Ridge Engineering Group",
+          "$1,550.85",
+          "$2,731.40",
+          "mid",
+          "Payroll Dep - Scioto Ridge Engineering Group",
+          "$1,550.85",
+          "$4,282.25",
+          "mid",
+          "Olentangy Park Apartments - Rent",
+          "$1,200.00",
+          "$3,082.25",
+          "mid",
+          "Buckeye Auto Capital - Loan Pmt",
+          "$400.00",
+          "$2,682.25",
+          "mid",
+          "Heartland Preferred Health - Premium",
+          "$220.00",
+          "$2,462.25",
+          "mid",
+          "Kroger",
+          "$300.10",
+          "$2,162.15",
+          "mid",
+          "AEP Ohio",
+          "$138.60",
+          "$2,023.55",
+          "Ending Balance: $2,023.55",
+          "This is a simulated bank statement created for software-testing purposes. Capital City Trust Bank is a fictional institution."
+        ],
+        "rows": [
+          [
+            133.2,
+            [
+              [
+                6.0,
+                "Date"
+              ],
+              [
+                56.4,
+                "Description"
+              ],
+              [
+                282.729,
+                "Withdrawals"
+              ],
+              [
+                359.658,
+                "Deposits"
+              ],
+              [
+                426.6186,
+                "Balance"
+              ]
+            ]
+          ],
+          [
+            115.2,
+            [
+              [
+                6.0,
+                "early"
+              ],
+              [
+                56.4,
+                "Payroll Dep - Scioto Ridge Engineering Group"
+              ],
+              [
+                355.3056,
+                "$1,550.85"
+              ],
+              [
+                420.1056,
+                "$2,731.40"
+              ]
+            ]
+          ],
+          [
+            97.2,
+            [
+              [
+                6.0,
+                "mid"
+              ],
+              [
+                56.4,
+                "Payroll Dep - Scioto Ridge Engineering Group"
+              ],
+              [
+                355.3056,
+                "$1,550.85"
+              ],
+              [
+                420.1056,
+                "$4,282.25"
+              ]
+            ]
+          ],
+          [
+            79.2,
+            [
+              [
+                6.0,
+                "mid"
+              ],
+              [
+                56.4,
+                "Olentangy Park Apartments - Rent"
+              ],
+              [
+                290.5056,
+                "$1,200.00"
+              ],
+              [
+                420.1056,
+                "$3,082.25"
+              ]
+            ]
+          ],
+          [
+            61.2,
+            [
+              [
+                6.0,
+                "mid"
+              ],
+              [
+                56.4,
+                "Buckeye Auto Capital - Loan Pmt"
+              ],
+              [
+                297.0108,
+                "$400.00"
+              ],
+              [
+                420.1056,
+                "$2,682.25"
+              ]
+            ]
+          ],
+          [
+            43.2,
+            [
+              [
+                6.0,
+                "mid"
+              ],
+              [
+                56.4,
+                "Heartland Preferred Health - Premium"
+              ],
+              [
+                297.0108,
+                "$220.00"
+              ],
+              [
+                420.1056,
+                "$2,462.25"
+              ]
+            ]
+          ],
+          [
+            25.2,
+            [
+              [
+                6.0,
+                "mid"
+              ],
+              [
+                56.4,
+                "Kroger"
+              ],
+              [
+                297.0108,
+                "$300.10"
+              ],
+              [
+                420.1056,
+                "$2,162.15"
+              ]
+            ]
+          ],
+          [
+            7.2,
+            [
+              [
+                6.0,
+                "mid"
+              ],
+              [
+                56.4,
+                "AEP Ohio"
+              ],
+              [
+                297.0108,
+                "$138.60"
+              ],
+              [
+                420.1056,
+                "$2,023.55"
+              ]
+            ]
+          ]
+        ]
+      },
+      "expected": {
+        "_kind": "bank",
+        "_account": "****5581",
+        "_period_end": "2026-07-31",
+        "_deposits": [
+          [
+            "Payroll Dep - Scioto Ridge Engineering Group",
+            1550.85
+          ],
+          [
+            "Payroll Dep - Scioto Ridge Engineering Group",
+            1550.85
+          ]
+        ],
+        "ending_balance": 2023.55
+      }
+    },
+    {
+      "path": "examples/02_whitfield_gregory_OIC/03_Bank_Statement_Month2.pdf",
+      "document_type": null,
+      "page_text": {
+        "texts": [
+          "Capital City Trust Bank",
+          "Personal Checking Account Statement",
+          "145 E Broad St, Columbus, OH 43215",
+          "Member FDIC",
+          "Statement Period",
+          "08/01/2026 - 08/31/2026",
+          "Account Holder:",
+          "Gregory T. Whitfield",
+          "Account Number:",
+          "****5581",
+          "Account Type:",
+          "Personal Checking",
+          "Beginning Balance:",
+          "$1,340.20",
+          "Date",
+          "Description",
+          "Withdrawals",
+          "Deposits",
+          "Balance",
+          "early",
+          "Payroll Dep - Scioto Ridge Engineering Group",
+          "$1,550.85",
+          "$2,891.05",
+          "mid",
+          "Payroll Dep - Scioto Ridge Engineering Group",
+          "$1,550.85",
+          "$4,441.90",
+          "mid",
+          "Olentangy Park Apartments - Rent",
+          "$1,200.00",
+          "$3,241.90",
+          "mid",
+          "Buckeye Auto Capital - Loan Pmt",
+          "$400.00",
+          "$2,841.90",
+          "mid",
+          "Heartland Preferred Health - Premium",
+          "$220.00",
+          "$2,621.90",
+          "mid",
+          "Kroger",
+          "$300.10",
+          "$2,321.80",
+          "mid",
+          "AEP Ohio",
+          "$138.60",
+          "$2,183.20",
+          "Ending Balance: $2,183.20",
+          "This is a simulated bank statement created for software-testing purposes. Capital City Trust Bank is a fictional institution."
+        ],
+        "rows": [
+          [
+            133.2,
+            [
+              [
+                6.0,
+                "Date"
+              ],
+              [
+                56.4,
+                "Description"
+              ],
+              [
+                282.729,
+                "Withdrawals"
+              ],
+              [
+                359.658,
+                "Deposits"
+              ],
+              [
+                426.6186,
+                "Balance"
+              ]
+            ]
+          ],
+          [
+            115.2,
+            [
+              [
+                6.0,
+                "early"
+              ],
+              [
+                56.4,
+                "Payroll Dep - Scioto Ridge Engineering Group"
+              ],
+              [
+                355.3056,
+                "$1,550.85"
+              ],
+              [
+                420.1056,
+                "$2,891.05"
+              ]
+            ]
+          ],
+          [
+            97.2,
+            [
+              [
+                6.0,
+                "mid"
+              ],
+              [
+                56.4,
+                "Payroll Dep - Scioto Ridge Engineering Group"
+              ],
+              [
+                355.3056,
+                "$1,550.85"
+              ],
+              [
+                420.1056,
+                "$4,441.90"
+              ]
+            ]
+          ],
+          [
+            79.2,
+            [
+              [
+                6.0,
+                "mid"
+              ],
+              [
+                56.4,
+                "Olentangy Park Apartments - Rent"
+              ],
+              [
+                290.5056,
+                "$1,200.00"
+              ],
+              [
+                420.1056,
+                "$3,241.90"
+              ]
+            ]
+          ],
+          [
+            61.2,
+            [
+              [
+                6.0,
+                "mid"
+              ],
+              [
+                56.4,
+                "Buckeye Auto Capital - Loan Pmt"
+              ],
+              [
+                297.0108,
+                "$400.00"
+              ],
+              [
+                420.1056,
+                "$2,841.90"
+              ]
+            ]
+          ],
+          [
+            43.2,
+            [
+              [
+                6.0,
+                "mid"
+              ],
+              [
+                56.4,
+                "Heartland Preferred Health - Premium"
+              ],
+              [
+                297.0108,
+                "$220.00"
+              ],
+              [
+                420.1056,
+                "$2,621.90"
+              ]
+            ]
+          ],
+          [
+            25.2,
+            [
+              [
+                6.0,
+                "mid"
+              ],
+              [
+                56.4,
+                "Kroger"
+              ],
+              [
+                297.0108,
+                "$300.10"
+              ],
+              [
+                420.1056,
+                "$2,321.80"
+              ]
+            ]
+          ],
+          [
+            7.2,
+            [
+              [
+                6.0,
+                "mid"
+              ],
+              [
+                56.4,
+                "AEP Ohio"
+              ],
+              [
+                297.0108,
+                "$138.60"
+              ],
+              [
+                420.1056,
+                "$2,183.20"
+              ]
+            ]
+          ]
+        ]
+      },
+      "expected": {
+        "_kind": "bank",
+        "_account": "****5581",
+        "_period_end": "2026-08-31",
+        "_deposits": [
+          [
+            "Payroll Dep - Scioto Ridge Engineering Group",
+            1550.85
+          ],
+          [
+            "Payroll Dep - Scioto Ridge Engineering Group",
+            1550.85
+          ]
+        ],
+        "ending_balance": 2183.2
+      }
+    },
+    {
+      "path": "examples/02_whitfield_gregory_OIC/03_Bank_Statement_Month3.pdf",
+      "document_type": null,
+      "page_text": {
+        "texts": [
+          "Capital City Trust Bank",
+          "Personal Checking Account Statement",
+          "145 E Broad St, Columbus, OH 43215",
+          "Member FDIC",
+          "Statement Period",
+          "09/01/2026 - 09/25/2026",
+          "Account Holder:",
+          "Gregory T. Whitfield",
+          "Account Number:",
+          "****5581",
+          "Account Type:",
+          "Personal Checking",
+          "Beginning Balance:",
+          "$1,462.90",
+          "Date",
+          "Description",
+          "Withdrawals",
+          "Deposits",
+          "Balance",
+          "early",
+          "Payroll Dep - Scioto Ridge Engineering Group",
+          "$1,550.85",
+          "$3,013.75",
+          "mid",
+          "Payroll Dep - Scioto Ridge Engineering Group",
+          "$1,550.85",
+          "$4,564.60",
+          "mid",
+          "Olentangy Park Apartments - Rent",
+          "$1,200.00",
+          "$3,364.60",
+          "mid",
+          "Buckeye Auto Capital - Loan Pmt",
+          "$400.00",
+          "$2,964.60",
+          "mid",
+          "Heartland Preferred Health - Premium",
+          "$220.00",
+          "$2,744.60",
+          "mid",
+          "Kroger",
+          "$300.10",
+          "$2,444.50",
+          "mid",
+          "AEP Ohio",
+          "$138.60",
+          "$2,305.90",
+          "Ending Balance: $2,305.90",
+          "This is a simulated bank statement created for software-testing purposes. Capital City Trust Bank is a fictional institution."
+        ],
+        "rows": [
+          [
+            133.2,
+            [
+              [
+                6.0,
+                "Date"
+              ],
+              [
+                56.4,
+                "Description"
+              ],
+              [
+                282.729,
+                "Withdrawals"
+              ],
+              [
+                359.658,
+                "Deposits"
+              ],
+              [
+                426.6186,
+                "Balance"
+              ]
+            ]
+          ],
+          [
+            115.2,
+            [
+              [
+                6.0,
+                "early"
+              ],
+              [
+                56.4,
+                "Payroll Dep - Scioto Ridge Engineering Group"
+              ],
+              [
+                355.3056,
+                "$1,550.85"
+              ],
+              [
+                420.1056,
+                "$3,013.75"
+              ]
+            ]
+          ],
+          [
+            97.2,
+            [
+              [
+                6.0,
+                "mid"
+              ],
+              [
+                56.4,
+                "Payroll Dep - Scioto Ridge Engineering Group"
+              ],
+              [
+                355.3056,
+                "$1,550.85"
+              ],
+              [
+                420.1056,
+                "$4,564.60"
+              ]
+            ]
+          ],
+          [
+            79.2,
+            [
+              [
+                6.0,
+                "mid"
+              ],
+              [
+                56.4,
+                "Olentangy Park Apartments - Rent"
+              ],
+              [
+                290.5056,
+                "$1,200.00"
+              ],
+              [
+                420.1056,
+                "$3,364.60"
+              ]
+            ]
+          ],
+          [
+            61.2,
+            [
+              [
+                6.0,
+                "mid"
+              ],
+              [
+                56.4,
+                "Buckeye Auto Capital - Loan Pmt"
+              ],
+              [
+                297.0108,
+                "$400.00"
+              ],
+              [
+                420.1056,
+                "$2,964.60"
+              ]
+            ]
+          ],
+          [
+            43.2,
+            [
+              [
+                6.0,
+                "mid"
+              ],
+              [
+                56.4,
+                "Heartland Preferred Health - Premium"
+              ],
+              [
+                297.0108,
+                "$220.00"
+              ],
+              [
+                420.1056,
+                "$2,744.60"
+              ]
+            ]
+          ],
+          [
+            25.2,
+            [
+              [
+                6.0,
+                "mid"
+              ],
+              [
+                56.4,
+                "Kroger"
+              ],
+              [
+                297.0108,
+                "$300.10"
+              ],
+              [
+                420.1056,
+                "$2,444.50"
+              ]
+            ]
+          ],
+          [
+            7.2,
+            [
+              [
+                6.0,
+                "mid"
+              ],
+              [
+                56.4,
+                "AEP Ohio"
+              ],
+              [
+                297.0108,
+                "$138.60"
+              ],
+              [
+                420.1056,
+                "$2,305.90"
+              ]
+            ]
+          ]
+        ]
+      },
+      "expected": {
+        "_kind": "bank",
+        "_account": "****5581",
+        "_period_end": "2026-09-25",
+        "_deposits": [
+          [
+            "Payroll Dep - Scioto Ridge Engineering Group",
+            1550.85
+          ],
+          [
+            "Payroll Dep - Scioto Ridge Engineering Group",
+            1550.85
+          ]
+        ],
+        "ending_balance": 2305.9
+      }
+    },
+    {
+      "path": "examples/02_whitfield_gregory_OIC/04_Pay_Stub.pdf",
+      "document_type": null,
+      "page_text": {
+        "texts": [
+          "Scioto Ridge Engineering Group",
+          "Earnings Statement",
+          "4600 Sawmill Rd, Columbus, OH 43220",
+          "Pay Date",
+          "09/18/2026",
+          "Employee Name:",
+          "Gregory T. Whitfield",
+          "SSN:",
+          "XXX-XX-3390",
+          "Pay Period:",
+          "09/01/2026 - 09/15/2026",
+          "Pay Frequency:",
+          "Semi-Monthly",
+          "Earnings/Deductions",
+          "Current",
+          "Year-to-Date",
+          "Regular Gross Pay",
+          "$2,100.00",
+          "$37,800.00",
+          "Federal Income Tax",
+          "$-315.00",
+          "$-5,670.00",
+          "Social Security Tax",
+          "$-130.20",
+          "$-2,343.60",
+          "Medicare Tax",
+          "$-30.45",
+          "$-548.10",
+          "State Income Tax",
+          "$-73.50",
+          "$-1,323.00",
+          "NET PAY: $1,550.85"
+        ],
+        "rows": [
+          [
+            114.5,
+            [
+              [
+                6.0,
+                "Earnings/Deductions"
+              ],
+              [
+                318.461,
+                "Current"
+              ],
+              [
+                413.346,
+                "Year-to-Date"
+              ]
+            ]
+          ],
+          [
+            96.5,
+            [
+              [
+                6.0,
+                "Regular Gross Pay"
+              ],
+              [
+                308.992,
+                "$2,100.00"
+              ],
+              [
+                419.466,
+                "$37,800.00"
+              ]
+            ]
+          ],
+          [
+            60.5,
+            [
+              [
+                6.0,
+                "Federal Income Tax"
+              ],
+              [
+                313.2505,
+                "$-315.00"
+              ],
+              [
+                421.3615,
+                "$-5,670.00"
+              ]
+            ]
+          ],
+          [
+            42.5,
+            [
+              [
+                6.0,
+                "Social Security Tax"
+              ],
+              [
+                313.2505,
+                "$-130.20"
+              ],
+              [
+                421.3615,
+                "$-2,343.60"
+              ]
+            ]
+          ],
+          [
+            24.5,
+            [
+              [
+                6.0,
+                "Medicare Tax"
+              ],
+              [
+                317.9765,
+                "$-30.45"
+              ],
+              [
+                428.4505,
+                "$-548.10"
+              ]
+            ]
+          ],
+          [
+            6.5,
+            [
+              [
+                6.0,
+                "State Income Tax"
+              ],
+              [
+                317.9765,
+                "$-73.50"
+              ],
+              [
+                421.3615,
+                "$-1,323.00"
+              ]
+            ]
+          ]
+        ]
+      },
+      "expected": {
+        "_kind": "pay_stub",
+        "_employer": "Scioto Ridge Engineering Group",
+        "pay_frequency": "semimonthly",
+        "gross_wages_taxpayer": 4200.0,
+        "actual_current_taxes": 1098.3
+      }
+    },
+    {
+      "path": "examples/02_whitfield_gregory_OIC/05_Lease_Statement.pdf",
+      "document_type": null,
+      "page_text": {
+        "texts": [
+          "Olentangy Park Apartments LLC",
+          "Monthly Rent Statement",
+          "3315 Olentangy River Rd, Columbus, OH 43202",
+          "Account Number",
+          "UNIT-3315-6B",
+          "Account Holder:",
+          "Gregory T. Whitfield",
+          "Property Address:",
+          "3315 Olentangy River Rd, Apt 6B, Columbus, OH 43202",
+          "Monthly Rent:",
+          "$1,200.00",
+          "Lease Term:",
+          "03/01/2025 - 02/28/2027",
+          "Payment Status:",
+          "Current",
+          "Simulated property management statement for software testing. Olentangy Park Apartments LLC is a fictional entity."
+        ],
+        "rows": []
+      },
+      "expected": {
+        "_kind": "lease",
+        "actual_housing_utilities": 1200.0,
+        "state_of_residence": "OH",
+        "rents_home": true,
+        "owns_home": false
+      }
+    },
+    {
+      "path": "examples/02_whitfield_gregory_OIC/06_Auto_Loan_Statement.pdf",
+      "document_type": null,
+      "page_text": {
+        "texts": [
+          "Buckeye Auto Capital",
+          "Auto Loan Statement",
+          "1800 Stringtown Rd, Grove City, OH 43123",
+          "Account Number",
+          "BAC-661820",
+          "Account Holder:",
+          "Gregory T. Whitfield",
+          "Vehicle:",
+          "2020 Chevrolet Equinox",
+          "Monthly Payment:",
+          "$400.00",
+          "Remaining Balance:",
+          "$9,000.00",
+          "Est. Market Value:",
+          "$12,000.00",
+          "Simulated auto lender statement for software testing. Buckeye Auto Capital is a fictional entity."
+        ],
+        "rows": []
+      },
+      "expected": {
+        "_kind": "auto",
+        "actual_vehicle_loan_lease": 400.0,
+        "vehicle_loan_balances": [
+          9000.0
+        ],
+        "vehicle_loan_balance_total": 9000.0,
+        "vehicle_count": 1,
+        "vehicle_market_values": [
+          12000.0
+        ],
+        "vehicle_market_value_total": 12000.0
+      }
+    },
+    {
+      "path": "examples/02_whitfield_gregory_OIC/07_Health_Insurance_Statement.pdf",
+      "document_type": null,
+      "page_text": {
+        "texts": [
+          "Heartland Preferred Health",
+          "Premium Billing Statement",
+          "PO Box 71100, Columbus, OH 43271",
+          "Account Number",
+          "HPH-4471209",
+          "Account Holder:",
+          "Gregory T. Whitfield",
+          "Plan:",
+          "Silver Individual Plan",
+          "Monthly Premium:",
+          "$220.00",
+          "Coverage Period:",
+          "01/01/2026 - 12/31/2026",
+          "Simulated health insurer statement for software testing. Heartland Preferred Health is a fictional entity."
+        ],
+        "rows": []
+      },
+      "expected": {
+        "_kind": "health",
+        "actual_health_insurance_premiums": 220.0
+      }
+    },
+    {
+      "path": "examples/03_renata_alves_streamlined_IA/01_IRS_Account_Transcript.pdf",
+      "document_type": null,
+      "page_text": {
+        "texts": [
+          "Department of the Treasury  Internal Revenue Service",
+          "Account Transcript",
+          "This Product Contains Sensitive Taxpayer Data (FICTIONAL / TEST DATA ONLY)",
+          "Taxpayer Name:",
+          "Renata C. Alves",
+          "SSN Provided:",
+          "XXX-XX-5509",
+          "Address:",
+          "8820 SW 112th St, Miami, FL 33176",
+          "Filing Status:",
+          "Single",
+          "Tax Period(s):",
+          "2023, 2024",
+          "Collection Statute Expiration Date",
+          "(CSED):",
+          "05/07/2034",
+          "Request Date:",
+          "09-26-2026",
+          "Response Date:",
+          "09-26-2026",
+          "Tax Period: 2023",
+          "Code",
+          "Explanation of Transaction",
+          "Cycle",
+          "Amount",
+          "150",
+          "Return filed & tax assessed",
+          "20240507",
+          "$14,200.00",
+          "276",
+          "Failure to pay penalty",
+          "20240507",
+          "$1,420.00",
+          "196",
+          "Interest charged",
+          "20240507",
+          "$780.00",
+          "Tax Period: 2024",
+          "Code",
+          "Explanation of Transaction",
+          "Cycle",
+          "Amount",
+          "150",
+          "Return filed & tax assessed",
+          "20250509",
+          "$9,800.00",
+          "276",
+          "Failure to pay penalty",
+          "20250509",
+          "$980.00",
+          "196",
+          "Interest charged",
+          "20250509",
+          "$820.00",
+          "ACCOUNT BALANCE (all periods, incl. penalties & interest): $28,000.00",
+          "This transcript was generated for internal testing purposes only. Fictional taxpayer, fictional balances. Not an official IRS document."
+        ],
+        "rows": [
+          [
+            61.0,
+            [
+              [
+                6.0,
+                "Code"
+              ],
+              [
+                49.2,
+                "Explanation of Transaction"
+              ],
+              [
+                308.4,
+                "Cycle"
+              ],
+              [
+                420.032,
+                "Amount"
+              ],
+              [
+                6.0,
+                "Code"
+              ],
+              [
+                49.2,
+                "Explanation of Transaction"
+              ],
+              [
+                308.4,
+                "Cycle"
+              ],
+              [
+                420.032,
+                "Amount"
+              ]
+            ]
+          ],
+          [
+            43.0,
+            [
+              [
+                6.0,
+                "150"
+              ],
+              [
+                49.2,
+                "Return filed & tax assessed"
+              ],
+              [
+                308.4,
+                "20240507"
+              ],
+              [
+                407.568,
+                "$14,200.00"
+              ],
+              [
+                6.0,
+                "150"
+              ],
+              [
+                49.2,
+                "Return filed & tax assessed"
+              ],
+              [
+                308.4,
+                "20250509"
+              ],
+              [
+                412.016,
+                "$9,800.00"
+              ]
+            ]
+          ],
+          [
+            25.0,
+            [
+              [
+                6.0,
+                "276"
+              ],
+              [
+                49.2,
+                "Failure to pay penalty"
+              ],
+              [
+                308.4,
+                "20240507"
+              ],
+              [
+                412.016,
+                "$1,420.00"
+              ],
+              [
+                6.0,
+                "276"
+              ],
+              [
+                49.2,
+                "Failure to pay penalty"
+              ],
+              [
+                308.4,
+                "20250509"
+              ],
+              [
+                418.688,
+                "$980.00"
+              ]
+            ]
+          ],
+          [
+            7.0,
+            [
+              [
+                6.0,
+                "196"
+              ],
+              [
+                49.2,
+                "Interest charged"
+              ],
+              [
+                308.4,
+                "20240507"
+              ],
+              [
+                418.688,
+                "$780.00"
+              ],
+              [
+                6.0,
+                "196"
+              ],
+              [
+                49.2,
+                "Interest charged"
+              ],
+              [
+                308.4,
+                "20250509"
+              ],
+              [
+                418.688,
+                "$820.00"
+              ]
+            ]
+          ]
+        ]
+      },
+      "expected": {
+        "_kind": "account",
+        "filing_status_married": false,
+        "state_of_residence": "FL",
+        "total_tax_owed": 28000.0,
+        "tax_only_balance": 24000.0,
+        "csed_months_remaining": 91
+      }
+    },
+    {
+      "path": "examples/03_renata_alves_streamlined_IA/02_IRS_Wage_Income_Transcript.pdf",
+      "document_type": null,
+      "page_text": {
+        "texts": [
+          "Department of the Treasury  Internal Revenue Service",
+          "Wage & Income Transcript",
+          "FICTIONAL / TEST DATA ONLY",
+          "Taxpayer Name:",
+          "Renata C. Alves",
+          "SSN Provided:",
+          "XXX-XX-5509",
+          "Tax Period:",
+          "2024",
+          "Form W-2  Wage and Tax Statement, filed by: Coral Gables Marine Insurance Group",
+          "Box 1  Wages, tips, other",
+          "compensation",
+          "$81,600.00",
+          "Box 2  Federal income tax withheld",
+          "$11,424.00",
+          "Box 4  Social security tax withheld",
+          "$5,059.20",
+          "Box 6  Medicare tax withheld",
+          "$1,183.20",
+          "Box 17  State income tax withheld",
+          "$0.00"
+        ],
+        "rows": []
+      },
+      "expected": {
+        "_kind": "wage",
+        "_employer": "Coral Gables Marine Insurance Group",
+        "gross_wages_taxpayer": 6800.0
+      }
+    },
+    {
+      "path": "examples/03_renata_alves_streamlined_IA/03_Bank_Statement_Month1.pdf",
+      "document_type": null,
+      "page_text": {
+        "texts": [
+          "Biscayne Bay National Bank",
+          "Personal Checking Account Statement",
+          "801 Brickell Ave, Miami, FL 33131",
+          "Member FDIC",
+          "Statement Period",
+          "07/01/2026 - 07/31/2026",
+          "Account Holder:",
+          "Renata C. Alves",
+          "Account Number:",
+          "****9012",
+          "Account Type:",
+          "Personal Checking",
+          "Beginning Balance:",
+          "$5,620.40",
+          "Date",
+          "Description",
+          "Withdrawals",
+          "Deposits",
+          "Balance",
+          "early",
+          "Payroll Dep - Coral Gables Marine Insurance",
+          "$3,400.00",
+          "$9,020.40",
+          "mid",
+          "Sunset Coastal Mortgage - Pmt",
+          "$1,850.00",
+          "$7,170.40",
+          "mid",
+          "Atlantic Shield Health - Premium",
+          "$260.00",
+          "$6,910.40",
+          "mid",
+          "FPL Electric",
+          "$165.30",
+          "$6,745.10",
+          "mid",
+          "Publix",
+          "$410.60",
+          "$6,334.50",
+          "mid",
+          "Transfer to Savings",
+          "$500.00",
+          "$5,834.50",
+          "Ending Balance: $5,834.50",
+          "This is a simulated bank statement created for software-testing purposes. Biscayne Bay National Bank is a fictional institution."
+        ],
+        "rows": [
+          [
+            115.2,
+            [
+              [
+                6.0,
+                "Date"
+              ],
+              [
+                56.4,
+                "Description"
+              ],
+              [
+                282.729,
+                "Withdrawals"
+              ],
+              [
+                359.658,
+                "Deposits"
+              ],
+              [
+                426.6186,
+                "Balance"
+              ]
+            ]
+          ],
+          [
+            97.2,
+            [
+              [
+                6.0,
+                "early"
+              ],
+              [
+                56.4,
+                "Payroll Dep - Coral Gables Marine Insurance"
+              ],
+              [
+                355.3056,
+                "$3,400.00"
+              ],
+              [
+                420.1056,
+                "$9,020.40"
+              ]
+            ]
+          ],
+          [
+            79.2,
+            [
+              [
+                6.0,
+                "mid"
+              ],
+              [
+                56.4,
+                "Sunset Coastal Mortgage - Pmt"
+              ],
+              [
+                290.5056,
+                "$1,850.00"
+              ],
+              [
+                420.1056,
+                "$7,170.40"
+              ]
+            ]
+          ],
+          [
+            61.2,
+            [
+              [
+                6.0,
+                "mid"
+              ],
+              [
+                56.4,
+                "Atlantic Shield Health - Premium"
+              ],
+              [
+                297.0108,
+                "$260.00"
+              ],
+              [
+                420.1056,
+                "$6,910.40"
+              ]
+            ]
+          ],
+          [
+            43.2,
+            [
+              [
+                6.0,
+                "mid"
+              ],
+              [
+                56.4,
+                "FPL Electric"
+              ],
+              [
+                297.0108,
+                "$165.30"
+              ],
+              [
+                420.1056,
+                "$6,745.10"
+              ]
+            ]
+          ],
+          [
+            25.2,
+            [
+              [
+                6.0,
+                "mid"
+              ],
+              [
+                56.4,
+                "Publix"
+              ],
+              [
+                297.0108,
+                "$410.60"
+              ],
+              [
+                420.1056,
+                "$6,334.50"
+              ]
+            ]
+          ],
+          [
+            7.2,
+            [
+              [
+                6.0,
+                "mid"
+              ],
+              [
+                56.4,
+                "Transfer to Savings"
+              ],
+              [
+                297.0108,
+                "$500.00"
+              ],
+              [
+                420.1056,
+                "$5,834.50"
+              ]
+            ]
+          ]
+        ]
+      },
+      "expected": {
+        "_kind": "bank",
+        "_account": "****9012",
+        "_period_end": "2026-07-31",
+        "_deposits": [
+          [
+            "Payroll Dep - Coral Gables Marine Insurance",
+            3400.0
+          ]
+        ],
+        "ending_balance": 5834.5
+      }
+    },
+    {
+      "path": "examples/03_renata_alves_streamlined_IA/03_Bank_Statement_Month2.pdf",
+      "document_type": null,
+      "page_text": {
+        "texts": [
+          "Biscayne Bay National Bank",
+          "Personal Checking Account Statement",
+          "801 Brickell Ave, Miami, FL 33131",
+          "Member FDIC",
+          "Statement Period",
+          "08/01/2026 - 08/31/2026",
+          "Account Holder:",
+          "Renata C. Alves",
+          "Account Number:",
+          "****9012",
+          "Account Type:",
+          "Personal Checking",
+          "Beginning Balance:",
+          "$5,910.75",
+          "Date",
+          "Description",
+          "Withdrawals",
+          "Deposits",
+          "Balance",
+          "early",
+          "Payroll Dep - Coral Gables Marine Insurance",
+          "$3,400.00",
+          "$9,310.75",
+          "mid",
+          "Sunset Coastal Mortgage - Pmt",
+          "$1,850.00",
+          "$7,460.75",
+          "mid",
+          "Atlantic Shield Health - Premium",
+          "$260.00",
+          "$7,200.75",
+          "mid",
+          "FPL Electric",
+          "$165.30",
+          "$7,035.45",
+          "mid",
+          "Publix",
+          "$410.60",
+          "$6,624.85",
+          "mid",
+          "Transfer to Savings",
+          "$500.00",
+          "$6,124.85",
+          "Ending Balance: $6,124.85",
+          "This is a simulated bank statement created for software-testing purposes. Biscayne Bay National Bank is a fictional institution."
+        ],
+        "rows": [
+          [
+            115.2,
+            [
+              [
+                6.0,
+                "Date"
+              ],
+              [
+                56.4,
+                "Description"
+              ],
+              [
+                282.729,
+                "Withdrawals"
+              ],
+              [
+                359.658,
+                "Deposits"
+              ],
+              [
+                426.6186,
+                "Balance"
+              ]
+            ]
+          ],
+          [
+            97.2,
+            [
+              [
+                6.0,
+                "early"
+              ],
+              [
+                56.4,
+                "Payroll Dep - Coral Gables Marine Insurance"
+              ],
+              [
+                355.3056,
+                "$3,400.00"
+              ],
+              [
+                420.1056,
+                "$9,310.75"
+              ]
+            ]
+          ],
+          [
+            79.2,
+            [
+              [
+                6.0,
+                "mid"
+              ],
+              [
+                56.4,
+                "Sunset Coastal Mortgage - Pmt"
+              ],
+              [
+                290.5056,
+                "$1,850.00"
+              ],
+              [
+                420.1056,
+                "$7,460.75"
+              ]
+            ]
+          ],
+          [
+            61.2,
+            [
+              [
+                6.0,
+                "mid"
+              ],
+              [
+                56.4,
+                "Atlantic Shield Health - Premium"
+              ],
+              [
+                297.0108,
+                "$260.00"
+              ],
+              [
+                420.1056,
+                "$7,200.75"
+              ]
+            ]
+          ],
+          [
+            43.2,
+            [
+              [
+                6.0,
+                "mid"
+              ],
+              [
+                56.4,
+                "FPL Electric"
+              ],
+              [
+                297.0108,
+                "$165.30"
+              ],
+              [
+                420.1056,
+                "$7,035.45"
+              ]
+            ]
+          ],
+          [
+            25.2,
+            [
+              [
+                6.0,
+                "mid"
+              ],
+              [
+                56.4,
+                "Publix"
+              ],
+              [
+                297.0108,
+                "$410.60"
+              ],
+              [
+                420.1056,
+                "$6,624.85"
+              ]
+            ]
+          ],
+          [
+            7.2,
+            [
+              [
+                6.0,
+                "mid"
+              ],
+              [
+                56.4,
+                "Transfer to Savings"
+              ],
+              [
+                297.0108,
+                "$500.00"
+              ],
+              [
+                420.1056,
+                "$6,124.85"
+              ]
+            ]
+          ]
+        ]
+      },
+      "expected": {
+        "_kind": "bank",
+        "_account": "****9012",
+        "_period_end": "2026-08-31",
+        "_deposits": [
+          [
+            "Payroll Dep - Coral Gables Marine Insurance",
+            3400.0
+          ]
+        ],
+        "ending_balance": 6124.85
+      }
+    },
+    {
+      "path": "examples/03_renata_alves_streamlined_IA/03_Bank_Statement_Month3.pdf",
+      "document_type": null,
+      "page_text": {
+        "texts": [
+          "Biscayne Bay National Bank",
+          "Personal Checking Account Statement",
+          "801 Brickell Ave, Miami, FL 33131",
+          "Member FDIC",
+          "Statement Period",
+          "09/01/2026 - 09/25/2026",
+          "Account Holder:",
+          "Renata C. Alves",
+          "Account Number:",
+          "****9012",
+          "Account Type:",
+          "Personal Checking",
+          "Beginning Balance:",
+          "$6,180.20",
+          "Date",
+          "Description",
+          "Withdrawals",
+          "Deposits",
+          "Balance",
+          "early",
+          "Payroll Dep - Coral Gables Marine Insurance",
+          "$3,400.00",
+          "$9,580.20",
+          "mid",
+          "Sunset Coastal Mortgage - Pmt",
+          "$1,850.00",
+          "$7,730.20",
+          "mid",
+          "Atlantic Shield Health - Premium",
+          "$260.00",
+          "$7,470.20",
+          "mid",
+          "FPL Electric",
+          "$165.30",
+          "$7,304.90",
+          "mid",
+          "Publix",
+          "$410.60",
+          "$6,894.30",
+          "mid",
+          "Transfer to Savings",
+          "$500.00",
+          "$6,394.30",
+          "Ending Balance: $6,394.30",
+          "This is a simulated bank statement created for software-testing purposes. Biscayne Bay National Bank is a fictional institution."
+        ],
+        "rows": [
+          [
+            115.2,
+            [
+              [
+                6.0,
+                "Date"
+              ],
+              [
+                56.4,
+                "Description"
+              ],
+              [
+                282.729,
+                "Withdrawals"
+              ],
+              [
+                359.658,
+                "Deposits"
+              ],
+              [
+                426.6186,
+                "Balance"
+              ]
+            ]
+          ],
+          [
+            97.2,
+            [
+              [
+                6.0,
+                "early"
+              ],
+              [
+                56.4,
+                "Payroll Dep - Coral Gables Marine Insurance"
+              ],
+              [
+                355.3056,
+                "$3,400.00"
+              ],
+              [
+                420.1056,
+                "$9,580.20"
+              ]
+            ]
+          ],
+          [
+            79.2,
+            [
+              [
+                6.0,
+                "mid"
+              ],
+              [
+                56.4,
+                "Sunset Coastal Mortgage - Pmt"
+              ],
+              [
+                290.5056,
+                "$1,850.00"
+              ],
+              [
+                420.1056,
+                "$7,730.20"
+              ]
+            ]
+          ],
+          [
+            61.2,
+            [
+              [
+                6.0,
+                "mid"
+              ],
+              [
+                56.4,
+                "Atlantic Shield Health - Premium"
+              ],
+              [
+                297.0108,
+                "$260.00"
+              ],
+              [
+                420.1056,
+                "$7,470.20"
+              ]
+            ]
+          ],
+          [
+            43.2,
+            [
+              [
+                6.0,
+                "mid"
+              ],
+              [
+                56.4,
+                "FPL Electric"
+              ],
+              [
+                297.0108,
+                "$165.30"
+              ],
+              [
+                420.1056,
+                "$7,304.90"
+              ]
+            ]
+          ],
+          [
+            25.2,
+            [
+              [
+                6.0,
+                "mid"
+              ],
+              [
+                56.4,
+                "Publix"
+              ],
+              [
+                297.0108,
+                "$410.60"
+              ],
+              [
+                420.1056,
+                "$6,894.30"
+              ]
+            ]
+          ],
+          [
+            7.2,
+            [
+              [
+                6.0,
+                "mid"
+              ],
+              [
+                56.4,
+                "Transfer to Savings"
+              ],
+              [
+                297.0108,
+                "$500.00"
+              ],
+              [
+                420.1056,
+                "$6,394.30"
+              ]
+            ]
+          ]
+        ]
+      },
+      "expected": {
+        "_kind": "bank",
+        "_account": "****9012",
+        "_period_end": "2026-09-25",
+        "_deposits": [
+          [
+            "Payroll Dep - Coral Gables Marine Insurance",
+            3400.0
+          ]
+        ],
+        "ending_balance": 6394.3
+      }
+    },
+    {
+      "path": "examples/03_renata_alves_streamlined_IA/04_Pay_Stub.pdf",
+      "document_type": null,
+      "page_text": {
+        "texts": [
+          "Coral Gables Marine Insurance Group",
+          "Earnings Statement",
+          "2801 Ponce de Leon Blvd, Coral Gables, FL 33134",
+          "Pay Date",
+          "09/18/2026",
+          "Employee Name:",
+          "Renata C. Alves",
+          "SSN:",
+          "XXX-XX-5509",
+          "Pay Period:",
+          "09/01/2026 - 09/15/2026",
+          "Pay Frequency:",
+          "Semi-Monthly",
+          "Earnings/Deductions",
+          "Current",
+          "Year-to-Date",
+          "Regular Gross Pay",
+          "$3,400.00",
+          "$61,200.00",
+          "Federal Income Tax",
+          "$-476.00",
+          "$-8,568.00",
+          "Social Security Tax",
+          "$-210.80",
+          "$-3,794.40",
+          "Medicare Tax",
+          "$-49.30",
+          "$-887.40",
+          "State Income Tax",
+          "$0.00",
+          "$0.00",
+          "Health Insurance (employee share)",
+          "$-65.00",
+          "$-1,170.00",
+          "401(k) Contribution",
+          "$-170.00",
+          "$-3,060.00",
+          "NET PAY: $2,428.90"
+        ],
+        "rows": [
+          [
+            150.5,
+            [
+              [
+                6.0,
+                "Earnings/Deductions"
+              ],
+              [
+                318.461,
+                "Current"
+              ],
+              [
+                413.346,
+                "Year-to-Date"
+              ]
+            ]
+          ],
+          [
+            132.5,
+            [
+              [
+                6.0,
+                "Regular Gross Pay"
+              ],
+              [
+                308.992,
+                "$3,400.00"
+              ],
+              [
+                419.466,
+                "$61,200.00"
+              ]
+            ]
+          ],
+          [
+            96.5,
+            [
+              [
+                6.0,
+                "Federal Income Tax"
+              ],
+              [
+                313.2505,
+                "$-476.00"
+              ],
+              [
+                421.3615,
+                "$-8,568.00"
+              ]
+            ]
+          ],
+          [
+            78.5,
+            [
+              [
+                6.0,
+                "Social Security Tax"
+              ],
+              [
+                313.2505,
+                "$-210.80"
+              ],
+              [
+                421.3615,
+                "$-3,794.40"
+              ]
+            ]
+          ],
+          [
+            60.5,
+            [
+              [
+                6.0,
+                "Medicare Tax"
+              ],
+              [
+                317.9765,
+                "$-49.30"
+              ],
+              [
+                428.4505,
+                "$-887.40"
+              ]
+            ]
+          ],
+          [
+            42.5,
+            [
+              [
+                6.0,
+                "State Income Tax"
+              ],
+              [
+                325.533,
+                "$0.00"
+              ],
+              [
+                440.733,
+                "$0.00"
+              ]
+            ]
+          ],
+          [
+            24.5,
+            [
+              [
+                6.0,
+                "Health Insurance (employee share)"
+              ],
+              [
+                317.9765,
+                "$-65.00"
+              ],
+              [
+                421.3615,
+                "$-1,170.00"
+              ]
+            ]
+          ],
+          [
+            6.5,
+            [
+              [
+                6.0,
+                "401(k) Contribution"
+              ],
+              [
+                313.2505,
+                "$-170.00"
+              ],
+              [
+                421.3615,
+                "$-3,060.00"
+              ]
+            ]
+          ]
+        ]
+      },
+      "expected": {
+        "_kind": "pay_stub",
+        "_employer": "Coral Gables Marine Insurance Group",
+        "pay_frequency": "semimonthly",
+        "gross_wages_taxpayer": 6800.0,
+        "actual_current_taxes": 1472.2
+      }
+    },
+    {
+      "path": "examples/03_renata_alves_streamlined_IA/05_Mortgage_Statement.pdf",
+      "document_type": null,
+      "page_text": {
+        "texts": [
+          "Sunset Coastal Mortgage",
+          "Monthly Mortgage Statement",
+          "9350 S Dixie Hwy, Miami, FL 33156",
+          "Account Number",
+          "SCM-4471002",
+          "Account Holder:",
+          "Renata C. Alves",
+          "Property Address:",
+          "8820 SW 112th St, Miami, FL 33176",
+          "Monthly Payment (PITI):",
+          "$1,850.00",
+          "Current Principal Balance:",
+          "$261,000.00",
+          "Estimated Market Value:",
+          "$340,000.00",
+          "Interest Rate:",
+          "6.125%",
+          "Simulated mortgage servicer statement for software testing. Sunset Coastal Mortgage is a fictional entity."
+        ],
+        "rows": []
+      },
+      "expected": {
+        "_kind": "mortgage",
+        "actual_housing_utilities": 1850.0,
+        "real_property_loan_balance": 261000.0,
+        "real_property_market_value": 340000.0,
+        "state_of_residence": "FL",
+        "owns_home": true,
+        "rents_home": false,
+        "has_real_property": true
+      }
+    },
+    {
+      "path": "examples/03_renata_alves_streamlined_IA/06_Health_Insurance_Statement.pdf",
+      "document_type": null,
+      "page_text": {
+        "texts": [
+          "Atlantic Shield Health",
+          "Premium Billing Statement",
+          "PO Box 522100, Miami, FL 33152",
+          "Account Number",
+          "ASH-3320981",
+          "Account Holder:",
+          "Renata C. Alves",
+          "Plan:",
+          "Gold Individual Plan",
+          "Monthly Premium:",
+          "$260.00",
+          "Coverage Period:",
+          "01/01/2026 - 12/31/2026",
+          "Simulated health insurer statement for software testing. Atlantic Shield Health is a fictional entity."
+        ],
+        "rows": []
+      },
+      "expected": {
+        "_kind": "health",
+        "actual_health_insurance_premiums": 260.0
       }
     }
   ],

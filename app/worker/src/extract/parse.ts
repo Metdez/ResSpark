@@ -1,18 +1,45 @@
 // Port of parse_texts / parse_pdf / _parse_document / _from_kind in src/document_parse.py.
 // No LLM fallback: a failed template throws the Python ValueError text as ExtractError.
+import { health, investment, life, retirement } from './accounts'
+import { bankStatement } from './bank-statement'
+import { business } from './business'
 import { classify } from './classify'
-import { ExtractError, StopIteration, type Rows } from './fields'
+import { ExtractError, StopIteration, strip, type Rows } from './fields'
+import { lease, mortgage, utility } from './housing'
+import { payStub } from './pay-stub'
 import { pageText } from './pdf-text'
 import { accountTranscript, wageTranscript } from './transcript'
+import { auto, valuation } from './vehicle'
 
 export { ExtractError } from './fields'
 
 export type ParsedDocument = Record<string, unknown> & { _kind?: string }
 
-const fromKind = (kind: string, texts: readonly string[], _rows: Rows): ParsedDocument => {
+const READERS: Record<string, (texts: readonly string[]) => ParsedDocument> = {
+  pay_stub: (texts) => ({ _kind: 'pay_stub', ...payStub(texts) }),
+  lease,
+  mortgage,
+  auto,
+  health,
+  utility,
+  business,
+  retirement,
+  life,
+  investment,
+  valuation,
+}
+
+const fromKind = (kind: string, texts: readonly string[], rows: Rows): ParsedDocument => {
   if (kind === 'account') return { _kind: 'account', ...accountTranscript(texts) }
   if (kind === 'wage') return { _kind: 'wage', ...wageTranscript(texts) }
-  throw new ExtractError('No template matched')
+  if (kind === 'bank') return { _kind: 'bank', ...bankStatement(texts, rows) }
+  if (kind === 'bankruptcy') {
+    if (!texts.some((text) => strip(text))) throw new ExtractError('No template matched')
+    return { _kind: 'bankruptcy' }
+  }
+  const read = READERS[kind]
+  if (!read) throw new ExtractError('No template matched')
+  return read(texts)
 }
 
 const parseDocument = (
