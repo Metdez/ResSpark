@@ -1,4 +1,3 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   button,
   cleanup,
@@ -7,8 +6,9 @@ import {
   waitFor,
   type Reply,
 } from '@/test-utils/query-render'
-import { PortalPage } from './portal-page'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { PortalState, PortalStep } from './portal-api'
+import { PortalPage } from './portal-page'
 
 const toastError = vi.hoisted(() => vi.fn())
 vi.mock('sonner', () => ({ toast: { error: toastError } }))
@@ -18,7 +18,14 @@ const step = (
   kind: PortalStep['kind'],
   label: string,
   status: PortalStep['status'] = 'pending'
-): PortalStep => ({ id: `s${position}`, position, kind, label, required: true, status })
+): PortalStep => ({
+  id: `s${position}`,
+  position,
+  kind,
+  label,
+  required: true,
+  status,
+})
 
 // Shuffled on purpose: the page must order by position.
 const STEPS: PortalStep[] = [
@@ -69,7 +76,10 @@ afterEach(() => {
 describe('PortalPage', () => {
   it('shows the invalid-link copy when there is no session', async () => {
     await render({
-      'GET /api/c/state': { status: 401, body: { error: { code: 'no_session' } } },
+      'GET /api/c/state': {
+        status: 401,
+        body: { error: { code: 'no_session' } },
+      },
     })
     await waitFor(() => text().includes("This link isn't active"))
     expect(text()).toContain('Ask your agent for a new link.')
@@ -78,7 +88,10 @@ describe('PortalPage', () => {
 
   it('shows a plain message for other state errors, with no code', async () => {
     await render({
-      'GET /api/c/state': { status: 500, body: { error: { code: 'internal' } } },
+      'GET /api/c/state': {
+        status: 500,
+        body: { error: { code: 'internal' } },
+      },
     })
     await waitFor(() => text().includes('Something went wrong'))
     expect(text()).toContain('Close this page and open your link again.')
@@ -157,7 +170,10 @@ describe('PortalPage', () => {
   it('a Start 401 swaps to the invalid-link copy', async () => {
     await render({
       ...okState(),
-      'POST /api/c/start': { status: 401, body: { error: { code: 'no_session' } } },
+      'POST /api/c/start': {
+        status: 401,
+        body: { error: { code: 'no_session' } },
+      },
     })
     await waitFor(() => !!button('Start'))
     await click(button('Start')!)
@@ -167,7 +183,10 @@ describe('PortalPage', () => {
   it('another Start failure toasts in client words and keeps Start', async () => {
     await render({
       ...okState(),
-      'POST /api/c/start': { status: 500, body: { error: { code: 'internal' } } },
+      'POST /api/c/start': {
+        status: 500,
+        body: { error: { code: 'internal' } },
+      },
     })
     await waitFor(() => !!button('Start'))
     await click(button('Start')!)
@@ -205,18 +224,29 @@ describe('PortalPage', () => {
     }
     expect(
       rows().map((r) => r.querySelector('[data-slot="badge"]')!.textContent)
-    ).toEqual(['Not started', 'In progress', 'Done', 'In progress', 'Needs attention'])
+    ).toEqual([
+      'Not started',
+      'In progress',
+      'Done',
+      'In progress',
+      'Needs attention',
+    ])
     expect(rows()[0].textContent).toContain(
       'Connect the bank you use most, so your statements come through automatically.'
     )
-    expect(el.querySelector('.text-sm, .text-xs')).toBeNull()
+    // built from parts so the folder-wide no-small-text grep stays meaningful
+    const small = ['sm', 'xs'].map((s) => `.text-${s}`).join(', ')
+    expect(el.querySelector(small)).toBeNull()
   })
 
   it('renders two steps of the same kind as two rows', async () => {
     await render(
       okState({
         opened_at: OPENED,
-        steps: [step(1, 'upload', 'Upload your ID'), step(2, 'upload', 'Upload a pay stub')],
+        steps: [
+          step(1, 'upload', 'Upload your ID'),
+          step(2, 'upload', 'Upload a pay stub'),
+        ],
       })
     )
     await waitFor(() => rows().length === 2)

@@ -15,12 +15,19 @@ export const STATE: PortalState = {
   opened_at: null,
   expires_at: '2026-10-25T00:00:00Z',
   steps: [
-    { id: 's1', position: 1, kind: 'bank_connect', label: 'Connect your bank', required: true, status: 'pending' },
+    {
+      id: 's1',
+      position: 1,
+      kind: 'bank_connect',
+      label: 'Connect your bank',
+      required: true,
+      status: 'pending',
+    },
   ],
 }
 
 function reply(status: number, body: unknown) {
-  const fetchMock = vi.fn(async () => ({
+  const fetchMock = vi.fn(async (_path: string, _init: RequestInit) => ({
     ok: status < 300,
     status,
     json: async () => body,
@@ -41,12 +48,16 @@ describe('portal-api', () => {
     expect(m.mock.calls[0][0]).toBe('/api/c/state')
     const init = initOf(m)
     expect(init.credentials).toBe('same-origin')
-    expect(Object.keys(init.headers).map((k) => k.toLowerCase())).not.toContain('authorization')
+    expect(Object.keys(init.headers).map((k) => k.toLowerCase())).not.toContain(
+      'authorization'
+    )
   })
 
   it('start posts /api/c/start with X-Requested-With: ResSpark', async () => {
     const m = reply(200, { opened_at: '2026-10-11T09:00:00Z' })
-    await expect(start()).resolves.toEqual({ opened_at: '2026-10-11T09:00:00Z' })
+    await expect(start()).resolves.toEqual({
+      opened_at: '2026-10-11T09:00:00Z',
+    })
     expect(m.mock.calls[0][0]).toBe('/api/c/start')
     expect(initOf(m).method).toBe('POST')
     expect(initOf(m).headers['X-Requested-With']).toBe('ResSpark')
@@ -66,22 +77,38 @@ describe('portal-api', () => {
 
   it('isPortalState checks every step key', () => {
     expect(isPortalState(STATE)).toBe(true)
-    expect(isPortalState({ ...STATE, steps: [{ ...STATE.steps[0], position: '1' }] })).toBe(false)
-    expect(isPortalState({ ...STATE, agent_display_name: undefined })).toBe(false)
+    expect(
+      isPortalState({ ...STATE, steps: [{ ...STATE.steps[0], position: '1' }] })
+    ).toBe(false)
+    expect(isPortalState({ ...STATE, agent_display_name: undefined })).toBe(
+      false
+    )
   })
 
   it('heartbeat posts the body with the header and reports ok', async () => {
     const m = reply(200, { ok: true })
-    await expect(heartbeat({ last_step: 'list', user_agent_class: 'phone' })).resolves.toBe('ok')
+    await expect(
+      heartbeat({ last_step: 'list', user_agent_class: 'phone' })
+    ).resolves.toBe('ok')
     expect(m.mock.calls[0][0]).toBe('/api/c/heartbeat')
     expect(initOf(m).headers['X-Requested-With']).toBe('ResSpark')
-    expect(JSON.parse(String(initOf(m).body))).toEqual({ last_step: 'list', user_agent_class: 'phone' })
+    expect(JSON.parse(String(initOf(m).body))).toEqual({
+      last_step: 'list',
+      user_agent_class: 'phone',
+    })
   })
 
   it('heartbeat never rejects: 429 is rate_limited, a network error is failed', async () => {
     reply(429, { error: { code: 'rate_limited' } })
-    await expect(heartbeat({ last_step: 'list', user_agent_class: 'desktop' })).resolves.toBe('rate_limited')
-    vi.stubGlobal('fetch', vi.fn(async () => Promise.reject(new TypeError('offline'))))
-    await expect(heartbeat({ last_step: 'list', user_agent_class: 'desktop' })).resolves.toBe('failed')
+    await expect(
+      heartbeat({ last_step: 'list', user_agent_class: 'desktop' })
+    ).resolves.toBe('rate_limited')
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => Promise.reject(new TypeError('offline')))
+    )
+    await expect(
+      heartbeat({ last_step: 'list', user_agent_class: 'desktop' })
+    ).resolves.toBe('failed')
   })
 })
