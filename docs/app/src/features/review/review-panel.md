@@ -35,3 +35,16 @@
 - `address = review.data.address ?? null`.
 - For an item with `kind === 'address'`, the `AddressCard` renders inside the item's `<section>`, directly under the header row (and under any rejection note and decision error), where an upload item shows its file table. The "No files yet" line is not shown for an address item.
 - Approve and Reject are enabled for an address item once an address exists (`hasFiles` is true for `kind === 'address' && address !== null`), because an address step has no documents. The server still refuses an approval of an item that is not `submitted` (`item_not_submitted`).
+
+## Signature item (Plan 06-07, D-20)
+
+- `signatures = review.data.signatures ?? []`.
+- For an item with `kind === 'signature'`, `SignatureCard` renders inside the item's `<section>`, under the
+  header row (and any rejection note and decision error) and above the item's file table. The signed PDF and
+  the audit-trail PDF are ordinary Phase 3 document rows in that table, so Preview, Download, Approve and
+  Reject work exactly as for an upload item.
+- The card gets `signatures.find((s) => s.item_id === item.id)`, which is `undefined` for a Worker that
+  predates the field; the card then shows the item label and `Waiting`.
+- The test file mocks `getRequest` from the requests API with a never-settling promise so the card's request
+  read stays pending. The signature test checks the card text, that the card sits before both document rows,
+  and that Approve and Reject stay enabled.

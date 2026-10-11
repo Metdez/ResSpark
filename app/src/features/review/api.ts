@@ -56,12 +56,31 @@ export interface CaseAddressView {
   confirmed_at: string
 }
 
+// Mirrors SignatureView of app/worker/src/db/signature-view.ts (Plan 06-07, D-20).
+export type EsignStage = 'not_started' | 'waiting' | 'viewed' | 'signing' | 'signed' | 'declined' | 'expired' | 'error'
+
+export interface SignatureView {
+  item_id: string
+  template_key: string | null
+  configured: boolean
+  connection: {
+    id: string
+    status: string
+    stage: EsignStage
+    env: 'test' | 'production'
+    error_code: string | null
+    completed_at: string | null
+  } | null
+}
+
 export interface ReviewResponse {
   request: ReviewRequest
   items: ReviewItem[]
   client_session: ClientSessionView | null
   // Optional so a response from before Plan 06-03 still passes the guard; read it as `?? null`.
   address?: CaseAddressView | null
+  // Optional for the same reason; read it as `?? []`.
+  signatures?: SignatureView[]
 }
 
 export interface DecisionResponse {
@@ -106,6 +125,20 @@ const isAddress = (v: unknown): v is CaseAddressView =>
   (v.source === 'smarty' || v.source === 'manual') &&
   str(v.confirmed_at)
 
+const isSignature = (v: unknown): v is SignatureView =>
+  isObject(v) &&
+  str(v.item_id) &&
+  strOrNull(v.template_key) &&
+  typeof v.configured === 'boolean' &&
+  (v.connection === null ||
+    (isObject(v.connection) &&
+      str(v.connection.id) &&
+      str(v.connection.status) &&
+      str(v.connection.stage) &&
+      (v.connection.env === 'test' || v.connection.env === 'production') &&
+      strOrNull(v.connection.error_code) &&
+      strOrNull(v.connection.completed_at)))
+
 export const isReviewResponse = (v: unknown): v is ReviewResponse =>
   isObject(v) &&
   isObject(v.request) &&
@@ -116,7 +149,8 @@ export const isReviewResponse = (v: unknown): v is ReviewResponse =>
   Array.isArray(v.items) &&
   v.items.every(isItem) &&
   (v.client_session === null || isSession(v.client_session)) &&
-  (v.address === undefined || v.address === null || isAddress(v.address))
+  (v.address === undefined || v.address === null || isAddress(v.address)) &&
+  (v.signatures === undefined || (Array.isArray(v.signatures) && v.signatures.every(isSignature)))
 
 export const isUrlResponse = (v: unknown): v is { url: string; expires_in: number; disposition: Disposition } =>
   isObject(v) &&

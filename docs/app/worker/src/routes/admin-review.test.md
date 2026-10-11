@@ -20,3 +20,11 @@ Unit tests for `admin-review.ts`, run in the `worker-node` Vitest project throug
 - Document URL: inline photo → `{ url, expires_in: 300, disposition: 'inline' }`, `signedReadUrl(…, { download: false, expiresIn: 300 })`, and one `document.viewed` event with the exact staff actor and payload; attachment → `download: 'My ID.jpg'`; `application/octet-stream` asked inline → `attachment`; unknown disposition → 400 with nothing signed; foreign document or an `uploading` one → 404 with no event.
 - Approve: 200 with the RPC's statuses and the call `(env, 'F1', I1, 'U1')`; `item_not_submitted` → 409 envelope; `not_found` → 404.
 - Reject: blank note → 400 `note_required` with no RPC call; 501 characters → 400; `' blurry '` → the RPC gets `'blurry'`.
+
+## Signatures (Plan 06-07)
+
+- `../db/signature-view` is mocked with `importOriginal`, so `listRequestSignatures` is a mock (default `[]`)
+  while `esignStage` stays real.
+- `esignStage` table: no status is `not_started`; `pending` is `waiting`, or `viewed`/`signing` from the last
+  event; `done` is `signed`; `error` with `declined`/`expired`/`http_500` is `declined`/`expired`/`error`.
+- The review body carries the mocked `signatures` unchanged, and the mock is called with `(ENV, 'F1', R1)`.

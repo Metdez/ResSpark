@@ -16,6 +16,10 @@ vi.mock('./api', async (orig) => ({
   approve: vi.fn(),
   reject: vi.fn(),
 }))
+vi.mock('@/features/requests/requests-api', async (orig) => ({
+  ...(await orig<typeof import('@/features/requests/requests-api')>()),
+  getRequest: vi.fn(() => new Promise(() => {})),
+}))
 vi.mock('@tanstack/react-query', async (orig) => {
   const real = await orig<typeof import('@tanstack/react-query')>()
   return { ...real, useQuery: vi.fn(real.useQuery) }
@@ -222,5 +226,32 @@ describe('ReviewPanel address item', () => {
     expect(button('Reject', el).disabled).toBe(false)
     await click(button('Approve', el))
     expect(api.approve).toHaveBeenCalledWith('a1')
+  })
+})
+
+describe('ReviewPanel signature item', () => {
+  it('renders the signature card above its two document rows and keeps Approve and Reject', async () => {
+    vi.mocked(api.fetchReview).mockResolvedValue({
+      ...REVIEW,
+      items: [item({ id: 's1', kind: 'signature', label: 'Sign your form', documents: [doc('signed'), doc('audit')] })],
+      signatures: [
+        {
+          item_id: 's1',
+          template_key: 'engagement_letter',
+          configured: true,
+          connection: { id: 'k1', status: 'done', stage: 'signed', env: 'production', error_code: null, completed_at: '2026-10-11T09:00:00Z' },
+        },
+      ],
+    })
+    await render()
+    const el = itemEl('s1')
+    const card = el.querySelector('[data-signature-card]')!
+    expect(card.textContent).toContain('Engagement letter')
+    expect(card.textContent).toContain('Signed')
+    const rows = [...el.querySelectorAll('[data-document-row]')]
+    expect(rows.map((r) => r.getAttribute('data-document-row'))).toEqual(['signed', 'audit'])
+    expect(card.compareDocumentPosition(rows[0]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(button('Approve', el).disabled).toBe(false)
+    expect(button('Reject', el).disabled).toBe(false)
   })
 })

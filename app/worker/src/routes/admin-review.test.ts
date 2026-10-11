@@ -4,6 +4,7 @@ import { getCaseAddress } from '../db/case-address'
 import { logEvent } from '../db/events'
 import * as review from '../db/review'
 import { ReviewError, type ReviewItem } from '../db/review'
+import { esignStage, listRequestSignatures } from '../db/signature-view'
 import { getStaffProfile } from '../db/staff'
 import { app } from '../index'
 import { signedReadUrl } from '../storage/case-documents'
@@ -14,6 +15,10 @@ vi.mock('../auth/staff-jwt', () => ({ verifyStaffJwt: vi.fn() }))
 vi.mock('../db/staff', () => ({ getStaffProfile: vi.fn() }))
 vi.mock('../db/events', () => ({ logEvent: vi.fn() }))
 vi.mock('../db/case-address', () => ({ getCaseAddress: vi.fn() }))
+vi.mock('../db/signature-view', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../db/signature-view')>()),
+  listRequestSignatures: vi.fn(),
+}))
 vi.mock('../db/review', async (importOriginal) => {
   const real = await importOriginal<typeof import('../db/review')>()
   return {
@@ -93,6 +98,7 @@ beforeEach(() => {
   vi.mocked(getStaffProfile).mockResolvedValue({ user_id: 'U1', firm_id: 'F1', role: 'staff', display_name: 'Z' } as never)
   vi.mocked(review.getFirmRequest).mockResolvedValue(REQUEST)
   vi.mocked(getCaseAddress).mockResolvedValue(null)
+  vi.mocked(listRequestSignatures).mockResolvedValue([])
   vi.mocked(review.listItemsWithDocuments).mockResolvedValue(ITEMS)
   vi.mocked(review.getLatestClientSession).mockResolvedValue({ last_step: 'upload', last_error: null, seen_at: '2026-10-11T08:01:00Z' })
   vi.mocked(review.findFirmDocument).mockResolvedValue(doc() as never)
@@ -107,7 +113,30 @@ afterEach(() => {
   vi.clearAllMocks()
 })
 
+describe('esignStage (D-20)', () => {
+  it.each([
+    [null, null, null, 'not_started'],
+    ['pending', null, null, 'waiting'],
+    ['pending', 'esign.viewed', null, 'viewed'],
+    ['pending', 'esign.started', null, 'signing'],
+    ['done', 'esign.started', null, 'signed'],
+    ['error', null, 'declined', 'declined'],
+    ['error', null, 'expired', 'expired'],
+    ['error', null, 'http_500', 'error'],
+  ] as const)('(%s, %s, %s) -> %s', (status, action, code, stage) => {
+    expect(esignStage(status, action, code)).toBe(stage)
+  })
+})
+
 describe('GET /requests/:id/review', () => {
+  it('carries the signature views from listRequestSignatures(staff firm, request id)', async () => {
+    const views = [{ item_id: I1, template_key: 'form_8821', configured: true, connection: null }]
+    vi.mocked(listRequestSignatures).mockResolvedValueOnce(views)
+    const res = await call('GET', `/requests/${R1}/review`)
+    expect(((await res.json()) as { signatures: unknown }).signatures).toEqual(views)
+    expect(listRequestSignatures).toHaveBeenCalledWith(ENV, 'F1', R1)
+  })
+
   it('carries the case address from getCaseAddress(request.case_id), or null', async () => {
     const address = { line1: '1600 Amphitheatre Pkwy', line2: null, city: 'Mountain View', state_code: 'CA', zip5: '94043', zip4: '1351', county_name: 'Santa Clara', county_fips: '06085', rdi: 'Commercial' as const, dpv: 'Y', verified: true, source: 'smarty' as const, confirmed_at: '2026-10-11T08:00:00Z' }
     vi.mocked(getCaseAddress).mockResolvedValueOnce(address)

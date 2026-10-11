@@ -12,6 +12,7 @@ import { AddressCard } from './address-card'
 import type { ReviewItem } from './api'
 import { DocumentRow } from './document-row'
 import { RejectDialog } from './reject-dialog'
+import { SignatureCard } from './signature-card'
 import { useApprove, useReject, useReview } from './use-review'
 
 const Heading = ({ children }: { children: React.ReactNode }) => (
@@ -63,6 +64,7 @@ export function ReviewPanel({ requestId, caseId }: { requestId: string; caseId: 
 
   const { request, items } = review.data
   const address = review.data.address ?? null
+  const signatures = review.data.signatures ?? []
   return (
     <Card>
       <CardContent className='grid gap-4'>
@@ -110,6 +112,9 @@ export function ReviewPanel({ requestId, caseId }: { requestId: string; caseId: 
                 <DecisionError error={approve.error} notReady='Nothing to approve yet.' />
               )}
               {item.kind === 'address' && <AddressCard address={address} />}
+              {item.kind === 'signature' && (
+                <SignatureCard item={item} signature={signatures.find((s) => s.item_id === item.id)} requestId={requestId} />
+              )}
               {item.documents.length > 0 ? (
                 <Table>
                   <TableHeader>

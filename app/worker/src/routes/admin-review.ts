@@ -11,6 +11,7 @@ import {
   rejectItem,
   ReviewError,
 } from '../db/review'
+import { listRequestSignatures } from '../db/signature-view'
 import { staffAuth } from '../middleware/staff-auth'
 import { ACCEPTED_MIMES, signedReadUrl } from '../storage/case-documents'
 import { readBody, type AdminApp } from './admin-requests'
@@ -36,12 +37,13 @@ export const adminReviewRoute = new Hono<AdminApp>()
     const { firmId } = c.var.staff
     const request = await getFirmRequest(c.env, firmId, idParam(c, 'id'))
     if (!request) throw fail(404, 'not_found')
-    const [items, client_session, address] = await Promise.all([
+    const [items, client_session, address, signatures] = await Promise.all([
       listItemsWithDocuments(c.env, request.id),
       getLatestClientSession(c.env, request.id),
       getCaseAddress(c.env, request.case_id),
+      listRequestSignatures(c.env, firmId, request.id),
     ])
-    return c.json({ request, items, client_session, address })
+    return c.json({ request, items, client_session, address, signatures })
   })
   .get('/documents/:id/url', async (c) => {
     const { firmId, userId } = c.var.staff

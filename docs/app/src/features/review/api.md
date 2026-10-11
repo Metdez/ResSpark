@@ -24,3 +24,13 @@ All four go through `api()` from `@/lib/api`, which attaches the staff Bearer to
 
 - `CaseAddressView`: mirrors the Worker's `db/case-address.ts` view.
 - `ReviewResponse.address` is optional (`address?: CaseAddressView | null`). The guard accepts a missing key, `null`, or a valid view (`isAddress`: string `line1`, string-or-null text fields, `rdi` of `Residential`/`Commercial`/`null`, boolean `verified`, `source` of `smarty`/`manual`, string `confirmed_at`). A missing key is read as `null` by the panel, so a Worker deployed before this plan still passes the guard.
+
+## Signatures (Plan 06-07, D-20)
+
+- `EsignStage` and `SignatureView` mirror `app/worker/src/db/signature-view.ts`.
+- `ReviewResponse.signatures` is optional; the panel reads it as `?? []`, so a response from an older
+  Worker still passes the guard.
+- `isSignature` checks `item_id` (string), `template_key` (string or null), `configured` (boolean), and
+  `connection` as `null` or an object with string `id`/`status`/`stage`, `env` of `test`/`production`, and
+  string-or-null `error_code`/`completed_at`. `isReviewResponse` accepts a missing `signatures` or an array
+  where every entry passes `isSignature`.

@@ -39,3 +39,11 @@ The signed URL is valid for 5 minutes and opens in a new tab with `noopener`; th
 ## Address on the review response (Plan 06-03, D-07)
 
 `GET /requests/:id/review` also returns `address`: `getCaseAddress(env, request.case_id)` runs in the same `Promise.all` as the items and the client session, after `getFirmRequest` has scoped the request to the staff firm. It is a `CaseAddressView` (see `db/case-address.md`) or `null` when the client has not confirmed an address. No other handler changed. The test file mocks `../db/case-address` and checks both the value and the `null` case, and that it is called with the request's `case_id`.
+
+## Signatures on the review response (Plan 06-07, D-20)
+
+`GET /requests/:id/review` also returns `signatures`: `listRequestSignatures(env, firmId, request.id)`
+runs in the same `Promise.all` as the items, client session and address, after `getFirmRequest` scoped the
+request to the staff firm. It is a `SignatureView[]` (see `db/signature-view.md`): one entry per
+`signature` item with its template key, whether e-sign is set up for it, and the latest DocuSeal
+connection's stage. It never carries the signing slug or the vendor submission id.
