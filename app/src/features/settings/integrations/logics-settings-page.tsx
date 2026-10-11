@@ -69,7 +69,11 @@ function StatusLines({ s }: { s: IntegrationStatus }) {
   )
 }
 
-export function LogicsSettingsPage() {
+export function LogicsSettingsPage({
+  children,
+}: {
+  children?: React.ReactNode
+}) {
   const id = useId()
   const qc = useQueryClient()
   const isAdmin = useSession().data?.role === 'admin'
@@ -259,6 +263,7 @@ export function LogicsSettingsPage() {
             isAdmin={isAdmin}
           />
         )}
+        {children}
       </div>
     </ContentSection>
   )

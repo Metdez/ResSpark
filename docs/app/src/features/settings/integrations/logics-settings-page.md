@@ -1,6 +1,6 @@
 # `app/src/features/settings/integrations/logics-settings-page.tsx`
 
-`LogicsSettingsPage()`: the `/admin/settings/integrations` page with the `IRS Logics` card (LOOK-05, D-01, D-03). A firm admin pastes the Logics API key and secret token, saves them, and tests the connection; afterwards only the key hint is ever shown.
+`LogicsSettingsPage({ children })`: the `/admin/settings/integrations` page with the `IRS Logics` card (LOOK-05, D-01, D-03). A firm admin pastes the Logics API key and secret token, saves them, and tests the connection; afterwards only the key hint is ever shown.
 
 | Part | What it does |
 |------|--------------|
@@ -17,7 +17,7 @@
 | Form | `API key` and `Secret token` as `PasswordInput` (show/hide toggle, `autoComplete="off"`); `Base URL (optional)` as a URL `Input` whose helper `Leave blank for the ValorTax default.` turns into the error `Enter an https:// address.` (with `aria-invalid`) after a refused save; typing again clears the error. |
 | Buttons (admin) | Right-aligned on wide screens, stacked below 640 px, 16 px apart: `Test connection` (outline, `Testing…`, disabled until configured) and `Save credentials` (primary submit, `Saving…`, disabled until both secrets are non-blank). |
 | Staff view | Inputs disabled, no buttons, and the muted line `Only a firm admin can change these credentials.` |
-| Layout | Settings `ContentSection` titled `Integrations` around a 24 px grid: the `Card` with title `IRS Logics` and description `Used to find cases by case ID, phone, or email.`, then `PushSettingsCard` (see `push-settings-card.md`) once the GET returned `settings`. That card is keyed by the serialized settings so a refetch remounts it with the saved values; it receives `activity_types`, the last test's `activity_types_error`, and `isAdmin`. |
+| Layout | Settings `ContentSection` titled `Integrations` around a 24 px grid: the `Card` with title `IRS Logics` and description `Used to find cases by case ID, phone, or email.`, then `PushSettingsCard` (see `push-settings-card.md`) once the GET returned `settings`. That card is keyed by the serialized settings so a refetch remounts it with the saved values; it receives `activity_types`, the last test's `activity_types_error`, and `isAdmin`. Last, `children`: further integration cards passed in by the route (the `E-sign templates` card, Plan 06-05). |
 
 ## Notes
 
