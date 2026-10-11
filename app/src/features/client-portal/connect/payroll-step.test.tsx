@@ -156,6 +156,7 @@ describe('PayrollStep', () => {
     expect(text()).toContain('1 pay stub')
     expect(text()).not.toContain('1 pay stub ·')
     expect(text()).toContain('Done. Your agent has what they need.')
+    expect(button('Add another employer')!.className).toContain('h-11')
   })
 
   it('error order_expired: the expired copy and no Bridge call', async () => {

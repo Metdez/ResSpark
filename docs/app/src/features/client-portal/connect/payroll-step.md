@@ -31,7 +31,9 @@ Only one sheet is on screen at a time:
 | `error` | `connectErrorCopy(error_code)` (for example `order_expired` → "This request expired. Ask your agent to send a new link.") | `Try again`, upload |
 | `pending` | Finishing up… | `Add another employer`, upload |
 | `connected` / `syncing` | Payroll connected. We're getting your pay stubs now. | `Add another employer`, upload |
-| `done` | Done. Your agent has what they need. | upload |
+| `done` | Done. Your agent has what they need. | `Add another employer`, upload |
+
+`Add another employer` stays at `done` so a client with a second job at a different payroll provider can connect it after the first Bridge session has closed. The server's `startPayroll` reuses only a `pending` or `connected` order, so a tap at `done` creates a new order on the same item.
 
 When a connection has employers, each is a 44 px row (`data-employer`): `company_name` (or "Employer"), the counts line, and a 16 px `StatusBadge` from `BADGE`. The badge always carries its label, so status never relies on color.
 

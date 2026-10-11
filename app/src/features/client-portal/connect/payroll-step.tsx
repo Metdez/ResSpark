@@ -107,9 +107,9 @@ export function PayrollStep({
   const status = conn?.status
   const fresh = !conn || status === 'error' || status === 'removed'
 
-  const active = status === 'pending' || status === 'connected' || status === 'syncing'
+  // done keeps "Add another employer": a second job at another provider starts a new order server-side
   const connectLabel =
-    !data || isError || notConfigured ? null : fresh ? (status === 'error' ? 'Try again' : T.connect) : active ? T.another : null
+    !data || isError || notConfigured ? null : fresh ? (status === 'error' ? 'Try again' : T.connect) : T.another
 
   // a rejected step makes the upload the primary action (D-07: the fallback is first-class)
   const connectButton = (label: string) => (

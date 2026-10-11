@@ -15,7 +15,7 @@ Renders `PayrollStep` (step `I1`, firm `ValorTax`) with `./connection-api`, `./u
 6. `provider_not_configured` from start shows the not-configured sentence and removes `Connect payroll`; the upload button stays.
 7. A Bridge load failure toasts the payroll-window sentence.
 8. `pending`: "Finishing up…" and a 44 px `Add another employer`.
-9. `done` with two employers: both names, `2 pay stubs · 1 W-2`, `1 pay stub` with no W-2 part, and the done sentence.
+9. `done` with two employers: both names, `2 pay stubs · 1 W-2`, `1 pay stub` with no W-2 part, and the done sentence, and a 44 px `Add another employer` (a second job can still be connected after the first is done).
 10. `error` / `order_expired`: the expired sentence and no Bridge load.
 11. `Upload pay stubs instead` renders the mocked `UploadSheet` with item id `I1`.
 12. `itemConnectionQuery`'s `refetchInterval` is 5 000 for `pending`, `false` for `done`, and `false` when the sheet is closed.
