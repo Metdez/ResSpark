@@ -99,11 +99,11 @@ Plans:
   4. Staff can see which step the client is on and the last error the client hit, so they can say on the phone "are you on this step?" (STAT-03)
   5. The case view shows a timeline of who did what and when (lookup, send, open, upload, approve, reject), and provider webhook events join the same timeline once the providers arrive in Phase 4 (STAT-04)
 
-**Plans:** 2/7 plans executed
+**Plans:** 3/7 plans executed
 
 Plans:
 - [x] 03-01-PLAN.md — [BLOCKING, Wave 1] Migration 0004 (documents columns, `case-documents` bucket, `request_status()`, review RPCs, dashboard view with Phase 2's `expires_at`/`created_at`) + signed-upload mint/complete routes behind Phase 2's `requireClientHeader` with magic-byte check, proven live (UPL-01, UPL-02, UPL-04)
-- [ ] 03-06-PLAN.md — [Wave 1] Shared atoms: extend Phase 2's `lib/status.ts` (document statuses, `OVERDUE_BADGE`, client `With your agent`) with `StatusBadge` untouched; `pollInterval`; `ago()` lifted from the Phase 2 requests list (UPL-03, STAT-01, STAT-02)
+- [x] 03-06-PLAN.md — [Wave 1] Shared atoms: extend Phase 2's `lib/status.ts` (document statuses, `OVERDUE_BADGE`, client `With your agent`) with `StatusBadge` untouched; `pollInterval`; `ago()` lifted from the Phase 2 requests list (UPL-03, STAT-01, STAT-02)
 - [ ] 03-02-PLAN.md — [Wave 2] Client upload step: accept rules, Canvas resize + lazy HEIC + SHA-256, TUS-or-PUT transport per spike (c), mobile sheet with progress/rejected states, `portalFetch` transport, wired into the step list via `UploadSheet` (UPL-01, UPL-02, UPL-03)
 - [ ] 03-03-PLAN.md — [Wave 2] Staff review: `/review`, signed preview/download URLs, approve/reject RPC routes, `/cases/:id/events`, review panel + reject dialog on the request page with 5 s poll (UPL-03, UPL-04, STAT-02)
 - [ ] 03-04-PLAN.md — [Wave 2] Dashboard: Phase 2's `GET /api/admin/requests` gains `?status=&q=` over `request_dashboard_v` (Phase 2 fields kept, `listRequests` removed) + TanStack Table with chips, search, sorting, overdue badges, visibility-aware polling (STAT-01, STAT-02)
@@ -269,7 +269,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 |-------|----------------|--------|-----------|
 | 1. Foundation & Staff Sign-In | 8/8 | In Progress | - |
 | 2. Find the Client & Send the Link | 8/8 | In Progress | - |
-| 3. Uploads, Review & Live Status | 2/7 | In Progress | - |
+| 3. Uploads, Review & Live Status | 3/7 | In Progress | - |
 | 4. Connect Payroll & Bank | 0/TBD | Not started | - |
 | 5. Push to Logics | 1/5 | In Progress | - |
 | 6. Address & E-Sign | 0/TBD | Not started | - |
