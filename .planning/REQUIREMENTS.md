@@ -54,8 +54,8 @@ Requirements for the first release. Each maps to a roadmap phase. The Oct 12 202
 
 - [x] **STAT-01**: Admin dashboard lists requests with status (sent, opened, in progress, waiting on staff, complete), age, and overdue flags, sortable and filterable
 - [x] **STAT-02**: Request and case status update on the dashboard and case view without a manual reload (polling every 5-10 seconds while the tab is visible)
-- [ ] **STAT-03**: Staff see a mirror of the client's current step and last error, driven by a client heartbeat, so they can guide the client on the phone
-- [ ] **STAT-04**: The case view shows an event timeline (who did what, when) including provider webhook events
+- [x] **STAT-03**: Staff see a mirror of the client's current step and last error, driven by a client heartbeat, so they can guide the client on the phone
+- [x] **STAT-04**: The case view shows an event timeline (who did what, when) including provider webhook events
 
 ### Bank Connection
 
@@ -194,8 +194,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | UPL-04 | Phase 3 | Complete |
 | STAT-01 | Phase 3 | Complete |
 | STAT-02 | Phase 3 | Complete |
-| STAT-03 | Phase 3 | Pending |
-| STAT-04 | Phase 3 | Pending |
+| STAT-03 | Phase 3 | Complete |
+| STAT-04 | Phase 3 | Complete |
 | BANK-01 | Phase 4 | Pending |
 | BANK-02 | Phase 4 | Pending |
 | BANK-03 | Phase 4 | Pending |
