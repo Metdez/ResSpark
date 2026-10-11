@@ -294,6 +294,19 @@ export async function latestItemSummary(env: DbEnv, requestItemId: string): Prom
   return conn ? getConnectionSummary(env, conn) : null
 }
 
+// Every payroll order on the item, newest first: "Add another employer" after done opens a new order.
+export async function payrollItemSummaries(env: DbEnv, requestItemId: string): Promise<ConnectionSummary[]> {
+  const { data, error } = await createAdminClient(env)
+    .from('connections')
+    .select('*')
+    .eq('request_item_id', requestItemId)
+    .eq('kind', 'payroll')
+    .order('created_at', { ascending: false })
+    .order('id', { ascending: false })
+  if (error) throw new Error('connection_list_failed')
+  return Promise.all(((data ?? []) as ConnectionRow[]).map((c) => getConnectionSummary(env, c)))
+}
+
 // Firm-scoped in SQL (T-04-07): another firm's connection reads as null.
 export async function getFirmConnection(env: DbEnv, firmId: string, connectionId: string): Promise<ConnectionRow | null> {
   const { data, error } = await createAdminClient(env)

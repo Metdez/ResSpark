@@ -5,7 +5,7 @@ import { isInWindow } from '../../../src/lib/statement-months'
 import { getCase } from '../db/cases'
 import { findConnectionAccount, getAccountCells, setMonthCell } from '../db/bank'
 import { getConnection, recordConnectionEvent, type ConnectionStatus, type ProviderId } from '../db/connections'
-import { latestItemSummary, type ConnectionSummary, type MonthCell } from '../db/connections-ops'
+import { latestItemSummary, payrollItemSummaries, type ConnectionSummary, type MonthCell } from '../db/connections-ops'
 import { hasConsent, recordConsent } from '../db/consents'
 import { findSessionDocument, findSessionItem, sessionRequest, type ItemRow } from '../db/documents'
 import { logEvent } from '../db/events'
@@ -71,6 +71,26 @@ export function clientConnectionView(s: ConnectionSummary): ClientConnectionView
   }
 }
 
+// One payroll sheet over every order on the item (views newest first): a finished employer is never
+// hidden by a newer pending or expired order. Unfinished employers on a dead order are dropped once
+// another order is done; they can never progress and the client re-adds them with a new order.
+export function mergePayrollViews(views: ClientConnectionView[]): ClientConnectionView | null {
+  const [newest] = views
+  if (!newest || views.length === 1) return newest ?? null
+  const anyDone = views.some((v) => v.status === 'done')
+  const live = views.find((v) => v.status === 'connected' || v.status === 'syncing')?.status
+  const status = live ?? (anyDone ? 'done' : newest.status)
+  const dead = (v: ClientConnectionView) => v.status === 'error' || v.status === 'removed'
+  return {
+    ...newest,
+    status,
+    error_code: status === newest.status ? newest.error_code : null,
+    employers: [...views]
+      .reverse()
+      .flatMap((v) => (anyDone && dead(v) ? v.employers.filter((e) => e.status === 'done') : v.employers)),
+  }
+}
+
 export const cConnectionsRoute = new Hono<Env_>()
   .get('/items/:itemId/connection', session_, async (c) => {
     const item = await itemOf(c, c.req.param('itemId'))
@@ -78,14 +98,16 @@ export const cConnectionsRoute = new Hono<Env_>()
     if (!isConnectKind(item.kind)) return fail(c, 409, 'item_not_connect', 'This step does not connect an account.')
     const id = providerFor(c.env, item.kind)
     const consentKind = consentKindForItem(item.kind)
-    const [consented, summary] = await Promise.all([
+    const [consented, connection] = await Promise.all([
       hasConsent(c.env, c.var.client.linkId, consentKind, CONSENT_TEXT[consentKind].version),
-      latestItemSummary(c.env, item.id),
+      item.kind === 'payroll_connect'
+        ? payrollItemSummaries(c.env, item.id).then((s) => mergePayrollViews(s.map(clientConnectionView)))
+        : latestItemSummary(c.env, item.id).then((s) => (s ? clientConnectionView(s) : null)),
     ])
     return c.json({
       provider: { id, configured: providerConfigured(c.env, id), capabilities: PROVIDER_CAPABILITIES[id] ?? null },
       consented,
-      connection: summary ? clientConnectionView(summary) : null,
+      connection,
     })
   })
   .post('/consents', session_, requireClientHeader, async (c) => {

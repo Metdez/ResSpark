@@ -1,12 +1,17 @@
 # `app/worker/src/routes/c-connections.test.ts`
 
-Unit tests for the client connection routes (no network). `db/cases`, `db/connections`, `db/connections-ops`, `db/consents`, `db/documents`, `db/events` and `integrations/truv/start` are auto-mocked; `clientSession` is replaced by a middleware that sets a fixed session (link `L1`, request `R1`, firm `F1`); `requireClientHeader` stays real. `beforeEach` resets mocks and the in-memory rate limiter, and sets defaults: a pending `payroll_connect` item on `R1`, consent present, case `C1`, no connection. `env.JOBS.send` is a `vi.fn()`.
+Unit tests for the client connection routes (no network). `db/cases`, `db/connections`, `db/connections-ops`, `db/consents`, `db/documents`, `db/events` and `integrations/truv/start` are auto-mocked; `clientSession` is replaced by a middleware that sets a fixed session (link `L1`, request `R1`, firm `F1`); `requireClientHeader` stays real. `beforeEach` resets mocks and the in-memory rate limiter, and sets defaults: a pending `payroll_connect` item on `R1`, consent present, case `C1`, no connection (`latestItemSummary` null, `payrollItemSummaries` empty). `env.JOBS.send` is a `vi.fn()`.
 
 | Case | Expected |
 |------|----------|
 | item view on an `upload` item | 409 `item_not_connect`, `cache-control: no-store` |
 | item view on a `bank_connect` item, `BANK_PROVIDER: plaid`, no Plaid secrets | `configured: false`, Plaid capabilities, `connection: null` |
 | item view on another request's item | 404 |
+| payroll item view: a done order (Acme) and a newer pending order (Beta) | exactly `{ id: 'C2', status: 'done', error_code: null, accounts: [], employers: [Acme done, Beta pending] }`; `link_ref` and `created_at` on the fixture do not cross; `latestItemSummary` not called |
+| payroll item view: a newer `order_expired` order with a pending Beta, and a done Acme | `status: 'done'`, `error_code: null`, only Acme |
+| payroll item view: one expired order / no order | `status: 'error'`, `error_code: 'order_expired'` / `null` |
+| `mergePayrollViews`: pending, syncing, done | `syncing` |
+| `mergePayrollViews`: two error orders, none done | the newest `error` and code; both employers, oldest order first |
 | consent without `X-Requested-With` | 403 `bad_origin`, `no-store` |
 | consent with `kind: 'nope'` | 400, nothing recorded |
 | consent `esign` / `esign-v1` (Plan 06-02) | 200, `recordConsent` called with `kind: 'esign'` |

@@ -6,6 +6,10 @@ import { getItemConnection, type ClientConnectionView } from './connection-api'
 const ACTIVE: ReadonlySet<ClientConnectionView['status']> = new Set(['pending', 'connected', 'syncing'])
 export const isActive = (s: ClientConnectionView['status'] | undefined) => !!s && ACTIVE.has(s)
 
+// A done payroll sheet can still carry a newer employer in progress (a second order).
+const employerInProgress = (v: ClientConnectionView | null | undefined) =>
+  v?.status === 'done' && v.employers.some((e) => e.status === 'pending' || e.status === 'connected')
+
 // Polls every 5 s while the sheet is open and the provider is still delivering; stops at done/error.
 export const itemConnectionQuery = (itemId: string, enabled: boolean) =>
   queryOptions({
@@ -13,7 +17,10 @@ export const itemConnectionQuery = (itemId: string, enabled: boolean) =>
     queryFn: () => getItemConnection(itemId),
     enabled,
     retry: false,
-    refetchInterval: (q) => (enabled && isActive(q.state.data?.connection?.status) ? 5_000 : false),
+    refetchInterval: (q) => {
+      const v = q.state.data?.connection
+      return enabled && (isActive(v?.status) || employerInProgress(v)) ? 5_000 : false
+    },
   })
 
 export const useItemConnection = (itemId: string, enabled: boolean) =>

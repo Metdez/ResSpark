@@ -8,9 +8,10 @@ TanStack Query wrapper for `getItemConnection`.
   - `enabled`: the sheet is open.
   - `retry: false`: a failure shows its copy at once.
   - `refetchInterval`: 5 000 ms while `enabled` and the connection is active, otherwise `false`, so polling stops at done or error and when the sheet closes.
+  - `employerInProgress(view)`: a `done` view that still lists a `pending` or `connected` employer also polls. The server merges every payroll order on the item, so a done first employer can sit beside a newer order still in progress (follow-up fix 2026-10-11). An `error` view never polls.
 - `useItemConnection(itemId, enabled)`: `useQuery(itemConnectionQuery(itemId, enabled))`.
 
-Tested in `payroll-step.test.tsx` (5 000 for `pending`, `false` for `done`, `false` when not enabled).
+Tested in `payroll-step.test.tsx` (5 000 for `pending`, `false` for `done`, 5 000 for `done` with a pending employer, `false` for `error` with one, `false` when not enabled).
 
 ## `useRejectionNote(step, open)`
 

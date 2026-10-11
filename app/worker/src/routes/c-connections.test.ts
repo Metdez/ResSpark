@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { findConnectionAccount, getAccountCells, setMonthCell } from '../db/bank'
 import { getCase } from '../db/cases'
 import { getConnection, recordConnectionEvent, type ConnectionRow } from '../db/connections'
-import { latestItemSummary } from '../db/connections-ops'
+import { latestItemSummary, payrollItemSummaries, type ConnectionSummary, type EmployerView } from '../db/connections-ops'
 import { hasConsent, recordConsent } from '../db/consents'
 import { findSessionDocument, findSessionItem, sessionRequest, type DocumentRow, type ItemRow } from '../db/documents'
 import { app } from '../index'
@@ -11,6 +11,7 @@ import { startBank } from '../integrations/bank/start'
 import { ProviderError } from '../integrations/provider-error'
 import { startPayroll } from '../integrations/truv/start'
 import { _resetRateLimitForTests } from '../middleware/link-rate-limit'
+import { mergePayrollViews, type ClientConnectionView } from './c-connections'
 import { targetMonths } from '../../../src/lib/statement-months'
 
 // Unit tests for the client connection routes: no network. Every db module and startPayroll are
@@ -70,6 +71,7 @@ beforeEach(() => {
   vi.mocked(sessionRequest).mockResolvedValue({ case_id: 'C1', status: 'opened' })
   vi.mocked(getCase).mockResolvedValue({ id: 'C1', first_name: 'A', last_name: 'B', email: null, phone_e164: null } as never)
   vi.mocked(latestItemSummary).mockResolvedValue(null)
+  vi.mocked(payrollItemSummaries).mockResolvedValue([])
 })
 
 describe('GET /api/c/items/:itemId/connection', () => {
@@ -92,6 +94,60 @@ describe('GET /api/c/items/:itemId/connection', () => {
   it("another request's item is 404", async () => {
     vi.mocked(findSessionItem).mockResolvedValue(null)
     expect((await call('GET', `/api/c/items/${ITEM}/connection`)).status).toBe(404)
+  })
+
+  // Follow-up fix (2026-10-11): the payroll sheet merges every order on the item.
+  const employer = (company_name: string, status: EmployerView['status']): EmployerView =>
+    ({ employer_id: `e-${company_name}`, company_name, status, pay_stubs: status === 'done' ? 2 : 0, w2s: 0, income_reports: 0, documents: [] })
+  const summary = (id: string, status: ConnectionSummary['status'], employers: EmployerView[], error: ConnectionSummary['error'] = null) =>
+    ({ id, status, error, accounts: [], employers, link_ref: 'secret', created_at: '2026-10-11T00:00:00Z' }) as unknown as ConnectionSummary
+  const payroll = async (...rows: ConnectionSummary[]) => {
+    vi.mocked(payrollItemSummaries).mockResolvedValue(rows)
+    const res = await call('GET', `/api/c/items/${ITEM}/connection`)
+    expect(res.status).toBe(200)
+    expect(latestItemSummary).not.toHaveBeenCalled()
+    return ((await res.json()) as { connection: ReturnType<typeof mergePayrollViews> }).connection
+  }
+
+  it('payroll: a done order (employer A) and a newer pending order show both employers, status done', async () => {
+    const view = await payroll(summary('C2', 'pending', [employer('Beta', 'pending')]), summary('C1', 'done', [employer('Acme', 'done')]))
+    expect(view).toEqual({
+      id: 'C2',
+      status: 'done',
+      error_code: null,
+      accounts: [],
+      employers: [
+        { company_name: 'Acme', status: 'done', pay_stubs: 2, w2s: 0 },
+        { company_name: 'Beta', status: 'pending', pay_stubs: 0, w2s: 0 },
+      ],
+    })
+  })
+  it('payroll: an expired newer order keeps employer A, drops its dead employer and is not stuck', async () => {
+    const view = await payroll(
+      summary('C2', 'error', [employer('Beta', 'pending')], { code: 'order_expired' }),
+      summary('C1', 'done', [employer('Acme', 'done')])
+    )
+    expect(view).toMatchObject({ status: 'done', error_code: null, employers: [{ company_name: 'Acme', status: 'done' }] })
+    expect(view!.employers).toHaveLength(1)
+  })
+  it('payroll: a single order and no order keep the old single-connection shape', async () => {
+    expect(await payroll(summary('C1', 'error', [], { code: 'order_expired' }))).toMatchObject({ status: 'error', error_code: 'order_expired' })
+    expect(await payroll()).toBeNull()
+  })
+})
+
+describe('mergePayrollViews', () => {
+  const v = (status: ClientConnectionView['status'], employers: ClientConnectionView['employers'] = []): ClientConnectionView =>
+    ({ id: status, status, error_code: status === 'error' ? 'order_expired' : null, accounts: [], employers })
+  const e = (company_name: string, status: ClientConnectionView['employers'][number]['status']) => ({ company_name, status, pay_stubs: 0, w2s: 0 })
+
+  it('an order still delivering wins over done, so the sheet keeps polling', () => {
+    expect(mergePayrollViews([v('pending'), v('syncing', [e('B', 'connected')]), v('done', [e('A', 'done')])])!.status).toBe('syncing')
+  })
+  it('with no done order the newest status and error stand, and every employer shows', () => {
+    const merged = mergePayrollViews([v('error', [e('B', 'pending')]), v('error', [e('A', 'error')])])!
+    expect(merged).toMatchObject({ status: 'error', error_code: 'order_expired' })
+    expect(merged.employers.map((x) => x.company_name)).toEqual(['A', 'B'])
   })
 })
 

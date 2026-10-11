@@ -172,11 +172,29 @@ describe('PayrollStep', () => {
     expect(document.querySelector('[data-testid="upload-sheet"]')!.textContent).toBe('I1')
   })
 
+  it('a second order: the done employer stays beside the pending one, not stuck on Finishing up', async () => {
+    const employers = [
+      { company_name: 'Acme Inc', status: 'done', pay_stubs: 2, w2s: 1 },
+      { company_name: 'Beta LLC', status: 'pending', pay_stubs: 0, w2s: 0 },
+    ]
+    await render(conn({ consented: true, connection: view('done', employers) }))
+    expect(document.querySelectorAll('[data-employer]')).toHaveLength(2)
+    expect(text()).toContain('Acme Inc')
+    expect(text()).toContain('Waiting')
+    expect(text()).not.toContain('Finishing up…')
+    expect(button('Add another employer')).toBeDefined()
+    expect(button('Upload pay stubs instead')).toBeDefined()
+  })
+
   it('polls every 5 s while pending and stops when done', () => {
     const interval = itemConnectionQuery('I1', true).refetchInterval as (q: unknown) => number | false
-    const q = (status: string) => ({ state: { data: conn({ connection: view(status) }) } })
+    const q = (status: string, employers: unknown[] = []) => ({ state: { data: conn({ connection: view(status, employers) }) } })
     expect(interval(q('pending'))).toBe(5000)
     expect(interval(q('done'))).toBe(false)
+    // a done sheet with a newer employer still in progress keeps polling; an error one does not
+    const second = [{ company_name: 'B', status: 'pending', pay_stubs: 0, w2s: 0 }]
+    expect(interval(q('done', second))).toBe(5000)
+    expect(interval(q('error', second))).toBe(false)
     const closed = itemConnectionQuery('I1', false).refetchInterval as (q: unknown) => number | false
     expect(closed(q('pending'))).toBe(false)
   })

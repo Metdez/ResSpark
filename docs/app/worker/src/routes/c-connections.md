@@ -9,6 +9,12 @@ Client connection routes under `/api/c` (Plan 04-03). Identity comes only from t
 - `providerFor(env, kind)`: `payroll_connect` → `truv`; `bank_connect` → `env.BANK_PROVIDER`.
 - `ipClass(ip)`: `ipv6` when the `cf-connecting-ip` contains `:`, `ipv4` for digits and dots, else `unknown`. Only the class is stored.
 - `clientConnectionView(summary)`: builds the client projection from an explicit field list: `id, status, error_code, accounts[{ id, mask, name, months[{ year, month, status }] }], employers[{ company_name, status, pay_stubs, w2s }]`. No document ids, timestamps, external ids or tokens cross (T-04-15).
+- `mergePayrollViews(views)` (follow-up fix 2026-10-11): folds every payroll order on an item (client views, newest first) into one view, so a finished employer is never hidden by a newer pending or expired order.
+  - No views → `null`; one view → returned unchanged (the single-order behavior).
+  - `status`: the first `connected`/`syncing` view's status (documents still arriving, so the sheet keeps polling); else `done` when any order is done; else the newest status.
+  - `error_code`: the newest one only when `status` is the newest status, else `null` (a done employer does not show the expired-order error).
+  - `employers`: every order's employers, oldest order first, each with its own status and counts. When some order is done, an `error`/`removed` order keeps only its `done` employers; its unfinished ones can never progress and the client adds them again with a new order.
+  - `id` and `accounts` are the newest view's (payroll has no accounts).
 
 ## Routes
 
@@ -20,7 +26,7 @@ Client connection routes under `/api/c` (Plan 04-03). Identity comes only from t
 | item kind not `bank_connect`/`payroll_connect` | 409 `item_not_connect` |
 | otherwise | 200 `{ provider: { id, configured, capabilities }, consented, connection }` |
 
-`capabilities` is `PROVIDER_CAPABILITIES[id]` (null for Truv). `consented` checks the current `CONSENT_TEXT` version. `connection` is the latest connection on the item through `latestItemSummary`, projected by `clientConnectionView`, or null.
+`capabilities` is `PROVIDER_CAPABILITIES[id]` (null for Truv). `consented` checks the current `CONSENT_TEXT` version. `connection` is projected by `clientConnectionView`, or null. For a `bank_connect` item it is the latest connection (`latestItemSummary`). For a `payroll_connect` item it is every order on the item (`payrollItemSummaries`) merged by `mergePayrollViews`, so the shape is unchanged.
 
 ### `POST /consents` (needs `X-Requested-With: ResSpark`)
 

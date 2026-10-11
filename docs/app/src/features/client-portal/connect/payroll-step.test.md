@@ -18,11 +18,12 @@ Renders `PayrollStep` (step `I1`, firm `ValorTax`) with `./connection-api`, `./u
 9. `done` with two employers: both names, `2 pay stubs · 1 W-2`, `1 pay stub` with no W-2 part, and the done sentence, and a 44 px `Add another employer` (a second job can still be connected after the first is done).
 10. `error` / `order_expired`: the expired sentence and no Bridge load.
 11. `Upload pay stubs instead` renders the mocked `UploadSheet` with item id `I1`.
-12. `itemConnectionQuery`'s `refetchInterval` is 5 000 for `pending`, `false` for `done`, and `false` when the sheet is closed.
+12. A second order (follow-up fix 2026-10-11): a merged `done` view with Acme `done` and Beta `pending` shows two employer rows, Acme, a `Waiting` chip, no "Finishing up…", and both `Add another employer` and the upload button.
+13. `itemConnectionQuery`'s `refetchInterval` is 5 000 for `pending`, `false` for `done`, 5 000 for `done` with a pending employer, `false` for `error` with one, and `false` when the sheet is closed.
 
 ## Polish (Task 3)
 
-13. A `rejected` step whose `rejection_note` is "The W-2 was cut off." shows "Your agent asked for a new copy: The W-2 was cut off."; the upload button comes before `Connect payroll` and is filled (`bg-primary`), and the connect button is outline (`bg-background`).
-14. A start failure with `consent_text_stale` reopens the consent sheet with "Please read and agree again.", shows no toast, refetches the connection, and a second `I agree` records consent and opens Bridge.
-15. A network failure (`TypeError`) shows exactly one `toast.error("Something went wrong. Try again.")` and no `role="alert"`.
-16. Every button in the sheet (except the hidden vendored icon close, the dialog's last child) is 44 px.
+14. A `rejected` step whose `rejection_note` is "The W-2 was cut off." shows "Your agent asked for a new copy: The W-2 was cut off."; the upload button comes before `Connect payroll` and is filled (`bg-primary`), and the connect button is outline (`bg-background`).
+15. A start failure with `consent_text_stale` reopens the consent sheet with "Please read and agree again.", shows no toast, refetches the connection, and a second `I agree` records consent and opens Bridge.
+16. A network failure (`TypeError`) shows exactly one `toast.error("Something went wrong. Try again.")` and no `role="alert"`.
+17. Every button in the sheet (except the hidden vendored icon close, the dialog's last child) is 44 px.
