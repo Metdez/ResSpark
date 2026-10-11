@@ -62,7 +62,9 @@ describe('checkContact', () => {
   })
 
   it('reports invalid syntax and a short phone', () => {
-    expect(checkContact({ email: 'not-an-email', phone: '555010' })).toMatchObject({
+    expect(
+      checkContact({ email: 'not-an-email', phone: '555010' })
+    ).toMatchObject({
       ok: false,
       email_error: "That doesn't look like an email address.",
       phone_error: 'Enter a 10-digit US phone number.',
@@ -80,6 +82,16 @@ describe('checkContact', () => {
     expect(r.email_error).toBeUndefined()
   })
 
+  it('a missing-dot domain keeps the syntax error and still offers the fix', () => {
+    expect(
+      checkContact({ email: 'a@gmailcom', phone: '5550100001' })
+    ).toMatchObject({
+      ok: false,
+      email_error: "That doesn't look like an email address.",
+      email_suggestion: 'a@gmail.com',
+    })
+  })
+
   it('a clean contact passes with no suggestion', () => {
     const r = checkContact({ email: 'a@gmail.com', phone: '5550100001' })
     expect(r).toMatchObject({ ok: true, phone_e164: '+15550100001' })
@@ -87,7 +99,9 @@ describe('checkContact', () => {
   })
 
   it('trims and lowercases the returned email', () => {
-    expect(checkContact({ email: 'A.B@Example.COM ', phone: '15550100001' })).toMatchObject({
+    expect(
+      checkContact({ email: 'A.B@Example.COM ', phone: '15550100001' })
+    ).toMatchObject({
       ok: true,
       email: 'a.b@example.com',
     })
@@ -96,8 +110,12 @@ describe('checkContact', () => {
 
 describe('contactSchema', () => {
   it('accepts a valid pair and rejects a bad phone', () => {
-    expect(contactSchema.safeParse({ email: 'x@y.co', phone: '5550100001' }).success).toBe(true)
-    expect(contactSchema.safeParse({ email: 'x@y.co', phone: '555' }).success).toBe(false)
+    expect(
+      contactSchema.safeParse({ email: 'x@y.co', phone: '5550100001' }).success
+    ).toBe(true)
+    expect(
+      contactSchema.safeParse({ email: 'x@y.co', phone: '555' }).success
+    ).toBe(false)
   })
 })
 
