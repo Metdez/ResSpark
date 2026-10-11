@@ -23,7 +23,8 @@ describe.skipIf(!live)('esign start (live; needs SUPABASE_URL, SUPABASE_SECRET_K
     JOBS: { send: vi.fn() },
     ASSETS,
   } as unknown as Env
-  const admin = createAdminClient(env)
+  // describe.skipIf still runs this body at collection time, so only build the client when live.
+  const admin = live ? createAdminClient(env) : (undefined as unknown as ReturnType<typeof createAdminClient>)
   let fx: PortalFixture
   let cookie = ''
   let savedSettings: Record<string, unknown> = {}
