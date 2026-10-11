@@ -64,16 +64,18 @@ export const adminLogicsPushRoute = new Hono<AdminApp>()
     if (!request) throw notFound()
     // The Logics CaseID comes from the confirmed case only, never from the body.
     if (request.logics_case_id === null) return refuse(c, 422, 'not_pushable', 'This case has no Logics CaseID')
-    if (c.env.LOGICS_WRITE_ENABLED !== 'true') {
-      return refuse(c, 403, 'logics_write_blocked', 'Logics writes are disabled in this environment')
-    }
-    try {
-      logicsWriteGuard(c.env, String(request.logics_case_id))
-    } catch {
-      return refuse(c, 403, 'logics_write_blocked', `Case ${request.logics_case_id} is not on the test allowlist`)
-    }
-
     const mode = modeOf(c.env)
+    // D-10: the env guard (flag + test-CaseID allowlist) protects real Logics writes, so live mode only.
+    if (mode === 'live') {
+      if (c.env.LOGICS_WRITE_ENABLED !== 'true') {
+        return refuse(c, 403, 'logics_write_blocked', 'Logics writes are disabled in this environment')
+      }
+      try {
+        logicsWriteGuard(c.env, String(request.logics_case_id))
+      } catch {
+        return refuse(c, 403, 'logics_write_blocked', `Case ${request.logics_case_id} is not on the test allowlist`)
+      }
+    }
     const integration = await getIntegration(c.env, staff.firmId, 'logics')
     // D-08 firm toggle: in addition to the env guard above, never instead of it.
     const settings = readSettings(integration)

@@ -30,15 +30,17 @@ const refusedNote = (code: string): Pick<LogicsWriteClient, 'createActivity'> =>
 
 const tokenOf = (e: unknown) => (e instanceof Error && /^[a-z_]+$/.test(e.message) ? e.message : 'internal')
 
-// Every check that must pass before a byte goes to Logics (D-10, C1): the guard runs here as well
-// as in the route, in both modes; fake mode never reads credentials.
+// Every check that must pass before a byte goes to Logics (D-10, C1): in live mode the guard runs
+// here as well as in the route; fake mode writes nothing real, so it skips the guard and never reads credentials.
 async function prepare(env: Env, job: PushJob, opts: PushOptions): Promise<Ready | Refused> {
-  try {
-    logicsWriteGuard(env, String(job.logics_case_id))
-  } catch {
-    return { code: 'logics_write_blocked', detail: 'Logics writes are blocked for this case', noteClient: refusedNote('logics_write_blocked') }
-  }
   const mode = env.LOGICS_MODE === 'live' ? 'live' : 'fake'
+  if (mode === 'live') {
+    try {
+      logicsWriteGuard(env, String(job.logics_case_id))
+    } catch {
+      return { code: 'logics_write_blocked', detail: 'Logics writes are blocked for this case', noteClient: refusedNote('logics_write_blocked') }
+    }
+  }
   if (mode !== job.mode) {
     return { code: 'mode_changed', detail: `Queued in ${job.mode} mode, now ${mode}`, noteClient: refusedNote('mode_changed') }
   }

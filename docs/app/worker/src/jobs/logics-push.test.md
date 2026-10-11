@@ -1,6 +1,6 @@
 # `app/worker/src/jobs/logics-push.test.ts`
 
-Unit ack/retry matrix for `handleLogicsPushPart` (D-03, PUSH-04). Mocked: `../db/logics-pushes` (`claimPush`, `getPushForJob`, `transitionPush`), `./logics-push-normalize` (`ensureNormalized`), `./logics-push-finalize`, `../integrations/logics/config`, `../db/integrations`. The real write guard runs. The client is a real `createFakeLogicsClient({ outcome, delayMs: 0 })` injected through `opts.clientFactory`. Messages are `{ body, ack: vi.fn(), retry: vi.fn(), attempts: 1 }`; env is fake mode, writes on, allowlist `900001`.
+Unit ack/retry matrix for `handleLogicsPushPart` (D-03, PUSH-04). Mocked: `../db/logics-pushes` (`claimPush`, `getPushForJob`, `transitionPush`), `./logics-push-normalize` (`ensureNormalized`), `./logics-push-finalize`, `../integrations/logics/config`, `../db/integrations`. The real write guard runs (live-mode cases only; one case proves fake mode skips it). The client is a real `createFakeLogicsClient({ outcome, delayMs: 0 })` injected through `opts.clientFactory`. Messages are `{ body, ack: vi.fn(), retry: vi.fn(), attempts: 1 }`; env is fake mode, writes on, allowlist `900001`.
 
 | Case | Expected |
 |------|----------|

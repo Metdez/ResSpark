@@ -67,12 +67,18 @@ describe('handleLogicsPushPart: refused claim', () => {
 })
 
 describe('handleLogicsPushPart: pre-dispatch failures after the claim', () => {
-  it('the write guard refusing marks the row failed logics_write_blocked and acks', async () => {
-    const msg = await run({ ...ENV, LOGICS_TEST_CASE_IDS: '1' })
+  it('the write guard refusing in live mode marks the row failed logics_write_blocked and acks', async () => {
+    const msg = await run({ ...ENV, LOGICS_MODE: 'live', LOGICS_TEST_CASE_IDS: '1' })
     expect(lastTransition()).toMatchObject({ from: 'sending', to: 'failed', errorCode: 'logics_write_blocked' })
     expect(msg.ack).toHaveBeenCalledTimes(1)
     expect(msg.retry).not.toHaveBeenCalled()
     expect(ensureNormalized).not.toHaveBeenCalled()
+  })
+
+  it('D-10: fake mode skips the env guard even with writes off and no allowlist', async () => {
+    await run({ ...ENV, LOGICS_WRITE_ENABLED: 'false', LOGICS_TEST_CASE_IDS: '' })
+    expect(ensureNormalized).toHaveBeenCalled()
+    expect(lastTransition()).not.toMatchObject({ errorCode: 'logics_write_blocked' })
   })
 
   it('a mode switch since queueing marks the row failed mode_changed and acks', async () => {

@@ -96,11 +96,11 @@ describe.skipIf(!SUPABASE_URL || !SUPABASE_SECRET_KEY)('logics push tracer (live
     expect(sent).toHaveLength(0)
   })
 
-  it('refuses before anything is enqueued when writes are off or the case is not allowlisted', async () => {
-    const off = await push({ document_ids: fx.document_ids }, { LOGICS_WRITE_ENABLED: 'false' })
+  it('live mode refuses before anything is enqueued when writes are off or the case is not allowlisted', async () => {
+    const off = await push({ document_ids: fx.document_ids }, { LOGICS_MODE: 'live', LOGICS_WRITE_ENABLED: 'false' })
     expect(off.status).toBe(403)
     expect((await errorOf(off)).message).toBe('Logics writes are disabled in this environment')
-    const unlisted = await push({ document_ids: fx.document_ids }, { LOGICS_TEST_CASE_IDS: '1' })
+    const unlisted = await push({ document_ids: fx.document_ids }, { LOGICS_MODE: 'live', LOGICS_TEST_CASE_IDS: '1' })
     expect(unlisted.status).toBe(403)
     expect((await errorOf(unlisted)).message).toContain('is not on the test allowlist')
     expect(sent).toHaveLength(0)

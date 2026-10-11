@@ -67,15 +67,21 @@ describe('POST /requests/:id/logics-push', () => {
     expect((await errorOf(res)).code).toBe('bad_request')
   })
 
-  it('403 with the disabled message when writes are off, and no batch', async () => {
-    const res = await pushDocs({ document_ids: [DOC] }, envOf({ LOGICS_WRITE_ENABLED: 'false' }))
+  it('403 with the disabled message when writes are off in live mode, and no batch', async () => {
+    const res = await pushDocs({ document_ids: [DOC] }, envOf({ LOGICS_MODE: 'live', LOGICS_WRITE_ENABLED: 'false' }))
     expect(res.status).toBe(403)
     expect(await errorOf(res)).toEqual({ code: 'logics_write_blocked', message: 'Logics writes are disabled in this environment' })
     expect(createBatch).not.toHaveBeenCalled()
   })
 
-  it('403 with the allowlist message for an unlisted case', async () => {
-    const res = await pushDocs({ document_ids: [DOC] }, envOf({ LOGICS_TEST_CASE_IDS: '1' }))
+  it('D-10: fake mode skips the env guard, so writes-off and an empty allowlist still queue a fake push', async () => {
+    const res = await pushDocs({ document_ids: [DOC] }, envOf({ LOGICS_WRITE_ENABLED: 'false', LOGICS_TEST_CASE_IDS: '' }))
+    expect(res.status).toBe(202)
+    expect(createBatch).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ mode: 'fake' }))
+  })
+
+  it('403 with the allowlist message for an unlisted case in live mode', async () => {
+    const res = await pushDocs({ document_ids: [DOC] }, envOf({ LOGICS_MODE: 'live', LOGICS_TEST_CASE_IDS: '1' }))
     expect(res.status).toBe(403)
     expect((await errorOf(res)).message).toBe('Case 900001 is not on the test allowlist')
     expect(createBatch).not.toHaveBeenCalled()
