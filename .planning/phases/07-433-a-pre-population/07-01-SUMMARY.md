@@ -230,3 +230,97 @@ None. No external service configuration required.
 - Commits b80552e, 2b90421, b94ce41, 565034b are ancestors of HEAD.
 - No stub patterns (TODO/FIXME/placeholder) in the engine, shared module or exporter.
 - Verification rerun: `--check` fresh; worker engine suite 270/270; Python unittest 27 OK; `git diff --stat dbec332 -- src/` shows only `src/tools/export_golden_fixtures.py`.
+
+## Re-port after origin/main merge (gap closure)
+
+**The TS engine has been re-ported to the merged Python oracle (merge `ff1c4a7`). It now covers the Offer in Compromise path, the Form 656-B lump-sum and periodic minimums, and the full `calculation_trace`. Parity is exact on 165 regenerated golden cases, and the full `pnpm -C app run check` exits 0.**
+
+- **Base / head:** `plan_head_before: 80b0ac9`, `plan_head_after: 190eece` (code); this SUMMARY commit follows. Worktree branch `worktree-agent-a813bd1683c3a4715`.
+- **Commits (measured, `git rev-list --count 80b0ac9..HEAD` before this summary):** 3
+  1. `b008f73` test: the exporter follows the merged tests and `golden.json` is regenerated, so parity is RED.
+  2. `ff9e0ba` feat: the engine is re-ported, so parity is GREEN.
+  3. `190eece` docs: companion docs and Python line anchors.
+
+### Case counts, before and after
+
+| | Before (pre-merge oracle) | After (merged oracle) |
+|---|---|---|
+| Cases | 160 | 165 |
+| Existing-test cases | 12 | 14 |
+| `grid_*` | 69 | 69 |
+| `boundary_*` | 15 | 18 |
+| `pay_frequency_not_applicable` | 1 | 1 |
+| `null_*` | 63 | 63 |
+| Validations | 140 | 140 |
+| Paths covered | 6 | 7 (OIC 9 cases) |
+| `parity.test.ts` tests | 270 | 283 |
+| `golden.json` size | — | about 103k lines (every determination carries its trace) |
+
+### Exporter changes (`src/tools/export_golden_fixtures.py`, the only Python file touched)
+
+- Two test cases were renamed to follow `test_intake_workflow.py`:
+  - `..._full_payment_failure_requires_manual_review_until_oic_calculator_exists` is now `test_a_balance_that_cannot_be_full_paid_uses_the_lump_sum_offer_minimum`.
+  - `..._partial_payment_case_requires_manual_review_...` is now `test_no_reduced_offer_when_the_lump_sum_minimum_meets_the_balance`.
+- New `test_case_api.py` scenarios are recorded as `case_api._screenable(row)[0]`, the row `result_for_row` actually evaluates:
+  - the missing health premium;
+  - the source-of-truth unknowns.
+
+  The packet tests that need `parse_packet(examples/…)` are not engine cases and were not recorded.
+- New boundaries:
+  - `boundary_lump_sum_equals_owed` (manual payment review);
+  - `boundary_lump_sum_below_owed` (OIC);
+  - `boundary_lump_sum_half_dollar` (50516.5 → 50517, ROUND_HALF_UP).
+
+  `_check_coverage` asserts all three.
+- `git diff --quiet 80b0ac9 -- src/determination.py src/financial_data.py src/questions.py src/intake_workflow.py src/standards.py src/standards_repository.py src/tests/` exits 0.
+
+### Behavior changes ported
+
+1. **Decision tree** (`resolution-path.ts`, split out of `determination.ts`, which kept steps 1-5):
+   - Selection is now by index, 0-6: blocked, CNC, manual equity, simple plan, non-simple IA, **Offer in Compromise** (`0 < lump_sum < total_tax_owed`), manual payment.
+   - `ndi` stays raw when the case is blocked and is clamped at 0 otherwise. The CSED payment, the lump sum and the periodic minimum are now computed before selection.
+2. **OIC amounts:**
+   - `lump_sum = _whole_dollars(nre + max(raw_ndi, 0) * 12)` and `periodic = … * 24`.
+   - `_whole_dollars` is `Decimal(str(x))` with ROUND_HALF_UP. It is ported as `wholeDollars` in `py.ts`.
+   - The OIC result is the lump sum, with `needs_manual_review` false and the review note "The 6-to-24-month minimum offer is $N."
+3. **`calculation_trace`** (`trace.ts`, plus the trace arguments in `calculateAllowableExpenses` and `netRealizableEquityLines`):
+   - Six sections: income, expenses (health care inserted at index 5), disposable, equity (per-vehicle or legacy steps), `resolution_amounts` (inserted at index 4), and decision.
+   - The decision section has seven checks, each `pass`, `fail`, `matched` or `not_evaluated`, titled the way Python's `.title()` does.
+   - Check text formats money as Python's `f"{x:,.2f}"`/`,.0f` (`pyFixed` in `py.ts`, exact-tie half-even).
+4. **`PATHS`** gains `"Offer in Compromise": oic / "Offer in compromise"`. `ENGINE_VERSION` is now `ts-port-2`.
+5. **Standards repository:** the merge only schema-qualified the SQL (`public.`). The lookup order and arguments are unchanged, and the recorded-call replay stays strict and green.
+6. **Questions:** no contract change. `app/shared/questions.ts` is untouched and its contract tests still pass.
+
+### Verification
+
+- Engine suite: `pnpm -C app exec vitest run --project worker-node worker/src/engine` gives 283/283, all exact `toEqual` including the whole trace, with a strict standards replay.
+- Python: `python -m unittest discover -s src/tests` passes 41 tests.
+- Freshness: `python src/tools/export_golden_fixtures.py --check` exits 0.
+- Full gate: `pnpm -C app run check` exits 0. Results: size gate, freshness, `tsc -b` and eslint (0 errors; 7 warnings, all pre-existing in `app/src`), then 1031 tests passed and 137 skipped.
+- Mutation: changing `lumpSum < owed` to `<=` fails `boundary_lump_sum_equals_owed`, and the change was reverted. New helper tests check `pyFixed` and `wholeDollars` against values Python printed.
+
+### Python behavior that looked surprising (reported, not changed)
+
+1. **`case_api._screenable` fills facts before `evaluate_case`.**
+   - It derives zeros from answered gates, for example spouse wages for an unmarried taxpayer, or vehicle costs when there is no vehicle.
+   - It also sets 17 `_ASSUMED_ZERO` income and expense lines to 0.0 as an "assumption" when they are NULL, and adds a review note saying so.
+   - That softens the project rule that a NULL required value must block evaluation.
+   - It lives in the HTTP adapter, not the engine, so it is **not ported**. A TS evaluation route that calls `evaluateCase` directly will still block on those NULLs where Python's `result_for_row` screens them. Someone needs to decide whether the Worker route should mirror `_screenable`.
+2. **Lump-sum rounding disagrees with its own test.**
+   - `_whole_dollars` rounds half **up**.
+   - The new test computes its expectation with Python `round()`, which rounds half to **even**.
+   - They agree only because that test's figures have no .5 cents. `boundary_lump_sum_half_dollar` pins the implementation's behavior: 50517.
+3. **The OIC path does not require manual review.** `needs_manual_review` is False, so the status is `ready`, the same as a simple plan. Given the CPA/EA-review rule, a reviewer may want OIC flagged.
+4. **The trace's lump-sum and periodic steps name only `["total_tax_owed"]` as `inputKeys`,** even though their inputs are equity and remaining income. This is ported as is.
+5. **The trace computes the full-pay requirement even when the CSED has passed.** With CSED ≤ 0, `csed_months` clamps to 1, so the step shows the full balance as one month's payment. It is never selected, because the simple-plan and IA rules require CSED > 0.
+
+### Deviations
+
+- [Rule 3 - Blocking] The engine passed 500 lines once the trace was added, so the decision tree moved to `resolution-path.ts` and the trace helpers to `trace.ts`. `intake-workflow.ts` now imports from `resolution-path`. Largest engine file: `determination.ts`, 255 lines.
+- Exporter docstring line anchors (`:134-169`) were updated. This is a comment only, and the output is unchanged.
+
+## Re-port Self-Check: PASSED
+
+- `trace.ts`, `resolution-path.ts`, `docs/app/worker/src/engine/{trace,resolution-path}.md` exist.
+- `b008f73`, `ff9e0ba`, `190eece` are ancestors of HEAD.
+- No TODO, FIXME or placeholder in the changed engine files. The only `shortcut:` note is in `wholeDollars`, for exponent forms.

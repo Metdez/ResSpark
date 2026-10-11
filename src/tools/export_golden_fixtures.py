@@ -18,7 +18,7 @@ ROOT = SRC.parent
 OUT = ROOT / "app" / "worker" / "test" / "fixtures" / "engine" / "golden.json"
 sys.path[:0] = [str(SRC), str(SRC / "tests")]
 
-from case_api import _NEXT, _PATHS  # noqa: E402
+from case_api import _NEXT, _PATHS, _screenable  # noqa: E402
 from determination import calculate_allowable_expenses, calculate_net_realizable_equity  # noqa: E402
 from financial_data import FinancialData  # noqa: E402
 from intake_workflow import (  # noqa: E402
@@ -42,6 +42,7 @@ MANUAL_EQUITY = "MANUAL REVIEW — negative income, meaningful equity present"
 SIMPLE = "Simple Payment Plan"
 NON_SIMPLE = "Non-Simple Installment Agreement"
 MANUAL_PAYMENT = "MANUAL REVIEW — payment resolution needs review"
+OIC = "Offer in Compromise"
 
 
 class Recorder:
@@ -84,7 +85,14 @@ def existing_test_cases() -> list[tuple[str, dict]]:
     unused_tax_only["tax_only_balance"] = None
     null_owed = canonical_zero_row()
     null_owed["total_tax_owed"] = None
+    # test_case_api.py screens through case_api._screenable before evaluate_case; record the screened row.
+    no_premium = canonical_zero_row()
+    no_premium["actual_health_insurance_premiums"] = None
+    unknowns = canonical_zero_row()
+    unknowns.update(age_spouse=None, social_security_income=None, tax_only_balance=None)
     return [
+        ("test_a_missing_health_premium_names_the_statement_and_does_not_recommend", _screenable(no_premium)[0]),
+        ("test_source_of_truth_keeps_complete_schema_unknowns_and_calculation_totals", _screenable(unknowns)[0]),
         ("test_document_requests_are_selected_from_canonical_case_data", {
             "is_wage_earner": True, "owns_home": True, "vehicle_count": 1, "has_retirement_accounts": True,
         }),
@@ -107,12 +115,12 @@ def existing_test_cases() -> list[tuple[str, dict]]:
         ("test_cnc_path_is_preserved", _row(
             **FL, total_tax_owed=60000.0, tax_only_balance=60000.0, csed_months_remaining=96,
         )),
-        ("test_full_payment_failure_requires_manual_review_until_oic_calculator_exists", _row(
+        ("test_a_balance_that_cannot_be_full_paid_uses_the_lump_sum_offer_minimum", _row(
             **FL, household_size=1, rents_home=True, is_wage_earner=True, pay_frequency="monthly",
             gross_wages_taxpayer=5000.0, actual_housing_utilities=1000.0, all_returns_filed=True,
             total_tax_owed=100000.0, tax_only_balance=100000.0, csed_months_remaining=12,
         )),
-        ("test_partial_payment_case_requires_manual_review_until_oic_calculator_exists", _row(
+        ("test_no_reduced_offer_when_the_lump_sum_minimum_meets_the_balance", _row(
             **FL, household_size=1, rents_home=True, is_wage_earner=True, pay_frequency="monthly",
             gross_wages_taxpayer=4000.0, actual_housing_utilities=1000.0, all_returns_filed=True,
             cash_and_bank_balances=5000.0, total_tax_owed=15000.0, tax_only_balance=15000.0,
@@ -231,6 +239,13 @@ def boundary_cases() -> list[tuple[str, dict]]:
             **two_cars | {"vehicle_count": 1}, filing_joint_offer=True, vehicle_market_value_total=19000.0)),
         ("boundary_single_legacy_totals", _row(
             **two_cars, filing_joint_offer=False, vehicle_market_value_total=38000.0, vehicle_loan_balance_total=4000.0)),
+        # Lump-sum OIC minimum here is (3000 - 1000) + 12 * 4043 = 50516; the offer needs it below the balance.
+        ("boundary_lump_sum_equals_owed", _row(**PAYING, cash_and_bank_balances=3000.0, total_tax_owed=50516.0,
+                                               csed_months_remaining=12)),
+        ("boundary_lump_sum_below_owed", _row(**PAYING, cash_and_bank_balances=3000.0, total_tax_owed=50516.01,
+                                              csed_months_remaining=12)),
+        ("boundary_lump_sum_half_dollar", _row(**PAYING, cash_and_bank_balances=3000.5, total_tax_owed=100000.0,
+                                               csed_months_remaining=12)),
         ("boundary_household_1_two_seniors", _row(
             **FL, filing_status_married=True, household_size=1, age_taxpayer=70, age_spouse=68,
             gross_wages_taxpayer=1500.0, total_tax_owed=5000.0, csed_months_remaining=40)),
@@ -264,7 +279,7 @@ def _check_row(name: str, row: dict) -> None:
 
 
 def nre_lines(fd: FinancialData) -> dict:
-    """The seven terms of calculate_net_realizable_equity, copied from src/determination.py:92-113."""
+    """The seven terms of calculate_net_realizable_equity, copied from src/determination.py:134-169."""
     cash = max(fd.cash_and_bank_balances - 1000, 0)
     investments = max(fd.investment_accounts_net, 0)
     retirement = max(fd.retirement_accounts_market_value * 0.8 - fd.retirement_accounts_loan_balance, 0)
@@ -328,8 +343,12 @@ def _check_coverage(cases: list[dict]) -> None:
         "boundary_nre_500": CNC, "boundary_nre_500_01": MANUAL_EQUITY,
         "boundary_owed_50000": SIMPLE, "boundary_owed_50000_01": NON_SIMPLE,
         "boundary_csed_0": MANUAL_PAYMENT, "boundary_csed_1": SIMPLE,
+        "boundary_lump_sum_equals_owed": MANUAL_PAYMENT, "boundary_lump_sum_below_owed": OIC,
+        "boundary_lump_sum_half_dollar": OIC,
     }.items():
         _require(path[name] == wanted, f"{name}: expected {wanted}, got {path[name]}")
+    half = by_name["boundary_lump_sum_half_dollar"]["determination"]["suggested_offer_or_payment"]
+    _require(half == 50517.0, f"lump-sum whole dollars must round half up: {half}")
     health = {name: by_name[name]["allowable_breakdown"]["out_of_pocket_health_care"]
               for name in ("boundary_age_64", "boundary_age_65")}
     _require(health == {"boundary_age_64": 90.0, "boundary_age_65": 163.0}, f"age boundary: {health}")
