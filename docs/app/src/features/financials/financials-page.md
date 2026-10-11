@@ -1,6 +1,6 @@
 # `app/src/features/financials/financials-page.tsx`
 
-`FinancialsPage({ caseId })`: the staff 433-A worksheet (D-12, D-14, FORM-03, FORM-04, ADDR-02). The route file supplies `caseId` and the page chrome.
+`FinancialsPage({ caseId })`: the staff 433-A worksheet (D-12, D-14, D-15, FORM-03, FORM-04, FORM-05, ADDR-02). The route file supplies `caseId` and the page chrome.
 
 | Part | What it does |
 |------|--------------|
@@ -12,7 +12,7 @@
 | Pending | The title and three `Skeleton` rows. |
 | Error | The title and a destructive `Alert`: `Couldn't load the 433-A worksheet`, the generic staff copy, and the muted error code. |
 | Header | `FinancialsHeader`. |
-| Layout | A two-column grid on large screens, `lg:grid-cols-[minmax(0,1fr)_360px]`: the sections on the left, an `aside` labelled `Recommendation` on the right. A `div`, not a second `main`: the route's `Main` is the page landmark. |
+| Layout | A two-column grid on large screens, `lg:grid-cols-[minmax(0,1fr)_360px]`: the sections on the left, an `aside` labelled `Recommendation` on the right holding `RecommendationRail` (sticky on large screens; see `recommendation-rail.md`). A `div`, not a second `main`: the route's `Main` is the page landmark. |
 | Sections | One `SectionTable` per view section, in the Worker's order (D-14 form order), each given the latest run. The Household section gets `CountyRow` and the Employment section gets `Employers` above its table. |
 
 ## Tests

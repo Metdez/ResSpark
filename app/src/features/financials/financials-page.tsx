@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { CountyBlock, FinancialsView } from './api'
 import { FinancialsHeader } from './financials-header'
+import { RecommendationRail } from './recommendation-rail'
 import { SectionTable } from './section-table'
 import { SourceBadge } from './source-badge'
 import { useFinancials, useLatestEvaluation, useRefresh } from './use-financials'
@@ -127,7 +128,9 @@ export function FinancialsPage({ caseId }: { caseId: string }) {
             </SectionTable>
           ))}
         </div>
-        <aside aria-label='Recommendation' />
+        <aside aria-label='Recommendation'>
+          <RecommendationRail caseId={caseId} />
+        </aside>
       </div>
     </>
   )
