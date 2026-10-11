@@ -115,6 +115,44 @@ async function linkExchange() {
   }
 }
 
+// Plan 02-04, --auth, fake mode only: confirm fixture 900001, create a "Documents only" draft, send
+// it to the fixture contact, open the returned URL, record a copy, try email, then delete the
+// probe request (cascading items and link). The URL and token are never printed.
+async function requestSend() {
+  const headers = { authorization: `Bearer ${await staffToken()}`, 'content-type': 'application/json' }
+  const api = async (method, path, body, status = 200) => {
+    const res = await fetch(`${base}/api/admin${path}`, { method, headers, body: body && JSON.stringify(body) })
+    if (res.status !== status) throw new Error(`${method} ${path.replace(/[0-9a-f-]{36}/, ':id')} status ${res.status}`)
+    return res.json()
+  }
+  const { mode } = await api('GET', '/integrations/logics')
+  if (mode !== 'fake') throw new Error('needs LOGICS_MODE=fake (live mode is covered by Plan 08)')
+  const { case_id } = await api('POST', '/cases/900001/confirm', { search_type: 'case_id' })
+  const { templates } = await api('GET', '/requests/templates')
+  const template = templates.find((t) => t.name === 'Documents only')
+  if (!template) throw new Error('Documents only template missing')
+  const { request_id } = await api(
+    'POST', '/requests', { case_id, template_id: template.id, items: template.items }, 201
+  )
+  try {
+    const sent = await api('POST', `/requests/${request_id}/send`, {
+      email: 'jordan.rivera@example.com', phone: '(555) 010-0001',
+    })
+    if (!/^[A-Za-z0-9_-]{64}$/.test(sent.url.slice(`${base}/c/`.length))) throw new Error('url is not origin/c/<token>')
+    if (sent.version !== 1) throw new Error(`version ${sent.version}`)
+    const open = await fetch(sent.url, { redirect: 'manual' })
+    if (open.status !== 302) throw new Error(`opening the link: status ${open.status}`)
+    const copied = await api('POST', `/requests/${request_id}/copied`)
+    if (copied.ok !== true) throw new Error('copied not recorded')
+    const email = await api('POST', `/requests/${request_id}/email`)
+    if (email.ok !== true && email.reason !== 'not_configured') throw new Error(`email ${email.reason}`)
+  } finally {
+    const { createClient } = await import('@supabase/supabase-js')
+    const db = createClient(env.SUPABASE_URL, env.SUPABASE_SECRET_KEY, { auth: { persistSession: false } })
+    await db.from('requests').delete().eq('id', request_id)
+  }
+}
+
 const checks = [
   {
     name: '/admin',
@@ -216,6 +254,7 @@ const checks = [
       }
     },
   },
+  { name: 'auth request send', auth: true, run: requestSend },
   {
     name: 'lookup 401 without token',
     run: async () => {
