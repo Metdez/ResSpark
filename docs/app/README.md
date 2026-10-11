@@ -13,7 +13,7 @@ How the ResSpark platform app is laid out, how its CLIs must be invoked so secre
 ## CLI rules
 
 1. **wrangler, and any command that needs `CLOUDFLARE_API_TOKEN`**, runs as `npx -y dotenv-cli -- <cmd>` from the repo root, or through the `app/package.json` wrappers that pass `-e ../.env`. The token is loaded into the child process only; it is never echoed, logged, or passed on the command line. A Bash hook blocks any command whose text names `.env` or `.dev.vars`, so do not `cat`, `grep`, or `source` those files.
-2. **The Supabase CLI** runs as `npx -y supabase@2.120.0 ...` from a directory that contains neither the repo root `.env` nor a `supabase/` folder — the CLI fails to parse the root `.env` (RESEARCH F-10). `app/scripts/lib/supabase-cli.mjs` (Plan 04) does this with a temporary working directory and absolute `-f` paths, e.g. `supabase db query --linked --project-ref zvkphuikjpwoauqdimcf -f <absolute path>`.
+2. **The Supabase CLI** runs as `npx -y supabase@2.120.0 ...` from a directory that contains neither the repo root `.env` nor a `supabase/` folder — the CLI fails to parse the root `.env` (RESEARCH F-10). `app/scripts/lib/supabase-cli.mjs` (Plan 04) does this with a temporary working directory and absolute `-f` paths, e.g. `supabase db query --linked --project-ref zvkphuikjpwoauqdimcf -f <absolute path>`. It authenticates with the CLI's stored login, a classic full-account token (threat T-01-18, accepted for this developer machine). Create a scoped personal access token and set `SUPABASE_ACCESS_TOKEN` before running these scripts in CI.
 
 ## Secrets
 
