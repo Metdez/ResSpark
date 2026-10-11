@@ -32,3 +32,10 @@ Truv order types, the reconcile read, and the deterministic order → connection
 ## Tests
 
 `orders.test.ts`: the `mapOrderStatus` table (all completed, completed + pending, all pending, error only, error + completed, completed + skipped, unknown `full_parse`, all skipped, no employers), `is_expired` with outstanding work (`order_expired`) and with every employer completed (`done`), every `mapEmployerStatus` value including `skipped`, `summarizeEmployers` keeping `fetched_at`/`pay_stubs` and adding a new employer, and the `isTruvOrder` guard.
+
+## Order creation (Plan 04-03)
+
+- `phone10(e164)`: strips a leading `+1` and returns the 10 digits, or null for anything else (non-US numbers, null). Truv requires a 10-digit phone, so other numbers are omitted rather than sent.
+- `createOrder(env, p)`: `POST /v1/orders/` with body `{ products: ['income'], first_name, last_name, email?, phone?, external_user_id: requestId, order_number, notification_settings: { suppress_user_notifications: true }, template_id? }`. `email`, `phone` and `template_id` keys are omitted when null. The response must pass `isTruvOrder` and carry a string `bridge_token`, else `ProviderError` `bad_response`. Non-2xx responses are `ProviderError`s from `truvFetch`.
+  - Only the `income` product is requested (cost rule, PITFALLS M5).
+  - `suppress_user_notifications: true`: Truv never texts or emails the client; ResSpark delivers the link.

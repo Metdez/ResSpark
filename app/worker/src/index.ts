@@ -6,6 +6,7 @@ import { secureHeaders } from 'hono/secure-headers'
 import { scheduled } from './cron'
 import { queue, type Job } from './jobs/index'
 import { logger } from './log/logger'
+import { clientCsp } from './middleware/client-csp'
 import { type StaffCtx } from './middleware/staff-auth'
 import { adminConnectionsRoute } from './routes/admin-connections'
 import { adminEventsRoute } from './routes/admin-events'
@@ -16,6 +17,7 @@ import { adminRequestActionsRoute } from './routes/admin-request-actions'
 import { adminRequestsRoute } from './routes/admin-requests'
 import { adminReviewRoute } from './routes/admin-review'
 import { adminSessionRoute } from './routes/admin-session'
+import { cConnectionsRoute } from './routes/c-connections'
 import { cUploadsRoute } from './routes/c-uploads'
 import { clientLinkRoute } from './routes/client-link'
 import { clientPortalRoute } from './routes/client-portal'
@@ -37,6 +39,7 @@ const clientPrivacyHeaders = createMiddleware(async (c, next) => {
   c.res.headers.set('X-Robots-Tag', 'noindex')
 })
 app.use('/c/*', secureHeaders(), clientPrivacyHeaders)
+app.use('/c/*', clientCsp)
 app.use('/api/c/*', clientPrivacyHeaders)
 
 // Envelope { error: { code, message } } with fixed strings only; err.message of unknown errors
@@ -65,6 +68,7 @@ app.route('/api/admin', adminLookupRoute)
 app.route('/c', clientLinkRoute)
 app.route('/api/c', clientPortalRoute)
 app.route('/api/c', cUploadsRoute)
+app.route('/api/c', cConnectionsRoute)
 app.route('/api/webhooks', webhooksRoute)
 
 app.notFound(async (c) => {

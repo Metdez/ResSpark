@@ -87,3 +87,46 @@ export function summarizeEmployers(order: TruvOrder, previous: EmployerSummary[]
     }
   })
 }
+
+// Truv wants a 10-digit US number; anything else is omitted rather than rejected.
+export const phone10 = (e164: string | null): string | null => {
+  const digits = e164?.replace(/^\+1/, '') ?? ''
+  return /^\d{10}$/.test(digits) ? digits : null
+}
+
+const hasBridgeToken = (v: unknown): v is TruvOrder & { bridge_token: string } =>
+  isTruvOrder(v) && typeof v.bridge_token === 'string'
+
+// D-05: income only; Truv never messages the client (ResSpark delivers the link).
+export async function createOrder(
+  env: Env,
+  p: {
+    requestId: string
+    orderNumber: string
+    first: string
+    last: string
+    email: string | null
+    phone10: string | null
+    templateId: string | null
+  }
+): Promise<TruvOrder & { bridge_token: string }> {
+  return truvFetch(
+    env,
+    '/orders/',
+    {
+      method: 'POST',
+      body: {
+        products: ['income'],
+        first_name: p.first,
+        last_name: p.last,
+        ...(p.email ? { email: p.email } : {}),
+        ...(p.phone10 ? { phone: p.phone10 } : {}),
+        external_user_id: p.requestId,
+        order_number: p.orderNumber,
+        notification_settings: { suppress_user_notifications: true },
+        ...(p.templateId ? { template_id: p.templateId } : {}),
+      },
+    },
+    hasBridgeToken
+  )
+}
