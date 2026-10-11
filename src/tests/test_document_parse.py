@@ -22,7 +22,7 @@ from document_parse import (
 
 
 _UNMATCHED = ["Case file"] + ["spacer"] * 11
-_ENV = {"SCIFORIUM_API_KEY": "test-key", "SCIFORIUM_API_ENDPOINT": "test-model"}
+_ENV = {"OPENROUTER_API_KEY": "test-key", "OPENROUTER_MODEL": "test-model"}
 
 
 class _Response(BytesIO):
@@ -249,7 +249,7 @@ class DocumentParseTests(unittest.TestCase):
             payload = {"choices": [{"message": {"content": content}}]}
             return Response(json.dumps(payload).encode())
 
-        env = {"SCIFORIUM_API_KEY": "test-key", "SCIFORIUM_API_ENDPOINT": "test-model"}
+        env = {"OPENROUTER_API_KEY": "test-key", "OPENROUTER_MODEL": "test-model"}
         with patch.dict(os.environ, env), patch("document_parse.urllib.request.urlopen", fake_urlopen):
             parsed = parse_texts(texts, document_type="lease_statement")
             with self.assertRaises(ValueError):
@@ -314,7 +314,7 @@ class DocumentParseTests(unittest.TestCase):
         def fail_if_called(*args, **kwargs):
             raise AssertionError("model was called")
 
-        with patch.dict(os.environ, {"SCIFORIUM_API_KEY": "", "SCIFORIUM_API_ENDPOINT": ""}), \
+        with patch.dict(os.environ, {"OPENROUTER_API_KEY": "", "OPENROUTER_MODEL": ""}), \
                 patch("document_parse.urllib.request.urlopen", fail_if_called):
             with self.assertRaises(ValueError) as caught:
                 parse_texts(_UNMATCHED, document_type="lease_statement")
@@ -518,7 +518,7 @@ class DocumentParseTests(unittest.TestCase):
         def fail_if_called(*args, **kwargs):
             raise AssertionError("model was called")
 
-        with patch.dict(os.environ, {"SCIFORIUM_API_KEY": "", "SCIFORIUM_API_ENDPOINT": ""}), \
+        with patch.dict(os.environ, {"OPENROUTER_API_KEY": "", "OPENROUTER_MODEL": ""}), \
                 patch("document_parse.urllib.request.urlopen", fail_if_called):
             part, error = _parse_classified("notes.pdf", texts, {})
         self.assertIsNone(part)

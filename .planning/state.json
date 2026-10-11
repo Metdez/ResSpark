@@ -1,0 +1,53 @@
+{
+  "contract": "1.0.0",
+  "flavor": "core",
+  "milestone": null,
+  "phases": [
+    {
+      "number": "1",
+      "name": "Foundation & Staff Sign-In",
+      "status": "in_progress"
+    },
+    {
+      "number": "2",
+      "name": "Find the Client & Send the Link",
+      "status": "in_progress"
+    },
+    {
+      "number": "3",
+      "name": "Uploads, Review & Live Status",
+      "status": "in_progress"
+    },
+    {
+      "number": "4",
+      "name": "Connect Payroll & Bank",
+      "status": "pending"
+    },
+    {
+      "number": "5",
+      "name": "Push to Logics",
+      "status": "in_progress"
+    },
+    {
+      "number": "6",
+      "name": "Address & E-Sign",
+      "status": "pending"
+    },
+    {
+      "number": "7",
+      "name": "433-A Pre-Population",
+      "status": "in_progress"
+    },
+    {
+      "number": "8",
+      "name": "Reminders, Teller & Production Readiness",
+      "status": "pending"
+    }
+  ],
+  "next": {
+    "command": "/gsd:progress --next",
+    "label": "Advance to the next step",
+    "reason": "Phase 3 of 8 · 0% · executing"
+  },
+  "updated_at": "2026-10-11T09:17:19.105Z"
+}

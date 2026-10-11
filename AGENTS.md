@@ -45,41 +45,25 @@ psql "$env:DATABASE_URL" -f src/schemas/database_schema.sql
 psql "$env:DATABASE_URL" -f src/schemas/lookup_standards.seed.sql
 ```
 
-## Implementation rules
 
-- Preserve the separation of concerns: intake gathers and validates facts;
-  `FinancialData` represents facts; the determination module calculates;
-  standards come from the repository/database.
-- Keep `case_financial_data` as the canonical case-data source. Distinguish
-  `NULL` (unknown) from `0` (known to be zero); unknown required values must
-  block evaluation rather than silently using a default.
-- Keep standards data out of Python business logic. Add or update dynamic
-  standards in the SQL schema/seed data and retrieve them through the
-  repository interface using parameterized queries.
-- Do not change IRS thresholds, formulas, asset reductions, eligibility gates,
-  or recommendation wording without an authoritative source and targeted tests.
-  Explain the source and rule in code comments or the change description.
-- Preserve the 32-question contract in `questions.py` unless a deliberate
-  intake-version change is requested. Update workflow and tests together when
-  changing question applicability or document-request logic.
-- Prefer standard-library Python and maintain the existing type hints,
-  dataclasses, and `unittest` style. Avoid adding runtime dependencies unless
-  the task explicitly requires one.
+## Coding
+Use the pony tail skill while coding and create a markdown file for every new file you create explaining it in detail and save them in the docs folder. Make sure no file goes over 500 lines of code and then try to break stuff into separate files so it's well organized. Write code in an Modular way.
 
-## Testing expectations
+## UI/UX/Components 
 
-- Add or update a focused test for every behavior change.
-- For calculation changes, cover normal, boundary, and missing-data cases.
-- For schema/repository changes, verify query parameters and interface usage;
-  do not make the unit suite depend on local PostgreSQL.
-- Run the full test command above before handing off work. If a database-backed
-  demo cannot run, state that explicitly.
+Use these Repos for inspiration on front-end design and everything. I want you to use their components and use their design whenever you're doing anything.
 
-## Data and safety
+https://github.com/frappe/erpnext.git
+- ERPNext: open-source ERP (accounting, invoicing, HR, CRM) built on the Frappe framework. Use it as a reference for data-heavy business UI: forms, list/table views, dashboards, sidebar navigation, and status badges.
 
-- Never commit real taxpayer information, credentials, connection strings, or
-  document extractions containing personal data.
-- Keep generated artifacts, virtual environments, and local databases out of
-  version control.
-- Present outputs as suggested paths for professional review, never as a
-  guaranteed IRS outcome or legal/tax advice.
+https://github.com/docusealco/docuseal.git
+- DocuSeal: open-source document signing and form-filling platform. Use it as a reference for document upload, document/form builder, e-signature flows, and clean submission/status screens (relevant to our client-document intake).
+
+https://github.com/bigcapitalhq/bigcapital.git
+- Bigcapital: open-source accounting and bookkeeping software (invoices, bills, expenses, financial reports). Use it as a reference for financial UI: transaction tables, financial statements/reports, and money-formatted fields.
+
+## Before doing anything
+
+Web search using Firecrawl and try to find GitHub repos that have the most stars and that could have done the same thing or could be useful when it comes to references or using code from 
+
+

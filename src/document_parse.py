@@ -11,7 +11,7 @@ figure that already includes utilities is not detected.
 ponytail: a second P&L replaces net business income. The same business on a
 Schedule C and a profit-and-loss is not added twice.
 Gross pay is Regular Gross Pay, or Gross Pay when that is the line on the stub.
-ponytail: a failed parse can ask Sciforium for the columns that document type
+ponytail: a failed parse can ask OpenRouter for the columns that document type
 owns. Empty extracted text is not recovered (no OCR). A scan still fails.
 An upload is classified from its text into one of the 12 request codes
 before those parsers run. Health coverage and life insurance are both insurance.
@@ -102,7 +102,7 @@ _FIELD_TYPES = {
     "state_of_residence": "str", "pay_frequency": "str",
     "vehicle_loan_balances": "float_list", "vehicle_market_values": "float_list",
 }
-_CHAT_URL = "https://api.sciforium.com/v1/chat/completions"
+_CHAT_URL = "https://openrouter.ai/api/v1/chat/completions"
 _TEXT_LIMIT = 12_000
 
 
@@ -398,10 +398,10 @@ def _llm_fill(text: str, fields: tuple[str, ...]) -> dict:
 
 def _llm_json(prompt: str, text: str) -> dict:
     _load_env()
-    key = os.environ.get("SCIFORIUM_API_KEY")
-    model = os.environ.get("SCIFORIUM_API_ENDPOINT")
+    key = os.environ.get("OPENROUTER_API_KEY")
+    model = os.environ.get("OPENROUTER_MODEL")
     if not key or not model:
-        raise RuntimeError("SCIFORIUM_API_KEY and SCIFORIUM_API_ENDPOINT are required")
+        raise RuntimeError("OPENROUTER_API_KEY and OPENROUTER_MODEL are required")
     body = json.dumps({
         "model": model,
         "messages": [
@@ -421,7 +421,7 @@ def _llm_json(prompt: str, text: str) -> dict:
 
 
 def _load_env() -> None:
-    if os.environ.get("SCIFORIUM_API_KEY") and os.environ.get("SCIFORIUM_API_ENDPOINT"):
+    if os.environ.get("OPENROUTER_API_KEY") and os.environ.get("OPENROUTER_MODEL"):
         return
     path = Path(__file__).resolve().parents[1] / ".env"
     if not path.is_file():
