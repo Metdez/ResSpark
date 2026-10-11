@@ -3,6 +3,7 @@ import { hmacKey, mintLinkToken, uuidToBytes, type ClientLinkRow } from '../src/
 import { createAdminClient } from '../src/db/client'
 import { createClientLink, findClientLink } from '../src/db/client-links'
 import { app } from '../src/index'
+import { _resetRateLimitForTests } from '../src/middleware/link-rate-limit'
 
 vi.mock('../src/db/client-links', () => ({ findClientLink: vi.fn(), createClientLink: vi.fn() }))
 vi.mock('../src/db/client', () => ({ createAdminClient: vi.fn() }))
@@ -42,6 +43,7 @@ const random64 = () =>
   Buffer.from(crypto.getRandomValues(new Uint8Array(48))).toString('base64url')
 
 beforeEach(() => {
+  _resetRateLimitForTests()
   vi.spyOn(console, 'log').mockImplementation(() => {})
   vi.mocked(findClientLink).mockResolvedValue(row())
 })
@@ -117,5 +119,31 @@ describe('GET /c/:token failures are one uniform 404', () => {
     await get('not-a-token')
     await get((await mint()).slice(0, 60))
     expect(findClientLink).not.toHaveBeenCalled()
+  })
+})
+
+describe('GET /c/:token rate limiting', () => {
+  const fromIp = (token: string, ip: string, env: Env = ENV) =>
+    app.request(`/c/${token}`, { headers: { 'cf-connecting-ip': ip } }, env)
+
+  it('returns the 429 page before any lookup when the binding refuses', async () => {
+    const env = { ...ENV, LINK_RATE_LIMITER: { limit: async () => ({ success: false }) } } as unknown as Env
+    const res = await fromIp(await mint(), '203.0.113.5', env)
+    expect(res.status).toBe(429)
+    expect(res.headers.get('content-type')).toContain('text/html')
+    expect(res.headers.get('cache-control')).toBe('no-store')
+    expect(await res.text()).toContain('Too many attempts')
+    expect(findClientLink).not.toHaveBeenCalled()
+  })
+
+  it('without the binding, limits the 21st request per ip inside the window', async () => {
+    const token = await mint()
+    for (let i = 0; i < 20; i++) {
+      expect((await fromIp(token, '203.0.113.9')).status).toBe(302)
+    }
+    const limited = await fromIp(token, '203.0.113.9')
+    expect(limited.status).toBe(429)
+    expect(limited.headers.get('cache-control')).toBe('no-store')
+    expect((await fromIp(token, '203.0.113.10')).status).toBe(302)
   })
 })
