@@ -114,8 +114,9 @@ describe('scheduled', () => {
   })
 
   it('logs only allowlisted fields', async () => {
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
     await scheduled(controller('*/15 * * * *'), env, ctx)
-    const line = JSON.parse(vi.mocked(console.log).mock.calls[0][0] as string)
+    const line = JSON.parse(logSpy.mock.calls[0][0] as string)
     expect(Object.keys(line).sort()).toEqual(['duration_ms', 'route', 'status'])
     expect(line).toMatchObject({ route: 'cron', status: 200 })
   })

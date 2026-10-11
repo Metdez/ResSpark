@@ -3,13 +3,16 @@ import { createMiddleware } from 'hono/factory'
 import { HTTPException } from 'hono/http-exception'
 import { requestId, type RequestIdVariables } from 'hono/request-id'
 import { secureHeaders } from 'hono/secure-headers'
+import { scheduled } from './cron'
 import { queue, type Job } from './jobs/index'
 import { logger } from './log/logger'
 import { type StaffCtx } from './middleware/staff-auth'
+import { adminEventsRoute } from './routes/admin-events'
 import { adminIntegrationsRoute } from './routes/admin-integrations'
 import { adminLookupRoute } from './routes/admin-lookup'
 import { adminRequestActionsRoute } from './routes/admin-request-actions'
 import { adminRequestsRoute } from './routes/admin-requests'
+import { adminReviewRoute } from './routes/admin-review'
 import { adminSessionRoute } from './routes/admin-session'
 import { cUploadsRoute } from './routes/c-uploads'
 import { clientLinkRoute } from './routes/client-link'
@@ -51,6 +54,8 @@ app.route('/api/admin/session', adminSessionRoute)
 app.route('/api/admin/integrations', adminIntegrationsRoute)
 app.route('/api/admin/requests', adminRequestsRoute)
 app.route('/api/admin/requests', adminRequestActionsRoute)
+app.route('/api/admin', adminReviewRoute)
+app.route('/api/admin', adminEventsRoute)
 // Last of the /api/admin mounts: its '*' staffAuth would otherwise run again on sibling admin routes.
 app.route('/api/admin', adminLookupRoute)
 app.route('/c', clientLinkRoute)
@@ -73,5 +78,5 @@ app.notFound(async (c) => {
 export default {
   fetch: app.fetch,
   queue,
-  scheduled: async (_c: ScheduledController, _env: Env) => {}, // Phase 2 fills the cron
+  scheduled,
 } satisfies ExportedHandler<Env, Job>
