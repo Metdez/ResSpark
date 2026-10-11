@@ -36,10 +36,10 @@ describe('client-link pages', () => {
 
   it('InvalidLinkPage shows the invalid-link copy', async () => {
     const el = await render(<InvalidLinkPage />)
-    expect(el.textContent).toContain("This link isn't active")
     expect(el.textContent).toContain(
       'It may have expired or been replaced with a new one. Ask your agent for a new link.'
     )
+    expect(el.textContent).toContain("This link isn't active")
   })
 
   it('renders no admin chrome (nav, aside, sidebar)', async () => {

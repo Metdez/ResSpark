@@ -1,4 +1,4 @@
 // RED stub: the GREEN commit renders the S6 placeholder.
 export function NoLinkPage() {
-  return null
+  return <p>stub</p>
 }
