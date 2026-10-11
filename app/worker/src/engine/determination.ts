@@ -163,7 +163,7 @@ export const NRE_LINE_LABELS: Readonly<Record<(typeof NRE_LINE_KEYS)[number], st
   other_assets: 'Other valuable assets × 0.8, less loans and $11,980 — 433-A(OIC) line 7',
 }
 
-// STEP 4 — determination.py:132-175, Form 433-A(OIC) Section 3, one term per line.
+// STEP 4 — determination.py:132-193, Form 433-A(OIC) Section 3, one term per line.
 // With `trace`, appends the equity steps exactly as Python does.
 export function netRealizableEquityLines(fd: FinancialData, trace: TraceStep[] | null = null): NreLines {
   const cash = pyMax(fd.cash_and_bank_balances - 1000, 0) // line 1: $1,000 reserve
@@ -183,7 +183,7 @@ export function netRealizableEquityLines(fd: FinancialData, trace: TraceStep[] |
   let vehicles: number
   const vehicleSteps: TraceStep[] = []
   if (fd.vehicle_market_values.length > 0) {
-    // :142-155, per-vehicle list (Python list truthiness)
+    // :142-156, per-vehicle list (Python list truthiness)
     vehicles = 0
     fd.vehicle_market_values.forEach((marketValue, index) => {
       const loan = index < fd.vehicle_loan_balances.length ? fd.vehicle_loan_balances[index] : 0
@@ -201,7 +201,7 @@ export function netRealizableEquityLines(fd: FinancialData, trace: TraceStep[] |
       ))
     })
   } else {
-    // :156-166, legacy totals
+    // :157-167, legacy totals
     const vehiclesRaw = pyMax(fd.vehicle_market_value_total * 0.8 - fd.vehicle_loan_balance_total, 0)
     const exemptVehicles = pyMin(fd.vehicle_count, fd.filing_joint_offer ? 2 : 1)
     vehicles = pyMax(vehiclesRaw - 3450 * exemptVehicles, 0) // $3,450 per exempt vehicle
@@ -240,7 +240,7 @@ export function netRealizableEquityLines(fd: FinancialData, trace: TraceStep[] |
   return { cash, investments, retirement, life_insurance, real_property, vehicles, other_assets }
 }
 
-// determination.py:153 — the seven lines added in Python's order.
+// determination.py:171 — the seven lines added in Python's order.
 export function calculateNetRealizableEquity(fd: FinancialData, trace: TraceStep[] | null = null): number {
   const l = netRealizableEquityLines(fd, trace)
   return l.cash + l.investments + l.retirement + l.life_insurance + l.real_property + l.vehicles + l.other_assets

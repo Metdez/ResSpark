@@ -25,7 +25,7 @@ export interface Determination {
   calculation_trace: TraceSection[]
 }
 
-// determination.py:299-449, the decision tree.
+// determination.py:299-447, the decision tree.
 export function determineResolutionPath(
   fd: FinancialData,
   repo: StandardsRepository

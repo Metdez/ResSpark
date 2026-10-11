@@ -279,7 +279,7 @@ def _check_row(name: str, row: dict) -> None:
 
 
 def nre_lines(fd: FinancialData) -> dict:
-    """The seven terms of calculate_net_realizable_equity, copied from src/determination.py:92-113."""
+    """The seven terms of calculate_net_realizable_equity, copied from src/determination.py:134-169."""
     cash = max(fd.cash_and_bank_balances - 1000, 0)
     investments = max(fd.investment_accounts_net, 0)
     retirement = max(fd.retirement_accounts_market_value * 0.8 - fd.retirement_accounts_loan_balance, 0)
