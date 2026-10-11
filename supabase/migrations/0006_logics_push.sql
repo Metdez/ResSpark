@@ -20,7 +20,7 @@ BEGIN;
 
 -- D-08: firm-level Logics settings (file_category_id, activity_type, write_enabled).
 ALTER TABLE public.firm_integrations
-    ADD COLUMN IF NOT EXISTS settings JSONB NOT NULL DEFAULT '{}'::JSONB;
+    ADD COLUMN IF NOT EXISTS settings jsonb NOT NULL DEFAULT '{}'::jsonb;
 
 CREATE TABLE IF NOT EXISTS public.logics_push_batches (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
