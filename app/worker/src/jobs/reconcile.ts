@@ -3,6 +3,7 @@ import {
   findConnectionByExternalId,
   findConnectionByLinkRef,
   getConnection,
+  recordConnectionEvent,
   updateConnection,
   type ConnectionStatus,
 } from '../db/connections'
@@ -27,13 +28,23 @@ export async function reconcileConnection(
   const conn = await getConnection(env, connectionId)
   if (!conn) throw new NonRetryableError('connection_not_found')
   if (conn.status === 'removed') return { status: 'removed', applied: false }
+  let res: { status: ConnectionStatus; applied: boolean }
   try {
-    if (conn.kind === 'payroll') return await reconcilePayroll(env, conn, opts)
-    if (conn.kind === 'signature') return await reconcileSignature(env, conn, opts)
-    return await reconcileBank(env, conn, opts)
+    if (conn.kind === 'payroll') res = await reconcilePayroll(env, conn, opts)
+    else if (conn.kind === 'signature') return await reconcileSignature(env, conn, opts)
+    else res = await reconcileBank(env, conn, opts)
   } finally {
     await updateConnection(env, conn.id, { last_polled_at: new Date().toISOString() })
   }
+  // D-07: fresh proposals once payroll or bank data is complete. A queue failure never fails the reconcile.
+  if (res.status === 'done' && res.applied) {
+    try {
+      await env.JOBS.send({ type: 'financials_propose', ref: conn.case_id, reason: 'connection_done' })
+    } catch {
+      await recordConnectionEvent(env, conn.id, 'connection.enqueue_failed', { reason: 'connection_done' }, { type: 'system' }).catch(() => {})
+    }
+  }
+  return res
 }
 
 const str = (v: unknown) => (typeof v === 'string' && v ? v : null)

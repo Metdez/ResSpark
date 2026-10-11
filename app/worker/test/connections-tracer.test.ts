@@ -131,6 +131,8 @@ describe.skipIf(!live)('connections tracer (live; needs SUPABASE_URL, SUPABASE_S
     const conn = (await fx.admin.from('connections').select('*').eq('id', connectionId).single()).data!
     expect(conn.status).toBe('done')
     expect(conn.completed_at).toBeTruthy()
+    // Plan 07-07: reaching done enqueues the case's financials_propose.
+    expect(sent[1]).toEqual({ type: 'financials_propose', ref: fx.case_id, reason: 'connection_done' })
     expect(conn.last_webhook_at).toBeTruthy()
     const employers = (conn.data as { employers: { company_name: string; status: string }[] }).employers
     expect(employers.map((e) => e.company_name)).toEqual(['Acme Inc', 'Beta LLC'])
@@ -171,6 +173,6 @@ describe.skipIf(!live)('connections tracer (live; needs SUPABASE_URL, SUPABASE_S
     ).data!
     expect(events).toHaveLength(1)
     expect(events[0].payload).toEqual({ provider: 'truv' })
-    expect(sent).toHaveLength(1)
+    expect(sent).toHaveLength(2) // the webhook and the financials_propose; nothing new
   })
 })

@@ -3,8 +3,11 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import { createAdminClient } from '../src/db/client'
 import { runFinancialsPropose } from '../src/financials/propose/run'
 import { app } from '../src/index'
+import { queue, type Job } from '../src/jobs/index'
+import { reconcileConnection } from '../src/jobs/reconcile'
 import { fixtureText } from './fixtures/connections'
 import { seedFinancialCase, type FinancialFixture } from './fixtures/financials'
+import { stubVendorFetch } from './helpers/vendor-fetch'
 
 // FORM-03 / FORM-07 against the live project: payroll and bank connections -> proposals.
 // Run with `pnpm -C app run test:live:file worker/test/financials-bank-payroll.test.ts`.
@@ -144,5 +147,50 @@ describe.skipIf(!live)('financials bank and payroll proposals (live)', { timeout
     await db.from('connections').update({ data: { transactions_update_status: 'INITIAL_UPDATE_COMPLETE' } }).eq('id', conn.id)
     expect((await runFinancialsPropose(env, fx.caseId, NOW)).bank).toBe('skipped')
     expect(await open(fx.caseId, 'plaid')).toHaveLength(4)
+  })
+
+  it('the payroll reconcile reaching done enqueues connection_done, and the queue proposes', async () => {
+    const ORDER = 'ord_fixture_0707'
+    const fx = await seed()
+    await db.from('connections').delete().eq('provider', 'truv').eq('external_id', ORDER) // crash leftovers
+    const conn = (
+      await db
+        .from('connections')
+        .insert({ firm_id: fx.firmId, case_id: fx.caseId, request_id: fx.requestId, request_item_id: fx.itemIds[PAYROLL], provider: 'truv', kind: 'payroll', external_id: ORDER })
+        .select('id')
+        .single()
+    ).data as { id: string }
+    const reports = (JSON.parse(fixtureText('truv/income_report_proposals.json')) as { employers: Array<{ report: unknown }> }).employers
+    const ok = (body: unknown) => () => new Response(JSON.stringify(body), { headers: { 'content-type': 'application/json' } })
+    const vendor = stubVendorFetch([
+      { host: 'prod.truv.com', path: `/v1/orders/${ORDER}/`, respond: () => new Response(fixtureText('truv/order_two_employers.json')) },
+      { host: 'prod.truv.com', path: '/v1/links/link_acme/income/report/', respond: ok(reports[0].report) },
+      { host: 'prod.truv.com', path: '/v1/links/link_beta/income/report/', respond: ok(reports[1].report) },
+      { host: 'prod.truv.com', path: /^\/v1\/links\/link_(acme|beta)\/documents\/$/, respond: ok([]) },
+    ])
+    const sent: Job[] = []
+    const jobsEnv = { ...env, TRUV_CLIENT_ID: 'test-client', TRUV_SECRET: 'test-secret', JOBS: { send: async (job: Job) => void sent.push(job) } } as unknown as Env
+    try {
+      expect(await reconcileConnection(jobsEnv, conn.id, { source: 'cron' })).toEqual({ status: 'done', applied: true })
+    } finally {
+      vendor.restore()
+    }
+    expect(sent).toEqual([{ type: 'financials_propose', ref: fx.caseId, reason: 'connection_done' }])
+
+    // The job reads the clock: pin it so the Jul-Sep 2026 stubs stay in the window.
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(NOW)
+    const ack = vi.fn()
+    const retry = vi.fn()
+    try {
+      await queue({ queue: 'resspark-jobs', messages: [{ body: sent[0], ack, retry, attempts: 1 }] } as unknown as MessageBatch<Job>, jobsEnv)
+    } finally {
+      vi.useRealTimers()
+    }
+    expect(ack).toHaveBeenCalledTimes(1)
+    expect(retry).not.toHaveBeenCalled()
+    const rows = await open(fx.caseId, 'truv')
+    expect(rows).toHaveLength(6)
+    expect(valueOf(rows, 'gross_wages_taxpayer')).toMatchObject({ proposed_value: 9341.67, window_start: '2026-07-01' })
   })
 })
