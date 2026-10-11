@@ -3,10 +3,9 @@ import { HTTPException } from 'hono/http-exception'
 import { requestId, type RequestIdVariables } from 'hono/request-id'
 import { secureHeaders } from 'hono/secure-headers'
 import { logger } from './log/logger'
+import { type StaffCtx } from './middleware/staff-auth'
+import { adminSessionRoute } from './routes/admin-session'
 import { configRoute } from './routes/config'
-
-// Plan 06 moves StaffCtx to middleware/staff-auth.ts and re-exports it; keep the shape.
-export type StaffCtx = { userId: string; firmId: string; role: 'staff' | 'admin' }
 
 export const app = new Hono<{
   Bindings: Env
@@ -36,6 +35,7 @@ app.onError((err, c) => {
 })
 
 app.route('/api/config', configRoute)
+app.route('/api/admin/session', adminSessionRoute)
 
 app.notFound(async (c) => {
   // path read for routing only, never logged
