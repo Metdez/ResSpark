@@ -73,7 +73,11 @@ export function LogicsSettingsPage() {
   const id = useId()
   const qc = useQueryClient()
   const isAdmin = useSession().data?.role === 'admin'
-  const status = useQuery({ queryKey: KEY, queryFn: getLogicsStatus })
+  const status = useQuery({
+    queryKey: KEY,
+    queryFn: getLogicsStatus,
+    meta: { errorShown: true },
+  })
   const [apiKey, setApiKey] = useState('')
   const [secret, setSecret] = useState('')
   const [baseUrl, setBaseUrl] = useState('')

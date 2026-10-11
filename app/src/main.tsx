@@ -7,7 +7,7 @@ import {
 } from '@tanstack/react-query'
 import { RouterProvider, createRouter } from '@tanstack/react-router'
 import { ApiError } from '@/lib/api'
-import { handleServerError } from '@/lib/handle-server-error'
+import { adminErrorHandler, handleServerError } from '@/lib/handle-server-error'
 import { signOutEverywhere } from '@/lib/session'
 import { DirectionProvider } from './context/direction-provider'
 import { ThemeProvider } from './context/theme-provider'
@@ -30,9 +30,12 @@ async function endSession() {
 
 const onApiError = (error: unknown) =>
   handleServerError(error, () => void endSession())
+const onAppError = adminErrorHandler(onApiError)
 
 const queryClient = new QueryClient({
-  queryCache: new QueryCache({ onError: onApiError }),
+  queryCache: new QueryCache({
+    onError: (error, query) => onAppError(error, query.meta),
+  }),
   defaultOptions: {
     queries: {
       // 4xx answers will not change on retry; a 401 must reach onApiError at once
@@ -44,7 +47,7 @@ const queryClient = new QueryClient({
       staleTime: 10 * 1000, // 10s
     },
     mutations: {
-      onError: onApiError,
+      onError: (error) => onAppError(error),
     },
   },
 })

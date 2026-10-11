@@ -104,7 +104,11 @@ function Empty() {
 }
 
 export function RequestsListPage() {
-  const list = useQuery({ queryKey: ['requests'], queryFn: listRequests })
+  const list = useQuery({
+    queryKey: ['requests'],
+    queryFn: listRequests,
+    meta: { errorShown: true },
+  })
   const rows = list.data?.requests
 
   let body: React.ReactNode

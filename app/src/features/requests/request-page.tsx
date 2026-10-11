@@ -48,6 +48,7 @@ export function RequestPage({ requestId }: { requestId: string }) {
   const detail = useQuery({
     queryKey: ['request', requestId],
     queryFn: () => getRequest(requestId),
+    meta: { errorShown: true },
   })
   const send = useMutation({
     mutationFn: (v: { email: string; phone: string; keep_flagged: boolean }) =>

@@ -21,3 +21,14 @@ export function handleServerError(error: unknown, onSessionEnded?: () => void) {
     description: error instanceof ApiError ? error.code : undefined,
   })
 }
+
+// App-wide query/mutation handler: staff toasts only under /admin; client pages (/c/*) word their
+// own errors. A query with `meta.errorShown` renders its error in-page, so only a 401 goes on.
+export function adminErrorHandler(onApiError: (error: unknown) => void) {
+  return (error: unknown, meta?: Record<string, unknown>) => {
+    if (!/^\/admin(\/|$)/.test(window.location.pathname)) return
+    const expired = error instanceof ApiError && error.status === 401
+    if (meta?.errorShown && !expired) return
+    onApiError(error)
+  }
+}
