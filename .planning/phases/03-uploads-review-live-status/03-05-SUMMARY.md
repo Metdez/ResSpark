@@ -152,3 +152,7 @@ None. No new endpoints and no new trust-boundary surface. The SPA reads only the
 ## Self-Check: PASSED
 
 All 13 created files exist; commits 13a7284 and f772420 are ancestors of HEAD; actor-badge.tsx has 0 raw palette classes; no dangerouslySetInnerHTML in the feature.
+
+## Deploy
+
+Deployed once with `pnpm -C app run deploy` at 10:33 EDT, after whole-tree `tsc -b`, `eslint .`, file sizes and `pnpm test` all passed (95 files, 1210 tests). The tsc errors from the other executor had cleared by then. Version `e379878a-f709-4850-b4a5-0cba8ecd9c09` is live at https://resspark.zh-a16.workers.dev. The working tree also held another executor's uncommitted plain `DOCUSEAL_*` vars in `wrangler.jsonc`, and they went out with this deploy.
