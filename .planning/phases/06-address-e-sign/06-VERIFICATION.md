@@ -124,3 +124,7 @@ What remains is behavioral proof that needs either live writes or real keys and 
 
 _Verified: 2026-10-11T19:34:16Z_
 _Verifier: Claude (gsd-verifier)_
+
+## Orchestrator evidence (2026-10-11)
+
+SIGN-02 behavior proven live: `pnpm -C app run test:live:file worker/test/esign-complete.test.ts worker/test/esign-reconcile-live.test.ts` → 2 files, 11/11 passed (test firm only, cleaned up). Deployed commit `ec8efea` (version `300b5f25`) passes `smoke` (14 ok), `smoke:connect` and `smoke:esign` (keys: smarty no, docuseal no).
