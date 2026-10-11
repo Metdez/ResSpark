@@ -33,23 +33,44 @@ function Caption({ line }: { line: LineView }) {
 
 const Small = (props: React.ComponentProps<typeof Button>) => <Button type='button' size='sm' variant='outline' {...props} />
 
+export type OpenEvidence = (column: string, proposalId: string | null, opener: HTMLElement) => void
+
+// D-10: a figure is a button that opens its evidence Sheet; plain text when the page offers no Sheet.
+function Figure({ text, label, open }: { text: string; label: string; open?: (e: React.MouseEvent<HTMLButtonElement>) => void }) {
+  if (!open) return <span className='tabular-nums'>{text}</span>
+  return (
+    <button
+      type='button'
+      aria-label={`${text}, show where ${label} comes from`}
+      className='tabular-nums underline decoration-dotted underline-offset-4 hover:decoration-solid'
+      onClick={open}
+    >
+      {text}
+    </button>
+  )
+}
+
 export function LineRow({
   caseId,
   line,
   view,
   standardValue,
   allowedValue,
+  onOpenEvidence,
 }: {
   caseId: string
   line: LineView
   view: FinancialsView
   standardValue?: number | null
   allowedValue?: number | null
+  onOpenEvidence?: OpenEvidence
 }) {
   const decide = useDecide(caseId)
   const [dialog, setDialog] = useState<'edit' | 'not_applicable' | null>(null)
   const column = line.column
   const busy = decide.isPending
+  const evidence = (proposalId: string | null) =>
+    column && onOpenEvidence ? (e: React.MouseEvent<HTMLButtonElement>) => onOpenEvidence(column, proposalId, e.currentTarget) : undefined
   const act = (body: Omit<DecideInput, 'column'>, onDone?: () => void) =>
     column && decide.mutate({ column, ...body }, { onSuccess: onDone })
 
@@ -63,7 +84,7 @@ export function LineRow({
           <div className='mt-2 flex flex-wrap gap-2'>
             {line.proposals.map((p) => (
               <div key={p.id} data-proposal={p.id} className='flex items-center gap-2 rounded-md border px-2 py-1'>
-                <span className='tabular-nums'>{formatValue(line.kind, p.proposed_value)}</span>
+                <Figure text={formatValue(line.kind, p.proposed_value)} label={line.label} open={evidence(p.id)} />
                 <SourceBadge source={p.source} />
                 <Small
                   aria-label={`Accept ${sourceName(p.source)} value for ${line.label}`}
@@ -85,7 +106,7 @@ export function LineRow({
         )}
       </TableCell>
       <TableCell className='text-right align-top tabular-nums' data-value>
-        {column ? formatValue(line.kind, line.value) : '—'}
+        {column ? <Figure text={formatValue(line.kind, line.value)} label={line.label} open={evidence(line.confirmed?.proposal_id ?? null)} /> : '—'}
       </TableCell>
       {line.section === 'expenses' && (
         <>

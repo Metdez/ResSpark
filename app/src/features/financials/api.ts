@@ -198,3 +198,52 @@ export const latestEvaluation = (caseId: string) => api(`${base(caseId)}/evaluat
 
 export const exportWorksheet = (caseId: string, runId: string) =>
   api(`${base(caseId)}/evaluations/${encodeURIComponent(runId)}/worksheet`, post(), isWorksheetExport)
+
+// SPA mirror of app/worker/src/financials/evidence.ts (Plan 10). Amounts are the server's; the SPA only formats them.
+export interface BankTxnView {
+  id: string
+  date: string
+  name: string | null
+  merchant_name: string | null
+  amount: number
+  account: string
+}
+type EvidenceBase = { column: string; label: string; proposal_id: string }
+export type EvidenceView =
+  | (EvidenceBase & {
+      kind: 'bank'
+      window: { start: string; end: string; months: number }
+      months: Array<{ month: string; subtotal: number; transactions: BankTxnView[] }>
+      average: number
+      truncated: boolean
+      cross_check: { label: string; monthly: number } | null
+    })
+  | { kind: 'none'; column: string; label: string }
+
+const isTxn = (v: unknown) => isObject(v) && str(v.id) && str(v.date) && num(v.amount) && str(v.account)
+const isCrossCheck = (v: unknown) => v === null || (isObject(v) && str(v.label) && num(v.monthly))
+
+export const isEvidenceView = (v: unknown): v is EvidenceView => {
+  if (!isObject(v) || !str(v.column) || !str(v.label)) return false
+  if (v.kind === 'none') return true
+  if (!str(v.proposal_id)) return false
+  if (v.kind === 'bank')
+    return (
+      isObject(v.window) &&
+      str(v.window.start) &&
+      num(v.window.months) &&
+      Array.isArray(v.months) &&
+      v.months.every((m) => isObject(m) && str(m.month) && num(m.subtotal) && Array.isArray(m.transactions) && m.transactions.every(isTxn)) &&
+      num(v.average) &&
+      typeof v.truncated === 'boolean' &&
+      isCrossCheck(v.cross_check)
+    )
+  return false
+}
+
+export const getEvidence = (caseId: string, column: string, proposalId: string | null = null) =>
+  api(
+    `${base(caseId)}/financials/${encodeURIComponent(column)}/evidence${proposalId ? `?proposal_id=${encodeURIComponent(proposalId)}` : ''}`,
+    {},
+    isEvidenceView
+  )

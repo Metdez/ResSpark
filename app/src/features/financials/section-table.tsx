@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Table, TableBody, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import type { FinancialsView, RunView } from './api'
-import { LineRow } from './line-row'
+import { LineRow, type OpenEvidence } from './line-row'
 import { useDecide } from './use-financials'
 
 type Section = FinancialsView['sections'][number]
@@ -18,12 +18,14 @@ export function SectionTable({
   view,
   section,
   run,
+  onOpenEvidence,
   children,
 }: {
   caseId: string
   view: FinancialsView
   section: Section
   run?: RunView | null
+  onOpenEvidence?: OpenEvidence
   children?: React.ReactNode
 }) {
   const [open, setOpen] = useState(true)
@@ -86,6 +88,7 @@ export function SectionTable({
                 caseId={caseId}
                 line={line}
                 view={view}
+                onOpenEvidence={onOpenEvidence}
                 standardValue={line.standard_key ? num(run?.standards_inputs[line.standard_key]) : null}
                 allowedValue={line.allowable_key ? (run?.allowable_breakdown[line.allowable_key] ?? null) : null}
               />

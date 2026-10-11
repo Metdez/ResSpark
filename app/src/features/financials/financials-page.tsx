@@ -1,3 +1,4 @@
+import { useRef, useState } from 'react'
 import { ApiError } from '@/lib/api'
 import { GENERIC_ERROR } from '@/lib/handle-server-error'
 import { TONE_CLASSES } from '@/lib/status'
@@ -6,6 +7,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { CountyBlock, FinancialsView } from './api'
+import { EvidenceSheet, type EvidenceTarget } from './evidence-sheet'
 import { FinancialsHeader } from './financials-header'
 import { RecommendationRail } from './recommendation-rail'
 import { SectionTable } from './section-table'
@@ -85,6 +87,8 @@ function Employers({ caseId, view }: { caseId: string; view: FinancialsView }) {
 export function FinancialsPage({ caseId }: { caseId: string }) {
   const financials = useFinancials(caseId)
   const latest = useLatestEvaluation(caseId)
+  const [evidence, setEvidence] = useState<EvidenceTarget | null>(null)
+  const opener = useRef<HTMLElement | null>(null)
 
   if (financials.isPending)
     return (
@@ -122,7 +126,17 @@ export function FinancialsPage({ caseId }: { caseId: string }) {
       <div className='grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start'>
         <div className='grid gap-4'>
           {view.sections.map((section) => (
-            <SectionTable key={section.id} caseId={caseId} view={view} section={section} run={run}>
+            <SectionTable
+              key={section.id}
+              caseId={caseId}
+              view={view}
+              section={section}
+              run={run}
+              onOpenEvidence={(column, proposalId, el) => {
+                opener.current = el
+                setEvidence({ column, proposalId })
+              }}
+            >
               {section.id === 'household' && <CountyRow county={view.county} />}
               {section.id === 'employment' && <Employers caseId={caseId} view={view} />}
             </SectionTable>
@@ -132,6 +146,7 @@ export function FinancialsPage({ caseId }: { caseId: string }) {
           <RecommendationRail caseId={caseId} />
         </aside>
       </div>
+      <EvidenceSheet caseId={caseId} target={evidence} onClose={() => setEvidence(null)} returnFocus={opener} />
     </>
   )
 }

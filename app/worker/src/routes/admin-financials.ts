@@ -12,6 +12,7 @@ import {
   staffDisplayNames,
 } from '../financials/db'
 import { evaluateForCase, toRunView } from '../financials/evaluate'
+import { buildEvidence } from '../financials/evidence'
 import { lineFor } from '../financials/lines'
 import { type DecideAction, decideValue, FinancialRpcError } from '../financials/rpc'
 import { buildFinancialsView, settingsOf } from '../financials/view'
@@ -131,6 +132,17 @@ export const adminFinancialsRoute = new Hono<AdminApp>()
       if (!mapped) throw e
       throw new HTTPException(mapped[0], { message: mapped[1] })
     }
+  })
+  .get('/cases/:id/financials/:column/evidence', async (c) => {
+    const { firmId } = c.var.staff
+    const caseId = caseIdParam(c)
+    const column = c.req.param('column')
+    if (!lineFor(column)) throw new HTTPException(400, { message: 'bad_column' })
+    const proposalId = c.req.query('proposal_id') ?? null
+    if (proposalId !== null && !UUID.test(proposalId)) throw badRequest()
+    const view = await buildEvidence(c.env, { firmId, caseId, column, proposalId })
+    if (!view) throw notFound()
+    return c.json(view)
   })
   .post('/cases/:id/evaluations', async (c) => {
     const { staff } = c.var

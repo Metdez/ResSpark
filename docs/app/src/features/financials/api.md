@@ -14,6 +14,7 @@ They mirror the Worker modules; keep them in sync when those change.
 | `Employer` | `CaseEmployer` from `worker/src/financials/db.ts` plus the `person` the view adds. |
 | `RunView`, `EvaluationResponse` | `worker/src/financials/evaluate.ts`. `standards_inputs` is kept as a plain record; the UI reads single keys from it. |
 | `WorksheetExport` | The export result in `worker/src/worksheet/store.ts`. |
+| `BankTxnView`, `EvidenceView` | `worker/src/financials/evidence.ts` (Plan 10): one variant per evidence kind, discriminated by `kind`. |
 
 ## Guards
 
@@ -25,6 +26,7 @@ They mirror the Worker modules; keep them in sync when those change.
 | `isFinancialsView` | Case id, settings with a string array of spouse employer ids, the window (start, end, months 3 or 6), the county block, employers, the required counts, and sections whose lines all pass `isLine`. A body without `sections` fails, so `api()` throws `ApiError(500, 'invalid_response')`. |
 | `isRunView` (private) | id, path, reason and next are strings; the five amounts are finite numbers; flags are strings; NRE lines have a key, a label and a numeric value; `standards_inputs` is an object; `payment_math` is null or two numbers. |
 | `isEvaluationResponse` | `determination` needs a valid run; the other two outcomes need `run: null`; `information_needed` needs labelled missing items and string flags. |
+| `isEvidenceView` | A string `column` and `label`; `kind: 'none'` needs nothing else; every other kind needs a `proposal_id` string and its own fields (see the per-kind checks in the code: `bank` needs the window, months with numeric subtotals and transactions with id, date, numeric amount and account label, a numeric average, a boolean `truncated` and a `cross_check` that is `null` or a label and a number). An unknown kind fails. |
 | `isLatest`, `isDecided`, `isQueued`, `isWorksheetExport` (private) | The shapes of the latest-run, decide, refresh (202) and export responses. |
 
 ## Functions
@@ -39,6 +41,7 @@ All go through `api()` from `lib/api.ts` (Bearer staff token, `{ error: { code, 
 | `runEvaluation(caseId)` | `POST /api/admin/cases/:id/evaluations` |
 | `latestEvaluation(caseId)` | `GET /api/admin/cases/:id/evaluations/latest` |
 | `exportWorksheet(caseId, runId)` | `POST /api/admin/cases/:id/evaluations/:runId/worksheet` |
+| `getEvidence(caseId, column, proposalId?)` | `GET /api/admin/cases/:id/financials/:column/evidence`, with `?proposal_id=` only when a proposal id is given |
 
 ## Tests
 

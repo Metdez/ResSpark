@@ -13,6 +13,7 @@ The staff 433-A routes (D-19, FORM-04/05), mounted at `/api/admin` in `index.ts`
 | `GET /cases/:id/financials` | Reads the case and row (404 if the case is foreign or missing), the proposals and the standards version. It also reads the payroll employers (`listCaseEmployers`) and the county block (`loadCountyBlock`, from the case's address columns, the FIPS map and the newest `address` county proposal). It returns `buildFinancialsView(...)` with `now = new Date()`: the case header, settings, `window`, `county`, `employers`, `standards_version`, `required`, and the seven sections with every line, status and competing proposal. |
 | `POST /cases/:id/financials/refresh` | Body `{ window_months?: 3 or 6, spouse_employer_ids?: string[] }` (D-07, D-09, D-14). It validates with `refreshPatch`, then reads the case firm-scoped (404 otherwise). It merges the patch into `cases.financials_settings` and saves it with an update filtered by `id` and `firm_id`. It logs `financials.refresh_requested { window_months, spouse_employers: <count> }` with the staff actor, and sends `{ type: 'financials_propose', ref: caseId, reason: 'refresh' }` to `JOBS`. It returns 202 `{ queued: true, settings }`, where `settings` is `settingsOf(merged)`. |
 | `POST /cases/:id/financials/:column/decide` | Validates `:column` against `LINES` and returns 400 `bad_column` before any RPC call (T-07-16). It then guards the body: `action` must be one of the six actions, `proposal_id` must be a UUID or null, and `note` must be a string of at most 2000 characters or null. Failing any of these gives 400 `bad_request`. Next it calls `decideValue` with the session's firm and user. It returns 200 `{ column, action, proposal_id }`. The value check, the note requirement and the stale-proposal check run in the RPC (Plan 02). |
+| `GET /cases/:id/financials/:column/evidence` | Query `proposal_id?` (D-10, FORM-03). `:column` must be a line column (400 `bad_column`) and `proposal_id`, when sent, a UUID (400 `bad_request`). Calls `buildEvidence(env, { firmId, caseId, column, proposalId })` with the session's firm; `null` (a foreign or missing case, or a proposal id that is not this case's and column's) is 404 `not_found`. Returns 200 with the `EvidenceView` (see `financials/evidence.md`): signed URLs only, never storage keys or account numbers. |
 | `POST /cases/:id/evaluations` | Calls `evaluateForCase`. It returns 404 for a foreign or missing case and 201 `{ run, outcome: { kind: 'determination' } }` when a run was recorded. It returns 200 `{ run: null, outcome }` for `information_needed` or `standards_unavailable`, and in those cases nothing is written. |
 | `GET /cases/:id/evaluations/latest` | Returns 404 for a foreign or missing case, otherwise 200 `{ run }`: the newest run as a `RunView`, or `null`. |
 
@@ -21,7 +22,7 @@ The staff 433-A routes (D-19, FORM-04/05), mounted at `/api/admin` in `index.ts`
 | Status | Code | When |
 |--------|------|------|
 | 401 | `unauthorized` | No or invalid staff token (`staffAuth`) |
-| 400 | `bad_request` | Decide body: unknown `action`, a non-UUID `proposal_id`, or a non-string or over-long `note`. Refresh body: a window other than 3 or 6, or bad spouse employer ids |
+| 400 | `bad_request` | Evidence query: a non-UUID `proposal_id`. Decide body: unknown `action`, a non-UUID `proposal_id`, or a non-string or over-long `note`. Refresh body: a window other than 3 or 6, or bad spouse employer ids |
 | 400 | `bad_column` | `:column` is not a line column. This is checked before the RPC, which also raises it. |
 | 400 | `bad_value` | The RPC rejected the value's type or range, or a table CHECK failed (`23514`) |
 | 400 | `note_required` | `edit` or `not_applicable` was sent without a note |
@@ -34,4 +35,5 @@ The staff 433-A routes (D-19, FORM-04/05), mounted at `/api/admin` in `index.ts`
 
 - `app/worker/src/routes/admin-financials.test.ts` (unit, with mocked db, rpc and evaluate): the error mapping, the column check before the RPC, a non-UUID id, the body guard, a foreign case, and the refresh body guard.
 - `app/worker/test/financials-propose.test.ts` (live): refresh saves the settings, logs the event and enqueues the job. GET financials shows the county block, the window and the employers.
+- `app/worker/test/financials-evidence.test.ts` (live): the evidence route for every source, the proposal-id scoping, 400s and a foreign case's 404.
 - `app/worker/test/financials-api.test.ts` (live): the read, accept, evaluate and latest path, plus the information-needed and standards-unavailable outcomes.
