@@ -25,6 +25,7 @@
     "wrangler": "dotenv -e ../.env -- wrangler",
     "deploy:raw": "vite build && wrangler deploy",
     "deploy": "dotenv -e ../.env -e ../src/frontend/.env -- pnpm run deploy:raw",
+    "deploy:snapshot": "dotenv -e ../.env -e ../src/frontend/.env -- node scripts/deploy-snapshot.mjs",
     "smoke": "node scripts/smoke.mjs",
     "smoke:auth": "dotenv -e .env -e .dev.vars -e ../src/frontend/.env -- node scripts/smoke.mjs",
     "smoke:connect": "dotenv -e .env -e .dev.vars -e ../src/frontend/.env -- node scripts/smoke.mjs --auth --connect-flow",

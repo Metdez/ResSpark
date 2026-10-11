@@ -15,7 +15,7 @@ The app's npm manifest (pnpm workspace member `app`; the lockfile is `pnpm-lock.
 | `test:e2e` | Playwright (`playwright.config.ts`, specs in `e2e/`); every API call is mocked, so it needs no env file |
 | `test:live`, `test:live:file`, `test:rls`, `test:requests` | Opt-in tests against live services, with env files loaded by `dotenv-cli` |
 | `check` | file-size check, golden-fixture check, `tsc -b`, ESLint, `pnpm test` |
-| `cf-typegen`, `wrangler`, `deploy:raw`, `deploy` | Wrangler types and deploys |
+| `cf-typegen`, `wrangler`, `deploy:raw`, `deploy`, `deploy:snapshot` | Wrangler types and deploys; `deploy:snapshot` deploys the last commit from a clean worktree (see `scripts/deploy-snapshot.md`) |
 | `smoke`, `smoke:auth` | Deployed smoke checks |
 | `db:migrate`, `questions:reconcile`, `secrets:*`, `staff:create`, `auth:config-push`, `spike` | Operational scripts under `scripts/` |
 
