@@ -44,6 +44,13 @@ async function staffToken() {
 const SESSION_PATH = '/api/admin/session'
 const session = (init) => fetch(base + SESSION_PATH, init)
 const signedIn = JSON.stringify({ event: 'signed_in' })
+// Plan 02-03: the shared fixture phone; lookup result bodies are never printed.
+const lookupFixture = (headers) =>
+  fetch(`${base}/api/admin/lookup`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', ...headers },
+    body: JSON.stringify({ type: 'phone', value: '(555)010-0001' }),
+  })
 
 // --- Plan 07: client-link checks (/c/*) ---
 function expectPrivacyHeaders(res) {
@@ -182,6 +189,37 @@ const checks = [
     auth: true,
     run: async () => {
       const res = await session({ method: 'POST', headers: { 'content-type': 'application/json' }, body: signedIn })
+      await expectJson(res, 401, (b) => isObject(b.error) && b.error.code === 'unauthorized')
+    },
+  },
+  // --- Plan 02-03: Logics lookup in fixture mode ---
+  {
+    name: 'auth integrations status',
+    auth: true,
+    run: async () => {
+      const headers = { authorization: `Bearer ${await staffToken()}` }
+      const res = await fetch(`${base}/api/admin/integrations/logics`, { headers })
+      await expectJson(res, 200, (b) => b.mode === 'fake' || b.mode === 'live')
+    },
+  },
+  {
+    name: 'auth lookup fixture',
+    auth: true,
+    run: async () => {
+      const res = await lookupFixture({ authorization: `Bearer ${await staffToken()}` })
+      if (res.status !== 200) throw new Error(`status ${res.status}`)
+      const body = await res.json()
+      if (!isObject(body) || !Array.isArray(body.results)) throw new Error('no results array')
+      // In live mode the fixture phone is not a real case, so only fake mode pins the count.
+      if (body.mode === 'fake' && body.results.length !== 2) {
+        throw new Error(`${body.results.length} results, expected 2`)
+      }
+    },
+  },
+  {
+    name: 'lookup 401 without token',
+    run: async () => {
+      const res = await lookupFixture({})
       await expectJson(res, 401, (b) => isObject(b.error) && b.error.code === 'unauthorized')
     },
   },

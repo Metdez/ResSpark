@@ -9,7 +9,7 @@ import { PROJECT_REF, runSupabase } from "./lib/supabase-cli.mjs";
 
 const APP_DIR = fileURLToPath(new URL("..", import.meta.url));
 const USER_ACTION =
-  "USER ACTION REQUIRED: create a secret key in Supabase Dashboard → Settings → API Keys, then run: pnpm -C app secrets:provision   (or manually: pnpm -C app wrangler secret put SUPABASE_URL; pnpm -C app wrangler secret put SUPABASE_SECRET_KEY; pnpm -C app wrangler secret put CLIENT_LINK_HMAC_KEY)";
+  "USER ACTION REQUIRED: create a secret key in Supabase Dashboard → Settings → API Keys, then run: pnpm -C app secrets:provision   (or manually: pnpm -C app wrangler secret put SUPABASE_URL; pnpm -C app wrangler secret put SUPABASE_SECRET_KEY; pnpm -C app wrangler secret put CLIENT_LINK_HMAC_KEY; pnpm -C app wrangler secret put INTEGRATION_ENC_KEY)";
 
 function requireEnv(name) {
   if (!process.env[name]) throw new Error(`Missing ${name}`);
@@ -63,10 +63,22 @@ if (existing.has("CLIENT_LINK_HMAC_KEY")) {
   console.log("set CLIENT_LINK_HMAC_KEY");
 }
 
+// Rotating this key orphans every firm_integrations ciphertext (D-01), so an existing one is kept.
+const encKey = randomBytes(32).toString("hex");
+let encComment;
+if (existing.has("INTEGRATION_ENC_KEY")) {
+  console.log("kept INTEGRATION_ENC_KEY");
+  encComment = "local only: production keeps its own INTEGRATION_ENC_KEY";
+} else {
+  wrangler(["secret", "put", "INTEGRATION_ENC_KEY"], encKey);
+  console.log("set INTEGRATION_ENC_KEY");
+}
+
 const written = appendMissingDevVars([
   ["SUPABASE_URL", supabaseUrl],
   ["SUPABASE_SECRET_KEY", secretKey],
   ["CLIENT_LINK_HMAC_KEY", hmacKey, hmacComment],
+  ["INTEGRATION_ENC_KEY", encKey, encComment],
   ["SUPABASE_PUBLISHABLE_KEY", publishableKey],
 ]);
 console.log(`wrote app/.dev.vars (${written} keys)`);

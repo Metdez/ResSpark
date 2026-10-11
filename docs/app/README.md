@@ -43,27 +43,41 @@ Run from the repo root. Every script that needs a secret loads it with `dotenv -
 
 ## Secrets
 
-Names only. Values live in the places listed and nowhere else. Only the first three are in `app/wrangler.jsonc` `secrets.required`; reserved names are deliberately left out so deploys stay green until a key exists.
+Names only. Values live in the places listed and nowhere else. Only the first four are in `app/wrangler.jsonc` `secrets.required`; optional and reserved names are deliberately left out so deploys stay green until a key exists.
 
 | Name | Where it lives | Set by |
 |------|----------------|--------|
 | `SUPABASE_URL` | Worker secret + `app/.dev.vars` | `app/scripts/provision-secrets.mjs` (Plan 05) |
 | `SUPABASE_SECRET_KEY` | Worker secret + `app/.dev.vars` | `app/scripts/provision-secrets.mjs` (Plan 05) |
 | `CLIENT_LINK_HMAC_KEY` | Worker secret + `app/.dev.vars` | `app/scripts/provision-secrets.mjs` (Plan 05) |
+| `INTEGRATION_ENC_KEY` | Worker secret + `app/.dev.vars` (required) | `app/scripts/provision-secrets.mjs` (Phase 2 Plan 03); kept if it already exists, because rotating it orphans every stored firm credential |
 | `SUPABASE_PUBLISHABLE_KEY` | `app/.dev.vars` (live tests, spike c) | `app/scripts/provision-secrets.mjs` (Plan 05) |
 | `DEMO_STAFF_EMAIL`, `DEMO_STAFF_PASSWORD` | `app/.dev.vars` | `app/scripts/create-staff.mjs` (Plan 05) |
 | `STAFF_PASSWORD__<email>` | `app/.dev.vars`, one per staff user | `app/scripts/create-staff.mjs` (Plan 05) |
 | `VITE_SUPABASE_URL` | `app/.env` (copied from `src/frontend/.env`) | developer copies the file; never printed |
 | `VITE_SUPABASE_PUBLISHABLE_KEY` | `app/.env` (copied from `src/frontend/.env`) | developer copies the file; never printed |
 | `CLOUDFLARE_API_TOKEN` | repo root `.env` | developer; never printed |
-| `RESEND_API_KEY` | reserved — not set in Phase 1 | Phase 2 (email, spike d); user creates a Resend key |
-| `MAIL_FROM` | reserved — not set in Phase 1 | Phase 2 (email, spike d); needs a verified sending domain |
+| `RESEND_API_KEY` | optional Worker secret — not set until the user creates a Resend key | `pnpm -C app wrangler secret put RESEND_API_KEY` |
+| `RESEND_FROM` | `wrangler.jsonc` var (not a secret), default `onboarding@resend.dev` | Resend delivers that sender only to the account owner until a domain is verified (D-09) |
+| `LOGICS_MODE` | `wrangler.jsonc` var (not a secret) | `fake` for the demo; `live` after Test connection succeeds (see § Logics mode) |
 | `TRUV_CLIENT_ID` | reserved — not set in Phase 1 | Phase 4 (payroll, spike e); `pnpm -C app wrangler secret put TRUV_CLIENT_ID` |
 | `TRUV_SECRET` | reserved — not set in Phase 1 | Phase 4 (payroll, spike e); `pnpm -C app wrangler secret put TRUV_SECRET` |
-| `LOGICS_API_KEY` | reserved — not set in Phase 1 | Phase 2 (Logics lookup) |
-| `LOGICS_SECRET_TOKEN` | reserved — not set in Phase 1 | Phase 2 (Logics lookup) |
 
 `app/.dev.vars.example` lists every name above that belongs in `app/.dev.vars`, with the reserved ones commented out.
+
+Logics credentials are no longer environment secrets: each firm's API key and secret token are entered in Settings → Integrations and stored encrypted in `firm_integrations` (D-01), so the old `LOGICS_API_KEY` / `LOGICS_SECRET_TOKEN` names are gone.
+
+## Logics mode
+
+The Worker var `LOGICS_MODE` picks where staff lookups go. In `fake` (the default in `app/wrangler.jsonc`) the Worker serves four synthetic fixture cases (900001-900004, `example.com` emails, `555-010-xxxx` phones) and **fixtures always win, even when tested credentials are stored**, so a demo can never read the real tenant (C1). Every lookup response carries `mode`, so the SPA can label fixture data.
+
+USER ACTION to switch to real Logics:
+
+1. In Logics, copy an API key with GET (`case.read`) permission (Dashboard → Security → API Key) and generate the secret token (Settings → Integrations → Generate Token).
+2. Paste both into ResSpark Settings → Integrations (or `PUT /api/admin/integrations/logics` as a firm admin) and click Test connection. It must report success.
+3. Set `"LOGICS_MODE": "live"` in `app/wrangler.jsonc` `vars` and redeploy with `pnpm -C app run deploy`.
+
+In `live` mode a lookup needs stored credentials whose last test succeeded; otherwise it answers 409 `logics_not_configured`. Saving new credentials clears the last test result.
 
 ## Workers plan notes
 

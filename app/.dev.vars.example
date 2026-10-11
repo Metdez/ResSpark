@@ -2,14 +2,13 @@
 SUPABASE_URL=
 SUPABASE_SECRET_KEY=
 CLIENT_LINK_HMAC_KEY=
+INTEGRATION_ENC_KEY=
 SUPABASE_PUBLISHABLE_KEY=
 DEMO_STAFF_EMAIL=
 DEMO_STAFF_PASSWORD=
 # STAFF_PASSWORD__<email with @ and . as _>=   one per created staff user
 # Reserved for later phases:
 # RESEND_API_KEY=
-# MAIL_FROM=
+# RESEND_FROM=   a wrangler.jsonc var in production; set here only to override locally
 # TRUV_CLIENT_ID=
 # TRUV_SECRET=
-# LOGICS_API_KEY=
-# LOGICS_SECRET_TOKEN=
