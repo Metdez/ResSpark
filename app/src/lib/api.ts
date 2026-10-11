@@ -2,7 +2,8 @@ export class ApiError extends Error {
   constructor(
     public status: number,
     public code: string,
-    message: string
+    message: string,
+    public body?: unknown
   ) {
     super(message)
     this.name = 'ApiError'
@@ -61,7 +62,7 @@ export async function api<T>(
       typeof err.code === 'string' &&
       typeof err.message === 'string'
     ) {
-      throw new ApiError(res.status, err.code, err.message)
+      throw new ApiError(res.status, err.code, err.message, body)
     }
     throw new ApiError(res.status, 'http_error', 'Request failed')
   }

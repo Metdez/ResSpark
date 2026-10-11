@@ -88,6 +88,15 @@ async function render(detail: Reply) {
     })
   })
   vi.stubGlobal('fetch', fetchMock)
+  // Radix Checkbox measures itself; jsdom has no ResizeObserver.
+  vi.stubGlobal(
+    'ResizeObserver',
+    class {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    }
+  )
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   })
