@@ -3,11 +3,11 @@ gsd_state_version: "1.0"
 current_phase: 01
 current_phase_name: Foundation & Staff Sign-In
 status: executing
-stopped_at: Completed 01-08-PLAN.md
-last_updated: "2026-10-11T05:35:47.520Z"
+stopped_at: Completed 02-01-PLAN.md
+last_updated: "2026-10-11T05:35:55.346Z"
 last_activity: 2026-10-10
 last_activity_desc: Phase 01 execution started
-state_head: 1e0b78df501926915420552266fe2c31c3fcf4dd
+state_head: db5baa5f4ccfb76c9bae8339b0b4e7705553da67
 progress:
   total_phases: 8
   completed_phases: 0
@@ -62,6 +62,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01 P04 | 23min | 2 tasks | 13 files |
 | Phase 01 P05 | 27 min | 3 tasks | 31 files |
 | Phase 01 P08 | 9min | 2 tasks | 6 files |
+| Phase 02 P01 | 10 min | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -93,6 +94,9 @@ Recent decisions affecting current work:
 - [Phase 01]: create-staff re-applies app_metadata on existing users; lib/dev-vars.mjs is the only writer of app/.dev.vars
 - [Phase 01]: 01-08: Phase 3 uploads use Worker-minted createSignedUploadUrl + no-session publishable client: uploadToSignedUrl <=6 MiB, TUS on <ref>.storage.supabase.co/storage/v1/upload/resumable/sign with x-signature above (spike c PASS/PASS)
 - [Phase 01]: 01-08: Phase 2 email via Resend over fetch; RESEND_API_KEY/MAIL_FROM reserved, not in secrets.required until a key exists (spike d)
+- [Phase 02]: 02-01: requests carries contact_email/contact_phone_e164 (planner assumption beyond D-06) for D-09 email and LOOK-04 send-time check; awaiting user confirm
+- [Phase 02]: 02-01: every request RPC locks requests then client_links; RAISE tokens are bare (no_items, case_not_found, request_not_found, request_not_draft, request_not_active, request_revoked, link_inactive)
+- [Phase 02]: 02-01: live-test probe case Logics 999999001 is a permanent fixture (events FK + append-only block case deletes); admin case lists should filter it
 
 ### Pending Todos
 
@@ -121,6 +125,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-10-11T05:35:27.377Z
-Stopped at: Completed 01-08-PLAN.md
+Last session: 2026-10-11T05:35:55.197Z
+Stopped at: Completed 02-01-PLAN.md
 Resume file: None
