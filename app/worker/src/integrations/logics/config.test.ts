@@ -110,6 +110,11 @@ describe('liveClientFromRow', () => {
     )
   })
 
+  it('throws not_configured when the ciphertexts do not decrypt (rotated key)', async () => {
+    const rotated = { ...env('live'), INTEGRATION_ENC_KEY: '11'.repeat(32) }
+    await expect(liveClientFromRow(rotated, await row(true))).rejects.toMatchObject({ kind: 'not_configured' })
+  })
+
   it('throws not_configured when a ciphertext is missing', async () => {
     const r = { ...(await row(null)), api_key_ciphertext: null }
     await expect(liveClientFromRow(env('live'), r)).rejects.toMatchObject({ kind: 'not_configured' })
