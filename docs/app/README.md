@@ -67,7 +67,7 @@ Names only. Values live in the places listed and nowhere else. Only the five req
 | `TOKEN_ENC_KEY_1` | Worker secret + `app/.dev.vars` (required) | `pnpm -C app secrets:provision` (Phase 4, D-15). It seals Plaid access tokens in `connection_secrets` and is kept if it already exists, because rotating it orphans every stored token. |
 | `PLAID_CLIENT_ID`, `PLAID_SECRET` | optional Worker secrets + `app/.dev.vars` | `pnpm -C app secrets:provider plaid`, entered at the prompt (echo off). Without them, bank `/start` returns `provider_not_configured` and the portal offers manual upload only. |
 | `TRUV_CLIENT_ID`, `TRUV_SECRET` | optional Worker secrets + `app/.dev.vars` | `pnpm -C app secrets:provider truv`, entered at the prompt. `TRUV_SECRET` is also the webhook signing key. Without them, payroll `/start` returns `provider_not_configured`. |
-| `PLAID_ENV`, `TRUV_TEMPLATE_ID`, `PLAID_REMOVE_AFTER_DAYS`, `BANK_PROVIDER` | `wrangler.jsonc` vars (not secrets) | `sandbox`, `""`, `30`, `plaid` (Phase 4, D-15) |
+| `PLAID_ENV`, `TRUV_TEMPLATE_ID`, `PLAID_REMOVE_AFTER_DAYS`, `BANK_PROVIDER` | `wrangler.jsonc` vars (not secrets) | `production` (since 2026-10-11, user decision), `""`, `30`, `plaid` (Phase 4, D-15) |
 | `DOCUSEAL_API_KEY` | optional Worker secret + `app/.dev.vars` | `pnpm -C app secrets:provider docuseal`, entered at the prompt. The API key from the DocuSeal Console in Test Mode (Phase 6, D-10). |
 | `DOCUSEAL_WEBHOOK_SECRET` | optional Worker secret + `app/.dev.vars` | same prompt. The HMAC secret configured on the DocuSeal Console webhook (Phase 6). |
 | `SMARTY_AUTH_ID`, `SMARTY_AUTH_TOKEN` | optional Worker secrets + `app/.dev.vars` | `pnpm -C app secrets:provider smarty`. A Smarty secret key pair with US Autocomplete Pro and US Street access (D-03). Without them the address step answers `provider_not_configured` and the client enters the address by hand, unverified (D-06). |
@@ -123,7 +123,7 @@ Phase 2 works in fixture mode today. These items need the user (or Andrew at Val
 
 ## Demo script (Phase 4)
 
-Use Sandbox vendor keys and synthetic fixture cases only. Never point the demo at a production Plaid or Truv environment or at real client data before Phase 8. `PLAID_ENV` is `sandbox` in `app/wrangler.jsonc`. The Truv environment is set by which Access Secret is installed.
+Use Sandbox vendor keys and synthetic fixture cases only. Never point the demo at a production Plaid or Truv environment or at real client data before Phase 8. `PLAID_ENV` is `production` in `app/wrangler.jsonc` since 2026-10-11 (user decision: only Production Plaid keys are on hand), so the bank step uses real bank logins and real data, not `user_good` / `pass_good`. The Truv environment is set by which Access Secret is installed.
 
 With keys (see § USER ACTION REQUIRED (Phase 4)):
 

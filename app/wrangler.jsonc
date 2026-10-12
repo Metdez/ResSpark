@@ -22,7 +22,8 @@
     // Compute > Email Service > Email Sending; until resspark.com is registered and onboarded, sends report "not configured".
     "EMAIL_FROM": "notifications@resspark.com",
     // Phase 4 (D-15). Vendor keys are optional secrets, set with `pnpm -C app secrets:provider plaid|truv`
-    "PLAID_ENV": "sandbox",
+    // Production since 2026-10-11 (user decision): only Production keys are on hand, so connections are real bank logins.
+    "PLAID_ENV": "production",
     "TRUV_TEMPLATE_ID": "",
     "PLAID_REMOVE_AFTER_DAYS": "30",
     "BANK_PROVIDER": "plaid",
