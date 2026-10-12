@@ -46,11 +46,23 @@ describe('createCaseDocument', () => {
     expect(fetchStub).toHaveBeenCalledTimes(1)
   })
 
+  // Live tenant (probed 2026-10-12): without CaseID on the query string the route 404s
+  // ("No HTTP resource was found"); with it, the upload is matched.
+  it('puts CaseID and Comment on the query string as well as in the form', async () => {
+    const { client, fetchStub } = setup(json(DOC_OK))
+    await client.createCaseDocument(doc())
+    const url = new URL(callOf(fetchStub)[0])
+    expect(url.origin + url.pathname).toBe(new URL('Documents/CaseDocument', BASE).toString())
+    expect(url.searchParams.get('CaseID')).toBe('900001')
+    expect(url.searchParams.get('Comment')).toBe('Uploaded via ResSpark by Dana Agent — stmt.pdf')
+    expect(url.searchParams.has('FileCategoryID')).toBe(false)
+  })
+
   it('POSTs multipart CaseID, Comment, File with Basic auth, no content-type, a 60 s timeout', async () => {
     const { client, fetchStub } = setup(json(DOC_OK))
     await client.createCaseDocument(doc())
     const [url, init] = callOf(fetchStub)
-    expect(url).toBe(new URL('Documents/CaseDocument', BASE).toString())
+    expect(url.startsWith(new URL('Documents/CaseDocument?', BASE).toString())).toBe(true)
     expect(init.method).toBe('POST')
     const headers = new Headers(init.headers)
     expect(headers.get('authorization')).toBe(AUTH)
@@ -71,6 +83,7 @@ describe('createCaseDocument', () => {
     const { client, fetchStub } = setup(json(DOC_OK))
     await client.createCaseDocument(doc(undefined, 7))
     expect((callOf(fetchStub)[1].body as FormData).get('FileCategoryID')).toBe('7')
+    expect(new URL(callOf(fetchStub)[0]).searchParams.get('FileCategoryID')).toBe('7')
   })
 
   it.each([

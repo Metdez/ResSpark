@@ -170,7 +170,11 @@ export function createLogicsClient(creds: LogicsCreds, fetchImpl: typeof fetch =
       body.append('Comment', p.comment)
       if (p.fileCategoryId !== undefined) body.append('FileCategoryID', String(p.fileCategoryId))
       body.append('File', new File([p.bytes as Uint8Array<ArrayBuffer>], p.fileName, { type: 'application/pdf' }), p.fileName)
-      const r = await write('Documents/CaseDocument', { headers: {}, body })
+      // The live tenant routes the upload only with CaseID on the query string (404 otherwise, probed
+      // 2026-10-12); the fields stay in the form too, as the vendor docs describe.
+      const query = new URLSearchParams({ CaseID: String(p.caseId), Comment: p.comment })
+      if (p.fileCategoryId !== undefined) query.set('FileCategoryID', String(p.fileCategoryId))
+      const r = await write(`Documents/CaseDocument?${query}`, { headers: {}, body })
       if (r.early) return r.early
       return isCaseDocumentCreated(r.body)
         ? { kind: 'sent', logicsDocumentId: r.body.data.CaseDocumentID }
