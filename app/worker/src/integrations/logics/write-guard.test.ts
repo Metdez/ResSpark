@@ -17,6 +17,14 @@ describe('logicsWriteGuard', () => {
     )
   })
 
+  it('returns for any id when the allowlist is the wildcard *', () => {
+    expect(logicsWriteGuard(env('true', ' * '), '99999')).toBeUndefined()
+  })
+
+  it('throws for the wildcard * when the flag is false', () => {
+    expect(() => logicsWriteGuard(env('false', '*'), '99999')).toThrow('logics_write_blocked')
+  })
+
   it('throws when the allowlist is empty', () => {
     expect(() => logicsWriteGuard(env('true', ''), '12345')).toThrow(
       'logics_write_blocked'

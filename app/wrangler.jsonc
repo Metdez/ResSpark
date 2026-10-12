@@ -13,8 +13,9 @@
   },
   "vars": {
     "APP_ENV": "sandbox",
-    "LOGICS_WRITE_ENABLED": "false",
-    "LOGICS_TEST_CASE_IDS": "",
+    // Live writes to any case since 2026-10-12 (user request): "*" allows every CaseID. "false" stops all writes.
+    "LOGICS_WRITE_ENABLED": "true",
+    "LOGICS_TEST_CASE_IDS": "*",
     // "fake" serves fixture cases (C1); "live" after Settings → Integrations → Test connection succeeds.
     // Live since 2026-10-11 for reads (user request); writes stay refused while LOGICS_WRITE_ENABLED is "false".
     "LOGICS_MODE": "live",

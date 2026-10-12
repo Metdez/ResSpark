@@ -136,7 +136,7 @@ export const adminIntegrationsRoute = new Hono<AdminApp>()
       status = 200
       // D-08: list real ActivityType strings so staff pick a valid one. Activity scopes may differ
       // from Find scopes, so a failed listing never fails the test.
-      const caseId = (c.env.LOGICS_TEST_CASE_IDS ?? '').split(',').map((s) => s.trim()).find(Boolean)
+      const caseId = (c.env.LOGICS_TEST_CASE_IDS ?? '').split(',').map((s) => s.trim()).find((s) => s && s !== '*')
       if (caseId) {
         const listed = await client.listActivities(Number(caseId))
         if ('activityTypes' in listed) {
