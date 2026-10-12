@@ -23,8 +23,8 @@
     // Compute > Email Service > Email Sending; resspark.com is registered and onboarded (status ready) since 2026-10-12.
     "EMAIL_FROM": "notifications@resspark.com",
     // Phase 4 (D-15). Vendor keys are optional secrets, set with `pnpm -C app secrets:provider plaid|truv`
-    // Production since 2026-10-11 (user decision): only Production keys are on hand, so connections are real bank logins.
-    "PLAID_ENV": "production",
+    // Back to sandbox 2026-10-12: the Sandbox secret is installed (test logins user_good / pass_good).
+    "PLAID_ENV": "sandbox",
     "TRUV_TEMPLATE_ID": "",
     "PLAID_REMOVE_AFTER_DAYS": "30",
     "BANK_PROVIDER": "plaid",
