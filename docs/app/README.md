@@ -20,7 +20,7 @@ Note: `pnpm deploy` (without `run`) is pnpm's own workspace-deploy command and f
 
 Run from the repo root. Every script that needs a secret loads it with `dotenv -e` inside `app/package.json`, so no secret file is named on the command line.
 
-- **dev** — `pnpm -C app run dev`: Vite dev server with the Worker running in workerd via `@cloudflare/vite-plugin`.
+- **dev** — `pnpm -C app run dev`: Vite dev server at http://localhost:5173 with the Worker running in workerd via `@cloudflare/vite-plugin`. The SPA's `VITE_SUPABASE_*` names load from `src/frontend/.env` (dotenv, as `deploy` does); Worker secrets load from `app/.dev.vars`.
 - **build** — `pnpm -C app run build`: `tsc -b` then `vite build` (SPA + Worker bundle).
 - **check** — `pnpm -C app run check`: 500-line size gate, golden-fixture freshness (`python ../src/tools/export_golden_fixtures.py --check`), `tsc -b`, `eslint .`, then `pnpm test`. Must be green before a commit.
 - **test** — `pnpm -C app run test`: Vitest `web` (jsdom) + `worker-node` projects. `pnpm -C app run test:workerd` runs the Workers-runtime project (spike a).

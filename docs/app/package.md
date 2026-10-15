@@ -6,7 +6,7 @@ The app's npm manifest (pnpm workspace member `app`; the lockfile is `pnpm-lock.
 
 | Script | What it runs |
 |---|---|
-| `dev` | Vite dev server with the Worker (Cloudflare Vite plugin) |
+| `dev` | Vite dev server with the Worker (Cloudflare Vite plugin); loads the `VITE_SUPABASE_*` names from `src/frontend/.env`, as `deploy` does |
 | `build` | `tsc -b`, then `vite build` (SPA into `dist/client`, Worker beside it) |
 | `preview` | `vite preview` of the build |
 | `lint`, `format`, `format:check` | ESLint and Prettier |
