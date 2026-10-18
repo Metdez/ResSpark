@@ -132,5 +132,53 @@ describe('projectSummary', () => {
     expect(s.employers[0].documents.map((d) => d.id)).toEqual(['d1', 'd2', 'd3', 'd4'])
     expect(s.employers[0].documents[0]).toEqual({ id: 'd1', document_type: 'pay_stub', name: 'd1.pdf' })
     expect(s.employers[1]).toMatchObject({ employer_id: 'e2', pay_stubs: 0, w2s: 0, income_reports: 0, documents: [] })
+    // no stored report: nothing to tabulate
+    expect(s.employers.map((e) => e.recent_pay)).toEqual([[], []])
+  })
+
+  it('lists each employer pay stub from the last three months, newest first, linked to its stored file', () => {
+    // NOW is 2026-10-11, so the window starts 2026-07-01: 06-30 is out, 07-01 is in.
+    const report = {
+      employments: [
+        {
+          statements: [
+            { pay_date: '2026-08-31', check_number: null, gross_pay: '2000.00', net_pay: '1500.00' },
+            { pay_date: '2026-09-15', check_number: '1001', gross_pay: '2000.00', net_pay: null },
+            { pay_date: '2026-06-30', check_number: null, gross_pay: '2000.00', net_pay: '1500.00' },
+          ],
+        },
+        { statements: [{ pay_date: '2026-07-01', check_number: null, gross_pay: 'n/a', net_pay: '10.5' }] },
+      ],
+    }
+    const conn = base({
+      provider: 'truv',
+      kind: 'payroll',
+      data: {
+        employers: [
+          { employer_id: 'e1', company_name: 'Acme Inc', status: 'done', report },
+          { employer_id: 'e2', company_name: null, status: 'pending' },
+        ],
+      },
+    })
+    const prefix = 'firm/F1/case/K1/item/I1/payroll'
+    const stub = (id: string, group: string, name: string) => ({
+      id,
+      document_type: 'pay_stub',
+      original_filename: name,
+      storage_key: `${prefix}/${group}/${name}`,
+    })
+    const documents = [
+      stub('d9', 'other-e10', 'paystub-2026-08-31.pdf'), // same name, another employer's group
+      stub('d1', 'acme-inc-e1', 'paystub-2026-09-15-1001.pdf'),
+      stub('d2', 'acme-inc-e1', 'paystub-2026-08-31.pdf'),
+      stub('d3', 'acme-inc-e1', 'paystub-2026-06-30.pdf'),
+    ]
+    const s = projectSummary(conn, { ...empty, documents }, NOW)
+    expect(s.employers[0].recent_pay).toEqual([
+      { pay_date: '2026-09-15', gross_pay: 2000, net_pay: null, document_id: 'd1' },
+      { pay_date: '2026-08-31', gross_pay: 2000, net_pay: 1500, document_id: 'd2' },
+      { pay_date: '2026-07-01', gross_pay: null, net_pay: 10.5, document_id: null },
+    ])
+    expect(s.employers[1].recent_pay).toEqual([])
   })
 })

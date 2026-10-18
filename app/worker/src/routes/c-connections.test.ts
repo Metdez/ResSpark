@@ -98,7 +98,7 @@ describe('GET /api/c/items/:itemId/connection', () => {
 
   // Follow-up fix (2026-10-11): the payroll sheet merges every order on the item.
   const employer = (company_name: string, status: EmployerView['status']): EmployerView =>
-    ({ employer_id: `e-${company_name}`, company_name, status, pay_stubs: status === 'done' ? 2 : 0, w2s: 0, income_reports: 0, documents: [] })
+    ({ employer_id: `e-${company_name}`, company_name, status, pay_stubs: status === 'done' ? 2 : 0, w2s: 0, income_reports: 0, documents: [], recent_pay: [] })
   const summary = (id: string, status: ConnectionSummary['status'], employers: EmployerView[], error: ConnectionSummary['error'] = null) =>
     ({ id, status, error, accounts: [], employers, link_ref: 'secret', created_at: '2026-10-11T00:00:00Z' }) as unknown as ConnectionSummary
   const payroll = async (...rows: ConnectionSummary[]) => {

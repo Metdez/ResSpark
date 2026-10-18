@@ -8,14 +8,15 @@ Typed staff client for the Plan 04-02 admin connection routes (`app/worker/src/r
 |------|----------------------|
 | `MonthCell` | `year`, `month`, `status` (`available`, `manual`, `not_supported`, `missing`, `pending`), `document_id` (set for `available` and `manual`). |
 | `AccountSummary` | `id`, `mask`, `name`, `type`, `subtype`, `months` (the six-month window, newest first). |
-| `EmployerView` | `employer_id`, `company_name`, `status`, the three counts (`pay_stubs`, `w2s`, `income_reports`), and `documents` (`id`, `document_type`, `name`). |
+| `PayStubRow` | One pay stub from the stored Truv report: `pay_date` (`YYYY-MM-DD`), `gross_pay` and `net_pay` (number or `null` when the report lacks a usable figure), `document_id` (the stored stub PDF, or `null`). |
+| `EmployerView` | `employer_id`, `company_name`, `status`, the three counts (`pay_stubs`, `w2s`, `income_reports`), `documents` (`id`, `document_type`, `name`), and `recent_pay` (the last three months of stubs, newest first; the payroll panel's "Last 3 months" table). |
 | `ConnectionSummary` | `id`, `request_item_id`, `kind` (`bank` or `payroll`), `provider`, `status`, `error` (`{ code, message? }` or `null`), `created_at`, `last_webhook_at`, `last_polled_at`, `accounts`, `transactions` (`count`, `update_status`), `employers`. The Worker sends more fields (`capabilities`, `remove_after`, and so on); the SPA ignores them. |
 | `TransactionRow` | `id`, `date`, `name`, `merchant_name`, `amount` (Plaid sign: positive is money out), `iso_currency_code`, `category_primary`, `pending`. |
 | `TransactionsResponse` | `months` (3 or 6), `total` (all rows in the window), `transactions` (the rows sent, capped at 1000 by the Worker). |
 
 ## Guards
 
-`str`, `strOrNull`, `num` are one-line checks. `isMonth`, `isAccount`, `isEmployerDoc`, `isEmployer`, `isTransaction` validate one nested record each. `isConnectionSummary` rejects any `kind` other than `bank` or `payroll` (signature rows belong to the e-sign card). `isConnectionsResponse` checks `{ connections: ConnectionSummary[] }`; `isTransactionsResponse` checks the transactions body; `isRefreshResponse` (module-private) checks `{ connection }`.
+`str`, `strOrNull`, `num`, `numOrNull` are one-line checks. `isMonth`, `isAccount`, `isEmployerDoc`, `isPayStub`, `isEmployer`, `isTransaction` validate one nested record each; `isEmployer` requires `recent_pay` to be an array of `isPayStub` rows. `isConnectionSummary` rejects any `kind` other than `bank` or `payroll` (signature rows belong to the e-sign card). `isConnectionsResponse` checks `{ connections: ConnectionSummary[] }`; `isTransactionsResponse` checks the transactions body; `isRefreshResponse` (module-private) checks `{ connection }`.
 
 ## Calls
 

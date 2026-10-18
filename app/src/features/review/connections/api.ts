@@ -17,6 +17,13 @@ export interface AccountSummary {
   months: MonthCell[]
 }
 
+export interface PayStubRow {
+  pay_date: string
+  gross_pay: number | null
+  net_pay: number | null
+  document_id: string | null
+}
+
 export interface EmployerView {
   employer_id: string
   company_name: string | null
@@ -25,6 +32,7 @@ export interface EmployerView {
   w2s: number
   income_reports: number
   documents: Array<{ id: string; document_type: string; name: string }>
+  recent_pay: PayStubRow[]
 }
 
 export interface ConnectionSummary {
@@ -62,6 +70,7 @@ export interface TransactionsResponse {
 const str = (v: unknown) => typeof v === 'string'
 const strOrNull = (v: unknown) => v === null || typeof v === 'string'
 const num = (v: unknown) => typeof v === 'number'
+const numOrNull = (v: unknown) => v === null || typeof v === 'number'
 
 const isMonth = (v: unknown): v is MonthCell =>
   isObject(v) && num(v.year) && num(v.month) && str(v.status) && strOrNull(v.document_id)
@@ -75,6 +84,9 @@ const isAccount = (v: unknown): v is AccountSummary =>
 
 const isEmployerDoc = (v: unknown) => isObject(v) && str(v.id) && str(v.document_type) && str(v.name)
 
+const isPayStub = (v: unknown): v is PayStubRow =>
+  isObject(v) && str(v.pay_date) && numOrNull(v.gross_pay) && numOrNull(v.net_pay) && strOrNull(v.document_id)
+
 const isEmployer = (v: unknown): v is EmployerView =>
   isObject(v) &&
   str(v.employer_id) &&
@@ -84,7 +96,9 @@ const isEmployer = (v: unknown): v is EmployerView =>
   num(v.w2s) &&
   num(v.income_reports) &&
   Array.isArray(v.documents) &&
-  v.documents.every(isEmployerDoc)
+  v.documents.every(isEmployerDoc) &&
+  Array.isArray(v.recent_pay) &&
+  v.recent_pay.every(isPayStub)
 
 export const isConnectionSummary = (v: unknown): v is ConnectionSummary =>
   isObject(v) &&

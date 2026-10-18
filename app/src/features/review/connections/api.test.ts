@@ -1,6 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiError } from '@/lib/api'
-import { fetchConnections, fetchTransactions, isConnectionSummary, refreshConnection, type ConnectionSummary } from './api'
+import {
+  fetchConnections,
+  fetchTransactions,
+  isConnectionSummary,
+  refreshConnection,
+  type ConnectionSummary,
+  type EmployerView,
+} from './api'
 
 vi.mock('@/lib/supabase', () => ({
   supabase: { auth: { getSession: async () => ({ data: { session: { access_token: 'tok' } } }) } },
@@ -20,6 +27,18 @@ const CONNECTION: ConnectionSummary = {
   transactions: { count: 0, update_status: 'not_ready' },
   employers: [],
 }
+
+const EMPLOYER: EmployerView = {
+  employer_id: 'E1',
+  company_name: 'Acme Inc',
+  status: 'done',
+  pay_stubs: 1,
+  w2s: 0,
+  income_reports: 0,
+  documents: [],
+  recent_pay: [{ pay_date: '2026-09-15', gross_pay: 2000, net_pay: null, document_id: 'D1' }],
+}
+const withEmployer = (e: unknown) => ({ ...CONNECTION, kind: 'payroll', provider: 'truv', employers: [e] })
 
 const fetchMock = vi.fn()
 const reply = (body: unknown, status = 200) =>
@@ -68,5 +87,15 @@ describe('connections api', () => {
   it('guard rejects an unknown kind', () => {
     expect(isConnectionSummary(CONNECTION)).toBe(true)
     expect(isConnectionSummary({ ...CONNECTION, kind: 'signature' })).toBe(false)
+  })
+
+  it('guard checks each employer pay stub row', () => {
+    const [row] = EMPLOYER.recent_pay
+    expect(isConnectionSummary(withEmployer(EMPLOYER))).toBe(true)
+    expect(isConnectionSummary(withEmployer({ ...EMPLOYER, recent_pay: [] }))).toBe(true)
+    expect(isConnectionSummary(withEmployer({ ...EMPLOYER, recent_pay: undefined }))).toBe(false)
+    expect(isConnectionSummary(withEmployer({ ...EMPLOYER, recent_pay: [{ ...row, gross_pay: '2000.00' }] }))).toBe(false)
+    expect(isConnectionSummary(withEmployer({ ...EMPLOYER, recent_pay: [{ ...row, pay_date: null }] }))).toBe(false)
+    expect(isConnectionSummary(withEmployer({ ...EMPLOYER, recent_pay: [{ ...row, document_id: 7 }] }))).toBe(false)
   })
 })

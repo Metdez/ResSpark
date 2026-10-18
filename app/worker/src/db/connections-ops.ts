@@ -1,5 +1,6 @@
 import { targetMonths } from '../../../src/lib/statement-months'
 import { PROVIDER_CAPABILITIES, type BankCapabilities } from '../integrations/bank/provider'
+import { safeName } from '../storage/case-documents'
 import { createAdminClient } from './client'
 import { latestConnectionForItem, type ConnectionRow, type ConnectionStatus, type ProviderId } from './connections'
 
@@ -101,6 +102,14 @@ export interface AccountSummary {
   months: MonthCell[]
 }
 
+// One stub from the stored Truv income report; amounts are null when the report lacks or garbles them.
+export interface PayStubRow {
+  pay_date: string
+  gross_pay: number | null
+  net_pay: number | null
+  document_id: string | null
+}
+
 export interface EmployerView {
   employer_id: string
   company_name: string | null
@@ -109,6 +118,7 @@ export interface EmployerView {
   w2s: number
   income_reports: number
   documents: Array<{ id: string; document_type: string; name: string }>
+  recent_pay: PayStubRow[]
 }
 
 export interface ConnectionSummary {
@@ -175,8 +185,33 @@ const byMaskThenId = (a: { mask: string | null; id: string }, b: { mask: string 
 }
 // Payroll files live under .../payroll/<company-slug>-<employer_id>/<name> (Plan 04-03 employerSlug).
 const payrollGroup = (key: string) => key.split('/payroll/')[1]?.split('/')[0] ?? null
+// Twin of payStubKeySuffix in ../financials/evidence.ts: truv/reports.ts names a stub paystub-<pay_date>[-<check>].pdf.
+const payStubSuffix = (payDate: string, check: string | null) =>
+  `/paystub-${safeName(payDate)}${check ? `-${safeName(check)}` : ''}.pdf`
+// Truv sends decimal strings ('2000.00'); a missing or unparseable amount is null, never 0.
+const amount = (v: unknown) => {
+  const n = typeof v === 'string' && v.trim() !== '' ? Number(v) : typeof v === 'number' ? v : NaN
+  return Number.isNaN(n) ? null : n
+}
+const objects = (v: unknown) => (Array.isArray(v) ? (v as Array<Record<string, unknown>>).filter((o) => !!o && typeof o === 'object') : [])
 
-function employerViews(data: Record<string, unknown>, documents: SummaryParts['documents']): EmployerView[] {
+// Every stub in the stripped Truv report dated on or after the 3-month window start, newest first (Oct 12 call, G).
+function recentPay(report: unknown, docs: SummaryParts['documents'], now: Date): PayStubRow[] {
+  if (!report || typeof report !== 'object') return []
+  const start = windowStart(now, 3)
+  return objects((report as Record<string, unknown>).employments)
+    .flatMap((emp) => objects(emp.statements))
+    .filter((s) => typeof s.pay_date === 'string' && s.pay_date.slice(0, 10) >= start)
+    .map((s) => {
+      const payDate = (s.pay_date as string).slice(0, 10)
+      const suffix = payStubSuffix(payDate, str(s.check_number))
+      const doc = docs.find((d) => d.document_type === 'pay_stub' && d.storage_key.endsWith(suffix))
+      return { pay_date: payDate, gross_pay: amount(s.gross_pay), net_pay: amount(s.net_pay), document_id: doc?.id ?? null }
+    })
+    .sort((a, b) => cmp(b.pay_date, a.pay_date))
+}
+
+function employerViews(data: Record<string, unknown>, documents: SummaryParts['documents'], now: Date): EmployerView[] {
   const raw = Array.isArray(data.employers) ? (data.employers as Array<Record<string, unknown>>) : []
   return raw
     .filter((e) => typeof e?.employer_id === 'string')
@@ -192,6 +227,7 @@ function employerViews(data: Record<string, unknown>, documents: SummaryParts['d
         w2s: count('w2'),
         income_reports: count('income_report'),
         documents: docs.map((d) => ({ id: d.id, document_type: d.document_type ?? 'other', name: d.original_filename })),
+        recent_pay: recentPay(e.report, docs, now),
       }
     })
 }
@@ -231,7 +267,7 @@ export function projectSummary(conn: ConnectionRow, parts: SummaryParts, now = n
       count: parts.transactionCount,
       update_status: UPDATE_STATUS[str(conn.data.transactions_update_status) ?? ''] ?? null,
     },
-    employers: employerViews(conn.data, parts.documents),
+    employers: employerViews(conn.data, parts.documents, now),
   }
 }
 
