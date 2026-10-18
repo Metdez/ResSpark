@@ -1,6 +1,6 @@
 # `app/src/features/client-portal/connect/connect-copy.ts`
 
-Every string the payroll sheet, the bank sheet, and the return page show, in one place. Voice (UI-SPEC): second person, sentence case, no exclamation marks; say "agent", "bank", "payroll", never "token", "staff", "financial institution", or a vendor name.
+Every string the payroll sheet, the bank sheet, and the return page show, in one place. Voice (UI-SPEC): second person, sentence case, no exclamation marks; say "agent", "bank", "payroll", never "token", "staff", or "financial institution". A vendor name appears only in the `poweredBy` trust line, where `ProviderMark` passes it in.
 
 ## `CONNECT_COPY.payroll`
 
@@ -46,6 +46,10 @@ Every string the payroll sheet, the bank sheet, and the return page show, in one
 | `slowBody` | You can go back to your steps — we'll keep checking in the background. |
 | `back` | Back to your steps |
 | `connected` | Bank connected |
+
+## `CONNECT_COPY.poweredBy(name)`
+
+`Secure connection powered by {name}` — the trust line `ProviderMark` shows under the message on the bank and payroll sheets, with `name` one of Plaid, Truv, or Teller. Added for the Oct 12 2026 ValorTax call ("I would want Plaid's logo or Truv's logo where it's more clear to the client"); text only, no logo assets.
 
 The object is `as const`, so each string is a literal type.
 

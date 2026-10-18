@@ -66,11 +66,11 @@ beforeEach(() => {
 afterEach(cleanup)
 
 describe('PayrollStep', () => {
-  it('fresh: Connect payroll (44 px), the upload fallback, and no vendor name', async () => {
+  it('fresh: Connect payroll (44 px), the upload fallback, and the Truv trust line', async () => {
     await render(conn())
     expect(button('Connect payroll')!.className).toContain('h-11')
     expect(button('Upload pay stubs instead')).toBeDefined()
-    expect(text()).not.toMatch(/truv|plaid/i)
+    expect(document.querySelector('[data-provider-mark]')?.textContent).toBe('Secure connection powered by Truv')
   })
 
   it('Connect opens the consent sheet without loading Bridge', async () => {

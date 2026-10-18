@@ -57,6 +57,7 @@ const ACCOUNT = {
 
 const text = () => document.body.textContent ?? ''
 const message = () => document.querySelector('[data-connect-message]')?.textContent
+const mark = () => document.querySelector('[data-provider-mark]')
 const uploadStub = () => document.querySelector('[data-testid="upload-sheet"]')
 
 async function render(data: ItemConnection, step: PortalStep = STEP) {
@@ -74,11 +75,12 @@ beforeEach(() => {
 afterEach(cleanup)
 
 describe('BankStep states', () => {
-  it('fresh with every capability: intro, 44 px Connect bank, and the upload fallback', async () => {
+  it('fresh with every capability: intro, 44 px Connect bank, the upload fallback, and the Plaid trust line', async () => {
     await render(conn())
     expect(message()).toBe("Connect the bank you use most. We'll gather up to 6 months of transactions and statements.")
     expect(button('Connect bank')!.className).toContain('h-11')
     expect(button('Upload statements instead')).toBeDefined()
+    expect(mark()?.textContent).toBe('Secure connection powered by Plaid')
   })
 
   it('Connect → consent (bank wording) → I agree → consent, start, same-tab hosted link', async () => {
@@ -99,6 +101,7 @@ describe('BankStep states', () => {
     expect(button('Connect bank')).toBeUndefined()
     const buttons = [...document.querySelectorAll('[role="dialog"] button')]
     expect(buttons[0].textContent).toBe('Upload statements instead')
+    expect(mark()).toBeNull()
   })
 
   it('no statement PDFs: the transactions-only intro', async () => {

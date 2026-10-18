@@ -11,6 +11,7 @@ import { PortalError, type PortalStep } from '../portal-api'
 import { CONNECT_COPY, connectErrorCopy } from './connect-copy'
 import { attributeStatement } from './connection-api'
 import { ConsentSheet } from './consent-sheet'
+import { ProviderMark } from './provider-mark'
 import { StatementCells, type MonthCell } from './statement-cells'
 import { useConnectFlow } from './use-connect-flow'
 import { useItemConnection, useRejectionNote } from './use-item-connection'
@@ -158,6 +159,7 @@ export function BankStep({
               {message}
             </p>
           )}
+          {data && !isError && !notConfigured && <ProviderMark id={data.provider.id} />}
           {note && (
             <p className='text-base text-muted-foreground' data-rejection-note>
               {uploadCopy.rejectedPrefix}

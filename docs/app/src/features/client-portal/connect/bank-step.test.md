@@ -4,9 +4,9 @@ Renders `BankStep` (step `I2`, firm `ValorTax`) with `./connection-api`, `@/feat
 
 ## States
 
-1. Fresh with every capability: the intro, a 44 px `Connect bank`, and the upload button.
+1. Fresh with every capability: the intro, a 44 px `Connect bank`, the upload button, and a `[data-provider-mark]` reading "Secure connection powered by Plaid".
 2. Connect → the bank consent (title and "We never see your bank password.") → `I agree` → `recordConsent('bank_data')`, `startConnection('bank', 'I2')`, and `location.assign` with the hosted link URL.
-3. Not configured: the not-configured copy, no connect button, and the upload button first.
+3. Not configured: the not-configured copy, no connect button, the upload button first, and no `[data-provider-mark]`.
 4. `statementPdfs: false`: the transactions-only intro.
 5. `hostedLink: false`: the not-available copy and no connect button.
 6. `pending`: "Checking your connection…".

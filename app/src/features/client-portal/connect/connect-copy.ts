@@ -38,6 +38,8 @@ export const CONNECT_COPY = {
     back: 'Back to your steps',
     connected: 'Bank connected',
   },
+  // Oct 12 2026 call: the client asked to see which provider they are connecting through
+  poweredBy: (name: string) => `Secure connection powered by ${name}`,
 } as const
 
 export function connectErrorCopy(code: string, kind: 'bank' | 'payroll'): string {

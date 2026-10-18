@@ -7,7 +7,7 @@ Renders `PayrollStep` (step `I1`, firm `ValorTax`) with `./connection-api`, `./u
 - `beforeEach` makes consent and reconcile resolve, `startConnection` return `{ connection_id: 'C1', bridge_token: 'bt_1' }`, and Bridge `init` return `{ open }`.
 - `conn()` and `view()` build `ItemConnection` fixtures.
 
-1. Fresh: a 44 px `Connect payroll`, the upload button, and no vendor name in the page.
+1. Fresh: a 44 px `Connect payroll`, the upload button, and a `[data-provider-mark]` reading "Secure connection powered by Truv" (until the Oct 12 2026 call this test asserted that no vendor name appeared; the client asked for the opposite).
 2. Connect opens the consent sheet (its title) and does not load Bridge.
 3. `I agree` calls consent, start, load, `init({ isOrder: true, bridgeToken: 'bt_1' })`, and `open`, in that order (`invocationCallOrder`).
 4. With the captured `init` options: a bridge `SUCCESS` does not reconcile; an order `COMPLETED` reconciles `C1` once; `onClose` reconciles again.

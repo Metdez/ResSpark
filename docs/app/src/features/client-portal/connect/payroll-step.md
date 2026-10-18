@@ -18,7 +18,11 @@ Only one sheet is on screen at a time:
 
 1. `uploading` → `UploadSheet` with the step's `{ id, label, status }`. Closing it returns to the payroll sheet and invalidates `['portal', 'state']` so the step chip updates.
 2. `flow.consenting` → `ConsentSheet` for `payroll_data` with the firm name.
-3. Otherwise the payroll sheet, open while `open && !bridgeOpen`: title = `step.label` (20 px), the state below, then `Upload pay stubs instead` (44 px, outline) in every state. The sheet scrolls (`max-h-dvh`, `overflow-y-auto`) when many employers are listed.
+3. Otherwise the payroll sheet, open while `open && !bridgeOpen`: title = `step.label` (20 px), the message, the provider trust line, the employers, then `Upload pay stubs instead` (44 px, outline) in every state. The sheet scrolls (`max-h-dvh`, `overflow-y-auto`) when many employers are listed.
+
+## Provider trust line
+
+Right under the message, `<ProviderMark id={data.provider.id} />` renders "Secure connection powered by Truv" (see `provider-mark.md`) when `data && !isError && !notConfigured`. It is absent while loading, after a failed query, and in the not-configured state. Requested on the Oct 12 2026 ValorTax call so the client recognises the provider. D-11 still holds: every decision in this file reads `provider.configured` and `provider.capabilities`; `provider.id` is read only for this display name.
 
 ## States
 

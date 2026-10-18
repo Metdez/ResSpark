@@ -2,7 +2,7 @@
 
 `BankStep({ step, firmName, open, onClose })`: the client's bank sheet (D-08, D-10, D-11, D-15; BANK-01, BANK-03, BANK-04, BANK-05). `StepList` renders it when a `bank_connect` step's View is tapped.
 
-Every decision reads `provider.configured` and `provider.capabilities`; nothing branches on which provider it is (D-11), so Teller can replace Plaid without touching this file.
+Every decision reads `provider.configured` and `provider.capabilities`; nothing branches on which provider it is (D-11), so Teller can replace Plaid without touching this file. The one place `provider.id` is read is `ProviderMark`, and it only picks the display name.
 
 ## Data
 
@@ -14,7 +14,11 @@ Only one sheet is on screen at a time:
 
 1. `uploading` → `UploadSheet` with the step's `{ id, label, status }`. `uploading.month` is the month being filled, or `null` for the plain fallback.
 2. `flow.consenting` → `ConsentSheet` for `bank_data` with the firm name.
-3. Otherwise the bank sheet: title = `step.label`, the message, the connect button when allowed, the accounts, then `Upload statements instead` (44 px, outline) in every state.
+3. Otherwise the bank sheet: title = `step.label`, the message, the provider trust line, the connect button when allowed, the accounts, then `Upload statements instead` (44 px, outline) in every state.
+
+## Provider trust line
+
+Right under the message, `<ProviderMark id={data.provider.id} />` renders "Secure connection powered by Plaid" (see `provider-mark.md`) when `data && !isError && !notConfigured`. It is absent while loading, after a failed query, and in the not-configured state (where `provider.id` is `null` anyway). Requested on the Oct 12 2026 ValorTax call so the client recognises the provider; it is text only and changes no behaviour.
 
 ## States (message)
 

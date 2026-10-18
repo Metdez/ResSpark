@@ -12,6 +12,7 @@ import type { PortalStep } from '../portal-api'
 import { CONNECT_COPY, connectErrorCopy } from './connect-copy'
 import { reconcileConnection, type ClientConnectionView } from './connection-api'
 import { ConsentSheet } from './consent-sheet'
+import { ProviderMark } from './provider-mark'
 import { useConnectFlow } from './use-connect-flow'
 import { useItemConnection, useRejectionNote } from './use-item-connection'
 import { loadTruvBridge } from './use-truv-bridge'
@@ -160,6 +161,7 @@ export function PayrollStep({
               {message}
             </p>
           )}
+          {data && !isError && !notConfigured && <ProviderMark id={data.provider.id} />}
           {note && (
             <p className='text-base text-muted-foreground' data-rejection-note>
               {uploadCopy.rejectedPrefix}
