@@ -10,11 +10,12 @@
 --     column is dropped, renamed, or retyped, and templates a001/a002 stay as
 --     they are (the Standard packet still carries address, ID, signature and
 --     intake);
---   * a provider-reported done connection is the client's completed step, so
---     connection_set_status() moves the item to approved on done and logs
---     item.approved with actor type provider (mirroring item_approve, 0004);
---     staff can still Reject (item_reject accepts approved). connected/syncing
---     still submit; pending still starts the item;
+--   * a provider-reported done bank or payroll connection is the client's
+--     completed step, so connection_set_status() moves the item to approved on
+--     done and logs item.approved with actor type provider (mirroring
+--     item_approve, 0004); staff can still Reject (item_reject accepts
+--     approved). A done signature connection (DocuSeal) still submits for staff
+--     review; connected/syncing still submit; pending still starts the item;
 --   * the item only moves forward and approved is never regressed (WEBH-03);
 --   * the Worker (service_role) stays the only reader and writer; anon and
 --     authenticated get nothing.
@@ -98,9 +99,11 @@ BEGIN
     -- provider-reported done connection is the client's completed step, so it
     -- reads green instead of waiting on staff. approved is never regressed;
     -- staff can still Reject (item_reject accepts approved).
+    -- Only bank and payroll finish on their own; a signature (kind 'signature',
+    -- DocuSeal) still submits for staff review as in Phase 6.
     v_item := CASE
-        WHEN p_new_status = 'done' THEN 'approved'
-        WHEN p_new_status IN ('connected','syncing') THEN 'submitted'
+        WHEN p_new_status = 'done' AND c.kind IN ('bank','payroll') THEN 'approved'
+        WHEN p_new_status IN ('connected','syncing','done') THEN 'submitted'
         WHEN p_new_status = 'pending' THEN 'in_progress'
     END;
     IF v_item IS NOT NULL THEN

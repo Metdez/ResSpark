@@ -16,7 +16,7 @@ import { stubVendorFetch } from './helpers/vendor-fetch'
 
 // SIGN-02 / WEBH-01 tracer against the live project (test firm only), DocuSeal stubbed:
 // signed form.completed -> 200 + ledger + enqueue -> queue() -> GET /submissions/{id} -> two
-// downloads -> two documents with sha256 -> connection done -> item approved -> request complete (0011).
+// downloads -> two documents with sha256 -> connection done -> item submitted -> request waiting_on_staff.
 // Ids 4101/5101 (not the fixture's 4001/5001): esign-start.test.ts owns docuseal external_id 4001
 // while it runs, and (provider, external_id) is unique.
 const { SUPABASE_URL, SUPABASE_SECRET_KEY, CLIENT_LINK_HMAC_KEY } = process.env
@@ -150,8 +150,8 @@ describe.skipIf(!live)('esign complete (live; needs SUPABASE_URL, SUPABASE_SECRE
     const conn = (await admin.from('connections').select('*').eq('id', connectionId).single()).data!
     expect(conn.status).toBe('done')
     expect(conn.completed_at).toBeTruthy()
-    expect((await admin.from('request_items').select('status').eq('id', item).single()).data!.status).toBe('approved')
-    expect((await admin.from('requests').select('status').eq('id', fx.requestId).single()).data!.status).toBe('complete')
+    expect((await admin.from('request_items').select('status').eq('id', item).single()).data!.status).toBe('submitted')
+    expect((await admin.from('requests').select('status').eq('id', fx.requestId).single()).data!.status).toBe('waiting_on_staff')
     const events = (await admin.from('events').select('action, payload').eq('request_id', fx.requestId)).data!
     expect(events.filter((e) => e.action === 'connection.done')).toHaveLength(1)
     const [row] = await ledger(EVENT_KEY)

@@ -25,7 +25,8 @@ Item transition when a connection status is applied:
 |---|---|---|---|
 | `pending` | `in_progress` | `in_progress` | `pending` |
 | `connected`, `syncing` | `submitted` | `submitted` | `pending`, `in_progress`, `rejected` |
-| `done` | `submitted` | **`approved`** | `pending`, `in_progress`, `submitted`, `rejected` |
+| `done`, connection kind `bank` or `payroll` | `submitted` | **`approved`** | `pending`, `in_progress`, `submitted`, `rejected` |
+| `done`, connection kind `signature` | `submitted` | `submitted` | `pending`, `in_progress`, `rejected` |
 | `error`, `removed` | unchanged | unchanged | - |
 
 - The item only moves forward. `approved` is never regressed by any connection status, including a late `connected` on an already approved item (the `WHERE` clause excludes it).
@@ -34,13 +35,13 @@ Item transition when a connection status is applied:
 
 ### Event
 
-When the `done` mapping changes the item (`FOUND` is true right after the `UPDATE`), the function logs `item.approved` through `log_event` with actor type `provider`, actor id `p_actor_id` or the provider name (`plaid`, `truv`, `teller`, `docuseal`), and payload `{request_item_id, label, auto: true}`. This mirrors the event `item_approve` writes for staff, so the audit log (PLAT-04) shows who or what approved; `auto: true` tells the two apart. It is written in the same transaction, just before `connection.done`. A repeated `done` is the 0005 idempotent no-op and logs nothing.
+When the `done` mapping changes the item (`FOUND` is true right after the `UPDATE`), the function logs `item.approved` through `log_event` with actor type `provider`, actor id `p_actor_id` or the provider name (`plaid`, `truv`, `teller`), and payload `{request_item_id, label, auto: true}`. This mirrors the event `item_approve` writes for staff, so the audit log (PLAT-04) shows who or what approved; `auto: true` tells the two apart. It is written in the same transaction, just before `connection.done`. A repeated `done` is the 0005 idempotent no-op and logs nothing.
 
 ### Request status
 
 `request_apply_status()` (0004) still runs last. With the item at `approved`, a request whose other required items are all approved becomes `complete` with `completed_at` set, where it used to stop at `waiting_on_staff`. The Worker's `setConnectionStatus()` returns the new values (`item_status: 'approved'`, `request_status: 'complete'` for a single-item request); no Worker code branches on them.
 
-Every `done` reaches this path: the Plaid bank reconcile (`app/worker/src/jobs/bank-reconcile.ts`), the Truv payroll reconcile (`jobs/payroll-reconcile.ts`) and the DocuSeal signature reconcile (`jobs/signature-reconcile.ts`), so a completed e-signature also approves its item.
+Only the Plaid bank reconcile (`app/worker/src/jobs/bank-reconcile.ts`) and the Truv payroll reconcile (`jobs/payroll-reconcile.ts`) reach the approve branch. The DocuSeal signature reconcile (`jobs/signature-reconcile.ts`) also reports `done`, but its connection kind is `signature`, so a completed e-signature still lands at `submitted` for staff review exactly as Phase 6 verified it; the Oct 12 call only asked for the bank and payroll steps to read done on their own.
 
 ## Grants
 
@@ -54,4 +55,4 @@ node app/scripts/db-migrate.mjs
 
 ## Verification
 
-Live tests updated for the new transition: `app/worker/test/connections-live.test.ts` (syncing to done approves the item, completes the request and logs one `item.approved` with `auto: true`), `connections-tracer.test.ts`, `esign-complete.test.ts`, `payroll-fetch.test.ts` and `bank-statements.test.ts`. `connected` still leaves the item `submitted` (`bank-complete.test.ts`, unchanged). They need `SUPABASE_URL` and `SUPABASE_SECRET_KEY` and run after the migration is applied.
+Live tests updated for the new transition: `app/worker/test/connections-live.test.ts` (syncing to done approves the item, completes the request and logs one `item.approved` with `auto: true`), `connections-tracer.test.ts`, `payroll-fetch.test.ts` and `bank-statements.test.ts`. `esign-complete.test.ts` keeps `submitted` / `waiting_on_staff` (signature kind). `connected` still leaves the item `submitted` (`bank-complete.test.ts`, unchanged). They need `SUPABASE_URL` and `SUPABASE_SECRET_KEY` and run after the migration is applied.
