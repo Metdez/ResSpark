@@ -24,6 +24,13 @@ describe('suggestDomain', () => {
   it('returns null for an exact known domain', () => {
     expect(suggestDomain('gmail.com')).toBeNull()
     expect(suggestDomain('comcast.net')).toBeNull()
+    expect(suggestDomain('verizon.net')).toBeNull()
+  })
+
+  it('catches typos of the carrier and legacy domains added after the Oct 12 call', () => {
+    expect(suggestDomain('verizonnet')).toBe('verizon.net')
+    expect(suggestDomain('sbcglobal.ent')).toBe('sbcglobal.net')
+    expect(suggestDomain('ymial.com')).toBe('ymail.com')
   })
 
   it('returns null for an unknown domain far from every known one', () => {

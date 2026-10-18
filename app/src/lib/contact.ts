@@ -22,6 +22,14 @@ export const KNOWN_DOMAINS = [
   'icloud.com',
   'aol.com',
   'comcast.net',
+  'live.com',
+  'msn.com',
+  'me.com',
+  'att.net',
+  'sbcglobal.net',
+  'verizon.net',
+  'proton.me',
+  'ymail.com',
 ] as const
 
 // One insertion, deletion, substitution, or adjacent swap (gmial → gmail) apart.

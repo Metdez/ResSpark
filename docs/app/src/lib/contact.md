@@ -7,7 +7,7 @@ Shared client-contact validation (REQ-02, D-04, D-07). Both the SPA "send link" 
 | 1-2 | The sharing rule, and the Zod 4 import. |
 | 4-10 | `normalizePhone`: strips every non-digit, drops a leading `1` when 11 digits remain, and returns `{ e164: '+1' + digits, digits }` only for exactly 10 digits. `(121)121-2121`, `121-121-2121`, `1 121 121 2121`, `+11211212121` all become `+11211212121`. `21211212121`, empty, and whitespace return `null`. |
 | 12-15 | `formatPhoneDoc`: `1211212121` → `(121)121-2121`, the format of the Logics doc's `HomePhone` sample. `lookup.ts` uses it for its one retry. |
-| 17-25 | `KNOWN_DOMAINS`: the seven consumer domains checked for typos (table below). |
+| 17-33 | `KNOWN_DOMAINS`: the fifteen consumer domains checked for typos (table below). The eight after `comcast.net` were added on 2026-10-18 after the Oct 12 call asked for stronger pre-send email checks. |
 | 27-41 | `withinOneEdit`: true when two strings are at most one insertion, deletion, substitution, or adjacent swap apart. Walks the common prefix once, then compares the remaining tails, so it runs in O(n). The adjacent swap matters because `gmial`/`hotmial` are swaps, and plain Levenshtein counts those as two edits. |
 | 43-51 | `suggestDomain`: lowercases. An exact known domain returns `null`. A known domain with its dot removed (`gmailcom`) returns that domain. Otherwise it returns the first known domain within one edit, or `null` when none is close (`valortax.com`). |
 | 53 | `emailSchema`: Zod 4 top-level `z.email()`. |
@@ -28,6 +28,9 @@ Shared client-contact validation (REQ-02, D-04, D-07). Both the SPA "send link" 
 | icloud.com | `iclod.com`, `icloudcom` |
 | aol.com | `aol.co`, `aolcom` |
 | comcast.net | `comcast.ne`, `comcastnet` |
+| live.com, msn.com, me.com | `livecom`, `msn.co`, `me.cmo` |
+| att.net, sbcglobal.net, verizon.net | `attnet`, `sbcglobal.ent`, `verizonnet` |
+| proton.me, ymail.com | `protonme`, `ymial.com` |
 
 ## Copy strings
 

@@ -39,6 +39,8 @@ export async function storeProviderFile(
     kind: 'bank' | 'payroll' | 'signature'
     group: string
     name: string
+    // what staff and Logics see; the storage path keeps `name` so existing keys never move
+    displayName?: string
     mime: string
     document_type: string
     // a loader runs only when the path is not stored yet, so a rerun downloads nothing
@@ -65,7 +67,7 @@ export async function storeProviderFile(
     request_item_id: conn.request_item_id,
     connection_id: conn.id,
     storage_key: path,
-    original_filename: p.name,
+    original_filename: p.displayName ?? p.name,
     mime_type: p.mime,
     document_type: p.document_type,
     size_bytes: bytes.byteLength,

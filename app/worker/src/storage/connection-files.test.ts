@@ -102,6 +102,12 @@ describe('storeProviderFile', () => {
     })
     expect(state.inserts[0].sha256).toMatch(/^[0-9a-f]{64}$/)
   })
+
+  it('displayName becomes original_filename while the path keeps name', async () => {
+    await storeProviderFile(env, input({ displayName: 'Pay stub - September 15, 2026.pdf' }))
+    expect(state.uploads[0].path.endsWith('/paystub-2026-09-15-1001.pdf')).toBe(true)
+    expect(state.inserts[0].original_filename).toBe('Pay stub - September 15, 2026.pdf')
+  })
   it('a concurrent writer won the unique storage_key: created false with its id', async () => {
     state.lookups = [null, { id: 'D9' }]
     state.insertError = { code: '23505', message: 'duplicate key' }

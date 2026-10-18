@@ -17,7 +17,7 @@ Stores provider-fetched files (Truv, Plaid statements, and DocuSeal signed PDFs 
 2. `p.bytes` may be an `ArrayBuffer` or a loader; a loader runs only now, so a rerun downloads nothing that is already stored.
 3. Magic bytes (`sniffType`) must equal `p.mime`, else `Error('bad_file_type')` and nothing is written (T-04-14).
 4. `storage.upload(path, bytes, { contentType: mime, upsert: false })`; an "already exists" error is tolerated (a crash after upload and before the row).
-5. Insert `documents` `{ id, case_id, request_item_id, connection_id, storage_key, original_filename, mime_type, document_type, size_bytes, sha256, status: 'ready', uploaded_by_actor }`. `sha256` is computed when not given.
+5. Insert `documents` `{ id, case_id, request_item_id, connection_id, storage_key, original_filename, mime_type, document_type, size_bytes, sha256, status: 'ready', uploaded_by_actor }`. `sha256` is computed when not given. `original_filename` is `p.displayName` when given (the human-readable name staff and Logics see, e.g. `Pay stub - October 12, 2026.pdf`), else `p.name`; the storage path always uses `p.name`, so `financials/evidence.ts` can keep matching stubs by key suffix.
 6. A unique violation on `storage_key` (`23505`, a concurrent writer) re-reads the winner and returns `{ created: false }`.
 
 ## Tests
