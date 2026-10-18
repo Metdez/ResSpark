@@ -255,3 +255,22 @@ describe('ReviewPanel signature item', () => {
     expect(button('Reject', el).disabled).toBe(false)
   })
 })
+
+describe('ReviewPanel connection items', () => {
+  it('points at the connection card instead of "No files yet"', async () => {
+    vi.mocked(api.fetchReview).mockResolvedValue({
+      ...REVIEW,
+      items: [
+        item({ id: 'b1', kind: 'bank_connect', label: 'Connect your bank' }),
+        item({ id: 'p1', kind: 'payroll_connect', label: 'Connect your payroll' }),
+        item({ id: 'u1', kind: 'upload', label: 'Other documents' }),
+      ],
+    })
+    await render()
+    expect(itemEl('b1').textContent).toContain('No statements yet. Accounts and transactions are in the bank connection above.')
+    expect(itemEl('p1').textContent).toContain('No pay stubs yet. Employers are in the payroll connection above.')
+    expect(itemEl('b1').textContent).not.toContain('No files yet')
+    expect(itemEl('p1').textContent).not.toContain('No files yet')
+    expect(itemEl('u1').textContent).toContain('No files yet')
+  })
+})

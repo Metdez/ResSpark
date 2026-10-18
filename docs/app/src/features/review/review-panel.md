@@ -9,11 +9,11 @@
 | Hooks | `useReview` (5 s visible-tab poll), `useApprove`, `useReject`, and `rejecting`, the item whose reject dialog is open. |
 | No data yet | A card with heading `Review` and either three `Skeleton` rows (loading) or a destructive `Alert` (`Couldn't load the uploads`, the generic copy, the muted code, and a `Retry` button that refetches). Once data has loaded, a failed poll keeps showing the last data (`keepPreviousData`), and polling backs off to 30 s. |
 | Header | `Review` and the request badge `<StatusBadge {...requestStatusBadge(request.status)} />`. It flips to `Complete` when the last required item is approved, and back to `In progress` after a rejection, because each decision invalidates this query (D-06). |
-| Item section | One bordered section per item, in the order the Worker returns them (`position`, then `id`). Shows the label, `Required`/`Optional`, the staff item badge `<StatusBadge {...itemStatusBadge(item.status, 'staff')} />`, and the item's `rejection_note` as `Note to client: …` when there is one. Items of every kind are listed (bank, payroll, address, signature too), so staff see the same step list as the client. Those kinds have no files and therefore read `No files yet`. |
+| Item section | One bordered section per item, in the order the Worker returns them (`position`, then `id`). Shows the label, `Required`/`Optional`, the staff item badge `<StatusBadge {...itemStatusBadge(item.status, 'staff')} />`, and the item's `rejection_note` as `Note to client: …` when there is one. Items of every kind are listed (bank, payroll, address, signature too), so staff see the same step list as the client. Address and signature items render their cards; a `bank_connect` item without statement PDFs reads `No statements yet. Accounts and transactions are in the bank connection above.` and a `payroll_connect` item without pay stubs reads `No pay stubs yet. Employers are in the payroll connection above.` (a connection returns data, not files; the connection card above this panel shows it; Oct 12 call). Any other kind without files reads `No files yet`. |
 | `Approve` | Disabled when the item has no files, is already `approved` (the label then reads `Approved`), or is being approved. A click calls `approve.mutate(item.id)`. A double click therefore sends one request, and a second staff member's concurrent approve is a no-op in the RPC. |
 | `Reject` | Outline button, 16 px from `Approve`, disabled without files. A click clears the last reject error and opens the dialog for this item. An already approved item can still be rejected (the RPC allows `approved → rejected`). |
 | Decision error | Shown under the item that the last approve was for (`approve.variables === item.id`). A reject error is shown inside the dialog. |
-| Documents | A dense `Table` (File, Type, Size, Uploaded, Status, and a screen-reader-only Actions header) with one `DocumentRow` per document, or the muted line `No files yet`. |
+| Documents | A dense `Table` (File, Type, Size, Uploaded, Status, and a screen-reader-only Actions header) with one `DocumentRow` per document, or the muted empty line from `emptyCopy(kind)` (kind-aware for `bank_connect` and `payroll_connect`, else `No files yet`). |
 | `RejectDialog` | Mounted only while an item is being rejected, keyed by the item id. On confirm it calls `reject.mutate({ itemId, note })` and closes on success; on an error the dialog stays open with the message. |
 
 ## Tests
@@ -29,6 +29,7 @@
 - Approve calls `approve('i1')` and invalidates `['review', 'r1']`, `['request', 'r1']`, `['requests']` (the dashboard) and `['events', 'c1']`.
 - A 409 `item_not_submitted` on approve shows `Nothing to approve yet.` with `item_not_submitted` in the muted span.
 - A rejected item shows `Note to client: blurry` and a `Rejected` badge.
+- A `bank_connect` and a `payroll_connect` item without files show the kind-aware copy and not `No files yet`; an `upload` item without files still reads `No files yet`.
 
 ## Address item (Plan 06-03, D-07)
 

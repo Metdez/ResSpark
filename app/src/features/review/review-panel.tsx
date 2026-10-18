@@ -30,6 +30,14 @@ function DecisionError({ error, notReady }: { error: Error | null; notReady: str
   )
 }
 
+// A connection returns accounts, transactions and employers, not files; those show in the connection
+// card above this panel, so its empty line points there instead of "No files yet" (Oct 12 call).
+const EMPTY_COPY: Record<string, string> = {
+  bank_connect: 'No statements yet. Accounts and transactions are in the bank connection above.',
+  payroll_connect: 'No pay stubs yet. Employers are in the payroll connection above.',
+}
+const emptyCopy = (kind: string) => EMPTY_COPY[kind] ?? 'No files yet'
+
 export function ReviewPanel({ requestId, caseId }: { requestId: string; caseId: string }) {
   const review = useReview(requestId)
   const approve = useApprove(requestId, caseId)
@@ -136,7 +144,7 @@ export function ReviewPanel({ requestId, caseId }: { requestId: string; caseId: 
                   </TableBody>
                 </Table>
               ) : (
-                item.kind !== 'address' && <p className='text-sm text-muted-foreground'>No files yet</p>
+                item.kind !== 'address' && <p className='text-sm text-muted-foreground'>{emptyCopy(item.kind)}</p>
               )}
             </section>
           )
