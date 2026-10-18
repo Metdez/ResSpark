@@ -2,7 +2,9 @@ import { describe, expect, it, vi } from 'vitest'
 import { api, ApiError } from '@/lib/api'
 import {
   emailLink,
+  isCaseInfo,
   isRequestDetail,
+  isRequestList,
   isSendResult,
   isTemplates,
   sendErrorExtras,
@@ -75,6 +77,41 @@ describe('guards', () => {
       false
     )
     expect(isSendResult({ expires_at: 'e', version: 1 })).toBe(false)
+  })
+
+  it('isCaseInfo takes an optional requests list and rejects a bad row', () => {
+    const row = {
+      id: 'r7',
+      status: 'sent',
+      agent_display_name: 'Avery Agent',
+      sent_at: '2026-10-12T10:00:00Z',
+      created_at: '2026-10-12T09:00:00Z',
+    }
+    expect(isCaseInfo(DETAIL.case)).toBe(true)
+    expect(isCaseInfo({ ...DETAIL.case, requests: [] })).toBe(true)
+    expect(isCaseInfo({ ...DETAIL.case, requests: [row] })).toBe(true)
+    expect(
+      isCaseInfo({ ...DETAIL.case, requests: [{ ...row, created_at: null }] })
+    ).toBe(false)
+    expect(isCaseInfo({ ...DETAIL.case, requests: 'none' })).toBe(false)
+  })
+
+  it('isRequestList needs agent_display_name as a string or null', () => {
+    const row = {
+      id: 'r1',
+      status: 'sent',
+      client_name: 'Ann Lee',
+      agent_display_name: 'Zack',
+      sent_at: null,
+      expires_at: null,
+      created_at: '2026-10-12T09:00:00Z',
+    }
+    expect(isRequestList({ requests: [row] })).toBe(true)
+    expect(
+      isRequestList({ requests: [{ ...row, agent_display_name: null }] })
+    ).toBe(true)
+    const { agent_display_name: _agent, ...noAgent } = row
+    expect(isRequestList({ requests: [noAgent] })).toBe(false)
   })
 
   it('isTemplates requires an items array on every template', () => {

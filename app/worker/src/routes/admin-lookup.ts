@@ -2,6 +2,7 @@ import { Hono, type Context } from 'hono'
 import { HTTPException } from 'hono/http-exception'
 import { normalizePhone } from '../../../src/lib/contact'
 import { confirmLogicsCase, getCase } from '../db/cases'
+import { listCaseRequests } from '../db/dashboard'
 import { getIntegration } from '../db/integrations'
 import { LogicsError } from '../integrations/logics/client'
 import { resolveLogicsClient } from '../integrations/logics/config'
@@ -89,5 +90,16 @@ export const adminLookupRoute = new Hono<AdminApp>()
     // Another firm's case is indistinguishable from a missing one (404, not 403).
     if (!row) throw new HTTPException(404, { message: 'not_found' })
     const { logics_case_id, first_name, last_name, email, phone_e164, logics_fetched_at } = row
-    return c.json({ case_id: row.id, logics_case_id, first_name, last_name, email, phone_e164, logics_fetched_at })
+    // Oct 12 call (I): the builder warns about these; a second packet stays allowed (see admin-requests.ts).
+    const requests = await listCaseRequests(c.env, c.var.staff.firmId, id)
+    return c.json({
+      case_id: row.id,
+      logics_case_id,
+      first_name,
+      last_name,
+      email,
+      phone_e164,
+      logics_fetched_at,
+      requests,
+    })
   })

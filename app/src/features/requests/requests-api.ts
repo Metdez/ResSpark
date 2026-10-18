@@ -26,6 +26,15 @@ export interface Template {
   items: TemplateItem[]
 }
 
+// GET /api/admin/cases/:id (Oct 12 call, I): the case's existing requests, newest first, revoked left out.
+export interface CaseRequestRow {
+  id: string
+  status: string
+  agent_display_name: string | null
+  sent_at: string | null
+  created_at: string
+}
+
 export interface CaseInfo {
   case_id: string
   logics_case_id: number | null
@@ -33,6 +42,8 @@ export interface CaseInfo {
   last_name: string | null
   email: string | null
   phone_e164: string | null
+  // Only the case read sends this; RequestDetail.case does not.
+  requests?: CaseRequestRow[]
 }
 
 export interface RequestItem {
@@ -80,14 +91,24 @@ export interface SendResult {
 const str = (v: unknown) => typeof v === 'string'
 const strOrNull = (v: unknown) => v === null || typeof v === 'string'
 
-const isCaseInfo = (v: unknown): v is CaseInfo =>
+const isCaseRequestRow = (v: unknown): v is CaseRequestRow =>
+  isObject(v) &&
+  str(v.id) &&
+  str(v.status) &&
+  strOrNull(v.agent_display_name) &&
+  strOrNull(v.sent_at) &&
+  str(v.created_at)
+
+export const isCaseInfo = (v: unknown): v is CaseInfo =>
   isObject(v) &&
   str(v.case_id) &&
   (v.logics_case_id === null || typeof v.logics_case_id === 'number') &&
   strOrNull(v.first_name) &&
   strOrNull(v.last_name) &&
   strOrNull(v.email) &&
-  strOrNull(v.phone_e164)
+  strOrNull(v.phone_e164) &&
+  (v.requests === undefined ||
+    (Array.isArray(v.requests) && v.requests.every(isCaseRequestRow)))
 
 const isItem = (v: unknown): v is RequestItem =>
   isObject(v) &&
@@ -206,6 +227,7 @@ export interface RequestListRow {
   id: string
   status: string
   client_name: string
+  agent_display_name: string | null
   sent_at: string | null
   expires_at: string | null
   created_at: string
@@ -222,6 +244,7 @@ export const isRequestList = (
       str(r.id) &&
       str(r.status) &&
       str(r.client_name) &&
+      strOrNull(r.agent_display_name) &&
       strOrNull(r.sent_at) &&
       strOrNull(r.expires_at) &&
       str(r.created_at)

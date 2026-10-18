@@ -5,11 +5,12 @@ The SPA side of the request routes from Plan 02-04 and the case read from Plan 0
 | Part | What it does |
 |------|--------------|
 | `ItemKind`, `TemplateItem`, `Template` | The template item shape the Worker stores and accepts (`kind`, `label`, `required`, `config`). |
-| `CaseInfo` | `GET /api/admin/cases/:id`: `case_id`, `logics_case_id`, names, `email`, `phone_e164` (each may be `null` when Logics has no value). |
+| `CaseRequestRow` | One existing request of the case (Oct 12 call, I): `id`, `status`, `agent_display_name`, `sent_at`, `created_at`. |
+| `CaseInfo` | `GET /api/admin/cases/:id`: `case_id`, `logics_case_id`, names, `email`, `phone_e164` (each may be `null` when Logics has no value), and `requests?` (the case's existing requests, newest first, revoked left out). Only the case read sends `requests`; `RequestDetail.case` reuses the type without it. |
 | `RequestItem`, `RequestLink`, `RequestDetail` | `GET /api/admin/requests/:id`. `link.url` is `null` once the link is revoked. |
 | `SendResult` | `POST .../send` success: `url`, `expires_at`, `version`, and `email` (the `EmailResult` of the automatic email; absent for a phone-only contact and on `/regenerate`). |
 | `str`, `strOrNull` | Tiny predicates used by the guards. |
-| `isCaseInfo`, `isItem`, `isLink` | Guards for the nested parts. |
+| `isCaseRequestRow`, `isCaseInfo` (exported), `isItem`, `isLink` | Guards for the nested parts. `isCaseInfo` accepts a missing `requests`; when present it must be an array of valid rows. |
 | `isRequestDetail` | Requires string `id`, `status`, `template_name`, a valid `case`, an `items` array of valid items, and `link` either `null` or valid. |
 | `isTemplateItem`, `isTemplates` | `{ templates: [{ id, name, items: TemplateItem[] }] }`. |
 | `isSendResult` | String `url` and `expires_at`, number `version`. |
@@ -20,7 +21,7 @@ The SPA side of the request routes from Plan 02-04 and the case read from Plan 0
 | `emailCopy(result, to)` | The D-09 result line, moved here from `request-link-actions.tsx` so the request page and the signature card share it: `Email sent to {to}`, `Email not configured — copy the link and send it yourself` (`not_configured`), or `Email failed — copy the link and send it yourself` (any other failure). |
 | `emailLink(id, step?)` | Posts `/email` with `{}` (Phase 2) or `{ step }` when a signature item id is given (Plan 06-07, D-17); the Worker then emails the link plus `?step=`. |
 | `regenerateLink`, `revokeLink`, `recordConsent` | Plan 02-06 callers for `/email`, `/regenerate` (returns a `SendResult`), `/revoke` (`{ ok: true }`), and `/consent` (posts `{ agreed: true }`, the only body the Worker accepts). |
-| `RequestListRow`, `isRequestList`, `listRequests()` | `GET /api/admin/requests`: `{ requests: [{ id, status, client_name, sent_at, expires_at, created_at }] }`, newest first; `sent_at` and `expires_at` may be `null`. |
+| `RequestListRow`, `isRequestList`, `listRequests()` | `GET /api/admin/requests`: `{ requests: [{ id, status, client_name, agent_display_name, sent_at, expires_at, created_at }] }`, newest first; `agent_display_name`, `sent_at` and `expires_at` may be `null`. |
 | `SendErrorExtras`, `sendErrorExtras(err)` | Reads the extra fields of a 400/409 send refusal from `ApiError.body`: `email_error`, `phone_error`, `email_suggestion` (strings), `differs` (only `email`/`phone` survive), `changed` (strings). Returns `{}` when there is no body. |
 | `logicsErrorCopy` (re-export) | The Logics two-part copy, defined once in `features/lookup/lookup-api.ts` and re-exported here for the send screen. |
 | `unlessHandled(qc, handled)` | Builds a mutation `onError`. Errors the screen renders itself (inline or in an `Alert`) stop there. Everything else is passed to the app-wide default handler from `main.tsx`, so 401 still signs out, 403 still toasts, and unknown codes still get the generic toast. Needed because a mutation's own `onError` replaces the default one. |
@@ -28,4 +29,4 @@ The SPA side of the request routes from Plan 02-04 and the case read from Plan 0
 
 ## Tests
 
-`requests-api.test.ts` (`web` project): `isRequestDetail` accepts the documented shape with and without a link, and rejects a missing `items` or a numeric `status`. `isSendResult` rejects a string `version` or a missing `url`. `isTemplates` rejects a template without `items`. `emailLink` (with `@/lib/api`'s `api` mocked) sends `{ step: 's1' }` with a step and `{}` without. `sendErrorExtras` reads the 409 extras, returns `{}` without a body, and drops `differs` entries outside `email|phone` and non-string `changed` entries.
+`requests-api.test.ts` (`web` project): `isRequestDetail` accepts the documented shape with and without a link, and rejects a missing `items` or a numeric `status`. `isSendResult` rejects a string `version` or a missing `url`. `isTemplates` rejects a template without `items`. `isCaseInfo` accepts no `requests`, `[]`, and a valid row, and rejects a row with a `null` `created_at` or a non-array `requests`. `isRequestList` accepts `agent_display_name` as a string or `null` and rejects a row without it. `emailLink` (with `@/lib/api`'s `api` mocked) sends `{ step: 's1' }` with a step and `{}` without. `sendErrorExtras` reads the 409 extras, returns `{}` without a body, and drops `differs` entries outside `email|phone` and non-string `changed` entries.

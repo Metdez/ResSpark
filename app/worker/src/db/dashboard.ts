@@ -60,3 +60,28 @@ export async function listDashboardRequests(
   if (error) throw new Error('requests_lookup_failed')
   return (data as unknown as Omit<DashboardRow, 'client_name'>[]).map((r) => ({ ...r, client_name: clientName(r) }))
 }
+
+// Oct 12 call (I): the builder warns when the case already has a request. Revoked ones are history,
+// not duplicates, so they are left out; drafts count because staff may already be working on one.
+export interface CaseRequestRow {
+  id: string
+  status: string
+  agent_display_name: string | null
+  sent_at: string | null
+  created_at: string
+}
+
+const CASE_REQUEST_COLUMNS = 'id, status, agent_display_name, sent_at, created_at'
+
+export async function listCaseRequests(env: DbEnv, firmId: string, caseId: string): Promise<CaseRequestRow[]> {
+  const { data, error } = await createAdminClient(env)
+    .from('request_dashboard_v')
+    .select(CASE_REQUEST_COLUMNS)
+    .eq('firm_id', firmId)
+    .eq('case_id', caseId)
+    .neq('status', 'revoked')
+    .order('created_at', { ascending: false })
+    .limit(20)
+  if (error) throw new Error('requests_lookup_failed')
+  return data as unknown as CaseRequestRow[]
+}
