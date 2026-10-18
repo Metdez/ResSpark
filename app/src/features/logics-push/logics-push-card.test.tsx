@@ -117,6 +117,7 @@ const button = (text: string) =>
   [...container.querySelectorAll('button')].find((b) => b.textContent?.trim() === text) as HTMLButtonElement
 const box = (label: string) => container.querySelector(`[aria-label="${label}"]`) as HTMLButtonElement
 const row = (id: string) => container.querySelector(`[data-push-row="${id}"]`) as HTMLElement
+const selectAll = () => container.querySelector('#logics-push-select-all') as HTMLButtonElement
 const click = (el: HTMLElement) =>
   act(async () => {
     el.click()
@@ -254,5 +255,49 @@ describe('LogicsPushCard', () => {
     await render(ITEMS, ledger('fake', [push({ document_id: 'big', state: 'unknown', logics_document_id: null })]))
     await click(button('Needs your decision'))
     expect(document.body.textContent).toContain("Logics didn't confirm this file")
+  })
+})
+
+describe('LogicsPushCard select all', () => {
+  const WORKSHEET = '433A-screening-worksheet-900001-2026-10-11.pdf'
+  // small is already sent and note.pdf is not a PDF (manual): neither can be selected
+  const items = [item({ documents: [doc('small', 2048), doc('big', 7 * 1024 * 1024), { ...doc('note', 100), mime: 'text/plain' }] })]
+
+  it('selects every enabled row, skips sent and manual rows, and the sheet gets exactly those', async () => {
+    await render(items, ledger('fake', [push({})]), worksheetsFor('r1'))
+    const pushButton = button('Push to Logics (simulated)')
+    expect(pushButton.disabled).toBe(true)
+    expect(selectAll().getAttribute('aria-checked')).toBe('false')
+    await click(selectAll())
+    expect(selectAll().getAttribute('aria-checked')).toBe('true')
+    expect(box('Select big.pdf').getAttribute('aria-checked')).toBe('true')
+    expect(box(`Select ${WORKSHEET}`).getAttribute('aria-checked')).toBe('true')
+    expect(box('Select small.pdf').getAttribute('aria-checked')).toBe('false')
+    expect(box('Select note.pdf').getAttribute('aria-checked')).toBe('false')
+    expect(pushButton.disabled).toBe(false)
+    await click(pushButton)
+    const sheet = document.body.querySelector('[role="dialog"]') as HTMLElement
+    expect(sheet.textContent).toContain('big.pdf')
+    expect(sheet.textContent).toContain(WORKSHEET)
+    expect(sheet.textContent).not.toContain('small.pdf')
+    expect(sheet.textContent).not.toContain('note.pdf')
+  })
+
+  it('reads mixed with a partial selection; a second click clears everything', async () => {
+    await render(items, ledger('fake', [push({})]), worksheetsFor('r1'))
+    await click(box('Select big.pdf'))
+    expect(selectAll().getAttribute('aria-checked')).toBe('mixed')
+    await click(selectAll())
+    expect(selectAll().getAttribute('aria-checked')).toBe('true')
+    await click(selectAll())
+    expect(selectAll().getAttribute('aria-checked')).toBe('false')
+    expect(box('Select big.pdf').getAttribute('aria-checked')).toBe('false')
+    expect(button('Push to Logics (simulated)').disabled).toBe(true)
+  })
+
+  it('is disabled when no row can be pushed', async () => {
+    await render([item({ documents: [doc('small', 2048)] })], ledger('fake', [push({})]))
+    expect(selectAll().disabled).toBe(true)
+    expect(selectAll().getAttribute('aria-checked')).toBe('false')
   })
 })

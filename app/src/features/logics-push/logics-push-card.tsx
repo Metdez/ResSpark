@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
+import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
 import { PushStatusBadge, StatusBadge } from '@/components/status-badge'
 import { useReview } from '@/features/review/use-review'
@@ -100,6 +101,10 @@ export function LogicsPushCard({ requestId, caseId }: { requestId: string; caseI
   }
   const live = ledger.data?.mode === 'live'
   const groups = [...new Set(rows.map((r) => r.itemLabel))]
+  // Select all (Oct 12 call) covers every row that can be pushed; sent, in-flight, unknown and manual rows stay out.
+  const enabled = rows.filter((r) => !r.disabled)
+  const allChecked = enabled.length > 0 && enabled.every((r) => selected.has(r.id))
+  const someChecked = enabled.some((r) => selected.has(r.id))
 
   return (
     <Card>
@@ -113,6 +118,18 @@ export function LogicsPushCard({ requestId, caseId }: { requestId: string; caseI
             </Button>
           </p>
         )}
+        <div className='flex items-center gap-2'>
+          <Checkbox
+            id='logics-push-select-all'
+            className='data-[state=indeterminate]:border-primary data-[state=indeterminate]:bg-primary/50 data-[state=indeterminate]:text-primary-foreground'
+            checked={allChecked ? true : someChecked ? 'indeterminate' : false}
+            disabled={enabled.length === 0}
+            onCheckedChange={(v) => setSelected(v === true ? new Set(enabled.map((r) => r.id)) : new Set())}
+          />
+          <Label htmlFor='logics-push-select-all' className='font-normal'>
+            Select all
+          </Label>
+        </div>
         {groups.map((label) => (
           <section key={label} className='grid'>
             <h3 className='text-sm text-muted-foreground'>{label}</h3>
