@@ -13,6 +13,6 @@ Run: `pnpm -C app run test:live:file worker/test/payroll-fetch.test.ts`.
 
 1. `reconcileConnection(..., { source: 'cron' })` gives `done`. Six `documents` rows (income report 1, pay stubs 3, W-2 1, 1099 1), all `ready`, on the payroll item, `provider:truv`; each object exists in Storage (`headBytes`); five under `/payroll/acme-inc-emp_1/`, one under `/payroll/beta-llc-emp_2/`. Employer counts 2/1/1 and 1/0/0 with `fetched_at`; `connections.data` holds no `files.truv.test` URL and not the report's access token. Item `submitted`; one `connection.done` event.
 2. Rerun: still six rows; the only vendor call is `GET /v1/orders/ord_fixture_fetch/`.
-3. Beta's `fetched_at` is cleared and its report gains a statement with a wrong `md5sum`: the run rejects with `ProviderError` `file_hash_mismatch`; only the bad file was downloaded (the stored Beta stub was skipped before download); no row for `paystub-2026-10-15-78.pdf`.
+3. Beta's `fetched_at` is cleared and its report gains a statement with a wrong `md5sum`: the run rejects with `ProviderError` `file_hash_mismatch`; only the bad file was downloaded (the stored Beta stub was skipped before download); no row for `Pay stub - October 15, 2026 - check 78.pdf` (documents carry the readable display name since 2026-10-18; the storage key keeps `paystub-<pay_date>[-<check>].pdf`).
 
 `afterAll` removes the Storage objects and the `documents` rows of the connection, then `fx.cleanup()`.

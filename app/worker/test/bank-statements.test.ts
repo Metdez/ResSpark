@@ -149,15 +149,24 @@ describe.skipIf(!live)('bank statements (live; needs SUPABASE_URL, SUPABASE_SECR
     expect(paths().filter((p) => p === '/statements/refresh')).toHaveLength(1)
   })
 
-  it('second reconcile: still nothing for acc_2 -> not_supported, done, no new downloads or refresh', async () => {
+  // Quick 261018-kgl (H): done also generates a transaction-statement PDF for every window month the bank
+  // could not provide that has transactions: acc_2 August (not_supported) and acc_1 July (missing).
+  it('second reconcile: still nothing for acc_2 -> not_supported, done, generated transaction PDFs, no new downloads or refresh', { timeout: 30_000 }, async () => {
     const downloads = paths().filter((p) => p === '/statements/download').length
     const r = await reconcileConnection(env, conn.id, { source: 'cron' })
     expect(r.status).toBe('done')
     const ids = Object.fromEntries((await accounts(conn.id)).map((a) => [a.external_account_id, a.id]))
-    expect((await cells(ids.acc_2)).map((c) => c.status)).toEqual(Array(6).fill('not_supported'))
+    const acc2 = await cells(ids.acc_2)
+    expect(acc2.map((c) => c.status)).toEqual(Array(6).fill('not_supported'))
+    expect(acc2.filter((c) => c.document_id)).toHaveLength(1)
+    expect((await cells(ids.acc_1)).filter((c) => c.status === 'missing' && c.document_id)).toHaveLength(1)
     expect(paths().filter((p) => p === '/statements/download')).toHaveLength(downloads)
     expect(paths().filter((p) => p === '/statements/refresh')).toHaveLength(1)
-    expect((await fx.admin.from('documents').select('id').eq('connection_id', conn.id)).data).toHaveLength(2)
+    const docs = (await fx.admin.from('documents').select('document_type, original_filename, uploaded_by_actor').eq('connection_id', conn.id)).data!
+    expect(docs.filter((d) => d.document_type === 'bank_statement')).toHaveLength(2)
+    const generated = docs.filter((d) => d.document_type === 'bank_transactions')
+    expect(generated.map((d) => d.original_filename).sort()).toEqual(['Transactions - August 2026 - x1111.pdf', 'Transactions - July 2026 - x0000.pdf'])
+    expect(generated.every((d) => d.uploaded_by_actor === 'provider:resspark')).toBe(true)
     expect((await fx.admin.from('request_items').select('status').eq('id', fx.item_id).single()).data!.status).toBe('approved')
   })
 

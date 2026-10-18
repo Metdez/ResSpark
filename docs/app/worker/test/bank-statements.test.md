@@ -12,7 +12,7 @@ Live proof for the connected half of the bank flow (BANK-02, BANK-03). Real Supa
 ## Tests
 
 1. First cron reconcile: status `syncing`; sync cursors `null, c1, null, c1, c2`; 2 accounts; 3 transactions (4 added minus 1 removed), read `date DESC, plaid_transaction_id ASC`; `sync_cursor c3`; `transactions_update_status` stored; `acc_1` has 2 `available` cells with documents and 4 `missing`; `acc_2` has 6 `pending`; 2 `bank_statement` documents with the header hash, actor `provider:plaid`, and a `/bank/0000/YYYY-MM.pdf` key; exactly one `/statements/refresh`.
-2. Second reconcile: `acc_2` cells `not_supported`, status `done`, no new download or refresh, still 2 documents, item `submitted`.
+2. Second reconcile (30 s budget): `acc_2` cells `not_supported`, status `done`, no new download or refresh; the two `bank_statement` documents are joined by two generated `bank_transactions` documents (`Transactions - August 2026 - x1111.pdf` for acc_2, `Transactions - July 2026 - x0000.pdf` for acc_1's missing July), actor `provider:resspark`, each attached to its month cell while the cell status stays `not_supported` / `missing` (quick task 261018-kgl, item H); the item is `approved` (0011).
 3. `SYNC_UPDATES_AVAILABLE` hint: one `/transactions/sync` from cursor `c3`, then the `/accounts/get` balances call, no statements calls.
 4. `ITEM_LOGIN_REQUIRED` hint on a fresh connected connection: status `error` with that code and no vendor call. (A `done` connection keeps `done`: `connection_set_status` only moves forward by rank.)
 5. `PRODUCTS_NOT_SUPPORTED`: every cell of every account `not_supported`, and the connection reaches `done` once history is complete.

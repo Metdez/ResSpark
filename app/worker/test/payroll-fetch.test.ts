@@ -80,7 +80,7 @@ describe.skipIf(!live)('payroll fetch (live; needs SUPABASE_URL, SUPABASE_SECRET
     }
     expect(rows.filter((d) => d.storage_key.includes('/payroll/acme-inc-emp_1/'))).toHaveLength(5)
     expect(rows.filter((d) => d.storage_key.includes('/payroll/beta-llc-emp_2/'))).toHaveLength(1)
-    expect(rows.map((d) => d.original_filename)).toContain('paystub-2026-09-15-1001.pdf')
+    expect(rows.map((d) => d.original_filename)).toContain('Pay stub - September 15, 2026 - check 1001.pdf')
 
     const c = await conn()
     const employers = (c.data as { employers: Array<Record<string, unknown>> }).employers
@@ -122,6 +122,6 @@ describe.skipIf(!live)('payroll fetch (live; needs SUPABASE_URL, SUPABASE_SECRET
     expect(callsTo(/files\.truv\.test/) - downloadsBefore).toBe(1)
     const rows = await docs()
     expect(rows).toHaveLength(6)
-    expect(rows.map((d) => d.original_filename)).not.toContain('paystub-2026-10-15-78.pdf')
+    expect(rows.map((d) => d.original_filename)).not.toContain('Pay stub - October 15, 2026 - check 78.pdf')
   })
 })
