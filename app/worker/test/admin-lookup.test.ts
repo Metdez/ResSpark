@@ -11,6 +11,7 @@ vi.mock('../src/db/staff', () => ({ getStaffProfile: vi.fn() }))
 vi.mock('../src/db/events', () => ({ logEvent: vi.fn() }))
 vi.mock('../src/db/integrations', () => ({ getIntegration: vi.fn() }))
 vi.mock('../src/db/cases', () => ({ confirmLogicsCase: vi.fn(), getCase: vi.fn() }))
+vi.mock('../src/db/dashboard', () => ({ listCaseRequests: vi.fn().mockResolvedValue([]) }))
 
 const FIRM = '00000000-0000-0000-0000-000000000001'
 const SUB = '11111111-2222-4333-8444-555555555555'
@@ -278,7 +279,7 @@ describe('POST /api/admin/cases/:logicsCaseId/confirm', () => {
 })
 
 describe('GET /api/admin/cases/:id', () => {
-  it('returns the seven case fields, without the snapshot', async () => {
+  it('returns the case fields and an empty requests list, without the snapshot', async () => {
     vi.mocked(getCase).mockResolvedValue({
       id: CASE_UUID,
       firm_id: FIRM,
@@ -300,6 +301,7 @@ describe('GET /api/admin/cases/:id', () => {
       email: 'jordan.rivera@example.com',
       phone_e164: '+15550100001',
       logics_fetched_at: '2026-10-11T00:00:00Z',
+      requests: [],
     })
     expect(getCase).toHaveBeenCalledWith(expect.anything(), FIRM, CASE_UUID)
   })
