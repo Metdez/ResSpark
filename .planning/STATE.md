@@ -4,9 +4,9 @@ current_phase: 8
 current_phase_name: Reminders & Readiness
 status: paused
 stopped_at: Phases 1-7 complete, verified, deployed 4219f2b; Phase 8 awaiting approval
-last_updated: "2026-10-11T20:05:06.746Z"
-last_activity: 2026-10-11
-last_activity_desc: Phase 7 verified (66/71, live suites 39/39); Phase 8 awaiting "approve phase 8 migrations"
+last_updated: "2026-10-18T22:40:00.000Z"
+last_activity: 2026-10-18
+last_activity_desc: Quick task 261018-kgl (Oct 12 call feedback) built, 0011 applied; Phase 8 still awaiting "approve phase 8 migrations"
 state_head: c62c76ecf5bbe2e2f5507446490e9caaf8dbb69e
 progress:
   total_phases: 8
@@ -130,6 +130,10 @@ Recent decisions affecting current work:
 - [Phase 02]: Populated requests list follows dense-table rules with count-aware caption; filters/sorting/polling stay Phase 3 (assumption for Phase 3 to confirm)
 - [Phase 02]: 02-08: app-wide error toast fires only on /admin; queries that render their own error set meta.errorShown and pass only a 401
 - [Phase 02]: 02-08: client heartbeat runs from state load with last_step intro/list/step kind; PORT-04 saved progress is server-side status and opened_at
+- [Quick 261018-kgl]: a done bank or payroll connection auto-approves its item (migration 0011, `item.approved` with actor provider, auto: true); signatures still submit for staff review. Reverses the "every item needs a staff approve" reading of UPL-04 for provider-completed steps, per the Oct 12 call.
+- [Quick 261018-kgl]: client-portal connect sheets name the provider ("Secure connection powered by Plaid/Truv") as display text; behaviour still branches on capabilities only (D-11). Replaces the Phase 4 "no vendor names" rule.
+- [Quick 261018-kgl]: provider files carry a human-readable `original_filename` (displayName) while storage keys keep the machine name; existing rows are not backfilled.
+- [Quick 261018-kgl]: months a bank cannot provide get a generated transaction-statement PDF attached to the cell without changing the cell status, so a real upload still wins.
 
 ### Pending Todos
 
@@ -147,6 +151,12 @@ None yet.
 - [Requirements]: REQUIREMENTS.md header said 62 v1 requirements; the actual count is 70 and has been corrected
 - app/.env not created in Plan 01-02 (auto-mode classifier blocked the copy); human must copy src/frontend/.env to app/.env and append VITE_APP_NAME=ResSpark before Plan 06 needs Supabase in the SPA
 - USER ACTION (01-05): run pnpm -C app run deploy then node app/scripts/smoke.mjs https://resspark.zh-a16.workers.dev (deploy with secrets.required was blocked by the auto-mode classifier)
+
+## Quick Tasks Completed
+
+| ID | Task | Date | Commits | Summary |
+|----|------|------|---------|---------|
+| 261018-kgl | Incorporate the Oct 12 ValorTax call feedback: Bank and payroll default template, Plaid/Truv trust line, done connections auto-approve, readable file names for Logics, Select all on push, 3-month pay-stub table, generated transaction PDFs, duplicate-case warning, Agent column, more typo domains | 2026-10-18 | 90ce5ef..d0abda0 (16 commits on `zack`) | .planning/quick/261018-kgl-incorporate-oct-12-valortax-call-feedbac/SUMMARY.md |
 
 ## Deferred Items
 

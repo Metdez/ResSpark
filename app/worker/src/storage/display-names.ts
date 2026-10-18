@@ -7,7 +7,7 @@ const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/
 
 // Logics is a Windows-facing product: none of these may appear in a file name.
-const windowsSafe = (s: string) => s.replace(/[\/:*?"<>|]/g, '')
+const windowsSafe = (s: string) => s.replace(/[/\\:*?"<>|]/g, '')
 const monthName = (month: number) => MONTHS[month - 1] ?? String(month).padStart(2, '0')
 
 // '2026-10-12' -> 'October 12, 2026'. Anything that is not YYYY-MM-DD comes back unchanged.

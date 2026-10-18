@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { INCOME_REPORT_DISPLAY_NAME, longDate, payStubDisplayName, statementDisplayName, w2DisplayName } from './display-names'
 
-const FORBIDDEN = /[\/:*?"<>|]/
+const FORBIDDEN = /[/\\:*?"<>|]/
 
 describe('longDate', () => {
   it('spells out an ISO date without a timezone shift', () => {
@@ -48,7 +48,7 @@ describe('w2DisplayName / INCOME_REPORT_DISPLAY_NAME', () => {
 })
 
 describe('Windows-safe names', () => {
-  it('no helper emits / \ : * ? " < > |', () => {
+  it('no helper emits / \\ : * ? " < > |', () => {
     const names = [
       statementDisplayName(2026, 9, 'x/y:z'),
       statementDisplayName(2026, 13, null),
