@@ -33,6 +33,7 @@ describe('cellBadge', () => {
     ['not_supported', 'muted', 'Not from bank'],
     ['missing', 'warning', 'Missing'],
     ['pending', 'neutral', 'Checking'],
+    ['generated', 'info', 'From transactions'],
   ])('%s', (status, tone, label) => expect(cellBadge(status)).toEqual({ tone, label }))
 })
 

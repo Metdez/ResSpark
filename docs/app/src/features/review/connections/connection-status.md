@@ -40,6 +40,7 @@ One statement-grid cell.
 | `not_supported` | muted | Not from bank |
 | `missing` | warning | Missing |
 | `pending` | neutral | Checking |
+| `generated` | info | From transactions (not a stored cell status: the grid passes it for a `not_supported` or `missing` cell that carries a ResSpark-generated transaction statement, Oct 12 call item H) |
 | unknown | warning | Missing |
 
 ## `employerBadge(status)`

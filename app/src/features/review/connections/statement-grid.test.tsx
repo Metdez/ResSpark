@@ -120,6 +120,22 @@ describe('StatementGrid', () => {
     expect(cells().map((c) => c.querySelector('button') !== null)).toEqual([true, true, false, false, false, false])
   })
 
+  it('a not_supported or missing month with a generated document reads From transactions and opens it', async () => {
+    await render([account({ months: [m(9, 'not_supported', 'G9'), m(8, 'missing', 'G8'), m(7, 'not_supported')] })])
+    expect(cells().slice(0, 3).map((c) => c.textContent)).toEqual(['From transactions', 'From transactions', 'Not from bank'])
+    const btn = container.querySelector('[aria-label="Open Sep 2026 transactions"]') as HTMLButtonElement
+    await act(async () => btn.click())
+    await flush()
+    expect(reviewApi.documentUrl).toHaveBeenCalledWith('G9', 'inline')
+    expect(container.querySelector('[aria-label="Open Aug 2026 transactions"]')).not.toBeNull()
+  })
+
+  it('lists the generated badge in the legend', async () => {
+    await render([account({})])
+    const legend = [...container.querySelector('[aria-label="Legend"]')!.children].map((b) => b.textContent)
+    expect(legend).toEqual(['Statement', 'Uploaded', 'From transactions', 'Not from bank', 'Missing', 'Checking'])
+  })
+
   it('keeps accounts in the given order', async () => {
     await render([account({ id: 'B', mask: '9999', name: 'Savings' }), account({ id: 'A1' })])
     expect([...container.querySelectorAll('[data-account]')].map((r) => r.getAttribute('data-account'))).toEqual([

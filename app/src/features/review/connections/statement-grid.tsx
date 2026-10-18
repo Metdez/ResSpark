@@ -7,18 +7,20 @@ import type { AccountSummary } from './api'
 import { cellBadge } from './connection-status'
 import { openSigned } from './open-signed'
 
-const LEGEND = ['available', 'manual', 'not_supported', 'missing', 'pending']
+const LEGEND = ['available', 'manual', 'generated', 'not_supported', 'missing', 'pending']
 
 function Cell({ status, documentId, label }: { status: string; documentId: string | null; label: string }) {
-  const badge = <StatusBadge {...cellBadge(status)} />
-  if (!documentId || (status !== 'available' && status !== 'manual')) return badge
+  // A month the bank could not provide may still carry a ResSpark-generated transaction statement.
+  const generated = documentId !== null && (status === 'not_supported' || status === 'missing')
+  const badge = <StatusBadge {...cellBadge(generated ? 'generated' : status)} />
+  if (!documentId || (status !== 'available' && status !== 'manual' && !generated)) return badge
   return (
     <Button
       type='button'
       variant='ghost'
       size='sm'
       className='h-auto p-0'
-      aria-label={`Open ${label} ${status === 'available' ? 'statement' : 'upload'}`}
+      aria-label={`Open ${label} ${status === 'available' ? 'statement' : generated ? 'transactions' : 'upload'}`}
       onClick={() => void openSigned(documentUrl(documentId, 'inline'))}
     >
       {badge}

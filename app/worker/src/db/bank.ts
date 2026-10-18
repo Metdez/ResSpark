@@ -80,6 +80,51 @@ export async function listConnectionAccounts(env: DbEnv, connectionId: string): 
   return (data ?? []) as Array<{ id: string }>
 }
 
+export interface AccountRow {
+  id: string
+  external_account_id: string
+  mask: string | null
+  name: string | null
+}
+
+// The accounts with the fields a generated transaction statement is named by (mask, name).
+export async function listConnectionAccountRows(env: DbEnv, connectionId: string): Promise<AccountRow[]> {
+  const { data, error } = await createAdminClient(env)
+    .from('bank_accounts')
+    .select('id, external_account_id, mask, name')
+    .eq('connection_id', connectionId)
+    .order('mask')
+    .order('id')
+  if (error) throw new Error('account_lookup_failed')
+  return (data ?? []) as AccountRow[]
+}
+
+export interface MonthTransaction {
+  date: string
+  name: string | null
+  merchant_name: string | null
+  amount: number
+  pending: boolean
+}
+
+const pad2 = (n: number) => String(n).padStart(2, '0')
+
+// One account's transactions dated inside the month, first to last day inclusive, in feed order.
+export async function listAccountMonthTransactions(env: DbEnv, accountId: string, year: number, month: number): Promise<MonthTransaction[]> {
+  const lastDay = new Date(Date.UTC(year, month, 0)).getUTCDate()
+  const { data, error } = await createAdminClient(env)
+    .from('bank_transactions')
+    .select('date, name, merchant_name, amount, pending')
+    .eq('bank_account_id', accountId)
+    .gte('date', `${year}-${pad2(month)}-01`)
+    .lte('date', `${year}-${pad2(month)}-${pad2(lastDay)}`)
+    .order('date')
+    .order('plaid_transaction_id')
+  if (error) throw new Error('transaction_lookup_failed')
+  // NUMERIC arrives as a string from PostgREST.
+  return ((data ?? []) as Array<Omit<MonthTransaction, 'amount'> & { amount: unknown }>).map((r) => ({ ...r, amount: Number(r.amount) }))
+}
+
 export async function ensureMonthCells(env: DbEnv, accountIds: string[], cells: Array<{ year: number; month: number }>): Promise<void> {
   const rows = accountIds.flatMap((bank_account_id) => cells.map((c) => ({ bank_account_id, ...c, status: 'pending' })))
   if (rows.length === 0) return

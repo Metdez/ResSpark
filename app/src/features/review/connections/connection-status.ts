@@ -32,6 +32,8 @@ const CELLS: Record<string, Badge> = {
   not_supported: { tone: 'muted', label: 'Not from bank' },
   missing: { tone: 'warning', label: 'Missing' },
   pending: { tone: 'neutral', label: 'Checking' },
+  // Not a cell status: a not_supported/missing cell that carries a ResSpark-generated transaction statement.
+  generated: { tone: 'info', label: 'From transactions' },
 }
 
 export function cellBadge(status: string): Badge {

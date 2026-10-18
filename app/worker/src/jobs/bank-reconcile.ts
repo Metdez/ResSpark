@@ -15,6 +15,7 @@ import type { BankProvider } from '../integrations/bank/provider'
 import { ProviderError } from '../integrations/provider-error'
 import { openToken, sealToken } from '../integrations/token-vault'
 import { syncStatements } from './bank-statements'
+import { generateTransactionPdfs } from './bank-transaction-pdfs'
 import type { ReconcileOpts } from './reconcile'
 
 const DAY_MS = 86_400_000
@@ -121,7 +122,9 @@ async function syncConnected(
     } else if (conn.status !== 'done') {
       pending = 1 // statements were not checked on this run, so done is not proven
     }
-    const res = await setConnectionStatus(env, conn.id, historical && pending === 0 ? 'done' : 'syncing')
+    const complete = historical && pending === 0
+    if (complete && provider.capabilities.transactions) await generateTransactionPdfsSafely(env, { ...conn, data })
+    const res = await setConnectionStatus(env, conn.id, complete ? 'done' : 'syncing')
     return { status: res.status, applied: res.applied }
   } catch (e) {
     if (e instanceof ProviderError && !e.transient && isPermanent(e.code)) {
@@ -129,6 +132,16 @@ async function syncConnected(
       return { status: res.status, applied: res.applied }
     }
     throw e
+  }
+}
+
+// Oct 12 call (H): months the bank cannot provide get a generated transaction statement once history is
+// complete. A failure is recorded and never blocks `done`; the next reconcile tries again.
+async function generateTransactionPdfsSafely(env: Env, conn: ConnectionRow): Promise<void> {
+  try {
+    await generateTransactionPdfs(env, conn)
+  } catch (e) {
+    await recordConnectionEvent(env, conn.id, 'connection.transaction_pdfs_failed', { code: e instanceof Error ? e.message : 'unknown' })
   }
 }
 
