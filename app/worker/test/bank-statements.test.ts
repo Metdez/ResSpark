@@ -158,7 +158,7 @@ describe.skipIf(!live)('bank statements (live; needs SUPABASE_URL, SUPABASE_SECR
     expect(paths().filter((p) => p === '/statements/download')).toHaveLength(downloads)
     expect(paths().filter((p) => p === '/statements/refresh')).toHaveLength(1)
     expect((await fx.admin.from('documents').select('id').eq('connection_id', conn.id)).data).toHaveLength(2)
-    expect((await fx.admin.from('request_items').select('status').eq('id', fx.item_id).single()).data!.status).toBe('submitted')
+    expect((await fx.admin.from('request_items').select('status').eq('id', fx.item_id).single()).data!.status).toBe('approved')
   })
 
   it('SYNC_UPDATES_AVAILABLE syncs from the stored cursor without statements calls', async () => {

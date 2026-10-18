@@ -91,7 +91,7 @@ describe.skipIf(!live)('payroll fetch (live; needs SUPABASE_URL, SUPABASE_SECRET
     expect(JSON.stringify(c.data)).not.toContain('at_fixture_never_stored')
 
     const item = (await fx.admin.from('request_items').select('status').eq('id', fx.item_id).single()).data!
-    expect(item.status).toBe('submitted')
+    expect(item.status).toBe('approved')
     const done = (await fx.admin.from('events').select('id').eq('request_id', fx.request_id).eq('action', 'connection.done')).data!
     expect(done).toHaveLength(1)
   })

@@ -16,8 +16,8 @@ import { stubVendorFetch } from './helpers/vendor-fetch'
 
 // WEBH-01 / WEBH-03 / PAY-04 tracer against the live project (test firm 00000000-0000-0000-0000-00000000000e):
 // signed Truv order-status-updated -> 200 -> one webhook_events row -> queue() -> stubbed
-// GET /v1/orders/ord_fixture_1/ (two completed employers) -> connection done -> item submitted
-// -> request waiting_on_staff -> one connection.done event. Only the Truv API is stubbed.
+// GET /v1/orders/ord_fixture_1/ (two completed employers) -> connection done -> item approved
+// -> request complete (migration 0011) -> one connection.done event. Only the Truv API is stubbed.
 const { SUPABASE_URL, SUPABASE_SECRET_KEY } = process.env
 const live = Boolean(SUPABASE_URL && SUPABASE_SECRET_KEY)
 // eslint-disable-next-line no-console -- the skip reason must be visible in the run output
@@ -139,9 +139,9 @@ describe.skipIf(!live)('connections tracer (live; needs SUPABASE_URL, SUPABASE_S
     expect(employers.every((e) => e.status === 'done')).toBe(true)
 
     const item = (await fx.admin.from('request_items').select('status').eq('id', fx.item_id).single()).data!
-    expect(item.status).toBe('submitted')
+    expect(item.status).toBe('approved')
     const request = (await fx.admin.from('requests').select('status').eq('id', fx.request_id).single()).data!
-    expect(request.status).toBe('waiting_on_staff')
+    expect(request.status).toBe('complete')
 
     const events = (await fx.admin.from('events').select('payload').eq('request_id', fx.request_id).eq('action', 'connection.done'))
       .data!

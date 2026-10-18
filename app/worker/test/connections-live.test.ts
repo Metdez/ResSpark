@@ -7,6 +7,7 @@ import { seedConnectionFixture, type ConnectionFixture } from './fixtures/connec
 // WEBH-03 rank matrix for connection_set_status, driven straight through the RPC against the live
 // project (test firm 00000000-0000-0000-0000-00000000000e). Rank: pending 10 < connected 30 <
 // syncing 40 < error 45 < done 50 < removed 60; error is repairable by connected/syncing/done.
+// done approves the item and completes a single-item request (migration 0011).
 const { SUPABASE_URL, SUPABASE_SECRET_KEY } = process.env
 const live = Boolean(SUPABASE_URL && SUPABASE_SECRET_KEY)
 // eslint-disable-next-line no-console -- the skip reason must be visible in the run output
@@ -75,12 +76,17 @@ describe.skipIf(!live)('connection_set_status rank matrix (live; needs SUPABASE_
     expect(await set(main, 'syncing')).toMatchObject({ applied: true, status: 'syncing' })
   })
 
-  it('syncing -> done applies, stamps completed_at and the request waits on staff', async () => {
+  it('syncing -> done applies, stamps completed_at, approves the item and completes the request (0011)', async () => {
     const res = await set(main, 'done')
-    expect(res).toMatchObject({ applied: true, status: 'done', request_status: 'waiting_on_staff' })
+    expect(res).toMatchObject({ applied: true, status: 'done', item_status: 'approved', request_status: 'complete' })
     expect((await row(main)).completed_at).toBeTruthy()
+    const item = (await db.from('request_items').select('status').eq('id', fx.item_id).single()).data!
+    expect(item.status).toBe('approved')
     const request = (await db.from('requests').select('status').eq('id', fx.request_id).single()).data!
-    expect(request.status).toBe('waiting_on_staff')
+    expect(request.status).toBe('complete')
+    const approved = (await db.from('events').select('payload').eq('request_id', fx.request_id).eq('action', 'item.approved')).data!
+    expect(approved).toHaveLength(1)
+    expect(approved[0].payload).toMatchObject({ request_item_id: fx.item_id, auto: true })
   })
 
   it('done -> pending is not applied, the row stays done and no event is written', async () => {

@@ -48,6 +48,8 @@ States the data rules: nothing earlier is dropped or renamed; provider-specific 
 
 Returns `{ applied, status, item_status, request_status }`.
 
+Superseded in part by migration 0011: `done` now moves the item to `approved` (and logs `item.approved`, actor type `provider`) instead of `submitted`; step 6 below describes the 0005 behaviour, everything else still applies.
+
 1. Missing connection: `RAISE EXCEPTION 'connection_not_found'`. Unknown status (rank -1): `RAISE EXCEPTION 'bad_status'`.
 2. Locks the `requests` row, then the `connections` row, then the `request_items` row, all `FOR UPDATE`. This keeps migration 0004's lock order (request before item), so this RPC and `upload_complete` / `item_approve` serialize on the same request instead of deadlocking. Two concurrent calls on one connection serialize on these locks.
 3. Equal status (`cur = new`): returns `applied: true` with no writes and no event. Exception: `error` to `error` overwrites `error` and logs again, because a new error reason is new information.
