@@ -17,7 +17,17 @@ async function fetchEmployerFiles(env: Env, conn: ConnectionRow, emp: EmployerSu
       if (f.md5 && md5Hex(bytes) !== f.md5.toLowerCase()) throw new ProviderError('truv', null, 'file_hash_mismatch', true)
       return bytes
     }
-    await storeProviderFile(env, { conn, kind: 'payroll', group, name: f.name, mime: f.mime, document_type: f.kind, bytes: load, actor: 'provider:truv' })
+    await storeProviderFile(env, {
+      conn,
+      kind: 'payroll',
+      group,
+      name: f.name,
+      displayName: f.displayName,
+      mime: f.mime,
+      document_type: f.kind,
+      bytes: load,
+      actor: 'provider:truv',
+    })
     counts[f.kind] += 1
   }
   const result = { pay_stubs: counts.pay_stub, w2s: counts.w2, income_reports: counts.income_report }

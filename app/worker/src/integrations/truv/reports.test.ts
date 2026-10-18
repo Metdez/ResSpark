@@ -52,6 +52,15 @@ describe('collectEmployerFiles', () => {
     expect(files[1].md5).toMatch(/^[0-9a-f]{32}$/)
     expect(files[4].md5).toBeNull()
   })
+  it('gives every file a human-readable display name while the storage name stays the same', () => {
+    expect(files.map((f) => f.displayName)).toEqual([
+      'Income report.pdf',
+      'Pay stub - September 15, 2026 - check 1001.pdf',
+      'Pay stub - August 31, 2026.pdf',
+      'W-2 - 2025.pdf',
+      '1099-NEC 2025.pdf',
+    ])
+  })
 })
 
 describe('stripFileUrls', () => {

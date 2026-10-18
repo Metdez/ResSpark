@@ -62,4 +62,24 @@ describe('reconcilePayroll', () => {
     expect(typeof saved.employers[1].fetched_at).toBe('string')
     expect(storeProviderFile).not.toHaveBeenCalled()
   })
+  it('stores each employer file under its storage name with the human-readable display name', async () => {
+    vi.mocked(getOrder).mockResolvedValue(
+      order({ employers: [{ id: 'e2', status: 'completed', link_id: 'link_ok', company: { name: 'Good Co' } }] })
+    )
+    vi.mocked(getIncomeReport).mockResolvedValue({
+      employments: [{ statements: [{ pay_date: '2026-09-15', check_number: '1001', file: 'https://files.truv.test/stub.pdf', md5sum: null }] }],
+    })
+    await reconcilePayroll(env, conn, { source: 'cron' })
+    expect(storeProviderFile).toHaveBeenCalledTimes(1)
+    expect(storeProviderFile).toHaveBeenCalledWith(
+      env,
+      expect.objectContaining({
+        kind: 'payroll',
+        group: 'good-co-e2',
+        name: 'paystub-2026-09-15-1001.pdf',
+        displayName: 'Pay stub - September 15, 2026 - check 1001.pdf',
+        document_type: 'pay_stub',
+      })
+    )
+  })
 })

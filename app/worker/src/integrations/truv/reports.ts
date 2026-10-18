@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto'
 import { safeName } from '../../storage/case-documents'
+import { INCOME_REPORT_DISPLAY_NAME, payStubDisplayName, w2DisplayName } from '../../storage/display-names'
 import { isTransientStatus, ProviderError } from '../provider-error'
 import { truvFetch } from './client'
 
@@ -9,6 +10,8 @@ export interface TruvFile {
   kind: TruvFileKind
   url: string
   name: string
+  // what staff and Logics read (documents.original_filename); name stays the storage key
+  displayName: string
   md5: string | null
   mime: string
 }
@@ -55,31 +58,41 @@ const DOC_PREFIX: Record<TruvFileKind, string> = {
 }
 
 // Names make a date sort a name sort within an employer (paystub-<pay_date>[-<check>].pdf).
+// displayName is the human-readable name (Oct 12 call); name is unchanged so evidence.ts still matches by suffix.
 export function collectEmployerFiles(report: Obj, docs: TruvLinkDocument[]): TruvFile[] {
   const files: TruvFile[] = []
   const add = (f: TruvFile) => {
     if (!files.some((x) => x.url === f.url)) files.push(f)
   }
   const pdf = str(report.pdf_report)
-  if (pdf) add({ kind: 'income_report', url: pdf, name: 'income-report.pdf', md5: null, mime: 'application/pdf' })
+  if (pdf) add({ kind: 'income_report', url: pdf, name: 'income-report.pdf', displayName: INCOME_REPORT_DISPLAY_NAME, md5: null, mime: 'application/pdf' })
   for (const emp of objects(report.employments)) {
     for (const s of objects(emp.statements)) {
       const url = str(s.file)
       if (!url) continue
       const check = str(s.check_number) ?? (typeof s.check_number === 'number' ? String(s.check_number) : null)
-      const date = safeName(str(s.pay_date) ?? 'undated')
-      add({ kind: 'pay_stub', url, name: `paystub-${date}${check ? '-' + safeName(check) : ''}.pdf`, md5: str(s.md5sum), mime: 'application/pdf' })
+      const payDate = str(s.pay_date)
+      const date = safeName(payDate ?? 'undated')
+      add({
+        kind: 'pay_stub',
+        url,
+        name: `paystub-${date}${check ? '-' + safeName(check) : ''}.pdf`,
+        displayName: payStubDisplayName(payDate, check),
+        md5: str(s.md5sum),
+        mime: 'application/pdf',
+      })
     }
     for (const w of objects(emp.w2s)) {
       const url = str(w.file)
       if (!url) continue
-      add({ kind: 'w2', url, name: `w2-${safeName(String(w.year ?? 'unknown'))}.pdf`, md5: str(w.md5sum), mime: 'application/pdf' })
+      const year = String(w.year ?? 'unknown')
+      add({ kind: 'w2', url, name: `w2-${safeName(year)}.pdf`, displayName: w2DisplayName(year), md5: str(w.md5sum), mime: 'application/pdf' })
     }
   }
   for (const d of docs) {
     const kind = DOC_KIND[d.type] ?? 'other'
     const name = d.filename ? safeName(d.filename) : `${DOC_PREFIX[kind]}-${safeName(d.id)}.pdf`
-    add({ kind, url: d.file, name, md5: null, mime: d.mimetype ?? 'application/pdf' })
+    add({ kind, url: d.file, name, displayName: d.filename ?? name, md5: null, mime: d.mimetype ?? 'application/pdf' })
   }
   return files
 }

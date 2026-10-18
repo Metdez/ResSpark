@@ -17,7 +17,7 @@
 1. `getIncomeReport` and `getLinkDocuments` in parallel (each once per employer).
 2. `collectEmployerFiles(report, docs)` gives the file list (see `reports.md` for names).
 3. `group = employerSlug(company_name, employer_id)`, so two employers with the same name land in different folders.
-4. For each file, `storeProviderFile` with a lazy loader: the loader runs only when the path is not stored yet. It downloads (`truvDownload`) and, when Truv sent an `md5sum`, compares `md5Hex(bytes)`; a mismatch throws `ProviderError('truv', null, 'file_hash_mismatch', true)` (transient, so the queue retries with a fresh download) and nothing is stored for that file. Every collected file is counted, whether stored now or already present.
+4. For each file, `storeProviderFile` with `name` (the storage key), `displayName` (the human-readable `original_filename`, see `reports.md`) and a lazy loader: the loader runs only when the path is not stored yet. It downloads (`truvDownload`) and, when Truv sent an `md5sum`, compares `md5Hex(bytes)`; a mismatch throws `ProviderError('truv', null, 'file_hash_mismatch', true)` (transient, so the queue retries with a fresh download) and nothing is stored for that file. Every collected file is counted, whether stored now or already present.
 5. `connection.documents_fetched` event with `{ employer_id, pay_stubs, w2s, income_reports }`.
 6. Returns the counts, `fetched_at` (now) and `report: stripFileUrls(report)`: the report figures without vendor URLs or the report's `access_token`.
 
@@ -32,4 +32,4 @@ No value reaches `case_financial_data` or the engine.
 ## Tests
 
 - `app/worker/test/payroll-fetch.test.ts` (live): two employers, six documents, rerun, md5 mismatch.
-- `app/worker/src/jobs/payroll-reconcile.test.ts` (unit): expired order fetches nothing; an `error` employer next to a `completed` one.
+- `app/worker/src/jobs/payroll-reconcile.test.ts` (unit): expired order fetches nothing; an `error` employer next to a `completed` one; a completed employer with one statement calls `storeProviderFile` with `name paystub-2026-09-15-1001.pdf` and `displayName Pay stub - September 15, 2026 - check 1001.pdf`.

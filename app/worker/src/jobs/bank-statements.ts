@@ -14,6 +14,7 @@ import { refreshStatements } from '../integrations/bank/plaid/statements'
 import type { BankProvider } from '../integrations/bank/provider'
 import { ProviderError } from '../integrations/provider-error'
 import { storeProviderFile } from '../storage/connection-files'
+import { statementDisplayName } from '../storage/display-names'
 
 const pad2 = (n: number) => String(n).padStart(2, '0')
 const toWindow = (now: Date) => {
@@ -55,6 +56,7 @@ export async function syncStatements(
         kind: 'bank',
         group: account.mask ?? account.external_account_id,
         name: `${s.year}-${pad2(s.month)}.pdf`,
+        displayName: statementDisplayName(s.year, s.month, account.mask),
         mime: 'application/pdf',
         document_type: 'bank_statement',
         bytes: async () => {
