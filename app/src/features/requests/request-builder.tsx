@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Link } from '@tanstack/react-router'
 import { Loader2, Plus } from 'lucide-react'
 import { ApiError } from '@/lib/api'
 import {
@@ -7,6 +8,8 @@ import {
   ESIGN_TEMPLATE_LABELS,
 } from '@/lib/esign-templates'
 import { GENERIC_ERROR } from '@/lib/handle-server-error'
+import { ago } from '@/lib/relative-time'
+import { requestStatusBadge } from '@/lib/status'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -36,11 +39,14 @@ import {
   getCase,
   getTemplates,
   unlessHandled,
+  type CaseRequestRow,
   type Template,
   type TemplateItem,
 } from './requests-api'
 
-const DEFAULT_TEMPLATE = 'Standard resolution packet'
+// Oct 12 call (A): bank and payroll are what the firm cares about; the full packet stays in the dropdown.
+const DEFAULT_TEMPLATE = 'Bank and payroll'
+const FALLBACK_TEMPLATE = 'Standard resolution packet'
 const NONE_ON = 'Choose at least one item.'
 const CASE_NOT_FOUND = {
   title: 'Case not found',
@@ -64,6 +70,38 @@ function ErrorAlert({ title, body }: { title: string; body?: string }) {
     <Alert variant='destructive'>
       <AlertTitle className='whitespace-normal'>{title}</AlertTitle>
       {body && <AlertDescription>{body}</AlertDescription>}
+    </Alert>
+  )
+}
+
+// Oct 12 call (I): say so when the case already has a request, with a way to it. Creating another
+// stays allowed; the Worker treats a second packet as a legitimate second draft (admin-requests.ts).
+function ExistingRequests({ rows }: { rows: CaseRequestRow[] }) {
+  return (
+    <Alert className='mb-6'>
+      <AlertTitle className='whitespace-normal'>
+        A request already exists for this client
+      </AlertTitle>
+      <AlertDescription>
+        {rows.map((r) => (
+          <p
+            key={r.id}
+            data-existing-request
+            className='flex flex-wrap items-center gap-x-3'
+          >
+            <span title={r.sent_at ?? r.created_at}>
+              {`${r.agent_display_name ?? 'Someone'} · ${requestStatusBadge(r.status).label} · ${ago(r.sent_at ?? r.created_at)}`}
+            </span>
+            <Link
+              to='/admin/requests/$requestId'
+              params={{ requestId: r.id }}
+              className='text-brand underline underline-offset-4'
+            >
+              View request
+            </Link>
+          </p>
+        ))}
+      </AlertDescription>
     </Alert>
   )
 }
@@ -134,8 +172,11 @@ export function RequestBuilder({
     )
 
   const templates = templatesQuery.data.templates
+  // Templates arrive by name, so templates[0] alone would pick "Documents only" where the new row is missing.
   const fallback =
-    templates.find((t) => t.name === DEFAULT_TEMPLATE) ?? templates[0]
+    templates.find((t) => t.name === DEFAULT_TEMPLATE) ??
+    templates.find((t) => t.name === FALLBACK_TEMPLATE) ??
+    templates[0]
   const templateId = chosen?.templateId ?? fallback?.id ?? ''
   const rows = chosen?.rows ?? rowsOf(fallback)
   const c = caseQuery.data
@@ -180,6 +221,7 @@ export function RequestBuilder({
   return (
     <>
       <Title>{name ? `New request for ${name}` : 'New request'}</Title>
+      {c.requests?.length ? <ExistingRequests rows={c.requests} /> : null}
       <Card>
         <CardContent className='grid gap-6'>
           <div className='grid gap-2'>

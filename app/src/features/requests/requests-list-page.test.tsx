@@ -23,6 +23,7 @@ const row = (id: string, name: string, status: string) => ({
   id,
   status,
   client_name: name,
+  agent_display_name: 'Avery Agent',
   sent_at: ago(2 * HOUR),
   expires_at: ago(-13 * 24 * HOUR),
   created_at: ago(3 * HOUR),
@@ -48,18 +49,19 @@ const loaded = (el: HTMLElement) => () =>
 describe('RequestsListPage', () => {
   afterEach(cleanup)
 
-  it('lists requests in the returned order with links and status badges', async () => {
+  it('lists requests in the returned order with links, agent, and status badges', async () => {
     const { el } = await render({ status: 200, body: { requests: TWO } })
     await waitFor(loaded(el))
     expect(el.querySelector('h1')?.textContent).toBe('Requests')
     expect(
       [...el.querySelectorAll('thead th')].map((th) => th.textContent)
-    ).toEqual(['Client', 'Status', 'Sent', 'Expires'])
+    ).toEqual(['Client', 'Agent', 'Status', 'Sent', 'Expires'])
     const rows = [...el.querySelectorAll('tbody tr')]
     expect(rows).toHaveLength(2)
     const link = rows[0].querySelector('a')!
     expect(link.textContent).toBe('Jordan Rivera')
     expect(link.getAttribute('href')).toBe('/admin/requests/r2')
+    expect(rows[0].querySelectorAll('td')[1].textContent).toBe('Avery Agent')
     expect(rows[0].textContent).toContain('Sent')
     expect(rows[1].textContent).toContain('Opened')
     expect(el.querySelector('caption')?.textContent).toBe('2 requests')
@@ -69,11 +71,11 @@ describe('RequestsListPage', () => {
     const { el } = await render({ status: 200, body: { requests: TWO } })
     await waitFor(loaded(el))
     const cells = el.querySelectorAll('tbody tr:first-child td')
-    expect(cells[2].textContent).toBe('2 h ago')
-    expect(cells[2].querySelector('[title]')?.getAttribute('title')).toBe(
+    expect(cells[3].textContent).toBe('2 h ago')
+    expect(cells[3].querySelector('[title]')?.getAttribute('title')).toBe(
       TWO[0].sent_at
     )
-    expect(cells[3].textContent).toBe('in 13 d')
+    expect(cells[4].textContent).toBe('in 13 d')
   })
 
   it('uses the real count for one request', async () => {
@@ -82,18 +84,20 @@ describe('RequestsListPage', () => {
     expect(el.querySelector('caption')?.textContent).toBe('1 request')
   })
 
-  it('renders a dash when a time is missing', async () => {
+  it('renders a dash when a time or the agent is missing', async () => {
     const draft = {
       ...TWO[0],
       status: 'draft',
+      agent_display_name: null,
       sent_at: null,
       expires_at: null,
     }
     const { el } = await render({ status: 200, body: { requests: [draft] } })
     await waitFor(loaded(el))
     const cells = el.querySelectorAll('tbody tr td')
-    expect(cells[2].textContent).toBe('—')
+    expect(cells[1].textContent).toBe('—')
     expect(cells[3].textContent).toBe('—')
+    expect(cells[4].textContent).toBe('—')
   })
 
   it('shows the empty block with one Find a client action', async () => {

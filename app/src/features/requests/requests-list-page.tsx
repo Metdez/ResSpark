@@ -20,7 +20,8 @@ import {
 import { StatusBadge } from '@/components/status-badge'
 import { listRequests, type RequestListRow } from './requests-api'
 
-const COLUMNS = ['Client', 'Status', 'Sent', 'Expires']
+// Oct 12 call (J): staff want to see which team member sent each request.
+const COLUMNS = ['Client', 'Agent', 'Status', 'Sent', 'Expires']
 const HEAD = 'sticky top-0 bg-muted px-3 py-2 font-semibold'
 const CELL = 'px-3 py-2'
 
@@ -39,6 +40,7 @@ function Rows({ rows }: { rows: RequestListRow[] }) {
           {r.client_name}
         </Link>
       </TableCell>
+      <TableCell className={CELL}>{r.agent_display_name ?? '—'}</TableCell>
       <TableCell className={CELL}>
         <StatusBadge {...requestStatusBadge(r.status)} />
       </TableCell>

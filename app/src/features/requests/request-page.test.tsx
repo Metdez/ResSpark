@@ -184,6 +184,7 @@ describe('RequestPage', () => {
       'Request for Jordan Rivera'
     )
     expect(el.textContent).toContain('Draft')
+    expect(el.textContent).toContain('Sent by Avery Agent')
     const rows = [...el.querySelectorAll('[data-item-row]')]
     expect(
       rows.map((r) => r.querySelector('[data-item-label]')?.textContent)

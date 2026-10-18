@@ -12,7 +12,7 @@
 | Send mutation | `sendRequest(id, { email, phone, keep_flagged })`. On success it shows the automatic email's result as a toast (`toast.success` "Email sent to …" when it went out, `toast.warning` with the `emailCopy` line when it did not, for example "Email not configured — copy the link and send it yourself") and invalidates the detail query. `onError` is `unlessHandled(...)`: form codes and alert codes render here; anything else goes to the app's default handler (401 sign-out, 403, generic toast). |
 | Pending | Title `Request` plus three `Skeleton` rows; no form. |
 | Error | Title `Request` plus a destructive `Alert` with the generic staff copy and the muted error code. |
-| Header | `Request for {First Last}` (or `Request`), the request `StatusBadge`, the muted `Template: {name}`, and (Plan 07-09) a `433-A worksheet` text link: TanStack `Link` to `/admin/cases/$caseId/433a` with `params={{ caseId: d.case.case_id }}`. See `docs/app/src/features/financials/financials-page.md`. |
+| Header | `Request for {First Last}` (or `Request`), the request `StatusBadge`, the muted `Template: {name}`, the muted `Sent by {agent_display_name}` when the request has an agent (Oct 12 call, J; nothing when `null`), and (Plan 07-09) a `433-A worksheet` text link: TanStack `Link` to `/admin/cases/$caseId/433a` with `params={{ caseId: d.case.case_id }}`. See `docs/app/src/features/financials/financials-page.md`. |
 | Send card | Only while `status === 'draft'` and before a send succeeds: Heading `Send the link`, the send alert when there is one, and `RequestContactForm`. Editing a field resets the mutation, which clears the old refusal. |
 | `link` | The stored link once it exists (so a regenerate refetch shows the new URL and expiry); `null` when the stored link is revoked (no URL); before the post-send refetch, the fresh `send.data`. |
 | Client link card | Rendered when there is a link or the request is revoked. Heading `Client link`, then `LinkRow`, or the muted line `This link was revoked.` in its place. Below, once the request is past `draft`, `RequestLinkActions` (email, regenerate, revoke, SMS consent) with `onChanged` refetching the detail query. |
@@ -31,7 +31,7 @@
 
 `request-page.test.tsx` (`web` project; `fetch` stubbed per method and path, `sonner`, `@/lib/supabase` and `@tanstack/react-router` mocked, `navigator.clipboard` and `ResizeObserver` stubbed):
 
-- a draft renders the title, `Draft`, five items in position order with `Not started`, `Send the link`, the prefilled email and `(555) 010-0001`, and an enabled `Send link`;
+- a draft renders the title, `Draft`, `Sent by Avery Agent`, five items in position order with `Not started`, `Send the link`, the prefilled email and `(555) 010-0001`, and an enabled `Send link`;
 - `jordan@gmial.com` shows `Did you mean jordan@gmail.com?`, the `Use` button, the keep checkbox, and disables `Send link`;
 - `Use jordan@gmail.com` replaces the value and shows `Differs from Logics (j•••@example.com)`;
 - ticking the checkbox enables `Send link`;

@@ -1,13 +1,14 @@
 # `app/src/features/requests/request-builder.tsx`
 
-`RequestBuilder({ caseId, onCreated })`: the "New request" screen (REQ-01, D-06). Staff pick a seeded template, switch its items on or off, rename them, and create the draft request. The only way to add an item is `Add a form to sign` (Plan 06-05), which appends an e-sign form; there is no general editor for adding or reordering items (that is v1.x). The component has no router dependency; the route passes `onCreated`.
+`RequestBuilder({ caseId, onCreated })`: the "New request" screen (REQ-01, D-06). Staff pick a seeded template, switch its items on or off, rename them, and create the draft request. The only way to add an item is `Add a form to sign` (Plan 06-05), which appends an e-sign form; there is no general editor for adding or reordering items (that is v1.x). The route passes `onCreated`; the component's only router dependency is the TanStack `Link` inside the existing-request alert (Oct 12 call).
 
 | Part | What it does |
 |------|--------------|
-| `DEFAULT_TEMPLATE` | `Standard resolution packet`, preselected when present (else the first template). |
+| `DEFAULT_TEMPLATE`, `FALLBACK_TEMPLATE` | `Bank and payroll` (Oct 12 call, A: bank and payroll are what the firm cares about; migration 0011 seeds it), preselected when present; else `Standard resolution packet`; else the first template. Templates arrive ordered by name, so the first alone would be `Documents only` on a database without the new row. |
 | `NONE_ON`, `CASE_NOT_FOUND`, `CREATE_COPY` | Copy for "nothing switched on" and for the create route's `no_items` and `case_not_found` refusals. |
 | `Row`, `rowsOf(template)` | A template item plus `enabled`; every row starts on. |
 | `Title`, `ErrorAlert` | The Display title and a destructive two-part `Alert`. |
+| `ExistingRequests` | Oct 12 call (I). Rendered above the template card when `case.requests` has rows: a default-variant `Alert` titled `A request already exists for this client`, one line per request as `{agent_display_name ?? 'Someone'} · {request status label} · {ago(sent_at ?? created_at)}` (ISO in `title`) followed by a `View request` TanStack `Link` to `/admin/requests/$requestId`. Creating another request stays allowed: the Worker treats a second packet as a legitimate second draft (`admin-requests.ts`). The Worker leaves revoked requests out. |
 | Queries | `getCase(caseId)` and `getTemplates()` in parallel, plus `getEsignSettings()` under `ESIGN_SETTINGS_KEY` (Plan 06-05) with `retry: false` and `meta: { errorShown: true }`, so a failed read shows no toast and only disables `Add a form to sign`. |
 | `chosen` state | `null` until staff touch anything, so the default template's rows render without an effect. Choosing a template or editing a row stores `{ templateId, rows }`. Changing the template resets the rows to that template's items, all on. |
 | `create` mutation | `createRequest(...)` then `onCreated(request_id)`. `onError` is `unlessHandled(...)`: `no_items` and `case_not_found` render as an `Alert`; any other error goes to the app's default handler (401 sign-out, 403, generic toast). |
@@ -30,19 +31,22 @@
 
 ## Tests
 
-`request-builder.test.tsx` (`web` project, `test-utils/query-render.tsx` harness). Every `waitFor` passes `SETTLE_MS` (10 s) and the `describe` allows 20 s per test: the first render pays the lazy `@/lib/supabase` import and module graph, which under a full parallel run could pass `waitFor`'s 2 s default (`waitFor timed out`). Alone each test takes under 0.5 s.
+`request-builder.test.tsx` (`web` project, `test-utils/query-render.tsx` harness, rendered inside a minimal TanStack memory router because the existing-request alert uses `Link`). Every `waitFor` passes `SETTLE_MS` (10 s) and the `describe` allows 20 s per test: the first render pays the lazy `@/lib/supabase` import and module graph, which under a full parallel run could pass `waitFor`'s 2 s default (`waitFor timed out`). Alone each test takes under 0.5 s. The `TEMPLATES` fixture holds `Bank and payroll` (a003), `Documents only` (a002) and `Standard resolution packet` (a001), ordered by name as the Worker returns them.
 
-- loads `New request for Jordan Rivera`, the select showing `Standard resolution packet`, and five checked rows in template order;
-- unchecking payroll and renaming `Government ID` to `Driver's license` posts four items in order with `config` intact, and `onCreated('r9')` fires on the 201;
-- unchecking all five disables `Create request` and shows `Choose at least one item.`;
+- loads `New request for Jordan Rivera`, the select showing `Bank and payroll`, and two checked rows `Connect your bank`, `Connect your payroll`;
+- without the `Bank and payroll` template the select shows `Standard resolution packet` with its five rows;
+- after switching to the standard packet, unchecking payroll and renaming `Government ID` to `Driver's license` posts four items in order with `config` intact, and `onCreated('r9')` fires on the 201;
+- unchecking every row disables `Create request` and shows `Choose at least one item.`;
 - switching the select (keyboard open, option click) to `Documents only` shows its three items, all checked;
 - a blank label shows `Enter a label.` and disables the button;
 - `Creating…` while the create is in flight;
 - a 404 case read shows `Case not found` / `Look the client up again.` and no button;
 - a 404 `case_not_found` from create shows the same title in an alert and does not navigate;
-- with `engagement_letter` and `form_2848` mapped, the menu lists `Engagement letter` (disabled, already a row) and `Form 2848 (power of attorney)`, and nothing matching `Form 8821` or `/433/`;
-- choosing Form 2848 appends a checked row and `Create request` posts it as `{ kind: 'signature', label: 'Form 2848 (power of attorney)', required: true, config: { template: 'form_2848' } }`;
+- a case with two existing requests shows the alert with `Avery Agent · Sent · 2 h ago` and `Someone · Draft · 30 min ago`, each with a `View request` link to `/admin/requests/r7` and `/admin/requests/r8`, and `Create request` stays enabled;
+- a case without a `requests` key, or with `requests: []`, shows no alert;
+- after switching to the standard packet, with `engagement_letter` and `form_2848` mapped, the menu lists `Engagement letter` (disabled, already a row) and `Form 2848 (power of attorney)`, and nothing matching `Form 8821` or `/433/`;
+- choosing Form 2848 appends a checked third row and `Create request` posts it as `{ kind: 'signature', label: 'Form 2848 (power of attorney)', required: true, config: { template: 'form_2848' } }`;
 - unconfigured, or every mapping value `null`: the button is disabled and the not-set-up line shows;
 - a 500 from the settings read: the button is disabled, and `Create request` still posts.
 
-The `esign(configured, mapping)` helper builds the stubbed `GET /api/admin/esign/settings` answer; the fixture's engagement letter row carries `config: { template: 'engagement_letter' }`, matching the seed.
+The `esign(configured, mapping)` helper builds the stubbed `GET /api/admin/esign/settings` answer; the fixture's engagement letter row carries `config: { template: 'engagement_letter' }`, matching the seed. `selectTemplate(el, name)` opens the select with Enter and clicks the named option.

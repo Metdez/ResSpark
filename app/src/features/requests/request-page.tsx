@@ -128,6 +128,11 @@ export function RequestPage({ requestId }: { requestId: string }) {
         <span className='text-sm text-muted-foreground'>
           Template: {d.template_name}
         </span>
+        {d.agent_display_name && (
+          <span className='text-sm text-muted-foreground'>
+            Sent by {d.agent_display_name}
+          </span>
+        )}
         <Link
           to='/admin/cases/$caseId/433a'
           params={{ caseId: d.case.case_id }}
