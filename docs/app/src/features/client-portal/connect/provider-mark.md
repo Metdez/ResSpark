@@ -17,7 +17,7 @@
 | `teller` | Secure connection powered by Teller |
 | `null`, `undefined`, or any other value | nothing (`null`) |
 
-Markup: `<p data-provider-mark class="flex items-center gap-1.5 text-sm text-muted-foreground">` with a lucide `ShieldCheck` (`size-4 shrink-0`, `aria-hidden`) followed by `CONNECT_COPY.poweredBy(name)`. The icon is decorative; the sentence carries the meaning.
+Markup: `<p data-provider-mark class="flex items-center gap-1.5 text-base text-muted-foreground">` with a lucide `ShieldCheck` (`size-4 shrink-0`, `aria-hidden`) followed by `CONNECT_COPY.poweredBy(name)`. The icon is decorative; the sentence carries the meaning.
 
 ## Why it does not break D-11
 

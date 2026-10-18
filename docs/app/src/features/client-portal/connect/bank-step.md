@@ -18,7 +18,7 @@ Only one sheet is on screen at a time:
 
 ## Provider trust line
 
-Right under the message, `<ProviderMark id={data.provider.id} />` renders "Secure connection powered by Plaid" (see `provider-mark.md`) when `data && !isError && !notConfigured`. It is absent while loading, after a failed query, and in the not-configured state (where `provider.id` is `null` anyway). Requested on the Oct 12 2026 ValorTax call so the client recognises the provider; it is text only and changes no behaviour.
+Right under the message, `<ProviderMark id={data.provider.id} />` renders "Secure connection powered by Plaid" (see `provider-mark.md`) when `data && !isError && !notConfigured && !unavailable`. It is absent while loading, after a failed query, in the not-configured state, and when the bank has no hosted link to offer (where `provider.id` is `null` anyway). Requested on the Oct 12 2026 ValorTax call so the client recognises the provider; it is text only and changes no behaviour.
 
 ## States (message)
 

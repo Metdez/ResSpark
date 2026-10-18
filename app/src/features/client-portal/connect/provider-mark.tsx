@@ -11,7 +11,7 @@ export function ProviderMark({ id }: { id: ProviderId | null | undefined }) {
   const name = id ? NAMES[id] : undefined
   if (!name) return null
   return (
-    <p data-provider-mark className='flex items-center gap-1.5 text-sm text-muted-foreground'>
+    <p data-provider-mark className='flex items-center gap-1.5 text-base text-muted-foreground'>
       <ShieldCheck className='size-4 shrink-0' aria-hidden='true' />
       {CONNECT_COPY.poweredBy(name)}
     </p>

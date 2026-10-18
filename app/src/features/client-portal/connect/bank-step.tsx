@@ -159,7 +159,7 @@ export function BankStep({
               {message}
             </p>
           )}
-          {data && !isError && !notConfigured && <ProviderMark id={data.provider.id} />}
+          {data && !isError && !notConfigured && !unavailable && <ProviderMark id={data.provider.id} />}
           {note && (
             <p className='text-base text-muted-foreground' data-rejection-note>
               {uploadCopy.rejectedPrefix}
