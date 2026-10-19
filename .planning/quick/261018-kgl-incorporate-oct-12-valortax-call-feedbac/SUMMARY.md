@@ -18,7 +18,7 @@ Every product ask from the Oct 12 call is built, tested, committed on `zack`, an
 | A | Default packet = bank + payroll | Migration 0011 seeds the global template **Bank and payroll** (`…a003`); the request builder preselects it, falling back to the Standard packet then the first template. Standard packet (address, ID, engagement letter, intake) stays in the dropdown. |
 | B | Plaid / Truv visible to the client | `ProviderMark` renders "Secure connection powered by Plaid / Truv" under the message on the bank and payroll sheets (16 px, hidden when connect is unavailable). Display reads `provider.id`; behaviour still branches on capabilities (D-11). The old "no vendor names" test was reversed. |
 | C | Green when connected; bank item not a "documents" placeholder | `connection_set_status`: a **done bank or payroll** connection moves its item to `approved` (client "Done", staff "Approved", request completes when all required items are approved) and logs `item.approved` with actor `provider` and `auto: true`. Signatures still submit for staff review. Review panel: connection items with no files say where the accounts/transactions or employers are instead of "No files yet". |
-| D/F | Readable file names in Logics | `storeProviderFile.displayName` → `documents.original_filename` while storage keys stay as before. Names: `Bank statement - September 2026 - x1234.pdf`, `Pay stub - October 12, 2026 - check 1001.pdf`, `W-2 - 2025.pdf`, `Income report.pdf`, `Transactions - September 2026 - x1234.pdf`. Logics pushes and the review list use the same field. Existing rows keep their old names (no backfill). |
+| D/F | Readable file names in Logics | `storeProviderFile.displayName` → `documents.original_filename` while storage keys stay as before. Names: `Bank statement - September 2026 - x1234.pdf`, `Pay stub - October 12, 2026 - check 1001.pdf`, `W-2 - 2025.pdf`, `Income report.pdf`, `Transactions - September 2026 - x1234.pdf`. Logics pushes and the review list use the same field. Migration 0012 backfilled the 118 rows stored before 2026-10-18 (70 statements, 32 pay stubs, 12 W-2s, 4 income reports). |
 | E | Select all + push | "Select all" checkbox on the Logics push card (indeterminate when partial; never selects sent, in-flight, unknown or manual rows). |
 | G | 3-month pay stub snapshot | `EmployerView.recent_pay` (pay date, gross, net, stub document) from the stored Truv income report, 3-month window; the payroll card shows a "Last 3 months" table with totals. |
 | H | Bank statement PDFs when the bank has none | After transaction history is complete, `generateTransactionPdfs` renders one "Transaction statement" PDF (pdf-lib, labelled not official) per account per window month whose cell is `not_supported`/`missing` and has no document, stores it on the bank item (`document_type bank_transactions`) and attaches it to the cell; the admin grid shows "From transactions" and opens it. A failure is logged as `connection.transaction_pdfs_failed` and never blocks `done`. |
@@ -43,12 +43,11 @@ Twilio SMS and the short URL (user: out of scope), Plaid Signal/Balance for rece
 
 ## Verification
 
-- Migration 0011 applied with `node app/scripts/db-migrate.mjs` (verified: three global templates; `connection_set_status` contains the bank/payroll approve branch).
+- Migrations 0011 and 0012 applied with `node app/scripts/db-migrate.mjs` (verified: three global templates; `connection_set_status` contains the bank/payroll approve branch).
 - Per-stream targeted vitest runs all green (portal 37, migration-adjacent unit tests unchanged, PDFs 13 + 35, names/review/select-all 22 + 29, pay stubs 29, requests UX 53 + 7, lookup route 26).
 - Full `pnpm -C app check` and the deploy/smoke results are recorded in STATE.md and HANDOFF.md under this task.
 
 ## Follow-ups worth doing
 
-- Backfill `original_filename` for provider files stored before 2026-10-18 if the firm wants old pushes renamed.
 - Live tests under `app/worker/test` that assert the done transition were updated to `approved` and need a live run (`pnpm -C app test:live`) after the deploy.
 - Client-portal month cells could show the generated transaction PDF as "received"; left as is so the upload fallback stays prominent.

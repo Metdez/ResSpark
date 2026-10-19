@@ -22,9 +22,9 @@ Every helper strips `/ \ : * ? " < > |` from its result, because Logics is a Win
 - `integrations/truv/reports.ts`: sets `TruvFile.displayName` for the income report, pay stubs and W-2s; a client's Bridge upload keeps its own `filename` (else the storage name).
 - `jobs/payroll-reconcile.ts`: passes `f.displayName` through to `storeProviderFile`.
 
-## No backfill
+## Backfill
 
-Rows stored before this change keep their old `original_filename` (`2026-09.pdf`, `paystub-2026-10-12.pdf`, ...). Only files stored from now on get the readable names; a rerun does not rename an existing row because `storeProviderFile` returns early when the storage key exists.
+A rerun does not rename an existing row because `storeProviderFile` returns early when the storage key exists, so the 118 provider files stored before 2026-10-18 were renamed once by `supabase/migrations/0012_provider_display_names.sql`, whose four `UPDATE`s mirror these helpers in SQL (see `docs/supabase/migrations/0012_provider_display_names.md`). Keep the two in step if a name rule changes.
 
 ## Tests
 

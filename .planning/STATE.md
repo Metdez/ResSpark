@@ -132,7 +132,7 @@ Recent decisions affecting current work:
 - [Phase 02]: 02-08: client heartbeat runs from state load with last_step intro/list/step kind; PORT-04 saved progress is server-side status and opened_at
 - [Quick 261018-kgl]: a done bank or payroll connection auto-approves its item (migration 0011, `item.approved` with actor provider, auto: true); signatures still submit for staff review. Reverses the "every item needs a staff approve" reading of UPL-04 for provider-completed steps, per the Oct 12 call.
 - [Quick 261018-kgl]: client-portal connect sheets name the provider ("Secure connection powered by Plaid/Truv") as display text; behaviour still branches on capabilities only (D-11). Replaces the Phase 4 "no vendor names" rule.
-- [Quick 261018-kgl]: provider files carry a human-readable `original_filename` (displayName) while storage keys keep the machine name; existing rows are not backfilled.
+- [Quick 261018-kgl]: provider files carry a human-readable `original_filename` (displayName) while storage keys keep the machine name; the 118 rows stored before 2026-10-18 were renamed by migration 0012.
 - [Quick 261018-kgl]: months a bank cannot provide get a generated transaction-statement PDF attached to the cell without changing the cell status, so a real upload still wins.
 
 ### Pending Todos
@@ -156,7 +156,7 @@ None yet.
 
 | ID | Task | Date | Commits | Summary |
 |----|------|------|---------|---------|
-| 261018-kgl | Incorporate the Oct 12 ValorTax call feedback: Bank and payroll default template, Plaid/Truv trust line, done connections auto-approve, readable file names for Logics, Select all on push, 3-month pay-stub table, generated transaction PDFs, duplicate-case warning, Agent column, more typo domains | 2026-10-18 | 90ce5ef..d0abda0 (16 commits on `zack`) | .planning/quick/261018-kgl-incorporate-oct-12-valortax-call-feedbac/SUMMARY.md |
+| 261018-kgl | Incorporate the Oct 12 ValorTax call feedback: Bank and payroll default template, Plaid/Truv trust line, done connections auto-approve, readable file names for Logics, Select all on push, 3-month pay-stub table, generated transaction PDFs, duplicate-case warning, Agent column, more typo domains | 2026-10-18 | 90ce5ef..HEAD (`zack`, pushed; migrations 0011 and 0012 applied) | .planning/quick/261018-kgl-incorporate-oct-12-valortax-call-feedbac/SUMMARY.md |
 
 ## Deferred Items
 

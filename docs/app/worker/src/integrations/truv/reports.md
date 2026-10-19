@@ -20,7 +20,7 @@ Builds the file list in this order, deduplicated by URL (the first occurrence wi
 
 Pay stub names start with the pay date, so within an employer folder a name sort is a date sort. Statement and W-2 entries carry Truv's `md5sum`; report PDFs and uploaded documents have none. The MIME type is `application/pdf` except for uploaded documents, which use their `mimetype`.
 
-`displayName` (Oct 12 call: "an actual person has to read this inside Logics") is what `storeProviderFile` writes to `documents.original_filename`, the name staff see in Review and that the Logics push sends. It comes from the helpers in `storage/display-names.ts`; `name` is unchanged and stays the storage key, so `financials/evidence.ts` still matches stubs by key suffix. Files stored before this change keep their old `original_filename` (no backfill).
+`displayName` (Oct 12 call: "an actual person has to read this inside Logics") is what `storeProviderFile` writes to `documents.original_filename`, the name staff see in Review and that the Logics push sends. It comes from the helpers in `storage/display-names.ts`; `name` is unchanged and stays the storage key, so `financials/evidence.ts` still matches stubs by key suffix. Files stored before this change were renamed by migration 0012.
 
 ## `truvDownload(url)`
 
