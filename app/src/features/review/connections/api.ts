@@ -58,6 +58,8 @@ export interface TransactionRow {
   amount: number
   iso_currency_code: string | null
   category_primary: string | null
+  // Plaid v2 detailed category; optional so an older Worker response still passes the guard.
+  category_detailed?: string | null
   pending: boolean
 }
 
@@ -134,6 +136,7 @@ const isTransaction = (v: unknown): v is TransactionRow =>
   num(v.amount) &&
   strOrNull(v.iso_currency_code) &&
   strOrNull(v.category_primary) &&
+  (v.category_detailed === undefined || strOrNull(v.category_detailed)) &&
   typeof v.pending === 'boolean'
 
 export const isTransactionsResponse = (v: unknown): v is TransactionsResponse =>

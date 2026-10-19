@@ -16,6 +16,7 @@ const tx = (over: Partial<TransactionRow>): TransactionRow => ({
   amount: 12.34,
   iso_currency_code: 'USD',
   category_primary: 'FOOD_AND_DRINK',
+  category_detailed: 'FOOD_AND_DRINK_COFFEE',
   pending: false,
   ...over,
 })
@@ -113,6 +114,33 @@ describe('TransactionsTable', () => {
     expect(rows()[0].textContent).not.toContain('Pending')
     expect(rows()[1].textContent).toContain('Pending')
     expect(container.textContent).toContain('Showing 2 of 412')
+  })
+
+  it('sums spending by category above the rows and skips pending ones', async () => {
+    vi.mocked(api.fetchTransactions).mockResolvedValue({
+      months: 6,
+      total: 4,
+      transactions: [
+        ...ROWS,
+        tx({ id: 'T3', amount: 1500, category_primary: 'RENT_AND_UTILITIES', category_detailed: 'RENT_AND_UTILITIES_RENT' }),
+        tx({ id: 'T4', amount: -3000, category_primary: 'INCOME', category_detailed: 'INCOME_WAGES', name: 'ACME PAYROLL' }),
+      ],
+    })
+    await renderOpen()
+    const summary = container.querySelector('[data-spending-summary]')!
+    expect(summary.textContent).toContain('Spending by category · last 6 months')
+    const lines = [...summary.querySelectorAll<HTMLElement>('[data-spending-row]')].map((r) => r.getAttribute('data-spending-row'))
+    expect(lines).toEqual(['income', 'Rent', 'Food and drink'])
+    const rent = [...summary.querySelector('[data-spending-row="Rent"]')!.querySelectorAll('td')].map((c) => c.textContent)
+    expect(rent).toEqual(['Rent', '1', '$1,500.00', '$250.00'])
+    expect(summary.textContent).toContain('Settled transactions only.')
+    expect(summary.textContent).not.toContain('from the rows shown below')
+  })
+
+  it('hides the summary when every row is pending or an inflow', async () => {
+    vi.mocked(api.fetchTransactions).mockResolvedValue({ months: 6, total: 1, transactions: [ROWS[1]] })
+    await renderOpen()
+    expect(container.querySelector('[data-spending-summary]')).toBeNull()
   })
 
   it('shows three skeleton rows while loading', async () => {

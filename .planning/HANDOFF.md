@@ -6,7 +6,9 @@ Branch `zack`, commits `90ce5ef`..HEAD, pushed to `origin/zack`. Plan and summar
 
 **Checks:** `pnpm -C app check` green (177 files / 2077 tests, tsc, eslint 0 errors, no file over 500 lines). Live suites `pnpm -C app test:live`: 41 files passed, then the 3 that failed were fixed and re-run green (bank-statements now proves the generated transaction PDFs; payroll-fetch expects the readable names; financials-api was a 5 s timeout flake). Smoke: `smoke.mjs` 17/17 ok. `smoke:connect` and `smoke:esign` stop at "auth lookup fixture: status 409 / needs LOGICS_MODE=fake" — a pre-existing consequence of the 2026-10-11 switch to live Logics reads, not of this task (the script says live mode is covered by Plan 08).
 
-**What changed (call item → change):** A default template; B provider trust line; C auto-approve + review copy; D/F readable file names; E Select all; G 3-month pay-stub table; H generated transaction PDFs; I duplicate-case alert; J Agent column / Sent by; K more typo domains. Details in SUMMARY.md.
+**What changed (call item → change):** A default template; B provider trust line; C auto-approve + review copy; D/F readable file names; E Select all; G 3-month pay-stub table; H generated transaction PDFs; I duplicate-case alert; J Agent column / Sent by; K more typo domains; L (2026-10-19) spending-by-category summary on the bank card's Transactions block. Details in SUMMARY.md.
+
+**2026-10-19 re-verification:** migrations `--status` lists 0011 and 0012; `smoke.mjs` 17/17 against the live URL; `pnpm -C app check` green (178 files / 2084 tests); every file changed since d053333 has its companion doc. The Worker and SPA code deployed from `561b4f2` matched HEAD until item L; see the deploy note below for the version that carries L.
 
 **Decisions:** auto-approve limited to bank and payroll (signatures still submit for review); branding is text, no logos; generated PDFs keep the cell status; builder falls back to the Standard packet when the new template is absent.
 

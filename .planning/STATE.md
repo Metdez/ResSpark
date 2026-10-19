@@ -6,7 +6,7 @@ status: paused
 stopped_at: Phases 1-7 complete, verified, deployed 4219f2b; Phase 8 awaiting approval
 last_updated: "2026-10-18T22:40:00.000Z"
 last_activity: 2026-10-18
-last_activity_desc: Quick task 261018-kgl (Oct 12 call feedback) built, 0011 applied; Phase 8 still awaiting "approve phase 8 migrations"
+last_activity_desc: Quick task 261018-kgl (Oct 12 call feedback) complete and verified 2026-10-19 (spending-by-category added, full check green, deployed); Phase 8 still awaiting "approve phase 8 migrations"
 state_head: c62c76ecf5bbe2e2f5507446490e9caaf8dbb69e
 progress:
   total_phases: 8
@@ -156,7 +156,7 @@ None yet.
 
 | ID | Task | Date | Commits | Summary |
 |----|------|------|---------|---------|
-| 261018-kgl | Incorporate the Oct 12 ValorTax call feedback: Bank and payroll default template, Plaid/Truv trust line, done connections auto-approve, readable file names for Logics, Select all on push, 3-month pay-stub table, generated transaction PDFs, duplicate-case warning, Agent column, more typo domains | 2026-10-18 | 90ce5ef..HEAD (`zack`, pushed; migrations 0011 and 0012 applied) | .planning/quick/261018-kgl-incorporate-oct-12-valortax-call-feedbac/SUMMARY.md |
+| 261018-kgl | Incorporate the Oct 12 ValorTax call feedback: Bank and payroll default template, Plaid/Truv trust line, done connections auto-approve, readable file names for Logics, Select all on push, 3-month pay-stub table, generated transaction PDFs, duplicate-case warning, Agent column, more typo domains, spending-by-category summary on the bank card | 2026-10-19 | 90ce5ef..HEAD (`zack`, pushed; migrations 0011 and 0012 applied) | .planning/quick/261018-kgl-incorporate-oct-12-valortax-call-feedbac/SUMMARY.md |
 
 ## Deferred Items
 

@@ -8,14 +8,12 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { Skeleton } from '@/components/ui/skeleton'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { StatusBadge } from '@/components/status-badge'
+import type { TransactionRow } from './api'
 import { formatMoney } from './money'
+import { humanizeCategory, summarizeSpending, type SpendingGroup } from './spending-summary'
 import { useTransactions } from './use-connections'
 
-const humanize = (category: string | null) => {
-  if (!category) return '—'
-  const text = category.toLowerCase().replace(/_/g, ' ')
-  return text.charAt(0).toUpperCase() + text.slice(1)
-}
+const humanize = (category: string | null) => (category ? humanizeCategory(category) : '—')
 
 const WINDOWS = [
   { months: 6, label: 'Last 6 months' },
@@ -37,6 +35,7 @@ function Rows({ connectionId, months }: { connectionId: string; months: 3 | 6 })
   if (transactions.length === 0) return <p className='text-sm text-muted-foreground'>No transactions yet</p>
   return (
     <>
+      <Summary rows={transactions} months={months} partial={transactions.length < total} />
       {/* The outer box scrolls so the sticky header works; the shadcn container would otherwise own the scroll. */}
       <div className='max-h-96 overflow-auto rounded-md border [&_[data-slot=table-container]]:overflow-visible'>
         <Table>
@@ -70,6 +69,46 @@ function Rows({ connectionId, months }: { connectionId: string; months: 3 | 6 })
         Showing {transactions.length} of {total}
       </p>
     </>
+  )
+}
+
+// The call asked for the client's expenses by category (rent, car payment, utilities) without reading every row.
+// The 433-A worksheet holds the allowable-standard comparison; this is the quick read on the card.
+function Summary({ rows, months, partial }: { rows: TransactionRow[]; months: 3 | 6; partial: boolean }) {
+  const s = summarizeSpending(rows, months)
+  if (s.expenses.length === 0 && !s.income) return null
+  const money = (n: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: s.currency ?? 'USD' }).format(n)
+  const line = (g: SpendingGroup, key: string) => (
+    <TableRow key={key} data-spending-row={key} className='h-10'>
+      <TableCell>{g.label}</TableCell>
+      <TableCell className='text-end tabular-nums text-muted-foreground'>{g.count}</TableCell>
+      <TableCell className='text-end tabular-nums'>{money(g.total)}</TableCell>
+      <TableCell className='text-end tabular-nums font-medium'>{money(g.monthly)}</TableCell>
+    </TableRow>
+  )
+  return (
+    <div data-spending-summary className='grid gap-1'>
+      <h4 className='text-sm font-medium'>Spending by category · last {months} months</h4>
+      <div className='rounded-md border'>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Category</TableHead>
+              <TableHead className='text-end'>Transactions</TableHead>
+              <TableHead className='text-end'>Total</TableHead>
+              <TableHead className='text-end'>Per month</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {s.income && line(s.income, 'income')}
+            {s.expenses.map((g) => line(g, g.label))}
+          </TableBody>
+        </Table>
+      </div>
+      <p className='text-sm text-muted-foreground'>
+        Settled transactions only{partial ? ', from the rows shown below' : ''}. Compare with the IRS standards on the 433-A worksheet.
+      </p>
+    </div>
   )
 }
 

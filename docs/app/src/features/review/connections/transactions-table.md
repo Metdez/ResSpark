@@ -4,10 +4,11 @@ The `Transactions` disclosure on a bank connection card (Plan 04-06; BANK-02). I
 
 | Part | What it does |
 |------|--------------|
-| `humanize(category)` | Plaid's `FOOD_AND_DRINK` → `Food and drink`; `null` → `—`. |
+| `humanize(category)` | `humanizeCategory` from `spending-summary.ts` (`FOOD_AND_DRINK` → `Food and drink`); `null` → `—`. |
+| `Summary({ rows, months, partial })` | The `Spending by category · last N months` block above the rows (Oct 12 call, quick task 261018-kgl): `summarizeSpending(rows, months)` rendered as a bordered dense table, Category · Transactions · Total · Per month, the `Income deposits` line first (`data-spending-row="income"`), then expenses by total descending (`data-spending-row=<label>`). Money uses the summary's currency (USD fallback). The footnote says `Settled transactions only` and adds `, from the rows shown below` when the Worker's 1000-row cap means the window is only partly shown, then points at the 433-A worksheet for the IRS-standard comparison. Renders nothing when there is no settled outflow and no income deposit. |
 | `WINDOWS` | The two window buttons: `Last 6 months` (the default) and `Last 3 months`. |
 | `TransactionsTable({ connectionId })` | A `Collapsible`, closed by default, with a ghost `Transactions` trigger (the chevron rotates when open). Inside are the two window buttons (`variant="outline"`, `aria-pressed`, the pressed one tinted `bg-accent`) and `Rows`. `ToggleGroup` is not vendored in this app, so two buttons stand in for it. `Rows` mounts only while the disclosure is open, so a closed card fetches nothing. |
-| `Rows({ connectionId, months })` | Calls `useTransactions(connectionId, months, true)`. Error: the generic staff sentence plus the code in muted text. Loading: three `Skeleton` rows. Empty: `No transactions yet`. Otherwise a table inside a `max-h-96` scroll box. The box overrides the shadcn container's own overflow so the `sticky top-0` header sticks to the box. |
+| `Rows({ connectionId, months })` | Calls `useTransactions(connectionId, months, true)`. Error: the generic staff sentence plus the code in muted text. Loading: three `Skeleton` rows. Empty: `No transactions yet`. Otherwise `Summary`, then a table inside a `max-h-96` scroll box. The box overrides the shadcn container's own overflow so the `sticky top-0` header sticks to the box. |
 | Columns | Date (`ago(date)`, `title` = ISO date) · Description (`merchant_name ?? name`, plus a `Pending` `StatusBadge` when `pending`) · Category (humanized) · Amount (`formatMoney(amount, iso_currency_code)`, `text-end tabular-nums`). Rows keep the server order (newest first). |
 | Footer | `Showing {rows} of {total}`. `total` counts every row in the window; the Worker sends at most 1000. |
 

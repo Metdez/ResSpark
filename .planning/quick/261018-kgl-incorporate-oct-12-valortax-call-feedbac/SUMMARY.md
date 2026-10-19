@@ -2,7 +2,7 @@
 quick_id: 261018-kgl
 slug: incorporate-oct-12-valortax-call-feedbac
 status: complete
-completed: 2026-10-18
+completed: 2026-10-19
 branch: zack
 source: .planning/Client/call2.md
 ---
@@ -25,6 +25,7 @@ Every product ask from the Oct 12 call is built, tested, committed on `zack`, an
 | I | Duplicate-case warning | `GET /api/admin/cases/:id` returns the case's non-revoked requests; the builder shows an "A request already exists for this client" alert with sender, status, age and a link. Creating another request stays allowed. |
 | J | Who sent it | "Agent" column on the Requests list; "Sent by {agent}" in the request page header. |
 | K | Email typo validation | Already in place (REQ-02). Eight more known domains (live, msn, me, att, sbcglobal, verizon, proton, ymail). |
+| L | "Categorize all of these transactions… here's everything that's rent, car payment, utilities; here's what the client's expenses are" (10:44) | `Spending by category · last N months` above the transaction rows on the bank card (2026-10-19): settled outflows grouped into 433-A words (Rent, Mortgage, Car payment, Utilities, Phone/internet/cable, Insurance, Fuel, loans, then Plaid primaries), with count, total and per-month average, plus an `Income deposits` line. Display only; the allowable comparison stays on the 433-A worksheet. No Plaid Income Insights add-on needed: the v2 `personal_finance_category` already on every row carries it. |
 
 ## Not built (out of scope or no access)
 
@@ -39,7 +40,7 @@ Twilio SMS and the short URL (user: out of scope), Plaid Signal/Balance for rece
 
 ## Commits (oldest first)
 
-90ce5ef plan + displayName + typo domains · ed63827 / bf72903 portal provider mark · 5068f6d / c4c7fbc migration 0011 · 1635160 transaction PDFs · c077fdd / b869d2c / c3125fb names, review copy, select all · f42cbae pay-stub table · b1a38e2 / 8465e96 requests UX · (test) lookup route test.
+90ce5ef plan + displayName + typo domains · ed63827 / bf72903 portal provider mark · 5068f6d / c4c7fbc migration 0011 · 1635160 transaction PDFs · c077fdd / b869d2c / c3125fb names, review copy, select all · f42cbae pay-stub table · b1a38e2 / 8465e96 requests UX · (test) lookup route test · b144e01 migration 0012 backfill · (2026-10-19) spending by category on the bank card.
 
 ## Verification
 

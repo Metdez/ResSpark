@@ -11,7 +11,7 @@ Typed staff client for the Plan 04-02 admin connection routes (`app/worker/src/r
 | `PayStubRow` | One pay stub from the stored Truv report: `pay_date` (`YYYY-MM-DD`), `gross_pay` and `net_pay` (number or `null` when the report lacks a usable figure), `document_id` (the stored stub PDF, or `null`). |
 | `EmployerView` | `employer_id`, `company_name`, `status`, the three counts (`pay_stubs`, `w2s`, `income_reports`), `documents` (`id`, `document_type`, `name`), and `recent_pay` (the last three months of stubs, newest first; the payroll panel's "Last 3 months" table). |
 | `ConnectionSummary` | `id`, `request_item_id`, `kind` (`bank` or `payroll`), `provider`, `status`, `error` (`{ code, message? }` or `null`), `created_at`, `last_webhook_at`, `last_polled_at`, `accounts`, `transactions` (`count`, `update_status`), `employers`. The Worker sends more fields (`capabilities`, `remove_after`, and so on); the SPA ignores them. |
-| `TransactionRow` | `id`, `date`, `name`, `merchant_name`, `amount` (Plaid sign: positive is money out), `iso_currency_code`, `category_primary`, `pending`. |
+| `TransactionRow` | `id`, `date`, `name`, `merchant_name`, `amount` (Plaid sign: positive is money out), `iso_currency_code`, `category_primary`, `category_detailed` (optional in the guard so an older response still passes; the spending summary reads it), `pending`. |
 | `TransactionsResponse` | `months` (3 or 6), `total` (all rows in the window), `transactions` (the rows sent, capped at 1000 by the Worker). |
 
 ## Guards
