@@ -2,7 +2,7 @@
 
 Branch `zack`, commits `90ce5ef`..HEAD, pushed to `origin/zack`. Plan and summary: `.planning/quick/261018-kgl-incorporate-oct-12-valortax-call-feedbac/`.
 
-**Live:** https://resspark.zh-a16.workers.dev deployed from commit `561b4f2` (Worker version `436a663e`) with `pnpm -C app run deploy:snapshot`. **Migrations 0011 and 0012 are applied** (Bank and payroll template; done bank/payroll connections auto-approve their item; 118 older provider files renamed to the readable names). `LOGICS_MODE=live`, `LOGICS_WRITE_ENABLED=false` unchanged.
+**Live:** https://resspark.zh-a16.workers.dev deployed from commit `a9995a4` (Worker version `afa4cefa`, 2026-10-19; previously `561b4f2` / `436a663e`) with `pnpm -C app run deploy:snapshot`; smoke 17/17 after the deploy. **Migrations 0011 and 0012 are applied** (Bank and payroll template; done bank/payroll connections auto-approve their item; 118 older provider files renamed to the readable names). `LOGICS_MODE=live`, `LOGICS_WRITE_ENABLED=false` unchanged.
 
 **Checks:** `pnpm -C app check` green (177 files / 2077 tests, tsc, eslint 0 errors, no file over 500 lines). Live suites `pnpm -C app test:live`: 41 files passed, then the 3 that failed were fixed and re-run green (bank-statements now proves the generated transaction PDFs; payroll-fetch expects the readable names; financials-api was a 5 s timeout flake). Smoke: `smoke.mjs` 17/17 ok. `smoke:connect` and `smoke:esign` stop at "auth lookup fixture: status 409 / needs LOGICS_MODE=fake" — a pre-existing consequence of the 2026-10-11 switch to live Logics reads, not of this task (the script says live mode is covered by Plan 08).
 
