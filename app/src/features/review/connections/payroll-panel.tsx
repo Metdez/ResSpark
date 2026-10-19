@@ -19,9 +19,14 @@ const TYPE_LABEL: Record<string, string> = {
 
 // Pay amounts are plain income figures, so they use the unsigned financials formatter, not the Plaid-signed money.ts one.
 const money = (n: number | null) => (n === null ? '—' : formatMoney(n))
-const total = (rows: PayStubRow[], key: 'gross_pay' | 'net_pay') => rows.reduce((sum, r) => sum + (r[key] ?? 0), 0)
-const summary = (rows: PayStubRow[]) =>
-  `${rows.length} pay ${rows.length === 1 ? 'stub' : 'stubs'} · gross ${formatMoney(total(rows, 'gross_pay'))} · net ${formatMoney(total(rows, 'net_pay'))}`
+// A stub without an amount makes that total unknown (shown as —), never a smaller number that reads as the real sum.
+const total = (rows: PayStubRow[], key: 'gross_pay' | 'net_pay') =>
+  rows.some((r) => r[key] === null) ? null : rows.reduce((sum, r) => sum + (r[key] ?? 0), 0)
+const summary = (rows: PayStubRow[]) => {
+  const missing = rows.filter((r) => r.gross_pay === null || r.net_pay === null).length
+  const note = missing ? ` · ${missing} ${missing === 1 ? 'stub has' : 'stubs have'} no amount` : ''
+  return `${rows.length} pay ${rows.length === 1 ? 'stub' : 'stubs'} · gross ${money(total(rows, 'gross_pay'))} · net ${money(total(rows, 'net_pay'))}${note}`
+}
 
 // Same signed-URL route the Phase 3 review panel uses; never a second copy of the file (D-06, D-09).
 function DocLink({ id, children }: { id: string; children: ReactNode }) {
@@ -76,7 +81,7 @@ export function PayrollPanel({ employers }: { employers: EmployerView[] }) {
             <StatusBadge {...employerBadge(e.status)} />
             <span className='text-sm text-muted-foreground'>{employerCounts(e)}</span>
           </div>
-          {e.recent_pay.length > 0 && <RecentPay rows={e.recent_pay} />}
+          {e.recent_pay && e.recent_pay.length > 0 && <RecentPay rows={e.recent_pay} />}
           {e.documents.length > 0 && (
             <ul className='grid gap-1'>
               {e.documents.map((d) => (

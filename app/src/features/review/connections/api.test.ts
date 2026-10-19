@@ -90,10 +90,11 @@ describe('connections api', () => {
   })
 
   it('guard checks each employer pay stub row', () => {
-    const [row] = EMPLOYER.recent_pay
+    const [row] = EMPLOYER.recent_pay!
     expect(isConnectionSummary(withEmployer(EMPLOYER))).toBe(true)
     expect(isConnectionSummary(withEmployer({ ...EMPLOYER, recent_pay: [] }))).toBe(true)
-    expect(isConnectionSummary(withEmployer({ ...EMPLOYER, recent_pay: undefined }))).toBe(false)
+    // optional: an older Worker response without recent_pay still renders the panel
+    expect(isConnectionSummary(withEmployer({ ...EMPLOYER, recent_pay: undefined }))).toBe(true)
     expect(isConnectionSummary(withEmployer({ ...EMPLOYER, recent_pay: [{ ...row, gross_pay: '2000.00' }] }))).toBe(false)
     expect(isConnectionSummary(withEmployer({ ...EMPLOYER, recent_pay: [{ ...row, pay_date: null }] }))).toBe(false)
     expect(isConnectionSummary(withEmployer({ ...EMPLOYER, recent_pay: [{ ...row, document_id: 7 }] }))).toBe(false)

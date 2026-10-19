@@ -72,12 +72,23 @@ function Rows({ connectionId, months }: { connectionId: string; months: 3 | 6 })
   )
 }
 
+// Plaid sends ISO codes or null; an unknown code would throw a RangeError and unmount the card, so fall back to USD.
+function currencyFormatter(currency: string | null): (n: number) => string {
+  let f: Intl.NumberFormat
+  try {
+    f = new Intl.NumberFormat('en-US', { style: 'currency', currency: currency ?? 'USD' })
+  } catch {
+    f = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' })
+  }
+  return (n) => f.format(n)
+}
+
 // The call asked for the client's expenses by category (rent, car payment, utilities) without reading every row.
 // The 433-A worksheet holds the allowable-standard comparison; this is the quick read on the card.
 function Summary({ rows, months, partial }: { rows: TransactionRow[]; months: 3 | 6; partial: boolean }) {
   const s = summarizeSpending(rows, months)
   if (s.expenses.length === 0 && !s.income) return null
-  const money = (n: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: s.currency ?? 'USD' }).format(n)
+  const money = currencyFormatter(s.currency)
   const line = (g: SpendingGroup, key: string) => (
     <TableRow key={key} data-spending-row={key} className='h-10'>
       <TableCell>{g.label}</TableCell>
@@ -88,7 +99,7 @@ function Summary({ rows, months, partial }: { rows: TransactionRow[]; months: 3 
   )
   return (
     <div data-spending-summary className='grid gap-1'>
-      <h4 className='text-sm font-medium'>Spending by category · last {months} months</h4>
+      <h4 className='text-sm font-medium'>Spending by category · last {months} full months</h4>
       <div className='rounded-md border'>
         <Table>
           <TableHeader>
@@ -106,7 +117,8 @@ function Summary({ rows, months, partial }: { rows: TransactionRow[]; months: 3 
         </Table>
       </div>
       <p className='text-sm text-muted-foreground'>
-        Settled transactions only{partial ? ', from the rows shown below' : ''}. Compare with the IRS standards on the 433-A worksheet.
+        Settled transactions in full months only; the current month is left out{partial ? ' and only the rows shown below count' : ''}. Compare with the IRS
+        standards on the 433-A worksheet.
       </p>
     </div>
   )

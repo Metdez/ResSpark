@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest'
 import type { TransactionRow } from './api'
 import { groupLabel, humanizeCategory, summarizeSpending } from './spending-summary'
 
+const NOW = new Date('2026-10-19T12:00:00Z')
+
 const tx = (over: Partial<TransactionRow>): TransactionRow => ({
   id: 'T',
   date: '2026-09-15',
@@ -42,7 +44,8 @@ describe('summarizeSpending', () => {
         tx({ id: '4', amount: 40.25, category_primary: 'RENT_AND_UTILITIES', category_detailed: 'RENT_AND_UTILITIES_WATER' }),
         tx({ id: '5', amount: 25.1 }),
       ],
-      3
+      3,
+      NOW
     )
     expect(s.months).toBe(3)
     expect(s.currency).toBe('USD')
@@ -62,15 +65,28 @@ describe('summarizeSpending', () => {
         tx({ id: '3', amount: -3000, category_primary: 'INCOME', category_detailed: 'INCOME_WAGES' }),
         tx({ id: '4', amount: -500, category_primary: 'TRANSFER_IN', category_detailed: 'TRANSFER_IN_DEPOSIT' }),
       ],
-      6
+      6,
+      NOW
     )
     expect(s.expenses).toEqual([])
     expect(s.income).toEqual({ label: 'Income deposits', count: 2, total: 6000, monthly: 1000 })
   })
 
+  it('leaves out the current partial month so monthly figures cover full months only', () => {
+    const s = summarizeSpending(
+      [
+        tx({ id: '1', date: '2026-10-05', amount: 1200, category_primary: 'RENT_AND_UTILITIES', category_detailed: 'RENT_AND_UTILITIES_RENT' }),
+        tx({ id: '2', date: '2026-09-30', amount: 1200, category_primary: 'RENT_AND_UTILITIES', category_detailed: 'RENT_AND_UTILITIES_RENT' }),
+      ],
+      3,
+      NOW
+    )
+    expect(s.expenses).toEqual([{ label: 'Rent', count: 1, total: 1200, monthly: 400 }])
+  })
+
   it('reads null currency and empty input', () => {
-    const s = summarizeSpending([tx({ iso_currency_code: null })], 3)
+    const s = summarizeSpending([tx({ iso_currency_code: null })], 3, NOW)
     expect(s.currency).toBeNull()
-    expect(summarizeSpending([], 3)).toEqual({ months: 3, currency: null, expenses: [], income: null })
+    expect(summarizeSpending([], 3, NOW)).toEqual({ months: 3, currency: null, expenses: [], income: null })
   })
 })

@@ -120,21 +120,23 @@ describe('TransactionsTable', () => {
     vi.mocked(api.fetchTransactions).mockResolvedValue({
       months: 6,
       total: 4,
+      // dated last month: the current partial month is left out of the summary
       transactions: [
-        ...ROWS,
-        tx({ id: 'T3', amount: 1500, category_primary: 'RENT_AND_UTILITIES', category_detailed: 'RENT_AND_UTILITIES_RENT' }),
-        tx({ id: 'T4', amount: -3000, category_primary: 'INCOME', category_detailed: 'INCOME_WAGES', name: 'ACME PAYROLL' }),
+        tx({ id: 'T3', date: '2026-09-15', amount: 1500, category_primary: 'RENT_AND_UTILITIES', category_detailed: 'RENT_AND_UTILITIES_RENT' }),
+        tx({ id: 'T4', date: '2026-09-01', amount: -3000, category_primary: 'INCOME', category_detailed: 'INCOME_WAGES', name: 'ACME PAYROLL' }),
+        tx({ id: 'T5', date: '2026-09-20' }),
+        tx({ id: 'T6', date: '2026-09-21', amount: 80, pending: true }),
       ],
     })
     await renderOpen()
     const summary = container.querySelector('[data-spending-summary]')!
-    expect(summary.textContent).toContain('Spending by category · last 6 months')
+    expect(summary.textContent).toContain('Spending by category · last 6 full months')
     const lines = [...summary.querySelectorAll<HTMLElement>('[data-spending-row]')].map((r) => r.getAttribute('data-spending-row'))
     expect(lines).toEqual(['income', 'Rent', 'Food and drink'])
     const rent = [...summary.querySelector('[data-spending-row="Rent"]')!.querySelectorAll('td')].map((c) => c.textContent)
     expect(rent).toEqual(['Rent', '1', '$1,500.00', '$250.00'])
-    expect(summary.textContent).toContain('Settled transactions only.')
-    expect(summary.textContent).not.toContain('from the rows shown below')
+    expect(summary.textContent).toContain('the current month is left out.')
+    expect(summary.textContent).not.toContain('only the rows shown below count')
   })
 
   it('hides the summary when every row is pending or an inflow', async () => {

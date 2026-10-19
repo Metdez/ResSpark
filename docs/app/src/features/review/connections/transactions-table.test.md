@@ -10,7 +10,7 @@ Vitest (`web` project, jsdom) for `transactions-table.tsx`. `fetchTransactions` 
 | row rendering | Rows keep server order; description, humanized category (`Food and drink`) and the ISO date in `title`. |
 | money | `−$12.34` and `+$1,500.00`, right-aligned with `tabular-nums`. |
 | pending chip and footer | `Pending` only on the pending row; `Showing 2 of 412`. |
-| spending summary | With a rent charge and an `INCOME_WAGES` deposit added, the `[data-spending-summary]` block reads `Spending by category · last 6 months`, lists `income`, `Rent`, `Food and drink` in that order, the Rent line shows `1 · $1,500.00 · $250.00`, and the footnote says `Settled transactions only.` without the partial-window clause (rows equal total). |
+| spending summary | With a September rent charge, an `INCOME_WAGES` deposit, a coffee and a pending charge (all dated last month, since the current month is left out), the `[data-spending-summary]` block reads `Spending by category · last 6 full months`, lists `income`, `Rent`, `Food and drink` in that order, the Rent line shows `1 · $1,500.00 · $250.00`, and the footnote says `the current month is left out.` without the partial-window clause (rows equal total). |
 | summary hidden | Only the pending deposit → no `[data-spending-summary]`. |
 | loading | Three `[data-skeleton]` rows while the promise is open. |
 | empty | `No transactions yet` for zero rows. |

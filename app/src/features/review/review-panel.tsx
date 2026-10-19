@@ -83,6 +83,10 @@ export function ReviewPanel({ requestId, caseId }: { requestId: string; caseId: 
         {items.map((item) => {
           // An address item has no files; it is decidable once the client confirmed one (D-07).
           const hasFiles = item.documents.length > 0 || (item.kind === 'address' && address !== null)
+          // A done bank or payroll connection approves its item on its own (migration 0011); staff can still
+          // send it back to the client even when no file arrived.
+          const connection = item.kind === 'bank_connect' || item.kind === 'payroll_connect'
+          const canReject = hasFiles || (connection && item.status === 'approved')
           const approving = approve.isPending && approve.variables === item.id
           return (
             <section key={item.id} data-review-item={item.id} className='grid gap-3 rounded-lg border p-4'>
@@ -103,7 +107,7 @@ export function ReviewPanel({ requestId, caseId }: { requestId: string; caseId: 
                   <Button
                     type='button'
                     variant='outline'
-                    disabled={!hasFiles}
+                    disabled={!canReject}
                     onClick={() => {
                       reject.reset()
                       setRejecting(item)

@@ -32,7 +32,8 @@ export interface EmployerView {
   w2s: number
   income_reports: number
   documents: Array<{ id: string; document_type: string; name: string }>
-  recent_pay: PayStubRow[]
+  // Optional in the guard so an older Worker response degrades to no table instead of failing the panel.
+  recent_pay?: PayStubRow[]
 }
 
 export interface ConnectionSummary {
@@ -99,8 +100,7 @@ const isEmployer = (v: unknown): v is EmployerView =>
   num(v.income_reports) &&
   Array.isArray(v.documents) &&
   v.documents.every(isEmployerDoc) &&
-  Array.isArray(v.recent_pay) &&
-  v.recent_pay.every(isPayStub)
+  (v.recent_pay === undefined || (Array.isArray(v.recent_pay) && v.recent_pay.every(isPayStub)))
 
 export const isConnectionSummary = (v: unknown): v is ConnectionSummary =>
   isObject(v) &&

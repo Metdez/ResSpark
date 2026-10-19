@@ -45,9 +45,12 @@ export const groupLabel = (t: Pick<TransactionRow, 'category_primary' | 'categor
   (t.category_detailed && DETAILED[t.category_detailed]) || humanizeCategory(t.category_primary)
 
 // Settled rows only (a pending charge can still reverse). Plaid signs: positive leaves the account.
-// Monthly figures divide the window total by the window length, the same shape the 433-A asks for.
-export function summarizeSpending(rows: TransactionRow[], months: 3 | 6): SpendingSummary {
-  const settled = rows.filter((t) => !t.pending)
+// The Worker window starts on the first day of the month `months` back and runs to today, so it holds
+// `months` full months plus the current partial one. The partial month is left out and totals divide
+// by `months`, so a rent paid monthly shows once per month, the shape the 433-A asks for.
+export function summarizeSpending(rows: TransactionRow[], months: 3 | 6, now = new Date()): SpendingSummary {
+  const currentMonth = now.toISOString().slice(0, 7)
+  const settled = rows.filter((t) => !t.pending && t.date.slice(0, 7) < currentMonth)
   const groups = new Map<string, SpendingGroup>()
   let income: SpendingGroup | null = null
   for (const t of settled) {

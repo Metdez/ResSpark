@@ -144,6 +144,7 @@ describe('projectSummary', () => {
           statements: [
             { pay_date: '2026-08-31', check_number: null, gross_pay: '2000.00', net_pay: '1500.00' },
             { pay_date: '2026-09-15', check_number: '1001', gross_pay: '2000.00', net_pay: null },
+            { pay_date: '2026-09-01', check_number: 1002, gross_pay: '2000.00', net_pay: '1500.00' }, // numeric check: named like the file
             { pay_date: '2026-06-30', check_number: null, gross_pay: '2000.00', net_pay: '1500.00' },
           ],
         },
@@ -171,11 +172,13 @@ describe('projectSummary', () => {
       stub('d9', 'other-e10', 'paystub-2026-08-31.pdf'), // same name, another employer's group
       stub('d1', 'acme-inc-e1', 'paystub-2026-09-15-1001.pdf'),
       stub('d2', 'acme-inc-e1', 'paystub-2026-08-31.pdf'),
+      stub('d4', 'acme-inc-e1', 'paystub-2026-09-01-1002.pdf'),
       stub('d3', 'acme-inc-e1', 'paystub-2026-06-30.pdf'),
     ]
     const s = projectSummary(conn, { ...empty, documents }, NOW)
     expect(s.employers[0].recent_pay).toEqual([
       { pay_date: '2026-09-15', gross_pay: 2000, net_pay: null, document_id: 'd1' },
+      { pay_date: '2026-09-01', gross_pay: 2000, net_pay: 1500, document_id: 'd4' },
       { pay_date: '2026-08-31', gross_pay: 2000, net_pay: 1500, document_id: 'd2' },
       { pay_date: '2026-07-01', gross_pay: null, net_pay: 10.5, document_id: null },
     ])

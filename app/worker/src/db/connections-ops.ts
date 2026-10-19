@@ -1,5 +1,6 @@
 import { targetMonths } from '../../../src/lib/statement-months'
 import { PROVIDER_CAPABILITIES, type BankCapabilities } from '../integrations/bank/provider'
+import { stubCheck, stubPayDate } from '../integrations/truv/reports'
 import { safeName } from '../storage/case-documents'
 import { createAdminClient } from './client'
 import { latestConnectionForItem, type ConnectionRow, type ConnectionStatus, type ProviderId } from './connections'
@@ -201,10 +202,12 @@ function recentPay(report: unknown, docs: SummaryParts['documents'], now: Date):
   const start = windowStart(now, 3)
   return objects((report as Record<string, unknown>).employments)
     .flatMap((emp) => objects(emp.statements))
-    .filter((s) => typeof s.pay_date === 'string' && s.pay_date.slice(0, 10) >= start)
+    .filter((s) => (stubPayDate(s) ?? '').slice(0, 10) >= start)
     .map((s) => {
-      const payDate = (s.pay_date as string).slice(0, 10)
-      const suffix = payStubSuffix(payDate, str(s.check_number))
+      const raw = stubPayDate(s)!
+      // the suffix reads the date and check exactly as reports.ts named the file
+      const suffix = payStubSuffix(raw, stubCheck(s))
+      const payDate = raw.slice(0, 10)
       const doc = docs.find((d) => d.document_type === 'pay_stub' && d.storage_key.endsWith(suffix))
       return { pay_date: payDate, gross_pay: amount(s.gross_pay), net_pay: amount(s.net_pay), document_id: doc?.id ?? null }
     })

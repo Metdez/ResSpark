@@ -113,9 +113,9 @@ describe('PayrollPanel', () => {
 
   it('sums the window into one line, singular for one stub', async () => {
     await render()
-    expect(employer('E1').textContent).toContain('3 pay stubs · gross $5,950.50 · net $2,980.25')
+    expect(employer('E1').textContent).toContain('3 pay stubs · gross $5,950.50 · net — · 1 stub has no amount')
     await act(async () => root?.unmount())
-    await render([{ ...EMPLOYERS[0], recent_pay: [EMPLOYERS[0].recent_pay[0]] }])
+    await render([{ ...EMPLOYERS[0], recent_pay: EMPLOYERS[0].recent_pay!.slice(0, 1) }])
     expect(employer('E1').textContent).toContain('1 pay stub · gross $2,000.00 · net $1,500.00')
   })
 

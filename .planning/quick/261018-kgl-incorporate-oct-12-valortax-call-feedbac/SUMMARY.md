@@ -48,6 +48,17 @@ Twilio SMS and the short URL (user: out of scope), Plaid Signal/Balance for rece
 - Per-stream targeted vitest runs all green (portal 37, migration-adjacent unit tests unchanged, PDFs 13 + 35, names/review/select-all 22 + 29, pay stubs 29, requests UX 53 + 7, lookup route 26).
 - Full `pnpm -C app check` and the deploy/smoke results are recorded in STATE.md and HANDOFF.md under this task.
 
+## Code review (2026-10-19)
+
+An independent reviewer read the whole range d053333..bb24c58 (migrations, Worker, SPA; 36 tool calls). No critical findings; the migrations, naming change, PDF job and firm-scoped lookup were judged correct. Four important findings, all fixed the same day:
+
+1. Spending summary divided by `months` while the Worker window also holds the current partial month, overstating a monthly rent by up to a third. Now the current month is left out and the heading reads `last N full months`.
+2. Reject was disabled for a connection item with no files, so an auto-approved bank or payroll item could not be sent back. Reject now stays available for an approved connection item.
+3. Pay-stub totals summed a `null` amount as zero. A missing amount now makes that total `—` with a `1 stub has no amount` note.
+4. A numeric Truv `check_number` was stringified for the file name but dropped by the pay-stub table lookup, losing the stub link. Both now read `stubCheck`/`stubPayDate` from `truv/reports.ts`.
+
+Minor items taken: `recent_pay` optional in the API guard; `Intl` currency fallback; doc notes on the PDF job's cells precondition and retry trigger. Left as noted: Logics name collisions for two employers paying the same day or two accounts without masks; the sibling-connection re-approve edge; `to_date` strictness in a future backfill.
+
 ## Follow-ups worth doing
 
 - Live tests under `app/worker/test` that assert the done transition were updated to `approved` and need a live run (`pnpm -C app test:live`) after the deploy.

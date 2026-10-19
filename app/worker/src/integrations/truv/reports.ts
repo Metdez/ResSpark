@@ -57,6 +57,12 @@ const DOC_PREFIX: Record<TruvFileKind, string> = {
   other: 'document-upload',
 }
 
+// One reading of a stub's check number and pay date, shared with db/connections-ops.ts so the stored
+// file name and the "Last 3 months" table never drift apart (a numeric check_number is stringified).
+export const stubCheck = (s: Obj): string | null =>
+  str(s.check_number) ?? (typeof s.check_number === 'number' ? String(s.check_number) : null)
+export const stubPayDate = (s: Obj): string | null => str(s.pay_date)
+
 // Names make a date sort a name sort within an employer (paystub-<pay_date>[-<check>].pdf).
 // displayName is the human-readable name (Oct 12 call); name is unchanged so evidence.ts still matches by suffix.
 export function collectEmployerFiles(report: Obj, docs: TruvLinkDocument[]): TruvFile[] {
@@ -70,8 +76,8 @@ export function collectEmployerFiles(report: Obj, docs: TruvLinkDocument[]): Tru
     for (const s of objects(emp.statements)) {
       const url = str(s.file)
       if (!url) continue
-      const check = str(s.check_number) ?? (typeof s.check_number === 'number' ? String(s.check_number) : null)
-      const payDate = str(s.pay_date)
+      const check = stubCheck(s)
+      const payDate = stubPayDate(s)
       const date = safeName(payDate ?? 'undated')
       add({
         kind: 'pay_stub',

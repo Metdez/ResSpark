@@ -37,3 +37,7 @@ Hex MD5 through `node:crypto` (`nodejs_compat` is on; Web Crypto has no MD5). Us
 ## Tests
 
 `reports.test.ts`: report read with auth headers, `bad_response` for a body without employments, documents 404 gives `[]`, the file order and names from the Acme fixtures (with the duplicate URL collapsed), the five display names, md5 present only on statements and W-2s, URL and access-token stripping, `md5Hex('abc')`, download without auth headers, 500 transient and 403 not.
+
+## Shared stub readers
+
+`stubCheck(s)` (a string `check_number`, or a numeric one stringified, else `null`) and `stubPayDate(s)` (the raw `pay_date` string or `null`) are exported and used both here to name the stored file and in `db/connections-ops.ts` `recentPay` to find that file again, so the two readings cannot drift (review 2026-10-19).

@@ -273,4 +273,18 @@ describe('ReviewPanel connection items', () => {
     expect(itemEl('p1').textContent).not.toContain('No files yet')
     expect(itemEl('u1').textContent).toContain('No files yet')
   })
+
+  it('lets staff reject an auto-approved connection item that has no files', async () => {
+    vi.mocked(api.fetchReview).mockResolvedValue({
+      ...REVIEW,
+      items: [
+        item({ id: 'b1', kind: 'bank_connect', label: 'Connect your bank', status: 'approved' }),
+        item({ id: 'u1', kind: 'upload', label: 'Other documents' }),
+      ],
+    })
+    await render()
+    expect(button('Reject', itemEl('b1')).disabled).toBe(false)
+    expect(button('Approved', itemEl('b1')).disabled).toBe(true)
+    expect(button('Reject', itemEl('u1')).disabled).toBe(true)
+  })
 })

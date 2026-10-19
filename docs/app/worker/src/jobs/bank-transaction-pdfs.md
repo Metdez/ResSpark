@@ -41,3 +41,8 @@ then `setMonthCell(env, account.id, year, month, cell.status, document_id)`. Ret
 ## Tests
 
 `app/worker/src/jobs/bank-transaction-pdfs.test.ts` (see its companion doc).
+
+## Known limits (review 2026-10-19)
+
+- Cells first: the job walks `bank_statement_months` rows, and `syncStatements` creates them only when the provider's `capabilities.statementPdfs` is true. A provider with no statement product (Teller) has no cells and so gets no generated PDFs until its reconcile creates the month cells; do that in the Teller phase.
+- Retry trigger: a `connection.transaction_pdfs_failed` on a connection that then reaches `done` is retried only by a webhook or a staff Refresh (`listStaleConnections` polls non-terminal rows only), and one failing account stops the loop for the accounts after it.
